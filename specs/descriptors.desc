@@ -1,0 +1,88 @@
+descriptors = {
+  { name = "cxxtest",
+    url = "http://www.tecgraf.puc-rio.br/~openbus/repository/cxxtest.tar.gz",
+    dev_files = {
+      ["cxxtestgen.pl"] = "bin",
+      ["cxxtestgen.py"] = "bin",
+      ["include/cxxtest"] = "incpath/cxxtest/",
+    },
+  },
+  { name = "openbus-orbix",
+    build = {
+      type = "tecmake",
+      src = SVNDIR,
+      mf = { "orbix genstubs USE_NODEPEND=Yes", "orbix" },
+    -- special compile instructions for solaris
+    SunOS = {
+      mf = { "orbix genstubs USE_NODEPEND=Yes", "orbix", "orbix sunos" },
+    },
+    SunOS510_64 = {
+      mf = { "orbix genstubs ".. SUNOS64_TECMAKE_FLAGS, "orbix "..SUNOS64_TECMAKE_FLAGS, "orbix sunos "..SUNOS64_TECMAKE_FLAGS },
+    },
+    },
+    dev_files = {
+      ["lib/${TEC_UNAME}/libopenbusorbix.*"] = "lib/${TEC_UNAME}",
+      ["*.h"] = ".", --include
+      ["openbus/util/*.h"] = "openbus/util/",    --include
+      ["openbus/interceptors/*.h"] = "openbus/interceptors/",    --include
+      ["stubs"] = ".",     --include
+      ["../../test/orbix/acs/*.cpp"] = "orbix/acs/",
+      ["../../test/orbix/acs/config.mak"] = "test/orbix/acs/",
+      ["../../test/orbix/rgs/*.cpp"] = "test/orbix/rgs/",
+      ["../../test/orbix/rgs/config.mak"] = "test/orbix/rgs/",
+      ["../../test/orbix/config*"] = "test/orbix/",
+      ["../../test/orbix/runtests"] = "test/orbix/",
+    },
+  },  
+  { name = "openbus-orbix-test",
+    build = {
+      type = "tecmake",
+      src = SVNDIR .."/test/orbix",
+      mf = { "config cxxtest -C acs", "config -C acs", "config cxxtest -C rgs", "config -C rgs" },
+      SunOS510_64 = { 
+	    mf = { "config cxxtest -C acs",
+               "config -C acs ".. SUNOS64_TECMAKE_FLAGS,
+               "config cxxtest -C rgs",
+               "config -C rgs ".. SUNOS64_TECMAKE_FLAGS, },
+      },
+    },
+    install_files = {
+      ["bin/${TEC_UNAME}/*"] = "test/orbix/bin/${TEC_UNAME}",
+      ["config*"] = "test/orbix/",
+      ["runtests"] = "test/orbix/",
+    },
+  },
+  { name = "openbus-orbix-doc",
+    build = {
+      type = "command",
+      src = SVNDIR,
+      cmd = "doxygen",
+      arguments = "doxygen.cfg"
+    },
+    install_files = {
+      ["html"] = "docs",
+    },
+  },
+  { name = "openbus-demo-hello-orbix",
+    build = {
+      type = "tecmake",
+      src = SVNDIR .."/demo/hello/orbix63",
+      mf = { "server genstubs USE_NODEPEND=Yes", "client", "server" },
+      SunOS510_64 = { mf = { "server genstubs ".. SUNOS64_TECMAKE_FLAGS, "client "..SUNOS64_TECMAKE_FLAGS, "server "..SUNOS64_TECMAKE_FLAGS } },
+    },
+    dev_files = {
+      ["bin/${TEC_UNAME}/*"] = "demo/hello/orbix63/bin/${TEC_UNAME}",
+      ["../idl/hello.idl"] = "demo/hello/idl/",
+      ["client.cpp"] = "demo/hello/orbix63",
+      ["server.cpp"] = "demo/hello/orbix63",
+      ["run*"] = "demo/hello/orbix63",
+      ["*.mak"] = "demo/hello/orbix63",
+      ["*config"] = "demo/hello/orbix63",
+      ["run*"] = "demo/hello/orbix63",
+      ["client"] = "demo/hello/orbix63",
+      ["server"] = "demo/hello/orbix63",
+      ["../../../specs/shell/*rc"] = "specs/shell/", -- shell variables
+      ["../../../specs/shell/sample-domain_env.*"] = "specs/shell/",
+    },
+  },
+}
