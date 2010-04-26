@@ -24,14 +24,14 @@ OBJROOT=obj
 INCLUDES= . \
   stubs \
   ${MICO_INC} \
-  ${OPENBUS_HOME}/core/utilities/cpp \
+  ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/scs
 
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
 LIBS= mico2.3.11 dl crypto pthread
 
-SLIB= ${OPENBUS_HOME}/core/utilities/cpp/lib/${TEC_UNAME}/libopenbusmico.a \
+SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/libscsmico.a
 
 USE_LUA51= YES
@@ -41,5 +41,5 @@ SRC= server.cpp \
 
 genstubs:
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../../idl/hello.idl
+	cd stubs ; ${MICO_BIN}/idl --poa ../idl/hello.idl
 

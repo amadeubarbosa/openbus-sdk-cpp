@@ -12,7 +12,7 @@ include ../config
 
 INCLUDES= . \
   ${ORBIXINC} \
-  ${OPENBUS_HOME}/core/utilities/cpp \
+  ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/cxxtest \
   ${OPENBUSINC}/openssl-0.9.9
@@ -22,7 +22,7 @@ LDIR= ${ORBIXLDIR} \
 
 LIBS+= crypto it_poa it_art it_ifc it_portable_interceptor
 
-SLIB= ${OPENBUS_HOME}/core/utilities/cpp/lib/${TEC_UNAME}/libopenbusorbix.a \
+SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
   ${OPENBUSLIB}/libscsorbix.a
 
 USE_LUA51= YES
