@@ -15,6 +15,7 @@
 #include "stubs/helloS.hh"
 
 using namespace std;
+using namespace tecgraf::openbus::core::v1_05::registry_service;
 
 openbus::Openbus* bus;
 registry_service::IRegistryService* registryService;
@@ -127,7 +128,17 @@ int main(int argc, char* argv[]) {
   cout << "Registrando serviço IHello no barramento..." << endl;
 
 /* Registro do serviço no barramento. */
-  registryService->_cxx_register(serviceOffer, registryId);
+  try {
+    registryId = registryService->_cxx_register(serviceOffer);
+  } catch (UnathorizedFacets& e) {
+    cout << "Nao foi possivel registrar IHello." << endl;
+    CORBA::ULong idx;
+    CORBA::ULong length = e.facets.length();
+    for (idx = 0; idx < length; idx++) {
+      cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
+    }
+    exit(-1);
+  }
   cout << "Serviço IHello registrado." << endl;
   cout << "Aguardando requisições..." << endl;
 

@@ -14,6 +14,7 @@
 
 using namespace openbus;
 using namespace tecgraf::openbus::core::v1_05;
+using namespace tecgraf::openbus::core::v1_05::registry_service;
 
 class RGSTestSuite: public CxxTest::TestSuite {
   private:
@@ -140,12 +141,36 @@ class RGSTestSuite: public CxxTest::TestSuite {
         registry_service::ServiceOffer serviceOffer;
         serviceOffer.properties = propertyListHelper->getPropertyList();
         serviceOffer.member = component;
-        TS_ASSERT(rgs->_cxx_register(serviceOffer, registryIdentifier));
+        try {
+          registryIdentifier = rgs->_cxx_register(serviceOffer);
+          TS_ASSERT(registryIdentifier);
+        } catch (UnathorizedFacets& e) {
+          cout << "Nao foi possivel registrar a oferta." << endl;
+          CORBA::ULong idx;
+          CORBA::ULong length = e.facets.length();
+          for (idx = 0; idx < length; idx++) {
+            cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
+          }
+
+          exit(-1);
+        }
 
         propertyListHelper2 = new openbus::util::PropertyListHelper();
         serviceOffer.properties = propertyListHelper2->getPropertyList();
         serviceOffer.member = component;
-        TS_ASSERT(rgs->_cxx_register(serviceOffer, registryIdentifier2));
+        try {
+          registryIdentifier2 = rgs->_cxx_register(serviceOffer);
+          TS_ASSERT(registryIdentifier2);
+        } catch (UnathorizedFacets& e) {
+          cout << "Nao foi possivel registrar a oferta." << endl;
+          CORBA::ULong idx;
+          CORBA::ULong length = e.facets.length();
+          for (idx = 0; idx < length; idx++) {
+            cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
+          }
+
+          exit(-1);
+        }
       } catch (const char* errmsg) {
         TS_FAIL(errmsg);
       }

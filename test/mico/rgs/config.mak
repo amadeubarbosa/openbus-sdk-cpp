@@ -20,7 +20,7 @@ endif
 
 INCLUDES= . \
   ${MICO_INC} \
-  ${OPENBUS_HOME}/core/utilities/cpp \
+  ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/cxxtest \
   ${OPENBUSINC}/openssl-0.9.9
@@ -32,6 +32,8 @@ LIBS= crypto mico2.3.11 dl
 
 SLIB= ${OPENBUS_HOME}/core/utilities/cpp/lib/${TEC_UNAME}/libopenbusmico.a \
   ${OPENBUSLIB}/libscsmico.a
+
+USE_LUA51= YES
 
 SRC= runner.cpp \
      RGSTestSuite.cpp
