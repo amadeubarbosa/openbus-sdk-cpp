@@ -51,12 +51,12 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
 
 genstubs:
 	mkdir -p stubs/orbix
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/fault_tolerance.idl 
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/access_control_service.idl 
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/registry_service.idl
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/session_service.idl
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/core.idl
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base -poa ${OPENBUS_HOME}/idlpath/scs.idl
+	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl 
+	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl 
+	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl
+	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
+	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/core.idl
+	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base -poa ${OPENBUS_HOME}/idlpath/v1_05/scs.idl
 	
 sunos: $(OBJS)
 	rm -f lib/$(TEC_UNAME)/libopenbusorbix.a

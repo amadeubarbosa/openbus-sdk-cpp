@@ -50,12 +50,12 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
 
 genstubs:
 	mkdir -p stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/core.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/scs.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/access_control_service.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/registry_service.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/fault_tolerance.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/session_service.idl stubs/mico
+	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/core.idl stubs/mico
+	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/scs.idl stubs/mico
+	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl stubs/mico
+	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl stubs/mico
+	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl stubs/mico
+	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl stubs/mico
 	cd stubs/mico ; ${MICO_BIN}/idl --any --typecode access_control_service.idl 
 	cd stubs/mico ; ${MICO_BIN}/idl fault_tolerance.idl
 	cd stubs/mico ; ${MICO_BIN}/idl registry_service.idl

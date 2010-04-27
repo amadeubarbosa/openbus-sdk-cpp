@@ -41,5 +41,5 @@ SRC= server.cpp \
 
 genstubs:
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../idl/hello.idl
+	cd stubs ; ${MICO_BIN}/idl --poa ../../idl/hello.idl
 
