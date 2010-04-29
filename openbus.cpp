@@ -302,34 +302,22 @@ namespace openbus {
  void Openbus::createProxyToIAccessControlService() {
     logger->log(INFO, "Openbus::createProxyToIAccessControlService() BEGIN");
     logger->indent();
-    std::stringstream corbalocACS;
-    std::stringstream corbalocLP;
     std::stringstream corbalocIC;
-    corbalocACS << "corbaloc::" << hostBus << ":" << portBus << "/ACS_v1_05";
-    logger->log(INFO, "corbaloc ACS: " + corbalocACS.str());
-    corbalocLP << "corbaloc::" << hostBus << ":" << portBus << "/LP_v1_05";
-    logger->log(INFO, "corbaloc LeaseProvider: " + corbalocLP.str());
     corbalocIC << "corbaloc::" << hostBus << ":" << portBus << "/openbus_v1_05";
-    logger->log(INFO, "corbaloc IComponent: " + corbalocIC.str());
-    CORBA::Object_var objACS = 
-      orb->string_to_object(corbalocACS.str().c_str());
-    CORBA::Object_var objLP = 
-      orb->string_to_object(corbalocLP.str().c_str());
+    logger->log(INFO, "corbaloc IC do ACS: " + corbalocIC.str());
     CORBA::Object_var objIC = 
       orb->string_to_object(corbalocIC.str().c_str());
+    iComponentAccessControlService = scs::core::IComponent::_narrow(objIC);
+    CORBA::Object_var objLP = iComponentAccessControlService->getFacet(
+      "IDL:tecgraf/openbus/core/v1_05/access_control_service/ILeaseProvider:1.0");
+    iLeaseProvider = access_control_service::ILeaseProvider::_narrow(objLP);
+    CORBA::Object_var objACS = iComponentAccessControlService->getFacet(
+      "IDL:tecgraf/openbus/core/v1_05/access_control_service/IAccessControlService:1.0");
     iAccessControlService = 
       access_control_service::IAccessControlService::_narrow(objACS);
-    iLeaseProvider = access_control_service::ILeaseProvider::_narrow(objLP);
-    iComponentAccessControlService = scs::core::IComponent::_narrow(objIC);
-
-    std::stringstream corbalocFT;
-    corbalocFT << "corbaloc::" << hostBus << ":" << portBus << "/FTACS_v1_05";
-    logger->log(INFO, "corbaloc IFaultTolerant: " + corbalocFT.str());
-    CORBA::Object_var objFT = 
-      orb->string_to_object(corbalocFT.str().c_str());
-    iFaultTolerantService = 
-      IFaultTolerantService::_narrow(objFT);
-
+    CORBA::Object_var objFT = iComponentAccessControlService->getFacet(
+      "IDL:tecgraf/openbus/fault_tolerance/v1_05/IFaultTolerantService:1.0");
+    iFaultTolerantService = IFaultTolerantService::_narrow(objFT);
     logger->dedent(INFO, "Openbus::createProxyToIAccessControlService() END");
   }
 
