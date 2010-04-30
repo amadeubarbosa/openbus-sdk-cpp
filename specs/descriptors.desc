@@ -73,6 +73,7 @@ descriptors = {
     dev_files = {
       ["bin/${TEC_UNAME}/*"] = "demo/hello/orbix63/bin/${TEC_UNAME}",
       ["../idl/hello.idl"] = "demo/hello/idl/",
+      ["../management"] = "demo/hello",
       ["client.cpp"] = "demo/hello/orbix63",
       ["server.cpp"] = "demo/hello/orbix63",
       ["run*"] = "demo/hello/orbix63",
