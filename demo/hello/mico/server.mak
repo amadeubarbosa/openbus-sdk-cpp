@@ -25,14 +25,16 @@ INCLUDES= . \
   stubs \
   ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
-  ${OPENBUSINC}/scs
+  ${OPENBUSINC}/scs \
+  ${OPENBUSINC}/logger
 
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
 LIBS= mico2.3.11 dl crypto pthread
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
-      ${OPENBUSLIB}/libscsmico.a
+      ${OPENBUSLIB}/libscsmico.a \
+      ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES
 

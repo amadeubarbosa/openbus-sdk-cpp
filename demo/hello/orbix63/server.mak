@@ -13,13 +13,14 @@ include config
 TARGETROOT=bin
 OBJROOT=obj
 
-INCLUDES= . ${ORBIXINC} ${OPENBUSINC}/openbus/cpp ${OPENBUSINC}/scs 
+INCLUDES= . ${ORBIXINC} ${OPENBUSINC}/openbus/cpp ${OPENBUSINC}/scs ${OPENBUSINC}/logger
 LDIR= ${ORBIXLDIR} ${OPENBUSLIB}
 
 LIBS+= it_poa it_art it_ifc it_portable_interceptor crypto
 
 SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
-      ${OPENBUSLIB}/libscsorbix.a
+      ${OPENBUSLIB}/libscsorbix.a \
+      ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES
 

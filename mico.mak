@@ -27,10 +27,10 @@ OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 OBJROOT= obj
 TARGETROOT= lib
 
-INCLUDES= . ${MICO_INC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9
+INCLUDES= . ${MICO_INC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${MICO_LIB} ${OPENBUSLIB} ${MICO_LIB}
 
-LIBS= mico2.3.11 scsmico crypto dl
+LIBS= mico2.3.11 scsmico crypto dl logger
 
 USE_LUA51= YES
 
@@ -45,8 +45,7 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
      stubs/mico/scs.cc \
      openbus.cpp \
      openbus/util/Helper.cpp \
-     FaultToleranceManager.cpp \
-     logger.cpp
+     FaultToleranceManager.cpp
 
 genstubs:
 	mkdir -p stubs/mico

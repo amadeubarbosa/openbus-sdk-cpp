@@ -29,10 +29,10 @@ OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 OBJROOT= obj
 TARGETROOT= lib
 
-INCLUDES= . ${ORBIXINC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9
+INCLUDES= . ${ORBIXINC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${ORBIXLDIR} ${OPENBUSLIB} ${ORBIXLDIR}
 
-LIBS= it_poa it_art it_ifc it_portable_interceptor scsorbix crypto
+LIBS= it_poa it_art it_ifc it_portable_interceptor scsorbix crypto logger
 
 USE_LUA51=YES
 
@@ -46,8 +46,7 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
      stubs/orbix/coreC.cxx \
      openbus.cpp \
      openbus/util/Helper.cpp \
-     FaultToleranceManager.cpp \
-     logger.cpp
+     FaultToleranceManager.cpp
 
 genstubs:
 	mkdir -p stubs/orbix
