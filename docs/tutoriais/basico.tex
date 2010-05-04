@@ -139,7 +139,17 @@ envolvidas.
 \section{Desenvolvimento}
 \subsection{API}
 \lstset{language=c++}
-A API é composta pelos módulos openbus.h e RegistryService.h.
+O serviço de acesso ao barramento é utilizado através de uma API proprietária,
+que é representada pelo arquivo \lstinline!openbus.h!, no entanto o serviço de 
+registro e o serviço de sessão, são acessados diretamente através dos 
+stubs disponibilizados. No caso do Mico a API para o serviço de registro
+é descrita através do arquivo \lstinline!stubs/mico/registry_service.h!, 
+e para o serviço de sessão é o arquivo \lstinline!stubs/mico/session_service.h!. 
+Quanto ao Orbix, o serviço de registro é representado por 
+\lstinline!stubs/orbix/registry_service.hh! e 
+o serviço de sessão por \lstinline!stubs/orbix/session_service.hh!.
+
+\subsubsection{openbus.h}
 
 \begin{lstlisting}
   static Openbus::getInstance()
@@ -359,40 +369,41 @@ Loop que processa requisições remotas. Execução do orb->run().
 
 Finaliza a execução do ORB.
 
+\subsubsection{Stub do serviço de registro}
+
 \begin{lstlisting}
-  void services::RegistryService::Register(
-    ServiceOffer serviceOffer, 
-    char* registryId)
+  RegistryIdentifier _cxx_register(const ServiceOffer& aServiceOffer)
 \end{lstlisting}
 
 Registra um serviço no barramento. O serviço é descrito através de uma 
 oferta de serviço. Caso o serviço seja registrado com sucesso, a 
-identificação do mesmo é armazenada no parâmetro de saída registryId.
+identificação do mesmo é retornada através de uma string.
 
 \begin{lstlisting}
-  void services::RegistryService::unregister(char* registryId)
+  CORBA::Boolean unregister(const char* identifier)
 \end{lstlisting}
 
 Remove uma oferta de serviço do barramento. Se a remoção ocorrer com sucesso,
 o valor true é retornado, caso contrário false é retornado.
 
 \begin{lstlisting}
-  ServiceOfferList* services::RegistryService::find(FacetList facets);
+  ServiceOfferList* find(const FacetList& facets);
 \end{lstlisting}
 
 Busca uma ou mais ofertas de serviço no barramento que implementam todas as
 facetas discriminadas em facets.
 
 \begin{lstlisting}
-  ServiceOfferList* services::RegistryService::findByCriteria(
-    FacetList facets,
-    PropertyList properties);
+  ServiceOfferList* findByCriteria(
+    const FacetList& facets,
+    const PropertyList* criteria);
 \end{lstlisting}
 
 Busca uma ou mais ofertas de serviço no barramento que implementam todas as 
 as facetas discriminadas em facets, e, que atendam aos critérios descritos no 
 parâmetro criteria, que é uma lista de propriedades descrita através de strings
 no formato  chave = {valor1, valor2, ..., valorN}.
+
 
 \subsection{Primeiros passos...}
 Basicamente há dois tipos de aplicações Openbus. Uma que oferta serviços e 
