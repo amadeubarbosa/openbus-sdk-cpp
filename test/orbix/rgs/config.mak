@@ -30,8 +30,14 @@ SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
 USE_LUA51= YES
 
 SRC= runner.cpp \
+     stubs/RGSTestC.cxx \
+     stubs/RGSTestS.cxx \
      RGSTestSuite.cpp
 
 cxxtest:
 	cxxtestgen.pl --runner=StdioPrinter -o runner.cpp RGSTestSuite.cpp
+
+genstubs:
+	mkdir -p stubs
+	cd stubs ; ${ORBIXBIN}/idl -base -poa ../../../idl/RGSTest.idl
 

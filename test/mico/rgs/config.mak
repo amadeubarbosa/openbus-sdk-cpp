@@ -38,8 +38,13 @@ SLIB= ${OPENBUSLIB}/libopenbusmico.a \
 USE_LUA51= YES
 
 SRC= runner.cpp \
+     stubs/RGSTest.cc \
      RGSTestSuite.cpp
 
 cxxtest:
 	cxxtestgen.pl --runner=StdioPrinter -o runner.cpp RGSTestSuite.cpp
+
+genstubs:
+	mkdir -p stubs
+	cd stubs ; ${MICO_BIN}/idl --poa ../../../idl/RGSTest.idl
 

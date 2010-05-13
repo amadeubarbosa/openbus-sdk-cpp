@@ -11,10 +11,32 @@
 #include <fstream>
 #include <cxxtest/TestSuite.h>
 #include <openbus.h>
+#include "stubs/RGSTestS.hh"
 
 using namespace openbus;
 using namespace tecgraf::openbus::core::v1_05;
 using namespace tecgraf::openbus::core::v1_05::registry_service;
+
+class RGSTest : virtual public POA_IRGSTest {
+  private:
+    scs::core::ComponentContext* componentContext;
+    RGSTest(scs::core::ComponentContext* componentContext) {
+      this->componentContext = componentContext;
+    }
+  public:
+    static PortableServer::ServantBase* instantiate(
+      scs::core::ComponentContext* componentContext) 
+    {
+      return (PortableServer::ServantBase*) new RGSTest(componentContext);
+    }
+    static void destruct(void* obj) {
+      delete (RGSTest*) obj;
+    }
+    void foo() 
+      throw(CORBA::SystemException) 
+    {
+    };
+};
 
 class RGSTestSuite: public CxxTest::TestSuite {
   private:
@@ -85,7 +107,10 @@ class RGSTestSuite: public CxxTest::TestSuite {
           "ALL"}; 
         bus->init(7, (char**) argv);
         credential = new access_control_service::Credential;
-        rgs = bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+        rgs = bus->connect(
+         "TesteBarramento", 
+         "TesteBarramento.key", 
+         "AccessControlService.crt"); 
         iAccessControlService = bus->getAccessControlService();
       }
       catch ( const char* errmsg ) {
@@ -131,7 +156,15 @@ class RGSTestSuite: public CxxTest::TestSuite {
         scs::core::ComponentId id;
         fillComponentId(id);
 
+      /* Descrição das facetas. */
         std::list<scs::core::ExtendedFacetDescription> extFacets;
+        scs::core::ExtendedFacetDescription desc;
+        desc.name = "IRGSTest";
+        desc.interface_name = "IDL:IRGSTest:1.0";
+        desc.instantiator = RGSTest::instantiate;
+        desc.destructor = RGSTest::destruct;
+        extFacets.push_back(desc);
+
         context = componentBuilder->newComponent(extFacets, id);
         component = context->getIComponent();
 
@@ -179,7 +212,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
     void testFind() {
       openbus::util::FacetListHelper* facetListHelper = \
         new openbus::util::FacetListHelper();
-      facetListHelper->add("IComponent");
+      facetListHelper->add("IRGSTest");
 
       registry_service::ServiceOfferList* serviceOfferList = 
         rgs->find(facetListHelper->getFacetList());
@@ -191,7 +224,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
     void testFindByCriteria() {
       openbus::util::FacetListHelper* facetListHelper = \
         new openbus::util::FacetListHelper();
-      facetListHelper->add("IComponent");
+      facetListHelper->add("IRGSTest");
 
       registry_service::ServiceOfferList* serviceOfferList = \
         rgs->findByCriteria(
