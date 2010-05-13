@@ -1,3 +1,4 @@
+SUNOS64_TECMAKE_FLAGS="USE_NODEPEND=Yes TEC_UNAME=SunOS510_64 BUILD_64=yes"
 descriptors = {
   { name = "cxxtest",
     url = "http://www.tecgraf.puc-rio.br/~openbus/repository/cxxtest.tar.gz",
@@ -26,7 +27,7 @@ descriptors = {
       ["openbus/util/*.h"] = "openbus/util/",    --include
       ["openbus/interceptors/*.h"] = "openbus/interceptors/",    --include
       ["stubs"] = ".",     --include
-      ["../../test/orbix/acs/*.cpp"] = "orbix/acs/",
+      ["../../test/orbix/acs/*.cpp"] = "test/orbix/acs/",
       ["../../test/orbix/acs/config.mak"] = "test/orbix/acs/",
       ["../../test/orbix/rgs/*.cpp"] = "test/orbix/rgs/",
       ["../../test/orbix/rgs/config.mak"] = "test/orbix/rgs/",
@@ -86,4 +87,41 @@ descriptors = {
       ["../../../specs/shell/sample-domain_env.*"] = "specs/shell/",
     },
   },
+  -- CPPOiL related packages, it needs of loop to work (precompiler.lua dependency)
+  --[[
+  { name = "openbus-cppoil",
+    build = {
+      type = "tecmake",
+      src = SVNDIR .."/oil",
+      mf = { "config LUA51="..PRODAPP.."/lua5.1", },
+    },
+    dev_files = {
+      ["lib/${TEC_UNAME}/libopenbus*.*"] = "lib/${TEC_UNAME}",
+      ["openbus.h"] = ".", --include
+      ["common"] = ".",    --include
+      ["luaidl"] = ".",    --include
+      ["stubs"] = ".",     --include
+      ["openbus.lua"] = ".",
+      ["../test/oil"] = "test/",
+    },
+  },
+  { name = "openbus-demo-hello-cppoil",
+    build = {
+      type = "tecmake",
+      src = SVNDIR .."/demo/hello/oil",
+      mf = { "client LUA51="..PRODAPP.."/lua5.1", "server LUA51="..PRODAPP.."/lua5.1"},
+    },
+    dev_files = {
+      ["bin/${TEC_UNAME}/*"] = "demo/hello/oil/bin/${TEC_UNAME}",
+      ["hello.cpp"] = "demo/hello/oil",
+      ["hello.hpp"] = "demo/hello/oil",
+      ["helloStub.h"] = "demo/hello/oil",
+      ["helloStub.cpp"] = "demo/hello/oil",
+      ["client.cpp"] = "demo/hello/oil",
+      ["server.cpp"] = "demo/hello/oil",
+      ["*.mak"] = "demo/hello/oil",
+      ["../idl"] = "demo/hello",
+    },
+  },
+  ]]
 }
