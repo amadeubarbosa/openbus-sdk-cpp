@@ -33,6 +33,7 @@ namespace openbus {
   IT_Mutex Openbus::mutex;
 #endif
   Openbus* Openbus::bus = 0;
+  Openbus::LeaseExpiredCallback* Openbus::_leaseExpiredCallback = 0;
 #ifndef OPENBUS_MICO
   Openbus::RenewLeaseThread* Openbus::renewLeaseThread = 0;
 #else
@@ -50,13 +51,13 @@ namespace openbus {
     }
   #else
     Openbus::RenewLeaseCallback::RenewLeaseCallback() {
-      leaseExpiredCallback = 0;
+      _leaseExpiredCallback = 0;
     }
   
     void Openbus::RenewLeaseCallback::setLeaseExpiredCallback(
       LeaseExpiredCallback* obj) 
     {
-      leaseExpiredCallback = obj;
+      _leaseExpiredCallback = obj;
     }
   
     void Openbus::RenewLeaseCallback::callback(
@@ -78,10 +79,8 @@ namespace openbus {
           logger->log(INFO, msg.str());
           if (!status) {
             logger->log(WARNING, "Nao foi possivel renovar a credencial!");
-          /* "Desconecta" o usuario. */
-            bus->localDisconnect();
-            if (leaseExpiredCallback) {
-              leaseExpiredCallback->expired();
+            if (_leaseExpiredCallback) {
+              _leaseExpiredCallback->expired();
             }
           } else {
             logger->log(INFO, "Credencial renovada!");
@@ -89,10 +88,8 @@ namespace openbus {
           }
         } catch (CORBA::Exception& e) {
           logger->log(WARNING, "Nao foi possivel renovar a credencial!");
-        /* "Desconecta" o usuario. ? */
-          bus->localDisconnect();
-          if (leaseExpiredCallback) {
-            leaseExpiredCallback->expired();
+          if (_leaseExpiredCallback) {
+            _leaseExpiredCallback->expired();
           }
         }
         logger->dedent(INFO, "Openbus::RenewLeaseCallback::callback() END");
@@ -116,26 +113,15 @@ namespace openbus {
     logger->dedent(INFO, "Openbus::terminationHandlerCallback() END");
   }
 
-  void Openbus::localDisconnect() {
-    if (iRegistryService) {
-      delete iRegistryService;
-    }
-    openbus::interceptors::ClientInterceptor::credential = 0;
-    if (credential) {
-      delete credential;
-    }
-    newState();
-  }
-
 #ifndef OPENBUS_MICO
   Openbus::RenewLeaseThread::RenewLeaseThread() {
-    leaseExpiredCallback = 0;
+    _leaseExpiredCallback = 0;
   }
 
   void Openbus::RenewLeaseThread::setLeaseExpiredCallback(
     LeaseExpiredCallback* obj) 
   {
-    leaseExpiredCallback = obj;
+    _leaseExpiredCallback = obj;
   }
 
   void* Openbus::RenewLeaseThread::run() {
@@ -177,21 +163,29 @@ namespace openbus {
           logger->log(INFO, msg.str());
           if (!status) {
             logger->log(WARNING, "Não foi possível renovar a credencial!");
-            if (leaseExpiredCallback) {
-              leaseExpiredCallback->expired();
+            if (_leaseExpiredCallback) {
+            #ifndef OPENBUS_MICO
+              mutex.unlock();
+            #endif
+              _leaseExpiredCallback->expired();
+            #ifndef OPENBUS_MICO
+              mutex.lock();
+            #endif
             }
-          /* "Desconecta" o usuário. */
-            bus->localDisconnect();
           } else {
             logger->log(INFO, "Credencial renovada!");
           }
         } catch (CORBA::Exception& e) {
           logger->log(WARNING, "Não foi possível renovar a credencial!");
-          if (leaseExpiredCallback) {
-            leaseExpiredCallback->expired();
+          if (_leaseExpiredCallback) {
+          #ifndef OPENBUS_MICO
+            mutex.unlock();
+          #endif
+            _leaseExpiredCallback->expired();
+          #ifndef OPENBUS_MICO
+            mutex.lock();
+          #endif
           }
-        /* "Desconecta" o usuário. ? */
-          bus->localDisconnect();
         }
       } else {
       #ifndef OPENBUS_MICO
@@ -339,75 +333,82 @@ namespace openbus {
   Openbus::~Openbus() {
     logger->log(INFO, "Openbus::~Openbus() BEGIN");
     logger->indent();
-    lua_close(luaState);
-    logger->log(INFO, "Deletando lista de métodos interceptáveis...");
-    IfaceMap::iterator iter = ifaceMap.begin();
-    while (iter != ifaceMap.end()) {
-      MethodSet *methods = iter->second;
-      ifaceMap.erase(iter++);
-      methods->clear();
-      delete methods;
-    }
-    if (componentBuilder) {
-      logger->log(INFO, "Deletando objeto componentBuilder...");
-      delete componentBuilder;
-    }
-  #ifndef OPENBUS_MICO
-    if (!CORBA::is_nil(orb)) {
-  #else
-    if (orb) {
-  #endif
-      logger->log(INFO, "Desligando o orb...");
-    #ifdef OPENBUS_MICO
-    /*
-    * Alternativa para um memory leak.
-    * Referente ao Mico 2.3.11.
-    */
-      CORBA::Codeset::free();
-
-  /*    PInterceptor::PI::S_initializers_.erase(
-        PInterceptor::PI::S_initializers_.begin(),
-        PInterceptor::PI::S_initializers_.end());
-  */      
-    /*
-    * Alternativa para o segundo problema apresentado em OPENBUS-427.
-    * Referente ao Mico 2.3.11.
-    */
-  /*  PInterceptor::PI::S_client_req_int_.erase(
-        PInterceptor::PI::S_client_req_int_.begin(),
-        PInterceptor::PI::S_client_req_int_.end());
-      PInterceptor::PI::S_server_req_int_.erase(
-        PInterceptor::PI::S_server_req_int_.begin(),
-        PInterceptor::PI::S_server_req_int_.end());
-  */      
-      logger->log(INFO, "Removendo callback de renovação de credencial...");
-      orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
-      if (ini->_info) {
-        delete ini->_info;
+    if (bus) {
+      logger->log(INFO, "Deletando lista de métodos interceptáveis...");
+      IfaceMap::iterator iter = ifaceMap.begin();
+      while (iter != ifaceMap.end()) {
+        MethodSet *methods = iter->second;
+        ifaceMap.erase(iter++);
+        methods->clear();
+        delete methods;
+      }
+      if (componentBuilder) {
+        logger->log(INFO, "Deletando objeto componentBuilder...");
+        delete componentBuilder;
+      }
+    #ifndef OPENBUS_MICO
+      if (!CORBA::is_nil(orb)) {
+    #else
+      if (orb) {
+    #endif
+        logger->log(INFO, "Desligando o orb...");
+      #ifdef OPENBUS_MICO
+      /*
+      * Alternativa para um memory leak.
+      * Referente ao Mico 2.3.11.
+      */
+        CORBA::Codeset::free();
+   
+    /*    PInterceptor::PI::S_initializers_.erase(
+          PInterceptor::PI::S_initializers_.begin(),
+          PInterceptor::PI::S_initializers_.end());
+    */      
+      /*
+      * Alternativa para o segundo problema apresentado em OPENBUS-427.
+      * Referente ao Mico 2.3.11.
+      */
+    /*  PInterceptor::PI::S_client_req_int_.erase(
+          PInterceptor::PI::S_client_req_int_.begin(),
+          PInterceptor::PI::S_client_req_int_.end());
+        PInterceptor::PI::S_server_req_int_.erase(
+          PInterceptor::PI::S_server_req_int_.begin(),
+          PInterceptor::PI::S_server_req_int_.end());
+    */      
+        logger->log(INFO, "Removendo callback de renovação de credencial...");
+        orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
+        if (ini->_info) {
+          delete ini->_info;
+        }
+      #endif
+        logger->log(INFO, "Executando orb->shutdown(1) ...");
+        orb->shutdown(1);
+        logger->log(INFO, "Executando orb->destroy() ...");
+        orb->destroy();
+      }
+    #ifndef OPENBUS_MICO
+      mutex.lock();
+    #endif
+      bus = 0;
+    #ifndef OPENBUS_MICO
+      mutex.unlock();
+      if (renewLeaseThread) {
+        logger->log(INFO, "Esperando término de execução da Thread de renovação...");
+        try {
+          renewLeaseIT_Thread.join();
+        } catch(CORBA::Exception& e) {
+          logger->log(WARNING, "Não foi possível retornar a thread de renovação.");
+        }
+        logger->log(INFO, "Deletando objeto renewLeaseThread...");
+        delete renewLeaseThread;
+        renewLeaseThread = 0;
+#if 0
+        if (credential) {
+          delete credential;
+        }
+#endif
       }
     #endif
-      logger->log(INFO, "Executando orb->shutdown(1) ...");
-      orb->shutdown(1);
-      logger->log(INFO, "Executando orb->destroy() ...");
-      orb->destroy();
     }
-  #ifndef OPENBUS_MICO
-    mutex.lock();
-  #endif
-    bus = 0;
-  #ifndef OPENBUS_MICO
-    mutex.unlock();
-    if (renewLeaseThread) {
-      logger->log(INFO, "Esperando término de execução da Thread de renovação...");
-      renewLeaseIT_Thread.join();
-      logger->log(INFO, "Deletando objeto renewLeaseThread...");
-      delete renewLeaseThread;
-      renewLeaseThread = 0;
-      if (credential) {
-        delete credential;
-      }
-    }
-  #endif
     logger->dedent(INFO, "Openbus::~Openbus() END");
   }
 
@@ -595,24 +596,12 @@ namespace openbus {
   void Openbus::setLeaseExpiredCallback(
     LeaseExpiredCallback* leaseExpiredCallback) 
   {
-  #ifdef OPENBUS_MICO
-    renewLeaseCallback.setLeaseExpiredCallback(leaseExpiredCallback);
-  #else
-    if (renewLeaseThread) {
-      renewLeaseThread->setLeaseExpiredCallback(leaseExpiredCallback);
-    }
-  #endif
+    _leaseExpiredCallback = leaseExpiredCallback;
   }
 
   void Openbus::removeLeaseExpiredCallback()
   {
-  #ifdef OPENBUS_MICO
-    renewLeaseCallback.setLeaseExpiredCallback(0);
-  #else
-    if (renewLeaseThread) {
-      renewLeaseThread->setLeaseExpiredCallback(0);
-    }
-  #endif
+    _leaseExpiredCallback = 0;
   }
 
   registry_service::IRegistryService* Openbus::connect(
@@ -672,7 +661,9 @@ namespace openbus {
             timeRenewing);
         #else
           if (!renewLeaseThread) {
+            logger->log(INFO, "Criando RenewLeaseThread...");
             renewLeaseThread = new RenewLeaseThread();
+            logger->log(INFO, "Iniciando RenewLeaseThread...");
             renewLeaseIT_Thread = IT_ThreadFactory::smf_start(
               *renewLeaseThread, 
               IT_ThreadFactory::attached, 0);
@@ -853,6 +844,7 @@ namespace openbus {
             timeRenewing);
         #else
           if (!renewLeaseThread) {
+            logger->log(INFO, "Criando RenewLeaseThread...");
             renewLeaseThread = new RenewLeaseThread();
             renewLeaseIT_Thread = IT_ThreadFactory::smf_start(
               *renewLeaseThread, 
@@ -887,20 +879,27 @@ namespace openbus {
     if (connectionState == CONNECTED) {
     #ifdef OPENBUS_MICO
       orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
+    #else
     #endif
       if (iRegistryService) {
         delete iRegistryService;
       }
-      bool status = iAccessControlService->logout(*credential);
-      if (status) {
-        openbus::interceptors::ClientInterceptor::credential = 0;
-        if (credential) {
-          delete credential;
+      bool status;
+      try {
+        status = iAccessControlService->logout(*credential);
+        if (!status) {
+          logger->log(WARNING, "Não foi possível realizar logout.");
         }
-        newState();
-      } else {
-        connectionState = CONNECTED;
+      } catch (CORBA::Exception& e) {
+        logger->log(WARNING, "Não foi possível realizar logout.");
       }
+      openbus::interceptors::ClientInterceptor::credential = 0;
+#if 0
+      if (credential) {
+        delete credential;
+      }
+#endif
+      newState();
       logger->dedent(INFO, "Openbus::disconnect() END");
     #ifndef OPENBUS_MICO
       mutex.unlock();

@@ -16,19 +16,21 @@ using namespace openbus;
 using namespace tecgraf::openbus::core::v1_05;
 
 bool leaseExpiredCallbackOk;
+Openbus* bus;
 
 class MyCallback : public Openbus::LeaseExpiredCallback {
   public:
-    MyCallback() {}
     void expired() {
       TS_TRACE("Executando leaseExpiredCallback()...");
       leaseExpiredCallbackOk = true;
+      bus->disconnect();
+      delete bus;
+      bus = 0;
     }
 };
 
 class ACSTestSuite: public CxxTest::TestSuite {
   private:
-    Openbus* bus;
     access_control_service::IAccessControlService* iAccessControlService;
     registry_service::IRegistryService* rgs;
     access_control_service::Credential* credential;
@@ -274,7 +276,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
     }
 
     void testLeaseExpiredCallback() {
-#if 0
       bus->disconnect();
       bus = Openbus::getInstance();
       const char* argv[] = {
@@ -282,20 +283,17 @@ class ACSTestSuite: public CxxTest::TestSuite {
         "-OpenbusHost", 
         "localhost", 
         "-OpenbusPort", 
-        "2089",
-        "-TimeRenewing",
-        "95000"}; 
-      bus->init(7, (char**) argv);
+        "2089"};
+      bus->init(5, (char**) argv);
       leaseExpiredCallbackOk = false;
       MyCallback myCallback;
-      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       bus->setLeaseExpiredCallback(&myCallback);
-      TS_TRACE("Dormindo por 100 segundos...");
-      sleep(100);
+      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+      bus->getAccessControlService()->logout(*bus->getCredential());
+      bus->run();
       if (!leaseExpiredCallbackOk) {
         TS_FAIL("Função leaseExpiredCallback() não foi chamada.");
       }
-#endif
     }
 };
 

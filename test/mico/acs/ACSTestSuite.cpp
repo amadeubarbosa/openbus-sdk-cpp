@@ -24,6 +24,7 @@ class MyCallback : public Openbus::LeaseExpiredCallback {
     void expired() {
       TS_TRACE("Executando leaseExpiredCallback()...");
       leaseExpiredCallbackOk = true;
+      bus->disconnect();
       delete bus;
       bus = 0;
     }
@@ -279,7 +280,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
    * Este caso de teste gera um sleep de 150s.
    */
     void testLeaseExpiredCallback() {
-#if 0
       bus->disconnect();
       bus = Openbus::getInstance();
       const char* argv[] = {
@@ -287,20 +287,17 @@ class ACSTestSuite: public CxxTest::TestSuite {
         "-OpenbusHost", 
         "localhost", 
         "-OpenbusPort", 
-        "2089",
-        "-TimeRenewing",
-        "150000"}; 
+        "2089"};
       bus->init(7, (char**) argv);
       leaseExpiredCallbackOk = false;
       MyCallback myCallback;
-      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       bus->setLeaseExpiredCallback(&myCallback);
-      TS_TRACE("Tentativa de renovação de credencial em até 150 segundos...");
+      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+      bus->getAccessControlService()->logout(*bus->getCredential());
       bus->run();
       if (!leaseExpiredCallbackOk) {
         TS_FAIL("Função leaseExpiredCallback() não foi chamada.");
       }
-#endif
     }
 };
 

@@ -15,7 +15,8 @@ INCLUDES= . \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/cxxtest \
-  ${OPENBUSINC}/openssl-0.9.9
+  ${OPENBUSINC}/openssl-0.9.9 \
+  ${OPENBUSINC}/logger
 
 LDIR= ${ORBIXLDIR} \
   ${OPENBUSLIB}
@@ -23,7 +24,8 @@ LDIR= ${ORBIXLDIR} \
 LIBS+= crypto it_poa it_art it_ifc it_portable_interceptor
 
 SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
-  ${OPENBUSLIB}/libscsorbix.a
+  ${OPENBUSLIB}/libscsorbix.a \
+  ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES
 

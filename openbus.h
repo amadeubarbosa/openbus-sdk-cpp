@@ -300,16 +300,17 @@ namespace openbus {
       friend class openbus::interceptors::ClientInterceptor;
 
     /**
-    * Desconexão local.
-    */
-      void localDisconnect();
-
-    /**
     * Cria o objeto registryService.
     */
       void setRegistryService();
 
-  #ifndef OPENBUS_MICO
+    /**
+    * Callback registrada para a notificação da 
+    * expiração do lease.
+    */
+      static LeaseExpiredCallback* _leaseExpiredCallback;
+
+    #ifndef OPENBUS_MICO
       IT_Thread renewLeaseIT_Thread;
 
     /**
@@ -317,12 +318,6 @@ namespace openbus {
     * logado neste barramento.
     */
       class RenewLeaseThread : public IT_ThreadBody {
-        private:
-        /**
-        * Callback registrada para a notificação da 
-        * expiração do lease.
-        */
-          LeaseExpiredCallback* leaseExpiredCallback;
         public:
           RenewLeaseThread();
           void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
@@ -334,7 +329,7 @@ namespace openbus {
     * Thread responsável pela renovação de credencial.
     */
       static RenewLeaseThread* renewLeaseThread;
-  #endif
+    #endif
 
   #ifdef OPENBUS_MICO
 
@@ -348,12 +343,6 @@ namespace openbus {
       static RunThread* runThread;
     #else
       class RenewLeaseCallback : public CORBA::DispatcherCallback {
-        private:
-        /**
-        * Callback registrada para a notificação da 
-        * expiração do lease.
-        */
-          LeaseExpiredCallback* leaseExpiredCallback;
         public:
           RenewLeaseCallback();
           void setLeaseExpiredCallback(LeaseExpiredCallback* obj);

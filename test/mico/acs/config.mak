@@ -24,13 +24,16 @@ INCLUDES= . \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/cxxtest \
   ${OPENBUSINC}/openssl-0.9.9 \
+  ${OPENBUSINC}/logger \
   ${MICO_INC}
+
 LDIR= ${ORBIXLDIR} ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS= crypto mico2.3.11 dl
 
-SLIB= ${OPENBUS_HOME}/core/utilities/cpp/lib/${TEC_UNAME}/libopenbusmico.a \
-      ${OPENBUSLIB}/libscsmico.a
+SLIB= ${OPENBUSLIB}/libopenbusmico.a \
+      ${OPENBUSLIB}/libscsmico.a \
+      ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES
 
