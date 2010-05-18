@@ -533,7 +533,6 @@ namespace openbus {
         scs::core::ConnectionDescriptions_var conns =
           recep->getConnections("RegistryServiceReceptacle");
         if (conns->length() > 0) {
-          cout << conns->length() << endl;
           logger->log(INFO, "Adquirindo RegistryService...");
           CORBA::Object_var objref = conns[(CORBA::ULong) 0].objref;
           iComponentRegistryService = scs::core::IComponent::_narrow(objref);

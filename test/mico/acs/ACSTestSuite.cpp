@@ -48,7 +48,7 @@ class ACSTestSuite: public CxxTest::TestSuite {
     ACSTestSuite() {
       try {
         std::string OPENBUS_HOME = getenv("OPENBUS_HOME");
-        OPENBUS_HOME += "/core/test/orbix/config.txt";
+        OPENBUS_HOME += "/test/mico/config.txt";
         std::string temp;
         std::ifstream inFile;
         inFile.open(OPENBUS_HOME.c_str());

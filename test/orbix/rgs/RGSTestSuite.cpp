@@ -69,7 +69,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
     RGSTestSuite() {
       try {
         std::string OPENBUS_HOME = getenv("OPENBUS_HOME");
-        OPENBUS_HOME += "/core/test/orbix/config.txt";
+        OPENBUS_HOME += "/test/orbix/config.txt";
         std::string temp;
         std::ifstream inFile;
         inFile.open(OPENBUS_HOME.c_str());
@@ -120,7 +120,6 @@ class RGSTestSuite: public CxxTest::TestSuite {
 
     ~RGSTestSuite() {
       try {
-        delete context;
         if (bus) {
           if (bus->disconnect())
             delete bus;

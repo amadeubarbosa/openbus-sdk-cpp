@@ -24,8 +24,7 @@ class MyCallback : public Openbus::LeaseExpiredCallback {
       TS_TRACE("Executando leaseExpiredCallback()...");
       leaseExpiredCallbackOk = true;
       bus->disconnect();
-      delete bus;
-      bus = 0;
+      bus->finish(1);
     }
 };
 
@@ -46,7 +45,7 @@ class ACSTestSuite: public CxxTest::TestSuite {
     ACSTestSuite() {
       try {
         std::string OPENBUS_HOME = getenv("OPENBUS_HOME");
-        OPENBUS_HOME += "/core/test/orbix/config.txt";
+        OPENBUS_HOME += "/test/orbix/config.txt";
         std::string temp;
         std::ifstream inFile;
         inFile.open(OPENBUS_HOME.c_str());
