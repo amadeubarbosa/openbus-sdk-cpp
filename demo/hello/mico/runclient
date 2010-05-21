@@ -1,5 +1,5 @@
 #!/bin/ksh
 . ./democonfig
 
-./client -OpenbusHost $HOSTBUS -OpenbusPort $PORTBUS
+./client -OpenbusHost $HOSTBUS -OpenbusPort $PORTBUS -OpenbusDebug ALL
 

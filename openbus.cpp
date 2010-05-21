@@ -536,10 +536,10 @@ namespace openbus {
           logger->log(INFO, "Adquirindo RegistryService...");
           CORBA::Object_var objref = conns[(CORBA::ULong) 0].objref;
           iComponentRegistryService = scs::core::IComponent::_narrow(objref);
-          objref = iComponentRegistryService->getFacetByName("IRegistryService");
+          objref = iComponentRegistryService->getFacetByName("IRegistryService_v1_05");
           iRegistryService = registry_service::IRegistryService::_narrow(objref);
         }
-      } catch (scs::core::InvalidName& e) {
+      } catch (CORBA::Exception& e) {
         logger->log(ERROR, "Não foi possível obter o serviço de registro.");
         // TODO: necessário fazer um throw?
       }

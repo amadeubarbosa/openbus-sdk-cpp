@@ -2,5 +2,5 @@
 
 . ./democonfig
 
-./server -OpenbusHost $HOSTBUS -OpenbusPort $PORTBUS
+./server -OpenbusHost $HOSTBUS -OpenbusPort $PORTBUS -OpenbusDebug ALL
 

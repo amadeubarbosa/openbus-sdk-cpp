@@ -18,7 +18,7 @@ using namespace std;
 using namespace tecgraf::openbus::core::v1_05::registry_service;
 
 openbus::Openbus* bus;
-registry_service::IRegistryService* registryService;
+registry_service::IRegistryService* registryService = 0;
 char* registryId;
 scs::core::ComponentContext* componentContext;
 
@@ -83,14 +83,14 @@ int main(int argc, char* argv[]) {
   } catch (CORBA::SystemException& e) {
     cout << "** Não foi possível se conectar ao barramento. **" << endl \
          << "* Falha na comunicação. *" << endl;
-    exit(-1);
+    exit(1);
   } catch (openbus::LOGIN_FAILURE& e) {
     cout << "** Não foi possível se conectar ao barramento. **" << endl \
          << "* Par usuário/senha inválido. *" << endl;
-    exit(-1);
+    exit(1);
   } catch (openbus::SECURITY_EXCEPTION& e) {
     cout << e.what() << endl;
-    exit(-1);
+    exit(1);
   }
 
   cout << "Conexão com o barramento estabelecida com sucesso!" << endl;
@@ -129,7 +129,13 @@ int main(int argc, char* argv[]) {
 
 /* Registro do serviço no barramento. */
   try {
-    registryId = registryService->_cxx_register(serviceOffer);
+    if (registryService) {
+      registryId = registryService->_cxx_register(serviceOffer);
+    } else {
+      cout << "Nao foi possivel adquirir um proxy para o servico de registro." 
+        << endl;
+      exit(1);
+    }
   } catch (UnathorizedFacets& e) {
     cout << "Nao foi possivel registrar IHello." << endl;
     CORBA::ULong idx;
@@ -137,7 +143,7 @@ int main(int argc, char* argv[]) {
     for (idx = 0; idx < length; idx++) {
       cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
     }
-    exit(-1);
+    exit(1);
   }
   cout << "Serviço IHello registrado." << endl;
   cout << "Aguardando requisições..." << endl;
