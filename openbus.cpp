@@ -683,9 +683,9 @@ namespace openbus {
         throw;
       }
     } else {
-      logger->log(INFO, "Já há uma conexão ativa.");
+      logger->log(INFO, "Ja ha uma conexão ativa.");
       logger->dedent(INFO, "Openbus::connect() END");
-      return iRegistryService;
+      throw LOGIN_FAILURE();
     }
   }
 
@@ -774,7 +774,6 @@ namespace openbus {
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
           EVP_PKEY_free(privateKey);
-          fclose(certificateFile);
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena o certificado ACS.");
         }
@@ -863,9 +862,9 @@ namespace openbus {
         throw;
       }
     } else {
-      logger->log(INFO, "Já há uma conexão ativa.");
+      logger->log(INFO, "Ja ha uma conexão ativa.");
       logger->dedent(INFO, "Openbus::connect() END");
-      return iRegistryService;
+      throw LOGIN_FAILURE();
     }
   }
 

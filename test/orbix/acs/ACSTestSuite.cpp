@@ -17,6 +17,8 @@ using namespace tecgraf::openbus::core::v1_05;
 
 bool leaseExpiredCallbackOk;
 Openbus* bus;
+std::string OPENBUS_USERNAME;
+std::string OPENBUS_PASSWORD;
 
 class MyCallback : public Openbus::LeaseExpiredCallback {
   public:
@@ -24,7 +26,12 @@ class MyCallback : public Openbus::LeaseExpiredCallback {
       TS_TRACE("Executando leaseExpiredCallback()...");
       leaseExpiredCallbackOk = true;
       bus->disconnect();
-      bus->finish(1);
+      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+      TS_ASSERT(bus->isConnected());
+      cout << "expired()" << endl;
+      bus->disconnect();
+      bus->finish(0);
+      delete bus;
     }
 };
 
@@ -38,8 +45,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
     access_control_service::Lease lease2;
     std::string OPENBUS_SERVER_HOST;
     unsigned short OPENBUS_SERVER_PORT;
-    std::string OPENBUS_USERNAME;
-    std::string OPENBUS_PASSWORD;
 
   public:
     ACSTestSuite() {
@@ -86,18 +91,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
     }
 
     ~ACSTestSuite() {
-      try {
-        if (bus) {
-          if (bus->isConnected()) {
-            bus->disconnect();
-          }
-          delete bus;
-        }
-        delete credential2;
-      }
-      catch (const char* errmsg) {
-        TS_FAIL(errmsg);
-      }
     }
 
     void setUP() {
@@ -126,7 +119,17 @@ class ACSTestSuite: public CxxTest::TestSuite {
         TS_FAIL("** Não foi possível se conectar ao barramento. **");
       }
     }
-    void testConnect() {
+
+    void testeDisconnected() {
+      TS_ASSERT(!bus->disconnect());
+    }
+
+    void testConnectByPasswordInvalidLogin() {
+      TS_ASSERT_THROWS(bus->connect(OPENBUS_USERNAME.c_str(), "wrong"), 
+        openbus::LOGIN_FAILURE);
+    }
+
+    void testConnectByPassword() {
       try {
         rgs = bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
         TS_ASSERT(rgs);
@@ -144,6 +147,11 @@ class ACSTestSuite: public CxxTest::TestSuite {
       catch (const char* errmsg) {
         TS_FAIL(errmsg);
       }
+    }
+
+    void testConnectByPasswordTwice() {
+      TS_ASSERT_THROWS(bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str()), 
+        openbus::LOGIN_FAILURE);
     }
 
     void testIsConnected() {
@@ -173,11 +181,15 @@ class ACSTestSuite: public CxxTest::TestSuite {
       TS_ASSERT(bus->getORB());
     }
 
+    void testRootPOA() {
+      TS_ASSERT(bus->getRootPOA());
+    }
+
     void testGetComponentBuilder() {
       TS_ASSERT(bus->getComponentBuilder());
     }
 
-    void testGetACS() {
+    void testGetAccessControlService() {
       try {
         iAccessControlService = bus->getAccessControlService();
         TS_ASSERT(iAccessControlService);
@@ -209,6 +221,33 @@ class ACSTestSuite: public CxxTest::TestSuite {
       credential2->identifier = "dadadsa";
       credential2->delegate = "";
       TS_ASSERT(!iAccessControlService->logout(c));
+    }
+
+    void testConnectByCertificateNullKey() {
+      bus->disconnect();
+      TS_ASSERT_THROWS(bus->connect(
+        "TesteBarramento", 
+        0, 
+        "TesteBarramento.crt"), 
+        openbus::SECURITY_EXCEPTION);
+    }
+
+    void testConnectByCertificateNullACSCertificate() {
+      bus->disconnect();
+      TS_ASSERT_THROWS(bus->connect(
+        "TesteBarramento", 
+        "TesteBarramento.key", 
+        0), 
+        openbus::SECURITY_EXCEPTION);
+    }
+
+    void testConnectByCertificateInvalidEntityName() {
+      bus->disconnect();
+      TS_ASSERT_THROWS(bus->connect(
+        "WRONG", 
+        "TesteBarramento.key", 
+        "AccessControlService.crt"), 
+        openbus::SECURITY_EXCEPTION);
     }
 
     void testLoginByCertificate() {
