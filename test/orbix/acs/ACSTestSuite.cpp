@@ -15,20 +15,33 @@
 using namespace openbus;
 using namespace tecgraf::openbus::core::v1_05;
 
-bool leaseExpiredCallbackOk;
+bool leaseExpiredCallbackAfter;
+bool leaseExpiredCallbackBefore;
 Openbus* bus;
 std::string OPENBUS_USERNAME;
 std::string OPENBUS_PASSWORD;
 
-class MyCallback : public Openbus::LeaseExpiredCallback {
+class MyCallbackBefore : public Openbus::LeaseExpiredCallback {
   public:
     void expired() {
-      TS_TRACE("Executando leaseExpiredCallback()...");
-      leaseExpiredCallbackOk = true;
+      TS_TRACE("Executando MyCallbackBefore()...");
+      leaseExpiredCallbackBefore = true;
       bus->disconnect();
       bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       TS_ASSERT(bus->isConnected());
-      cout << "expired()" << endl;
+      bus->disconnect();
+      delete bus;
+    }
+};
+
+class MyCallbackAfter : public Openbus::LeaseExpiredCallback {
+  public:
+    void expired() {
+      TS_TRACE("Executando MyCallbackAfter()...");
+      leaseExpiredCallbackAfter = true;
+      bus->disconnect();
+      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+      TS_ASSERT(bus->isConnected());
       bus->disconnect();
       bus->finish(0);
       delete bus;
@@ -313,7 +326,7 @@ class ACSTestSuite: public CxxTest::TestSuite {
 #endif
     }
 
-    void testLeaseExpiredCallback() {
+    void testAddLeaseExpiredCbBeforeConnect() {
       bus->disconnect();
       bus = Openbus::getInstance();
       const char* argv[] = {
@@ -323,14 +336,35 @@ class ACSTestSuite: public CxxTest::TestSuite {
         "-OpenbusPort", 
         "2089"};
       bus->init(5, (char**) argv);
-      leaseExpiredCallbackOk = false;
-      MyCallback myCallback;
+      leaseExpiredCallbackBefore = false;
+      MyCallbackBefore myCallback;
       bus->setLeaseExpiredCallback(&myCallback);
       bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       bus->getAccessControlService()->logout(*bus->getCredential());
       bus->run();
-      if (!leaseExpiredCallbackOk) {
-        TS_FAIL("Função leaseExpiredCallback() não foi chamada.");
+      if (!leaseExpiredCallbackBefore) {
+        TS_FAIL("Método MyCallbackBefore::expired() não foi chamado.");
+      }
+    }
+
+    void testAddLeaseExpiredCbAfterConnect() {
+      bus->disconnect();
+      bus = Openbus::getInstance();
+      const char* argv[] = {
+        "exec", 
+        "-OpenbusHost", 
+        "localhost", 
+        "-OpenbusPort", 
+        "2089"};
+      bus->init(5, (char**) argv);
+      leaseExpiredCallbackAfter = false;
+      MyCallbackAfter myCallback;
+      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+      bus->setLeaseExpiredCallback(&myCallback);
+      bus->getAccessControlService()->logout(*bus->getCredential());
+      bus->run();
+      if (!leaseExpiredCallbackAfter) {
+        TS_FAIL("Método MyCallbackAfter::expired() não foi chamado.");
       }
     }
 };
