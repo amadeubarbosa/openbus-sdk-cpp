@@ -18,7 +18,7 @@ ifeq "$(TEC_UNAME)" "SunOS58"
   CPPFLAGS= -g +p -KPIC -xarch=v8  -mt -D_REENTRANT
 endif
 
-INCLUDES= . \
+INCLUDES= . ./stubs ../../../stubs/mico\
   ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/scs \
@@ -29,7 +29,7 @@ INCLUDES= . \
 LDIR= ${MICO_LIB} \
   ${OPENBUSLIB}
 
-LIBS= crypto mico2.3.11 dl
+LIBS= crypto mico2.3.11 dl ssl pthread
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
   ${OPENBUSLIB}/libscsmico.a \

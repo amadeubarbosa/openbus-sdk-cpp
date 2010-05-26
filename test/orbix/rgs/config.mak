@@ -21,7 +21,7 @@ INCLUDES= . \
 LDIR= ${ORBIXLDIR} \
   ${OPENBUSLIB}
 
-LIBS+= crypto it_poa it_art it_ifc it_portable_interceptor
+LIBS+= crypto it_poa it_art it_ifc it_portable_interceptor logger
 
 SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
   ${OPENBUSLIB}/libscsorbix.a \

@@ -25,12 +25,13 @@ INCLUDES= . \
   stubs \
   ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
+  ${OPENBUSINC}/openbus/cpp/stubs/mico \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/logger
 
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
-LIBS= mico2.3.11 dl crypto pthread
+LIBS= mico2.3.11 dl crypto ssl pthread
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/libscsmico.a \
