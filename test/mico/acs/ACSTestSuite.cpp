@@ -15,18 +15,36 @@
 using namespace openbus;
 using namespace tecgraf::openbus::core::v1_05;
 
+bool leaseExpiredCallbackAfter;
+bool leaseExpiredCallbackBefore;
 Openbus* bus;
-bool leaseExpiredCallbackOk;
+std::string OPENBUS_USERNAME;
+std::string OPENBUS_PASSWORD;
 
-class MyCallback : public Openbus::LeaseExpiredCallback {
+class MyCallbackBefore : public Openbus::LeaseExpiredCallback {
   public:
-    MyCallback() {}
     void expired() {
-      TS_TRACE("Executando leaseExpiredCallback()...");
-      leaseExpiredCallbackOk = true;
+      TS_TRACE("Executando MyCallbackBefore()...");
+      leaseExpiredCallbackBefore = true;
+      bus->disconnect();
+      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+      TS_ASSERT(bus->isConnected());
       bus->disconnect();
       delete bus;
-      bus = 0;
+    }
+};
+
+class MyCallbackAfter : public Openbus::LeaseExpiredCallback {
+  public:
+    void expired() {
+      TS_TRACE("Executando MyCallbackAfter()...");
+      leaseExpiredCallbackAfter = true;
+      bus->disconnect();
+      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+      TS_ASSERT(bus->isConnected());
+      bus->disconnect();
+      bus->finish(0);
+      delete bus;
     }
 };
 
@@ -36,19 +54,16 @@ class ACSTestSuite: public CxxTest::TestSuite {
     registry_service::IRegistryService* rgs;
     access_control_service::Credential* credential;
     access_control_service::Credential* credential2;
-    access_control_service::Credential_var trueCredential;
     access_control_service::Lease lease;
     access_control_service::Lease lease2;
     std::string OPENBUS_SERVER_HOST;
     unsigned short OPENBUS_SERVER_PORT;
-    std::string OPENBUS_USERNAME;
-    std::string OPENBUS_PASSWORD;
 
   public:
     ACSTestSuite() {
       try {
         std::string OPENBUS_HOME = getenv("OPENBUS_HOME");
-        OPENBUS_HOME += "/test/mico/config.txt";
+        OPENBUS_HOME += "/test/orbix/config.txt";
         std::string temp;
         std::ifstream inFile;
         inFile.open(OPENBUS_HOME.c_str());
@@ -89,19 +104,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
     }
 
     ~ACSTestSuite() {
-      try {
-        if (bus) {
-          if (bus->isConnected()) {
-            bus->disconnect();
-          }
-          delete bus;
-        }
-        delete credential2;
-      }
-      catch (const char* errmsg) {
-        TS_FAIL(errmsg);
-      }
-
     }
 
     void setUP() {
@@ -121,17 +123,27 @@ class ACSTestSuite: public CxxTest::TestSuite {
           "-OpenbusPort", 
           "2089",
           "-OpenbusDebug",
-          "ALL"};
+          "ALL"}; 
         bus->init(7, (char**) argv);
         bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
         bus->disconnect();
       } catch(CORBA::SystemException& e) {
+        cout << e << endl;
         TS_FAIL("** Não foi possível se conectar ao barramento. **");
       }
     }
 
-    void testConnect() {
-     try {
+    void testeDisconnected() {
+      TS_ASSERT(!bus->disconnect());
+    }
+
+    void testConnectByPasswordInvalidLogin() {
+      TS_ASSERT_THROWS(bus->connect(OPENBUS_USERNAME.c_str(), "wrong"), 
+        openbus::LOGIN_FAILURE);
+    }
+
+    void testConnectByPassword() {
+      try {
         rgs = bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
         TS_ASSERT(rgs);
         credential = bus->getCredential();
@@ -148,6 +160,11 @@ class ACSTestSuite: public CxxTest::TestSuite {
       catch (const char* errmsg) {
         TS_FAIL(errmsg);
       }
+    }
+
+    void testConnectByPasswordTwice() {
+      TS_ASSERT_THROWS(bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str()), 
+        openbus::LOGIN_FAILURE);
     }
 
     void testIsConnected() {
@@ -177,11 +194,15 @@ class ACSTestSuite: public CxxTest::TestSuite {
       TS_ASSERT(bus->getORB());
     }
 
+    void testRootPOA() {
+      TS_ASSERT(bus->getRootPOA());
+    }
+
     void testGetComponentBuilder() {
       TS_ASSERT(bus->getComponentBuilder());
     }
 
-    void testGetACS() {
+    void testGetAccessControlService() {
       try {
         iAccessControlService = bus->getAccessControlService();
         TS_ASSERT(iAccessControlService);
@@ -215,6 +236,33 @@ class ACSTestSuite: public CxxTest::TestSuite {
       TS_ASSERT(!iAccessControlService->logout(c));
     }
 
+    void testConnectByCertificateNullKey() {
+      bus->disconnect();
+      TS_ASSERT_THROWS(bus->connect(
+        "TesteBarramento", 
+        0, 
+        "TesteBarramento.crt"), 
+        openbus::SECURITY_EXCEPTION);
+    }
+
+    void testConnectByCertificateNullACSCertificate() {
+      bus->disconnect();
+      TS_ASSERT_THROWS(bus->connect(
+        "TesteBarramento", 
+        "TesteBarramento.key", 
+        0), 
+        openbus::SECURITY_EXCEPTION);
+    }
+
+    void testConnectByCertificateInvalidEntityName() {
+      bus->disconnect();
+      TS_ASSERT_THROWS(bus->connect(
+        "WRONG", 
+        "TesteBarramento.key", 
+        "AccessControlService.crt"), 
+        openbus::SECURITY_EXCEPTION);
+    }
+
     void testLoginByCertificate() {
       bus->disconnect();
       try {
@@ -229,7 +277,7 @@ class ACSTestSuite: public CxxTest::TestSuite {
         TS_FAIL("Par usuário/senha inválido.");
       } catch (openbus::SECURITY_EXCEPTION& e) {
         TS_FAIL("e.what()");
-      }
+      } 
     }
 
     void testIsValid() {
@@ -247,7 +295,8 @@ class ACSTestSuite: public CxxTest::TestSuite {
     }
 
     void testSetThreadCredential() {
-      trueCredential = bus->getCredential();
+      access_control_service::Credential* trueCredential = 
+        bus->getCredential();
       access_control_service::Credential wrongCredential;
       wrongCredential.identifier = "00000000";
       wrongCredential.owner = "none";
@@ -263,7 +312,8 @@ class ACSTestSuite: public CxxTest::TestSuite {
     }
 
     void testFinish() {
-/*      bus->disconnect();
+#if 0
+      bus->disconnect();
       bus->finish(true);
       try {
         if (!CORBA::is_nil(bus->getORB())) {
@@ -273,13 +323,10 @@ class ACSTestSuite: public CxxTest::TestSuite {
       }
 
       delete bus;
-*/
+#endif
     }
 
-  /*
-   * Este caso de teste gera um sleep de 150s.
-   */
-    void testLeaseExpiredCallback() {
+    void testAddLeaseExpiredCbBeforeConnect() {
       bus->disconnect();
       bus = Openbus::getInstance();
       const char* argv[] = {
@@ -288,18 +335,38 @@ class ACSTestSuite: public CxxTest::TestSuite {
         "localhost", 
         "-OpenbusPort", 
         "2089"};
-      bus->init(7, (char**) argv);
-      leaseExpiredCallbackOk = false;
-      MyCallback myCallback;
+      bus->init(5, (char**) argv);
+      leaseExpiredCallbackBefore = false;
+      MyCallbackBefore myCallback;
       bus->setLeaseExpiredCallback(&myCallback);
       bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       bus->getAccessControlService()->logout(*bus->getCredential());
       bus->run();
-      if (!leaseExpiredCallbackOk) {
-        TS_FAIL("Função leaseExpiredCallback() não foi chamada.");
+      if (!leaseExpiredCallbackBefore) {
+        TS_FAIL("Método MyCallbackBefore::expired() não foi chamado.");
+      }
+    }
+
+    void testAddLeaseExpiredCbAfterConnect() {
+      bus->disconnect();
+      bus = Openbus::getInstance();
+      const char* argv[] = {
+        "exec", 
+        "-OpenbusHost", 
+        "localhost", 
+        "-OpenbusPort", 
+        "2089"};
+      bus->init(5, (char**) argv);
+      leaseExpiredCallbackAfter = false;
+      MyCallbackAfter myCallback;
+      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
+      bus->setLeaseExpiredCallback(&myCallback);
+      bus->getAccessControlService()->logout(*bus->getCredential());
+      bus->run();
+      if (!leaseExpiredCallbackAfter) {
+        TS_FAIL("Método MyCallbackAfter::expired() não foi chamado.");
       }
     }
 };
 
 #endif
-
