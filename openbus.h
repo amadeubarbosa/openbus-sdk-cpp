@@ -20,6 +20,7 @@
 #else
   #include <omg/orb.hh>
   #include <it_ts/thread.h>
+  #include <it_ts/timer.h>
   #include <it_ts/mutex.h>
   #include "stubs/orbix/access_control_service.hh"
   #include "stubs/orbix/session_service.hh"
@@ -247,7 +248,8 @@ namespace openbus {
       ConnectionStates connectionState;
 
     /**
-    * Intervalo de tempo que determina quando que a credencial será renovada.
+    * Intervalo de tempo em segundos que determina quando que a credencial 
+    * será renovada.
     */
       unsigned long timeRenewing;
 
@@ -324,6 +326,7 @@ namespace openbus {
           void* run();
       };
       friend class Openbus::RenewLeaseThread;
+      static IT_Timer* renewLeaseTimer;
 
     /**
     * Thread responsável pela renovação de credencial.
@@ -384,9 +387,32 @@ namespace openbus {
     * A fábrica de componentes SCS é criada.
     * Os argumentos Openbus de linha de comando (argc e argv) são tratados.
     * Parâmetros de linha de comando: 
-    *   "-OpenbusHost": Host do barramento.
+    *   "-OpenbusHost": Máquina em que se encontra o barramento.
     *   "-OpenbusPort": Porta do barramento.
-    *   "-TimeRenewing": Tempo em milisegundos de renovação da credencial.
+    *   "-OpenbusDebug":
+    *     ALL - Ativa todos os níveis de verbose.
+    *     ERROR - Ativa o nível ERROR do debug.
+    *     INFO - Ativa o nível INFO do debug.
+    *     WARNING - Ativa o nível WARNING do debug.
+    *   "-OpenbusDebugFile": Caminho completo ou relativo do arquivo que 
+    *     armazenará as mensagens de verbose. Se este parâmetro não 
+    *     for definido, a saída do verbose será a saída padrão. OBS.:
+    *     Se for definido, o verbose somente será armazenado no arquivo
+    *     em questão, ou seja, a saída padrão não será mais utilizada.
+    *   "-OpenbusValidationPolicy": Define uma política de validação das 
+    *     credenciais. Por padrão, a política ALWAYS é adotada.
+    *     NONE: Não há validação de credenciais.
+    *     ALWAYS: Sempre valida cada credencial no ACS.
+    *     CACHED: Primeiro tenta validar a credencial consultando um 
+    *       cache local, se não conseguir, a validação transcorre 
+    *       normalmente através de uma chamada remota ao ACS.
+    *   "-OpenbusValidationTime": Define o intervalo de tempo(em milisegundos)
+    *     de validação do cache de credenciais. O tempo padrão é de 3000ms.
+    *   "-OpenbusFTConfigFilename": Caminho completo ou relativo do 
+    *     arquivo que descreve as réplicas a serem utilizadas pelo 
+    *     mecanismo de tolerância a falhas.
+    *
+    *   "-OpenbusTimeRenewing": Tempo em segundos de renovação da credencial.
     *
     * @param[in] argc
     * @param[in] argv
@@ -404,7 +430,30 @@ namespace openbus {
     * Parâmetros de linha de comando: 
     *   "-OpenbusHost": Máquina em que se encontra o barramento.
     *   "-OpenbusPort": Porta do barramento.
-    *   "-TimeRenewing": Tempo em milisegundos de renovação da credencial.
+    *   "-OpenbusDebug":
+    *     ALL - Ativa todos os níveis de verbose.
+    *     ERROR - Ativa o nível ERROR do debug.
+    *     INFO - Ativa o nível INFO do debug.
+    *     WARNING - Ativa o nível WARNING do debug.
+    *   "-OpenbusDebugFile": Caminho completo ou relativo do arquivo que 
+    *     armazenará as mensagens de verbose. Se este parâmetro não 
+    *     for definido, a saída do verbose será a saída padrão. OBS.:
+    *     Se for definido, o verbose somente será armazenado no arquivo
+    *     em questão, ou seja, a saída padrão não será mais utilizada.
+    *   "-OpenbusValidationPolicy": Define uma política de validação das 
+    *     credenciais. Por padrão, a política ALWAYS é adotada.
+    *     NONE: Não há validação de credenciais.
+    *     ALWAYS: Sempre valida cada credencial no ACS.
+    *     CACHED: Primeiro tenta validar a credencial consultando um 
+    *       cache local, se não conseguir, a validação transcorre 
+    *       normalmente através de uma chamada remota ao ACS.
+    *   "-OpenbusValidationTime": Define o intervalo de tempo(em milisegundos)
+    *     de validação do cache de credenciais. O tempo padrão é de 3000ms.
+    *   "-OpenbusFTConfigFilename": Caminho completo ou relativo do 
+    *     arquivo que descreve as réplicas a serem utilizadas pelo 
+    *     mecanismo de tolerância a falhas.
+    *
+    *   "-OpenbusTimeRenewing": Tempo em segundos de renovação da credencial.
     *
     * @param[in] argc
     * @param[in] argv
@@ -507,6 +556,7 @@ namespace openbus {
     */
       class LeaseExpiredCallback {
         public:
+          virtual ~LeaseExpiredCallback() {};
           virtual void expired() = 0;
       };
 

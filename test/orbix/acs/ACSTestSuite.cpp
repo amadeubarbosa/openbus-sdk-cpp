@@ -26,11 +26,6 @@ class MyCallbackBefore : public Openbus::LeaseExpiredCallback {
     void expired() {
       TS_TRACE("Executando MyCallbackBefore()...");
       leaseExpiredCallbackBefore = true;
-      bus->disconnect();
-      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
-      TS_ASSERT(bus->isConnected());
-      bus->disconnect();
-      delete bus;
     }
 };
 
@@ -39,12 +34,6 @@ class MyCallbackAfter : public Openbus::LeaseExpiredCallback {
     void expired() {
       TS_TRACE("Executando MyCallbackAfter()...");
       leaseExpiredCallbackAfter = true;
-      bus->disconnect();
-      bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
-      TS_ASSERT(bus->isConnected());
-      bus->disconnect();
-      bus->finish(0);
-      delete bus;
     }
 };
 
@@ -104,6 +93,8 @@ class ACSTestSuite: public CxxTest::TestSuite {
     }
 
     ~ACSTestSuite() {
+      bus->disconnect();
+      delete bus;
     }
 
     void setUP() {
@@ -334,14 +325,18 @@ class ACSTestSuite: public CxxTest::TestSuite {
         "-OpenbusHost", 
         "localhost", 
         "-OpenbusPort", 
-        "2089"};
-      bus->init(5, (char**) argv);
+        "2089",
+        "-OpenbusTimeRenewing",
+        "8"};
+      bus->init(7, (char**) argv);
       leaseExpiredCallbackBefore = false;
       MyCallbackBefore myCallback;
       bus->setLeaseExpiredCallback(&myCallback);
       bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       bus->getAccessControlService()->logout(*bus->getCredential());
-      bus->run();
+      TS_TRACE("Sleep de 10s...");
+      IT_CurrentThread::sleep(10000);
+      TS_TRACE("Término do sleep...");
       if (!leaseExpiredCallbackBefore) {
         TS_FAIL("Método MyCallbackBefore::expired() não foi chamado.");
       }
@@ -355,14 +350,18 @@ class ACSTestSuite: public CxxTest::TestSuite {
         "-OpenbusHost", 
         "localhost", 
         "-OpenbusPort", 
-        "2089"};
-      bus->init(5, (char**) argv);
+        "2089",
+        "-OpenbusTimeRenewing",
+        "8"};
+      bus->init(7, (char**) argv);
       leaseExpiredCallbackAfter = false;
       MyCallbackAfter myCallback;
       bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       bus->setLeaseExpiredCallback(&myCallback);
       bus->getAccessControlService()->logout(*bus->getCredential());
-      bus->run();
+      TS_TRACE("Sleep de 10s...");
+      IT_CurrentThread::sleep(10000);
+      TS_TRACE("Término do sleep...");
       if (!leaseExpiredCallbackAfter) {
         TS_FAIL("Método MyCallbackAfter::expired() não foi chamado.");
       }
