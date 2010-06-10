@@ -295,8 +295,10 @@ class ACSTestSuite: public CxxTest::TestSuite {
       bus->setThreadCredential(&wrongCredential);
       iAccessControlService = bus->getAccessControlService();
       try {
-        iAccessControlService->isValid(wrongCredential);
-        TS_FAIL("A credencial inválida inserida não foi utilizada. ");
+        bool status = iAccessControlService->isValid(wrongCredential);
+        if (status) {
+          TS_FAIL("Uma credencial inválida conseguiu ser validada! ");
+        }
       } catch(CORBA::NO_PERMISSION& e) {
       }
       bus->setThreadCredential(trueCredential);
