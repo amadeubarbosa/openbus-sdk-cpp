@@ -7,14 +7,13 @@
 
 namespace openbus {
   namespace interceptors {
-  #ifdef OPENBUS_MICO
     unsigned long ServerInterceptor::validationTime = 30000;
     set<access_control_service::Credential>::iterator 
       ServerInterceptor::itCredentialsCache;
     set<access_control_service::Credential, 
       ServerInterceptor::setCredentialCompare> 
       ServerInterceptor::credentialsCache;
-
+  #ifdef OPENBUS_MICO
     ServerInterceptor::CredentialsValidationCallback::
       CredentialsValidationCallback() {
     };
@@ -50,10 +49,69 @@ namespace openbus {
         }
       }
       dispatcher->tm_event(this, validationTime);
+      stringstream str;
+      str << "Próxima validação em: " << validationTime << "ms" << endl;
+      Openbus::logger->log(INFO, str.str());
       Openbus::logger->dedent(INFO, 
         "ServerInterceptor::CredentialsValidationCallback() END");
     }
+  #else
+    
+    ServerInterceptor::CredentialsValidationThread::
+      CredentialsValidationThread() 
+    {
+      Openbus::logger->log(INFO,
+        "CredentialsValidationThread::CredentialsValidationThread() BEGIN");
+      Openbus::logger->indent();
+      Openbus::logger->dedent(INFO,
+        "CredentialsValidationThread::CredentialsValidationThread() END");
+    }
+
+    ServerInterceptor::CredentialsValidationThread::
+      ~CredentialsValidationThread() 
+    {
+      Openbus::logger->log(INFO,
+        "CredentialsValidationThread::~CredentialsValidationThread() BEGIN");
+      Openbus::logger->indent();
+      Openbus::logger->dedent(INFO,
+        "CredentialsValidationThread::~CredentialsValidationThread() END");
+    }
+
+    void* ServerInterceptor::CredentialsValidationThread::run() {
+      Openbus::logger->log(INFO,
+        "CredentialsValidationThread::run() BEGIN");
+      Openbus::logger->indent();
+      openbus::Openbus* bus = openbus::Openbus::getInstance();
+      access_control_service::IAccessControlService* iAccessControlService = 
+        bus->getAccessControlService();
+      for (itCredentialsCache = credentialsCache.begin();
+           itCredentialsCache != credentialsCache.end(); 
+           itCredentialsCache++)
+      {
+        stringstream out;
+        out << "Validando a credencial: " << 
+          (const char*) ((*itCredentialsCache).identifier) << " ...";
+        Openbus::logger->log(INFO, out.str());
+        try {
+          if (iAccessControlService->isValid(*itCredentialsCache)) {
+            Openbus::logger->log(INFO, "Credencial ainda é válida.");
+          } else {
+            Openbus::logger->log(WARNING, "Credencial NÃO é mais válida!");
+            credentialsCache.erase(itCredentialsCache);
+          }
+        } catch (CORBA::SystemException& e) {
+          Openbus::logger->log(ERROR, 
+            "Erro ao verificar validade da credencial");
+        }
+      }
+      stringstream str;
+      str << "Próxima validação em: " << validationTime << "ms" << endl;
+      Openbus::logger->log(INFO, str.str());
+      Openbus::logger->dedent(INFO,
+        "CredentialsValidationThread::run() END");
+    }
   #endif
+
     ServerInterceptor::ServerInterceptor(
       Current* ppicurrent,
       SlotId pslotid,
@@ -64,6 +122,9 @@ namespace openbus {
       slotid = pslotid;
       picurrent = ppicurrent;
       cdr_codec = pcdr_codec;
+    #ifndef OPENBUS_MICO
+      credentialsValidationTimer = 0;
+    #endif
       Openbus::logger->dedent(INFO, "ServerInterceptor::ServerInterceptor() END");
     }
 
@@ -72,6 +133,12 @@ namespace openbus {
       openbus::Openbus* bus = openbus::Openbus::getInstance();
       bus->getORB()->dispatcher()->remove(&credentialsValidationCallback, 
         CORBA::Dispatcher::Timer);
+    #else
+      if (credentialsValidationTimer) {
+        credentialsValidationTimer->stop();
+        delete credentialsValidationThread;
+        delete credentialsValidationTimer;
+      }
     #endif
     }
 
@@ -153,17 +220,23 @@ namespace openbus {
             "ServerInterceptor::receive_request() END");
           throw;
         }
-    #ifdef OPENBUS_MICO
       } else if (policy == CACHED) {
         Openbus::logger->log(INFO, "Política de renovação de credenciais: " + 
           (string) "CACHED");
         stringstream out;
         out << "Número de credenciais no cache: " << credentialsCache.size();
         Openbus::logger->log(INFO, out.str());
+      #ifdef OPENBUS_MICO
         if (credentialsCache.find(c) != credentialsCache.end()
             &&
             !credentialsCache.empty()) 
         {  
+      #else
+        if (credentialsCache.find(*c) != credentialsCache.end()
+            &&
+            !credentialsCache.empty()) 
+        {  
+      #endif
           Openbus::logger->log(INFO, "Credencial está no cache.");
           Openbus::logger->dedent(INFO, 
             "ServerInterceptor::receive_request() END");
@@ -185,7 +258,11 @@ namespace openbus {
               throw CORBA::NO_PERMISSION();
             }
             Openbus::logger->log(INFO, "Inserindo credencial no cache...");
+          #ifdef OPENBUS_MICO
             credentialsCache.insert(c);
+          #else
+            credentialsCache.insert(*c);
+          #endif  
             Openbus::logger->dedent(INFO, 
               "ServerInterceptor::receive_request() END");
           } catch (CORBA::SystemException& e) {
@@ -196,7 +273,6 @@ namespace openbus {
             throw;
           }
         }
-    #endif
       } else {
         Openbus::logger->log(INFO, "Política de renovação de credenciais: " + 
           (string) "NONE");
@@ -272,6 +348,18 @@ namespace openbus {
       bus->getORB()->dispatcher()->tm_event(&credentialsValidationCallback, 
         validationTime);
     }
+  #else
+    void ServerInterceptor::registerValidationTimer() {
+      IT_Duration start(0);
+      IT_Duration interval(validationTime/1000, 0);
+      credentialsValidationThread = new CredentialsValidationThread();
+      credentialsValidationTimer = new IT_Timer(
+        start, 
+        interval, 
+        *credentialsValidationThread, 
+        true);
+    }
+  #endif
 
     void ServerInterceptor::setValidationTime(unsigned long pValidationTime) {
       validationTime = pValidationTime;
@@ -281,6 +369,5 @@ namespace openbus {
     unsigned long ServerInterceptor::getValidationTime() {
       return validationTime;
     }
-  #endif
   }
 }

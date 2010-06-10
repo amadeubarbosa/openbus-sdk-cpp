@@ -246,11 +246,9 @@ namespace openbus {
         faultToleranceEnable = true;
         idx++;
         FTConfigFilename = argv[idx];
-    #ifdef OPENBUS_MICO
       } else if (!strcmp(argv[idx], "-OpenbusValidationTime")) {
           ini->getServerInterceptor()->setValidationTime(
             (unsigned long) atoi(argv[++idx]));
-    #endif
       } 
     }
   }
@@ -436,6 +434,10 @@ namespace openbus {
   #ifdef OPENBUS_MICO
     if (credentialValidationPolicy == interceptors::CACHED) {
       ini->getServerInterceptor()->registerValidationDispatcher();
+    }
+  #else
+    if (credentialValidationPolicy == interceptors::CACHED) {
+      ini->getServerInterceptor()->registerValidationTimer();
     }
   #endif
     logger->dedent(INFO, "Openbus::init() END");

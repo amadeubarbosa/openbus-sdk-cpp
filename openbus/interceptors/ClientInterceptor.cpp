@@ -147,7 +147,6 @@ namespace openbus {
         stringstream out;
         Openbus::logger->log(ERROR, "TRATANDO EXCEÇÂO RECEBIDA DO SERVIDOR!");
         const char* operation = ri->operation();
-        const char* objectKey;
         out << "Método: " << operation;
         Openbus::logger->log(INFO, out.str());
         out.str(" ");
@@ -168,6 +167,7 @@ namespace openbus {
         Openbus::logger->log(INFO, out.str());
     #endif
       #else
+        const char* objectKey;
         itOperationObjectKey = operationObjectKey.find(operation);
         objectKey = itOperationObjectKey->second;
         out << "ObjectKey: " << objectKey;

@@ -11,8 +11,11 @@
 #else
   #include <orbix/corba.hh>
   #include <omg/PortableInterceptor.hh>
+  #include <it_ts/timer.h>
   #include "../../stubs/orbix/access_control_service.hh"
 #endif
+
+#include <set>
 
 using namespace tecgraf::openbus::core::v1_05;
 using namespace PortableInterceptor;
@@ -31,25 +34,10 @@ namespace openbus {
         SlotId slotid;
         IOP::Codec_ptr cdr_codec;
 
-    #ifdef OPENBUS_MICO
       /*
       * Intervalo em milisegundos de validação das credenciais do cache.
       */
         static unsigned long validationTime;
-
-        class CredentialsValidationCallback : 
-          public CORBA::DispatcherCallback 
-        {
-          public:
-            CredentialsValidationCallback();
-            void callback(CORBA::Dispatcher* dispatcher, Event event);
-        };
-        friend class ServerInterceptor::CredentialsValidationCallback;
-
-      /*
-      * Callback de validação do cache de credenciais.
-      */
-        CredentialsValidationCallback credentialsValidationCallback;
 
         struct setCredentialCompare {
           bool operator() (
@@ -64,7 +52,35 @@ namespace openbus {
           credentialsCache;
         static set<access_control_service::Credential>::iterator 
           itCredentialsCache;
-    #endif
+
+      #ifdef OPENBUS_MICO
+        class CredentialsValidationCallback : 
+          public CORBA::DispatcherCallback 
+        {
+          public:
+            CredentialsValidationCallback();
+            void callback(CORBA::Dispatcher* dispatcher, Event event);
+        };
+        friend class ServerInterceptor::CredentialsValidationCallback;
+
+      /*
+      * Callback de validação do cache de credenciais.
+      */
+        CredentialsValidationCallback credentialsValidationCallback;
+
+      #else
+        class CredentialsValidationThread : public IT_ThreadBody {
+          public:
+            CredentialsValidationThread();
+            ~CredentialsValidationThread();
+            void* run();
+        };
+        friend class ServerInterceptor::CredentialsValidationThread;
+
+        CredentialsValidationThread* credentialsValidationThread;
+        IT_Timer* credentialsValidationTimer;
+      #endif
+
       public:
         ServerInterceptor(Current* ppicurrent, 
           SlotId pslotid, 
@@ -80,9 +96,11 @@ namespace openbus {
         access_control_service::Credential_var getCredential();
       #ifdef OPENBUS_MICO
         void registerValidationDispatcher();
+      #else
+        void registerValidationTimer();
+      #endif
         void setValidationTime(unsigned long pValidationTime);
         unsigned long getValidationTime();
-      #endif
     };
   }
 }
