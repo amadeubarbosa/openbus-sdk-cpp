@@ -275,7 +275,6 @@ namespace openbus {
     iAccessControlService = 
       access_control_service::IAccessControlService::_nil();
     iRegistryService = 0;
-    iSessionService = 0;
     iLeaseProvider = access_control_service::ILeaseProvider::_nil();
     iComponentAccessControlService = scs::core::IComponent::_nil();
   }
@@ -541,33 +540,6 @@ namespace openbus {
     logger->dedent(INFO, "Openbus::getRegistryService() END");
     return iRegistryService;
   } 
-
-  ISessionService* Openbus::getSessionService() 
-    throw(NO_CONNECTED, NO_SESSION_SERVICE)
-  {
-    if (connectionState != CONNECTED) {
-      throw NO_CONNECTED();
-    } else {
-      if (CORBA::is_nil(iSessionService)) {
-        try {
-          registry_service::FacetList_var facetList = \
-            new registry_service::FacetList();
-          facetList->length(1);
-          facetList[(CORBA::ULong) 0] = "ISessionService";
-          registry_service::ServiceOfferList_var serviceOfferList = \
-            iRegistryService->find(facetList);
-          registry_service::ServiceOffer serviceOffer = serviceOfferList[(CORBA::ULong) 0];
-          scs::core::IComponent* component = serviceOffer.member;
-          CORBA::Object* obj = \
-            component->getFacet("IDL:tecgraf/openbus/session_service/v1_05/ISessionService:1.0");
-          iSessionService = ISessionService::_narrow(obj);
-        } catch (CORBA::Exception& e) {
-          throw NO_SESSION_SERVICE();
-        }
-      }
-    }
-    return iSessionService;
-  }
 
   access_control_service::Credential* Openbus::getCredential() {
     return credential;

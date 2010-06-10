@@ -161,11 +161,6 @@ namespace openbus {
       registry_service::IRegistryService* iRegistryService;
 
     /**
-    * Ponteiro para o stub do serviço de sessão.
-    */
-      ISessionService* iSessionService;
-
-    /**
     * Ponteiro para a faceta ILeaseProvider. 
     */
       access_control_service::ILeaseProvider_var iLeaseProvider;
@@ -522,13 +517,6 @@ namespace openbus {
     * @return Serviço de registro
     */
       registry_service::IRegistryService* getRegistryService();
-
-    /**
-    * Retorna o serviço de sessão. 
-    * @return Serviço de sessão.
-    */
-      ISessionService* getSessionService() 
-        throw(NO_CONNECTED, NO_SESSION_SERVICE);
 
     /**
     * Retorna a credencial de identificação do usuário frente ao barramento. 

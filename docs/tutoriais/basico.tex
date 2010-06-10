@@ -243,16 +243,6 @@ Retorna o serviço de acesso.
 
 Retorna o serviço de registro.
 
-\begin{lstlisting}
-  openbusidl::ss::ISessionService* getSessionService()
-    throw(NO_CONNECTED, NO_SESSION_SERVICE); 
-\end{lstlisting}
-
-Retorna o serviço de sessão.
-Se a tentativa for bem sucedida, uma instância que representa 
-o serviço de sessão é retornada, caso contrário duas exceções podem ser 
-lançadas:
-
 \begin{description}
   \item[NO\_CONNECTED] Não há uma conexão estabelecida com nenhum barramento.
   \item[NO\_SESSION\_SERVICE] Não é possível obter, a nível de CORBA, o serviço
