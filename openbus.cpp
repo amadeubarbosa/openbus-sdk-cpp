@@ -704,7 +704,7 @@ namespace openbus {
           stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             privateKeyFilename;
-          logger->log(INFO, filename.str());
+          logger->log(WARNING, filename.str());
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
           throw SECURITY_EXCEPTION(
