@@ -394,6 +394,25 @@ as facetas discriminadas em facets, e, que atendam aos critérios descritos no
 parâmetro criteria, que é uma lista de propriedades descrita através de strings
 no formato  chave = {valor1, valor2, ..., valorN}.
 
+\subsubsection{Log}
+
+A API utiliza o log criado no tecgraf, que se encontra atualmente no projeto 
+ cpputils. O Log deve ser definido na chamada ao Openbus::init(). Abaixo temos a
+ documentação encontrada na chamada init.
+ 
+\begin{itemize}
+ \item OpenbusDebug:
+  \subitem ALL Ativa todos os níveis de verbose.
+  \subitem ERROR Ativa o nível ERROR do debug.
+  \subitem INFO Ativa o nível INFO do debug.
+  \subitem WARNING Ativa o nível WARNING do debug.
+ \item OpenbusDebugFile: Caminho completo ou relativo do arquivo que 
+  armazenará as mensagens de verbose. Se este parâmetro não 
+  for definido, a saída do verbose será a saída padrão. OBS.:
+  Se for definido, o verbose somente será armazenado no arquivo
+  em questão, ou seja, a saída padrão não será mais utilizada.
+\end{itemize}
+
 
 \subsection{Primeiros passos...}
 Basicamente há dois tipos de aplicações Openbus. Uma que oferta serviços e 
