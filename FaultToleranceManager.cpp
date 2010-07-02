@@ -107,15 +107,19 @@ namespace openbus {
       acsHostInUse->port << "]";
     Openbus::logger->log(INFO, out.str());
     out.str(" ");
-    itACSHosts++;
-    if (itACSHosts == acsHosts.end()) {
-      itACSHosts = acsHosts.begin();
+    if (acsHosts.size() > 0) {  
+      itACSHosts++;
+      if (itACSHosts == acsHosts.end()) {
+        itACSHosts = acsHosts.begin();
+      }
+      acsHostInUse->name = (*itACSHosts)->name; 
+      acsHostInUse->port = (*itACSHosts)->port; 
+      out << "Nova replica ACS: [" << acsHostInUse->name  << "::" << 
+         acsHostInUse->port << "]";
+      Openbus::logger->log(INFO, out.str());
+    } else {
+      Openbus::logger->log(WARNING, "Lista de replicas vazia.");
     }
-    acsHostInUse->name = (*itACSHosts)->name; 
-    acsHostInUse->port = (*itACSHosts)->port; 
-    out << "Nova replica ACS: [" << acsHostInUse->name  << "::" << 
-       acsHostInUse->port << "]";
-    Openbus::logger->log(INFO, out.str());
     Openbus::logger->dedent(INFO, 
       "FaultToleranceManager::updateACSHostInUse() END");
     return acsHostInUse;
