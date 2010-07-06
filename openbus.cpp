@@ -255,7 +255,9 @@ namespace openbus {
 
   void Openbus::createOrbPoa() {
     logger->log(INFO, "Obtendo ORB...");
-    orb = CORBA::ORB_init(_argc, _argv);
+  #ifndef OPENBUS_MICO
+    orb = CORBA::ORB_init(_argc, _argv, "tecgraf.openbus");
+  #endif
     getRootPOA();
   }
 
