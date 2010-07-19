@@ -156,17 +156,7 @@ namespace openbus {
         out << "Exceção recebida: " << received_exception_id;
         Openbus::logger->log(INFO, out.str());
         out.str(" ");
-     #ifdef OPENBUS_MICO
-    #if 0
-        CORBA::IOR* ior = ri->target()->_ior();
-        CORBA::Long length;
-        const CORBA::Octet* octet = ior->get_profile(
-          (CORBA::ULong) 0)->objectkey(length);
-        string* objectKeyStr = new string((const char*) octet, (size_t) length);
-        out << "ObjectKey: " << objectKeyStr->c_str();
-        Openbus::logger->log(INFO, out.str());
-    #endif
-      #else
+
         const char* objectKey;
         itOperationObjectKey = operationObjectKey.find(operation);
         objectKey = itOperationObjectKey->second;
@@ -184,15 +174,21 @@ namespace openbus {
           bus->hostBus = newACSHost->name;
           bus->portBus = newACSHost->port;
 
-          /* Tempo de espera entre a troca de replica. */
-          Openbus::logger->log(INFO, 
-            "Aguardando 5s para se conectar a uma nova replica...");
-          IT_CurrentThread::sleep(5000);
-
           bus->createProxyToIAccessControlService();
-        /*
-        * Falta tratar IC e FT
-        */
+
+        #ifdef OPENBUS_MICO
+          if (!strcmp(objectKey, "LP_v1_05")) {
+            throw ForwardRequest(bus->iLeaseProvider, false);
+          } else if (!strcmp(objectKey, "ACS_v1_05")) {
+            throw ForwardRequest(bus->iAccessControlService, false);
+          } else if (!strcmp(objectKey, "RS_v1_05")) {
+            throw ForwardRequest(bus->iRegistryService, false);
+          } else if (!strcmp(objectKey, "openbus_v1_05")) {
+            throw ForwardRequest(bus->iComponentAccessControlService, false);
+          } else if (!strcmp(objectKey, "FTACS_v1_05")) {
+            throw ForwardRequest(bus->iFaultTolerantService, false);
+          }
+        #else
           if (!strcmp(objectKey, "LP_v1_05")) {
             throw ForwardRequest(bus->iLeaseProvider);
           } else if (!strcmp(objectKey, "ACS_v1_05")) {
@@ -204,8 +200,8 @@ namespace openbus {
           } else if (!strcmp(objectKey, "FTACS_v1_05")) {
             throw ForwardRequest(bus->iFaultTolerantService);
           }
+        #endif
         }
-      #endif
       }
       Openbus::logger->dedent(INFO, 
         "ClientInterceptor::receive_exception() END");
@@ -215,9 +211,8 @@ namespace openbus {
       throw(
         CORBA::SystemException,
         PortableInterceptor::ForwardRequest)
-    {
-      Openbus::logger->log(INFO, "OUTRA!");
-    }
+    {}
+    
     void ClientInterceptor::destroy() {}
   }
 }
