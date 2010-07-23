@@ -31,7 +31,21 @@ namespace openbus {
     */
       std::list<Host*> acsHosts;
       std::list<Host*>::iterator itACSHosts;
-
+      
+    /**
+    * Numero máximo de tentativas de se obter uma replica valida 
+    * do  conjunto  de  replicas.  Conta-se como uma tentativa o 
+    * percorrimento de todo o conjunto sem que se consiga  obter 
+    * uma replica valida.
+    */
+      short trials;
+      
+    /**
+    * Numero  de  tentativas realizadas de se obter uma replica
+    * valida do conjunto de replicas.
+    */
+      short currTrial;
+      
       FaultToleranceManager();
 
     public:

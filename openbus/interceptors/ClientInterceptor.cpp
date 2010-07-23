@@ -16,44 +16,11 @@ namespace openbus {
   namespace interceptors {
     access_control_service::Credential* ClientInterceptor::credential = 0;
 
-    void ClientInterceptor::loadOperationObjectKey() {
-      operationObjectKey["renewLease"] = "LP_v1_05";
-      operationObjectKey["loginByPassword"] = "ACS_v1_05";
-      operationObjectKey["loginByCertificate"] = "ACS_v1_05";
-      operationObjectKey["getChallenge"] = "ACS_v1_05";
-      operationObjectKey["logout"] = "ACS_v1_05";
-      operationObjectKey["isValid"] = "ACS_v1_05";
-      operationObjectKey["areValid"] = "ACS_v1_05";
-      operationObjectKey["getEntryCredential"] = "ACS_v1_05";
-      operationObjectKey["getAllEntryCredential"] = "ACS_v1_05";
-      operationObjectKey["addObserver"] = "ACS_v1_05";
-      operationObjectKey["removerObserver"] = "ACS_v1_05";
-      operationObjectKey["addCredentialToObserver"] = "ACS_v1_05";
-      operationObjectKey["removeCredentialFromObserver"] = "ACS_v1_05";
-      operationObjectKey["register"] = "RS_v1_05";
-      operationObjectKey["unregister"] = "RS_v1_05";
-      operationObjectKey["update"] = "RS_v1_05";
-      operationObjectKey["find"] = "RS_v1_05";
-      operationObjectKey["findByCriteria"] = "RS_v1_05";
-      operationObjectKey["localFind"] = "RS_v1_05";
-      operationObjectKey["init"] = "FTACS_v1_05";
-      operationObjectKey["isAlive"] = "FTACS_v1_05";
-      operationObjectKey["setStatus"] = "FTACS_v1_05";
-      operationObjectKey["kill"] = "FTACS_v1_05";
-      operationObjectKey["updateStatus"] = "FTACS_v1_05";
-      operationObjectKey["startup"] = "IC_v1_05";
-      operationObjectKey["shutdown"] = "IC_v1_05";
-      operationObjectKey["getFacet"] = "IC_v1_05";
-      operationObjectKey["getFacetByName"] = "IC_v1_05";
-      operationObjectKey["getComponentId"] = "IC_v1_05";
-    }
-
     ClientInterceptor::ClientInterceptor(IOP::Codec_ptr pcdr_codec)  
     {
       Openbus::logger->log(INFO, "ClientInterceptor::ClientInterceptor() BEGIN");
       Openbus::logger->indent();
       cdr_codec = pcdr_codec;
-      loadOperationObjectKey();
       faultToleranceManager = FaultToleranceManager::getInstance();
       Openbus* bus = Openbus::getInstance();
       Host* ACSHost = new Host;
@@ -63,7 +30,21 @@ namespace openbus {
       if (Openbus::FTConfigFilename) {
         faultToleranceManager->loadConfig(Openbus::FTConfigFilename);
       }
-      x = 0;
+    #ifndef OPENBUS_MICO
+      // if (luaL_loadfile(Openbus::luaState, "IOR.lua")) {
+      //   const char* errmsg = lua_tostring(Openbus::luaState, -1);
+      //   lua_pop(Openbus::luaState, 1);
+      //   Openbus::logger->log(ERROR, errmsg);
+      // } else {
+      //   if (lua_pcall(Openbus::luaState, 0, 0, 0)) {
+      //     const char* errmsg = lua_tostring(Openbus::luaState, -1);
+      //     lua_pop(Openbus::luaState, 1);
+      //     Openbus::logger->log(ERROR, errmsg);
+      //   } else {
+      //     Openbus::logger->log(INFO, "Modulo IOR.lua carregado.");
+      //   }
+      // }
+    #endif
       Openbus::logger->dedent(INFO, "ClientInterceptor::ClientInterceptor() END");
     }
 
@@ -156,10 +137,30 @@ namespace openbus {
         out << "Exceção recebida: " << received_exception_id;
         Openbus::logger->log(INFO, out.str());
         out.str(" ");
-
-        const char* objectKey;
-        itOperationObjectKey = operationObjectKey.find(operation);
-        objectKey = itOperationObjectKey->second;
+        
+        Openbus* bus = Openbus::getInstance();
+      #ifdef OPENBUS_MICO
+        CORBA::Long objectKeyLen;
+        const CORBA::Octet* objectKeyOct = ri->target()->_ior()->get_profile(0) \
+          ->objectkey(objectKeyLen);
+        char* objectKey = new char[objectKeyLen+1];
+        memcpy(objectKey, objectKeyOct, objectKeyLen);
+        objectKey[objectKeyLen] = '\0';
+      #else
+        char* objectKey = "(null)";
+        lua_getglobal(Openbus::luaState, "IOR");
+        lua_getfield(Openbus::luaState, -1, "IIOPProfileGetObjectKey");
+        lua_pushstring(Openbus::luaState, 
+          bus->getORB()->object_to_string(ri->target()));
+        if (lua_pcall(Openbus::luaState, 1, 1, 0)) {
+          const char* errmsg = lua_tostring(Openbus::luaState, -1);
+          lua_pop(Openbus::luaState, 1);
+          Openbus::logger->log(ERROR, errmsg);
+        } else {
+          objectKey = (char*) lua_tostring(Openbus::luaState, -1);
+        }
+      #endif
+        
         out << "ObjectKey: " << objectKey;
         Openbus::logger->log(INFO, out.str());
         if (!strcmp(objectKey, "LP_v1_05")
@@ -169,38 +170,39 @@ namespace openbus {
             || !strcmp(objectKey, "FTACS_v1_05")
            ) 
         {
-          Openbus* bus = Openbus::getInstance();
           Host* newACSHost = faultToleranceManager->updateACSHostInUse();
-          bus->hostBus = newACSHost->name;
-          bus->portBus = newACSHost->port;
+          if (newACSHost) {
+            bus->hostBus = newACSHost->name;
+            bus->portBus = newACSHost->port;
 
-          bus->createProxyToIAccessControlService();
+            bus->createProxyToIAccessControlService();
 
-        #ifdef OPENBUS_MICO
-          if (!strcmp(objectKey, "LP_v1_05")) {
-            throw ForwardRequest(bus->iLeaseProvider, false);
-          } else if (!strcmp(objectKey, "ACS_v1_05")) {
-            throw ForwardRequest(bus->iAccessControlService, false);
-          } else if (!strcmp(objectKey, "RS_v1_05")) {
-            throw ForwardRequest(bus->iRegistryService, false);
-          } else if (!strcmp(objectKey, "openbus_v1_05")) {
-            throw ForwardRequest(bus->iComponentAccessControlService, false);
-          } else if (!strcmp(objectKey, "FTACS_v1_05")) {
-            throw ForwardRequest(bus->iFaultTolerantService, false);
+          #ifdef OPENBUS_MICO
+            if (!strcmp(objectKey, "LP_v1_05")) {
+              throw ForwardRequest(bus->iLeaseProvider, false);
+            } else if (!strcmp(objectKey, "ACS_v1_05")) {
+              throw ForwardRequest(bus->iAccessControlService, false);
+            } else if (!strcmp(objectKey, "RS_v1_05")) {
+              throw ForwardRequest(bus->iRegistryService, false);
+            } else if (!strcmp(objectKey, "openbus_v1_05")) {
+              throw ForwardRequest(bus->iComponentAccessControlService, false);
+            } else if (!strcmp(objectKey, "FTACS_v1_05")) {
+              throw ForwardRequest(bus->iFaultTolerantService, false);
+            }
+          #else
+            if (!strcmp(objectKey, "LP_v1_05")) {
+              throw ForwardRequest(bus->iLeaseProvider);
+            } else if (!strcmp(objectKey, "ACS_v1_05")) {
+              throw ForwardRequest(bus->iAccessControlService);
+            } else if (!strcmp(objectKey, "RS_v1_05")) {
+              throw ForwardRequest(bus->iRegistryService);
+            } else if (!strcmp(objectKey, "openbus_v1_05")) {
+              throw ForwardRequest(bus->iComponentAccessControlService);
+            } else if (!strcmp(objectKey, "FTACS_v1_05")) {
+              throw ForwardRequest(bus->iFaultTolerantService);
+            }
+          #endif
           }
-        #else
-          if (!strcmp(objectKey, "LP_v1_05")) {
-            throw ForwardRequest(bus->iLeaseProvider);
-          } else if (!strcmp(objectKey, "ACS_v1_05")) {
-            throw ForwardRequest(bus->iAccessControlService);
-          } else if (!strcmp(objectKey, "RS_v1_05")) {
-            throw ForwardRequest(bus->iRegistryService);
-          } else if (!strcmp(objectKey, "openbus_v1_05")) {
-            throw ForwardRequest(bus->iComponentAccessControlService);
-          } else if (!strcmp(objectKey, "FTACS_v1_05")) {
-            throw ForwardRequest(bus->iFaultTolerantService);
-          }
-        #endif
         }
       }
       Openbus::logger->dedent(INFO, 

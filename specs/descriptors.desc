@@ -12,13 +12,13 @@ descriptors = {
     build = {
       type = "tecmake",
       src = SVNDIR,
-      mf = { "orbix genstubs USE_NODEPEND=Yes", "orbix" },
+      mf = { "orbix genstubs USE_NODEPEND=Yes", "orbix precompile", "orbix" },
     -- special compile instructions for solaris
     SunOS = {
-      mf = { "orbix genstubs USE_NODEPEND=Yes", "orbix", "orbix sunos" },
+      mf = { "orbix genstubs USE_NODEPEND=Yes", "orbix precompile", "orbix", "orbix sunos" },
     },
     SunOS510_64 = {
-      mf = { "orbix genstubs ".. SUNOS64_TECMAKE_FLAGS, "orbix "..SUNOS64_TECMAKE_FLAGS, "orbix sunos "..SUNOS64_TECMAKE_FLAGS },
+      mf = { "orbix genstubs ".. SUNOS64_TECMAKE_FLAGS, "orbix precompile", "orbix "..SUNOS64_TECMAKE_FLAGS, "orbix sunos "..SUNOS64_TECMAKE_FLAGS },
     },
     },
     dev_files = {

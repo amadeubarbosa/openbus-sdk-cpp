@@ -29,19 +29,6 @@ namespace openbus {
     {
       private:
         IOP::Codec_ptr cdr_codec;
-int x;
-        struct mapCompare {
-          bool operator() (
-            const char* s1,
-            const char* s2)
-          {
-            return (strcmp(s1, s2) < 0);
-          }
-        };
-
-        std::map<const char* ,const char*, mapCompare> operationObjectKey;
-        std::map<const char* ,const char*, mapCompare>::iterator 
-          itOperationObjectKey;
         FaultToleranceManager* faultToleranceManager;
         void loadOperationObjectKey();
       public:

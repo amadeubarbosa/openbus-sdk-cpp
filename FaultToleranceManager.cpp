@@ -14,6 +14,8 @@ namespace openbus {
     Openbus::logger->log(INFO, 
       "FaultToleranceManager::FaultToleranceManager() BEGIN");
     Openbus::logger->indent();
+    trials = 1;
+    currTrial = 1;
     Openbus::logger->dedent(INFO,
       "FaultToleranceManager::FaultToleranceManager() END");
   }
@@ -108,10 +110,29 @@ namespace openbus {
     Openbus::logger->log(INFO, out.str());
     out.str(" ");
     if (acsHosts.size() > 0) {  
+    /*
+    * Se todo o conjunto foi percorrido sem se obter uma replica valida, 
+    * verifica-se o numero maximo de tentativas disponiveis. Quando este
+    * numero é alcançado, a falha não será  recuperada,  caso contrário,
+    * uma nova tentativa é realizada em se percorrer todo o conjunto  em
+    * busca de uma replica valida. 
+    */
       itACSHosts++;
       if (itACSHosts == acsHosts.end()) {
-        itACSHosts = acsHosts.begin();
-      }
+        Openbus::logger->log(INFO, "Conjunto de replicas percorrido.");
+        if (currTrial > trials) {
+          out << "Numero de tentativas esgotado." << endl;
+          Openbus::logger->log(WARNING, out.str());
+          out.str(" ");
+          return 0;
+        } else {
+          out << "Número de tentativas realizadas: " << currTrial << endl;
+          currTrial++;
+          Openbus::logger->log(INFO, out.str());
+          out.str(" ");
+          itACSHosts = acsHosts.begin();
+        }
+      } 
       acsHostInUse->name = (*itACSHosts)->name; 
       acsHostInUse->port = (*itACSHosts)->port; 
       out << "Nova replica ACS: [" << acsHostInUse->name  << "::" << 

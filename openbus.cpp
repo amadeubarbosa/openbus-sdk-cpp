@@ -19,6 +19,9 @@
   #include <omg/orb.hh>
   #include <it_ts/thread.h>
   #include <stubs/orbix/scs.hh>
+extern "C" {
+  #include <IOR.h>
+}
 #endif
 
 #define CHALLENGE_SIZE 36
@@ -326,6 +329,9 @@ namespace openbus {
   Openbus::Openbus() {
     luaState = lua_open();
     luaL_openlibs(luaState);
+  #ifndef OPENBUS_MICO
+    luaopen_IOR(luaState);
+  #endif
     newState();
     credentialValidationPolicy = openbus::interceptors::ALWAYS;
     registerInterceptors();
