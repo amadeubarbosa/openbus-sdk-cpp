@@ -140,6 +140,7 @@ namespace openbus {
       Openbus::logger->log(INFO, out.str());
     } else {
       Openbus::logger->log(WARNING, "Lista de replicas vazia.");
+      return 0;
     }
     Openbus::logger->dedent(INFO, 
       "FaultToleranceManager::updateACSHostInUse() END");
