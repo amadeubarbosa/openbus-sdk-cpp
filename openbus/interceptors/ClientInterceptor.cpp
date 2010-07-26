@@ -30,21 +30,6 @@ namespace openbus {
       if (Openbus::FTConfigFilename) {
         faultToleranceManager->loadConfig(Openbus::FTConfigFilename);
       }
-    #ifndef OPENBUS_MICO
-      // if (luaL_loadfile(Openbus::luaState, "IOR.lua")) {
-      //   const char* errmsg = lua_tostring(Openbus::luaState, -1);
-      //   lua_pop(Openbus::luaState, 1);
-      //   Openbus::logger->log(ERROR, errmsg);
-      // } else {
-      //   if (lua_pcall(Openbus::luaState, 0, 0, 0)) {
-      //     const char* errmsg = lua_tostring(Openbus::luaState, -1);
-      //     lua_pop(Openbus::luaState, 1);
-      //     Openbus::logger->log(ERROR, errmsg);
-      //   } else {
-      //     Openbus::logger->log(INFO, "Modulo IOR.lua carregado.");
-      //   }
-      // }
-    #endif
       Openbus::logger->dedent(INFO, "ClientInterceptor::ClientInterceptor() END");
     }
 
@@ -116,25 +101,19 @@ namespace openbus {
     {
       Openbus::logger->indent(INFO, 
         "ClientInterceptor::receive_exception() BEGIN");
+      stringstream out;
       const char* received_exception_id = ri->received_exception_id();
-      if (!strcmp(received_exception_id, 
-             "IDL:omg.org/CORBA/COMM_FAILURE:1.0")
-          || !strcmp(received_exception_id, 
-             "IDL:omg.org/CORBA/TRANSIENT:1.0")
-          || !strcmp(received_exception_id, 
-             "IDL:omg.org/CORBA/OBJECT_NOT_EXIST:1.0")
-          ) 
-      {
-        stringstream out;
+      PortableInterceptor::ReplyStatus reply_status = ri->reply_status();
+      out << "Exception: " << received_exception_id;
+      Openbus::logger->log(INFO, out.str());
+      out.str(" ");
+      out << "Reply Status: " << reply_status << endl;
+      Openbus::logger->log(INFO, out.str());
+      out.str(" ");
+      if (reply_status == 1) {
         Openbus::logger->log(ERROR, "TRATANDO EXCEÇÂO RECEBIDA DO SERVIDOR!");
         const char* operation = ri->operation();
         out << "Método: " << operation;
-        Openbus::logger->log(INFO, out.str());
-        out.str(" ");
-        out << "Reply Status: " << ri->reply_status() << endl;
-        Openbus::logger->log(INFO, out.str());
-        out.str(" ");
-        out << "Exceção recebida: " << received_exception_id;
         Openbus::logger->log(INFO, out.str());
         out.str(" ");
         
