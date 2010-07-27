@@ -58,52 +58,44 @@ de algumas configurações específicas, como é o caso do Orbix.
 Este ORB é configurável através de domínios de configuração que por sua vez 
 formam um ambiente. O domínio é formado por escopos, e, é representado através 
 de um arquivo textual que pode ser editado diretamente pelo administrador. 
-Neste arquivo, as seguintes modificações devem ser realizadas no devido escopo:
+As seguintes linhas abaixo devem ser adicionadas neste arquivo:
 
 \lstset{language=bash}
-\begin{itemize}
-  \item Adicionar o \emph{plugin}(\verb!portable_interceptor!) responsável pela 
-  interceptação
-  na lista \verb!orb_plugins!.
-  Ex.:
-  \begin{lstlisting}
-  orb_plugins = [
-    "local_log_stream", 
-    "iiop_profile", 
-    "giop", 
-    "iiop", 
-    "portable_interceptor"
-  ];   
-  \end{lstlisting}
-  \item O nome do interceptador cliente(AccessControl) deve 
-  constar na lista 
-  \verb!client_binding_list!. 
-  Ex.: 
-  \begin{lstlisting}
-  binding:client_binding_list = [
-    "AccessControl+OTS+POA_Coloc", 
-    "AccessControl+POA_Coloc", 
-    "OTS+POA_Coloc",
-    "POA_Coloc", 
-    "AccessControl+OTS+GIOP+IIOP", 
-    "AccessControl+GIOP+IIOP", 
-    "OTS+GIOP+IIOP", 
-    "GIOP+IIOP"
-  ];
-  \end{lstlisting}
-  \item O nome do interceptador servidor(AccessControl) deve 
-  constar na lista 
-  server\_binding\_list.
-  Ex.: 
-  \begin{lstlisting}
-  binding:server_binding_list = [
-    "OTS+AccessControl", 
-    "AccessControl", 
-    "OTS", 
-    ""
-  ];
-  \end{lstlisting}
-\end{itemize}
+\begin{lstlisting}
+tecgraf {
+  openbus {
+    policies:giop:interop_policy:ignore_message_not_consumed = "true";
+    orb_plugins = [
+      "local_log_stream", 
+      "iiop_profile", 
+      "giop", 
+      "iiop", 
+      "portable_interceptor"
+    ];
+    binding:server_binding_list = [
+      "OTS+AccessControl", 
+      "AccessControl", 
+      "OTS", 
+      ""
+    ];
+    binding:client_binding_list = [
+      "AccessControl+OTS+POA_Coloc", 
+      "AccessControl+POA_Coloc", 
+      "OTS+POA_Coloc", 
+      "POA_Coloc", 
+      "AccessControl+OTS+GIOP+IIOP", 
+      "AccessControl+GIOP+IIOP", 
+      "OTS+GIOP+IIOP", 
+      "GIOP+IIOP"
+    ];
+  };
+};
+\end{lstlisting}
+
+As quatro diretivas necessárias para o correto funcionamento do Openbus são 
+definidas no escopo \lstinline!tecgraf.openbus!. A primeira define uma política necessária para que IIOP.NET possa se comunicar com o Openbus Orbix. A segunda carrega 
+o plugin responsável pelo mecanismo de interceptação. As duas últimas registram 
+o interceptador (\lstinline!AccessControl!).
   
 \section{Teste}
 Antes de se começar a programação, é aconselhável que o usuário coloque em 
