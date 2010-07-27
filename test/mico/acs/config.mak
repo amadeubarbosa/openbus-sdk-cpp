@@ -19,7 +19,6 @@ ifeq "$(TEC_UNAME)" "SunOS58"
 endif
 
 INCLUDES= . ../../../stubs/mico \
-  ${ORBIXINC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/cxxtest \
@@ -27,9 +26,9 @@ INCLUDES= . ../../../stubs/mico \
   ${OPENBUSINC}/logger \
   ${MICO_INC}
 
-LDIR= ${ORBIXLDIR} ${OPENBUSLIB} ${MICO_LIB}
+LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
-LIBS= crypto mico2.3.11 dl ssl pthread
+LIBS= crypto mico${MICOVERSION} dl ssl pthread
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/libscsmico.a \

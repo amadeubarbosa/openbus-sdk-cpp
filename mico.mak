@@ -30,7 +30,7 @@ TARGETROOT= lib
 INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${MICO_LIB} ${OPENBUSLIB} ${MICO_LIB}
 
-LIBS= mico2.3.11 scsmico crypto dl logger
+LIBS= mico${MICOVERSION} scsmico crypto dl logger
 
 USE_LUA51= YES
 

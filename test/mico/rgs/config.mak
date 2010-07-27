@@ -29,7 +29,7 @@ INCLUDES= . ./stubs ../../../stubs/mico\
 LDIR= ${MICO_LIB} \
   ${OPENBUSLIB}
 
-LIBS= crypto mico2.3.11 dl ssl pthread
+LIBS= crypto mico${MICOVERSION} dl ssl pthread
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
   ${OPENBUSLIB}/libscsmico.a \
