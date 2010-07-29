@@ -266,9 +266,7 @@ namespace openbus {
     /**
     * Trata os parâmetros de linha de comando.
     */
-      void commandLineParse(
-        int argc,
-        char** argv);
+      void commandLineParse();
 
     /**
     * Inicializa um valor default para a máquina e porta do barramento. 
@@ -330,7 +328,6 @@ namespace openbus {
     #endif
 
   #ifdef OPENBUS_MICO
-
     #ifdef MULTITHREAD
       class RunThread : public MICOMT::Thread {
         public:
@@ -339,19 +336,18 @@ namespace openbus {
       friend class Openbus::RunThread;
 
       static RunThread* runThread;
-    #else
-      class RenewLeaseCallback : public CORBA::DispatcherCallback {
-        public:
-          RenewLeaseCallback();
-          void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
-          void callback(CORBA::Dispatcher* dispatcher, Event event);
-      };
-
-    /**
-    * Callbak responsável por renovar a credencial.
-    */
-      RenewLeaseCallback renewLeaseCallback;
     #endif
+    class RenewLeaseCallback : public CORBA::DispatcherCallback {
+      public:
+        RenewLeaseCallback();
+        void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
+        void callback(CORBA::Dispatcher* dispatcher, Event event);
+    };
+
+  /**
+  * Callbak responsável por renovar a credencial.
+  */
+    RenewLeaseCallback renewLeaseCallback;
   #endif
 
     /**

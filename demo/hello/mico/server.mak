@@ -4,9 +4,12 @@ APPNAME=${PROJNAME}
 DEFINES=SCS_MICO
 DEFINES+=OPENBUS_MICO
 
+#Descomente a linha abaixo para utilizar o Openbus Multithread.
+#LIBS=pthread
+
 #Descomente as duas linhas abaixo para o uso em Valgrind.
-DBG=YES
-CPPFLAGS= -fno-inline
+#DBG=YES
+#CPPFLAGS= -fno-inline
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
@@ -31,7 +34,7 @@ INCLUDES= . \
 
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
-LIBS= mico${MICOVERSION} dl crypto ssl pthread
+LIBS+= mico${MICOVERSION} dl crypto ssl
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/libscsmico.a \

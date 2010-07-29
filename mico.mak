@@ -4,6 +4,11 @@ LIBNAME= ${PROJNAME}
 DEFINES=SCS_MICO
 DEFINES+=OPENBUS_MICO
 
+#Descomente a linha abaixo para utilizar a versão multithread.
+# A versão multithread do Openbus deve ser utilizada com Mico
+# compilado com suporte a multithread.
+#DEFINES+=MULTITHREAD
+
 #Descomente as duas linhas abaixo para o uso em Valgrind.
 #DBG=YES
 #CPPFLAGS= -fno-inline

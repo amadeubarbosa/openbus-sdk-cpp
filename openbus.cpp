@@ -50,60 +50,59 @@ namespace openbus {
   #ifdef MULTITHREAD
     void Openbus::RunThread::_run(void*) {
       logger->log(INFO, "*** RunThread iniciada...");
-      bus->orb->run();
+      bus->getORB()->run();
       logger->log(INFO, "*** RunThread encerrada...");
     }
-  #else
-    Openbus::RenewLeaseCallback::RenewLeaseCallback() {
-    }
-  
-    void Openbus::RenewLeaseCallback::setLeaseExpiredCallback(
-      LeaseExpiredCallback* obj) 
-    {
-      _leaseExpiredCallback = obj;
-    }
-  
-    void Openbus::RenewLeaseCallback::callback(
-      CORBA::Dispatcher* dispatcher, 
-      Event event) 
-    {
-      logger->log(INFO, "Openbus::RenewLeaseCallback::callback() BEGIN");
-      logger->indent();
-      if (bus && bus->connectionState == CONNECTED) {
-        logger->log(INFO, "Renovando credencial...");
-        try {
-          bool status = bus->iLeaseProvider->renewLease(*bus->credential, 
-            bus->lease);
-          if (!bus->timeRenewingFixe) {
-            bus->timeRenewing = bus->lease/3;
-          }
-          stringstream msg;
-          msg << "Proximo intervalo de renovacao: " << bus->timeRenewing << 
-            "s";
-          logger->log(INFO, msg.str());
-          if (!status) {
-            logger->log(WARNING, "Nao foi possivel renovar a credencial!");
-            if (_leaseExpiredCallback) {
-              _leaseExpiredCallback->expired();
-            } else {
-              logger->log(INFO, "Nenhuma callback registrada.");
-            }
-          } else {
-            logger->log(INFO, "Credencial renovada!");
-            dispatcher->tm_event(this, bus->timeRenewing*1000);
-          }
-        } catch (CORBA::Exception& e) {
+  #endif
+  Openbus::RenewLeaseCallback::RenewLeaseCallback() {
+  }
+
+  void Openbus::RenewLeaseCallback::setLeaseExpiredCallback(
+    LeaseExpiredCallback* obj) 
+  {
+    _leaseExpiredCallback = obj;
+  }
+
+  void Openbus::RenewLeaseCallback::callback(
+    CORBA::Dispatcher* dispatcher, 
+    Event event) 
+  {
+    logger->log(INFO, "Openbus::RenewLeaseCallback::callback() BEGIN");
+    logger->indent();
+    if (bus && bus->connectionState == CONNECTED) {
+      logger->log(INFO, "Renovando credencial...");
+      try {
+        bool status = bus->iLeaseProvider->renewLease(*bus->credential, 
+          bus->lease);
+        if (!bus->timeRenewingFixe) {
+          bus->timeRenewing = bus->lease/3;
+        }
+        stringstream msg;
+        msg << "Proximo intervalo de renovacao: " << bus->timeRenewing << 
+          "s";
+        logger->log(INFO, msg.str());
+        if (!status) {
           logger->log(WARNING, "Nao foi possivel renovar a credencial!");
           if (_leaseExpiredCallback) {
             _leaseExpiredCallback->expired();
           } else {
             logger->log(INFO, "Nenhuma callback registrada.");
           }
+        } else {
+          logger->log(INFO, "Credencial renovada!");
+          dispatcher->tm_event(this, bus->timeRenewing*1000);
         }
-        logger->dedent(INFO, "Openbus::RenewLeaseCallback::callback() END");
+      } catch (CORBA::Exception& e) {
+        logger->log(WARNING, "Nao foi possivel renovar a credencial!");
+        if (_leaseExpiredCallback) {
+          _leaseExpiredCallback->expired();
+        } else {
+          logger->log(INFO, "Nenhuma callback registrada.");
+        }
       }
+      logger->dedent(INFO, "Openbus::RenewLeaseCallback::callback() END");
     }
-  #endif
+  }
 #endif
 
   void Openbus::terminationHandlerCallback(long signalType) {
@@ -208,21 +207,21 @@ namespace openbus {
   }
 #endif
 
-  void Openbus::commandLineParse(int argc, char** argv) {
+  void Openbus::commandLineParse() {
     timeRenewingFixe = false;
-    for (short idx = 1; idx < argc; idx++) {
-      if (!strcmp(argv[idx], "-OpenbusHost")) {
+    for (short idx = 1; idx < _argc; idx++) {
+      if (!strcmp(_argv[idx], "-OpenbusHost")) {
         idx++;
-        hostBus = argv[idx];
-      } else if (!strcmp(argv[idx], "-OpenbusPort")) {
+        hostBus = _argv[idx];
+      } else if (!strcmp(_argv[idx], "-OpenbusPort")) {
         idx++;
-        portBus = atoi(argv[idx]);
-      } else if (!strcmp(argv[idx], "-OpenbusTimeRenewing")) {
-        timeRenewing = (unsigned int) atoi(argv[++idx]);
+        portBus = atoi(_argv[idx]);
+      } else if (!strcmp(_argv[idx], "-OpenbusTimeRenewing")) {
+        timeRenewing = (unsigned int) atoi(_argv[++idx]);
         timeRenewingFixe = true;
-      } else if (!strcmp(argv[idx], "-OpenbusDebug")) {
+      } else if (!strcmp(_argv[idx], "-OpenbusDebug")) {
         idx++;
-        char *debugLevelStr = argv[idx];
+        char *debugLevelStr = _argv[idx];
         if (!strcmp(debugLevelStr, "ALL")) {
           debugLevel = ALL;
         } else if (!strcmp(debugLevelStr, "ERROR")) {
@@ -232,12 +231,12 @@ namespace openbus {
         } else if (!strcmp(debugLevelStr, "WARNING")) {
           debugLevel = WARNING;
         }
-      } else if (!strcmp(argv[idx], "-OpenbusDebugFile")) {
+      } else if (!strcmp(_argv[idx], "-OpenbusDebugFile")) {
         idx++;
-        debugFile = argv[idx];
-      } else if (!strcmp(argv[idx], "-OpenbusValidationPolicy")) {
+        debugFile = _argv[idx];
+      } else if (!strcmp(_argv[idx], "-OpenbusValidationPolicy")) {
         idx++;
-        char* credentialValidationPolicyStr = argv[idx];
+        char* credentialValidationPolicyStr = _argv[idx];
         if (!strcmp(credentialValidationPolicyStr, "NONE")) {
           credentialValidationPolicy = interceptors::NONE;
         } else if (!strcmp(credentialValidationPolicyStr, "ALWAYS")) { 
@@ -245,13 +244,13 @@ namespace openbus {
         } else if (!strcmp(credentialValidationPolicyStr, "CACHED")) { 
           credentialValidationPolicy = interceptors::CACHED;
         }
-      } else if (!strcmp(argv[idx], "-OpenbusFTConfigFilename")) {
+      } else if (!strcmp(_argv[idx], "-OpenbusFTConfigFilename")) {
         faultToleranceEnable = true;
         idx++;
-        FTConfigFilename = argv[idx];
-      } else if (!strcmp(argv[idx], "-OpenbusValidationTime")) {
+        FTConfigFilename = _argv[idx];
+      } else if (!strcmp(_argv[idx], "-OpenbusValidationTime")) {
           ini->getServerInterceptor()->setValidationTime(
-            (unsigned long) atoi(argv[++idx]));
+            (unsigned long) atoi(_argv[++idx]));
       } 
     }
   }
@@ -384,14 +383,21 @@ namespace openbus {
     */      
         logger->log(INFO, "Removendo callback de renovação de credencial...");
         orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
-        if (ini->_info) {
-          delete ini->_info;
-        }
+        // if (ini->_info) {
+        //   delete ini->_info;
+        // }
       #endif
-        logger->log(INFO, "Executando orb->shutdown(1) ...");
-        orb->shutdown(1);
+        logger->log(INFO, "Executando orb->shutdown() ...");
+        orb->shutdown(0);
         logger->log(INFO, "Executando orb->destroy() ...");
         orb->destroy();
+      #ifdef OPENBUS_MICO 
+        #ifdef MULTITHREAD
+        /* provisório: orb->shutdown(0) não está fazendo o while() do orb->run() terminar. */
+          runThread->terminate();
+          // delete runThread;
+        #endif
+      #endif
       }
     #ifndef OPENBUS_MICO
       mutex.lock();
@@ -431,7 +437,7 @@ namespace openbus {
   {
     _argc = argc;
     _argv = argv;
-    commandLineParse(_argc, _argv);
+    commandLineParse();
     logger->setOutput(debugFile);
     logger->setLevel(debugLevel);
     logger->log(INFO, "Openbus::init(int argc, char** argv) BEGIN");
@@ -444,6 +450,10 @@ namespace openbus {
     if (credentialValidationPolicy == interceptors::CACHED) {
       ini->getServerInterceptor()->registerValidationDispatcher();
     }
+    #ifdef MULTITHREAD
+      runThread = new RunThread();
+      runThread->start();
+    #endif
   #else
     if (credentialValidationPolicy == interceptors::CACHED) {
       ini->getServerInterceptor()->registerValidationTimer();
