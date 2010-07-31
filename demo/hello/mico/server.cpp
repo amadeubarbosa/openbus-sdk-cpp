@@ -37,12 +37,13 @@ class HelloImpl : virtual public POA_demoidl::hello::IHello {
     static void destruct(void* obj) {
       delete (HelloImpl*) obj;
     }
-    void sayHello() throw(CORBA::SystemException) {
+    long sayHello() throw(CORBA::SystemException) {
       cout << "Servant diz: HELLO!" << endl;
       access_control_service::Credential_var credential = 
         bus->getInterceptedCredential();
       cout << "Usuario OpenBus que fez a chamada: " << credential->owner.in()
         << endl;
+      return 0;
     };
 };
 
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]) {
 /* Descricao das facetas. */
   std::list<scs::core::ExtendedFacetDescription> extFacets;
   scs::core::ExtendedFacetDescription helloDesc;
-  helloDesc.name = "IHello";
+  helloDesc.name = "IHelloX";
   helloDesc.interface_name = "IDL:demoidl/hello/IHello:1.0";
   helloDesc.instantiator = HelloImpl::instantiate;
   helloDesc.destructor = HelloImpl::destruct;
