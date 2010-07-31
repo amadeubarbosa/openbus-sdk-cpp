@@ -45,7 +45,12 @@ USE_LUA51= YES
 SRC= server.cpp \
      stubs/hello.cc 
 
-genstubs:
+IDLS= ../../idl/hello.idl
+
+STUBS= stubs/hello.cc stubs/hello.h
+
+$(STUBS): $(IDLS)
 	mkdir -p stubs
 	cd stubs ; ${MICO_BIN}/idl --poa ../../idl/hello.idl
 
+genstubs: $(STUBS)

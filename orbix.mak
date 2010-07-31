@@ -50,7 +50,21 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
      FaultToleranceManager.cpp \
      $(PRECMP_DIR)/IOR.c
 
-genstubs:
+IDLS= ${OPENBUS_HOME}/idlpath/v1_05/core.idl \
+${OPENBUS_HOME}/idlpath/v1_05/scs.idl \
+${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl \
+${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl \
+${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl \
+${OPENBUS_HOME}/idlpath/v1_05/session_service.idl 
+
+STUBS= stubs/orbix/coreC.cxx stubs/orbix/core.hh \
+stubs/orbix/scsC.cxx stubs/orbix/scs.hh \
+stubs/orbix/access_control_serviceC.cxx stubs/orbix/access_control_service.hh \
+stubs/orbix/registry_serviceC.cxx stubs/orbix/registry_service.hh \
+stubs/orbix/fault_toleranceC.cxx stubs/orbix/fault_tolerance.hh \
+stubs/orbix/session_serviceC.cxx stubs/orbix/session_service.hh
+
+$(STUBS): $(IDLS)
 	mkdir -p stubs/orbix
 	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl 
 	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl 
@@ -58,6 +72,8 @@ genstubs:
 	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
 	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/core.idl
 	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base -poa ${OPENBUS_HOME}/idlpath/v1_05/scs.idl
+
+genstubs: $(STUBS)
 	
 sunos: $(OBJS)
 	rm -f lib/$(TEC_UNAME)/libopenbusorbix.a

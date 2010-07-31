@@ -22,9 +22,9 @@ ifeq ($(TEC_WORDSIZE), TEC_64)
   CPPFLAGS+= -m64
 endif
 
-MICO_BIN= ${MICODIR}/bin
+MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}
 MICO_INC= ${MICODIR}/include
-MICO_LIB=${MICODIR}/lib
+MICO_LIB=${MICODIR}/lib/${TEC_UNAME}
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
@@ -52,7 +52,21 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
      openbus/util/Helper.cpp \
      FaultToleranceManager.cpp
 
-genstubs:
+STUBS= stubs/mico/core.h stubs/mico/core.cc \
+stubs/mico/scs.h stubs/mico/scs.cc \
+stubs/mico/access_control_service.h stubs/mico/access_control_service.cc \
+stubs/mico/registry_service.h stubs/mico/registry_service.cc \
+stubs/mico/fault_tolerance.h stubs/mico/fault_tolerance.cc \
+stubs/mico/session_service.h stubs/mico/session_service.cc
+
+IDLS= ${OPENBUS_HOME}/idlpath/v1_05/core.idl \
+${OPENBUS_HOME}/idlpath/v1_05/scs.idl \
+${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl \
+${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl \
+${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl \
+${OPENBUS_HOME}/idlpath/v1_05/session_service.idl 
+
+$(STUBS): $(IDLS)
 	mkdir -p stubs/mico
 	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/core.idl stubs/mico
 	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/scs.idl stubs/mico
@@ -66,6 +80,8 @@ genstubs:
 	cd stubs/mico ; ${MICO_BIN}/idl session_service.idl
 	cd stubs/mico ; ${MICO_BIN}/idl core.idl
 	cd stubs/mico ; ${MICO_BIN}/idl scs.idl
+
+genstubs: $(STUBS)
 	
 sunos: $(OBJS)
 	rm -f lib/$(TEC_UNAME)/libopenbusmico.a

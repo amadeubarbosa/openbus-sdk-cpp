@@ -28,7 +28,12 @@ SRC= server.cpp \
      stubs/helloC.cxx \
      stubs/helloS.cxx
 
-genstubs:
+IDLS= ../../idl/hello.idl
+
+STUBS= stubs/helloC.cxx stubs/helloS.cxx stubs/hello.hh
+
+$(STUBS): $(IDLS)
 	mkdir -p stubs
 	cd stubs ; ${ORBIXBIN}/idl -base -poa ../../idl/hello.idl
 
+genstubs: $(STUBS)
