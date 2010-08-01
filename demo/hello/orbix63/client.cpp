@@ -52,16 +52,19 @@ int main(int argc, char* argv[]) {
     registryService->find(facetListHelper->getFacetList());
   delete facetListHelper;
 
-  CORBA::ULong idx = 0;
-  registry_service::ServiceOffer serviceOffer = serviceOfferList[idx];
+  if (serviceOfferList->length() > 0) {
+    registry_service::ServiceOffer serviceOffer = serviceOfferList[(CORBA::ULong) 0];
 
-  scs::core::IComponent_var component = serviceOffer.member;
-  CORBA::Object_var obj = component->getFacet("IDL:demoidl/hello/IHello:1.0");
-  demoidl::hello::IHello_var hello = demoidl::hello::IHello::_narrow(obj);
+    scs::core::IComponent_var component = serviceOffer.member;
+    CORBA::Object_var obj = component->getFacet("IDL:demoidl/hello/IHello:1.0");
+    demoidl::hello::IHello_var hello = demoidl::hello::IHello::_narrow(obj);
 
-  cout << "Fazendo chamada remota sayHello()..." << endl;
+    cout << "Fazendo chamada remota sayHello()..." << endl;
 
-  hello->sayHello();
+    hello->sayHello();
+  } else {
+    cout << "Nenhuma oferta encontrada." << endl;
+  }
 
   cout << "Desconectando-se do barramento..." << endl;
 
