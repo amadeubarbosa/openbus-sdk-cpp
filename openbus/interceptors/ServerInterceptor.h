@@ -42,7 +42,7 @@ namespace openbus {
         struct setCredentialCompare {
           bool operator() (
             const access_control_service::Credential& c1,
-            const access_control_service::Credential& c2)
+            const access_control_service::Credential& c2) const
           {
             return (strcmp(c1.identifier, c2.identifier) < 0);
           }

@@ -16,9 +16,11 @@ OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
 EXTRA_CONFIG=config
 
-ifeq "$(TEC_UNAME)" "SunOS58"
+ifeq "$(TEC_UNAME)" "SunOS510"
   USE_CC=Yes
-  CPPFLAGS= -g +p -KPIC -xarch=v8  -mt -D_REENTRANT
+  CPPFLAGS= -library=stlport4
+  LFLAGS= -library=stlport4
+  LIBS= nsl socket
 endif
 
 TARGETROOT=bin
@@ -41,6 +43,7 @@ SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES
+USE_NODEPEND= Yes
 
 SRC= server.cpp \
      stubs/hello.cc 
@@ -54,3 +57,4 @@ $(STUBS): $(IDLS)
 	cd stubs ; ${MICO_BIN}/idl --poa ../../idl/hello.idl
 
 genstubs: $(STUBS)
+

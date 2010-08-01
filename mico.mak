@@ -13,9 +13,11 @@ DEFINES+=OPENBUS_MICO
 #DBG=YES
 #CPPFLAGS= -fno-inline
 
-ifeq "$(TEC_SYSNAME)" "SunOS"
+ifeq "$(TEC_UNAME)" "SunOS510"
   USE_CC=Yes
-  CPPFLAGS= -g +p -KPIC -mt -D_REENTRANT
+  CPPFLAGS= -library=stlport4
+  AR= CC
+  STDLFLAGS= -xar -o	
 endif
 
 ifeq ($(TEC_WORDSIZE), TEC_64)
@@ -38,6 +40,7 @@ LDIR= ${MICO_LIB} ${OPENBUSLIB} ${MICO_LIB}
 LIBS= mico${MICOVERSION} scsmico crypto dl logger
 
 USE_LUA51= YES
+USE_NODEPEND= Yes
 
 SRC= openbus/interceptors/ClientInterceptor.cpp \
      openbus/interceptors/ServerInterceptor.cpp \
@@ -83,9 +86,7 @@ $(STUBS): $(IDLS)
 
 genstubs: $(STUBS)
 	
-sunos: $(OBJS)
-	rm -f lib/$(TEC_UNAME)/libopenbusmico.a
-	CC $(CPPFLAGS) -xar -instances=extern -o lib/$(TEC_UNAME)/libopenbusmico.a $(OBJS)
+sunosShared: $(OBJS)
 	rm -f lib/$(TEC_UNAME)/libopenbusmico.so
 	CC $(CPPFLAGS) -G -instances=extern -o lib/$(TEC_UNAME)/libopenbusmico.so $(OBJS)
 
