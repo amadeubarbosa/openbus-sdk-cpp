@@ -342,10 +342,10 @@ namespace openbus {
     logger->indent();
     if (bus) {
       logger->log(INFO, "Deletando lista de métodos interceptáveis...");
-      IfaceMap::iterator iter = ifaceMap.begin();
-      while (iter != ifaceMap.end()) {
+      MethodsNotInterceptable::iterator iter = methodsNotInterceptable.begin();
+      while (iter != methodsNotInterceptable.end()) {
         MethodSet *methods = iter->second;
-        ifaceMap.erase(iter++);
+        methodsNotInterceptable.erase(iter++);
         methods->clear();
         delete methods;
       }
@@ -930,28 +930,28 @@ namespace openbus {
     logger->dedent(INFO, "Openbus::finish() END");
   }
 
-  void Openbus::setInterceptable(string iface, string method,
-    bool interceptable)
+  void Openbus::setInterceptable(string interfaceRepID, string method,
+    bool isInterceptable)
   {
     MethodSet *methods;
-    IfaceMap::iterator iter;
+    MethodsNotInterceptable::iterator iter;
     /* Guarda apenas os métodos que não são interceptados */
-    if (interceptable) {
-      iter = ifaceMap.find(iface);
-      if (iter != ifaceMap.end()) {
+    if (isInterceptable) {
+      iter = methodsNotInterceptable.find(interfaceRepID);
+      if (iter != methodsNotInterceptable.end()) {
         methods = iter->second;
         methods->erase(method);
         if (methods->size() == 0) {
-          ifaceMap.erase(iter);
+          methodsNotInterceptable.erase(iter);
           delete methods;
         }
       }
     }
     else {
-      iter = ifaceMap.find(iface);
-      if (iter == ifaceMap.end()) {
+      iter = methodsNotInterceptable.find(interfaceRepID);
+      if (iter == methodsNotInterceptable.end()) {
         methods = new MethodSet();
-        ifaceMap[iface] = methods;
+        methodsNotInterceptable[interfaceRepID] = methods;
       }
       else
         methods = iter->second;
@@ -959,10 +959,10 @@ namespace openbus {
     }
   }
 
-  bool Openbus::isInterceptable(string iface, string method)
+  bool Openbus::isInterceptable(string interfaceRepID, string method)
   {
-    IfaceMap::iterator iter = ifaceMap.find(iface);
-    if (iter != ifaceMap.end()) {
+    MethodsNotInterceptable::iterator iter = methodsNotInterceptable.find(interfaceRepID);
+    if (iter != methodsNotInterceptable.end()) {
       MethodSet *methods = iter->second;
       MethodSet::iterator method_iter = methods->find(method);
       return (method_iter == methods->end());

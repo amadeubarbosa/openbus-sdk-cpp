@@ -68,7 +68,7 @@ namespace tecgraf {
 namespace openbus {
 
   typedef set<string> MethodSet;
-  typedef map<string, MethodSet*> IfaceMap;
+  typedef map<string, MethodSet*> MethodsNotInterceptable;
 
 /**
 * \brief Falha no processo de login, ou seja, o par nome de usuário e senha não
@@ -259,9 +259,10 @@ namespace openbus {
       unsigned long credentialsValidationTime;
 
      /**
-     * Cria o objeto registryService.
+     * Mapa de métodos relacionados a suas respectivas interfaces que devem ser ignorados 
+     * pelo interceptador servidor.
      */
-      IfaceMap ifaceMap;
+      MethodsNotInterceptable methodsNotInterceptable;
 
     /**
     * Trata os parâmetros de linha de comando.
@@ -631,24 +632,30 @@ namespace openbus {
       void finish(bool force);
 
     /**
-    * Configura os métodos da interface devem ser interceptados pelo servidor.
+    * Define se os métodos de uma determinada interface devem ou não ser interceptados pelo
+    * interceptador servidor.
     *
-    * @param[in] string iface RepID da interface.
+    * @param[in] string interfaceRepID RepID da interface.
     * @param[in] string method Nome do método.
-    * @param[in] bool interceptable Indica se o método deve ser interceptado.
+    * @param[in] bool isInterceptable Indica se o método deve ser interceptado.
     *
     */
-      void setInterceptable(string iface, string method, bool interceptable);
+      void setInterceptable(
+        string interfaceRepID, 
+        string method, 
+        bool isInterceptable);
 
     /**
     * Consulta se o método está sendo interceptado.
     *
-    * @param[in] string iface RepID da interface.
+    * @param[in] string interfaceRepID RepID da interface.
     * @param[in] string method Nome do método.
     *
     * @return true se o método é interceptado ou false caso contrário.
     */
-      bool isInterceptable(string iface, string method);
+      bool isInterceptable(
+        string interfaceRepID, 
+        string method);
 
    /**
    * Consulta se o mecanismo de tolerancia a falhas está ativado.
