@@ -34,10 +34,17 @@ SRC= runner.cpp \
      stubs/RGSTestS.cxx \
      RGSTestSuite.cpp
 
-cxxtest:
-	cxxtestgen.pl --runner=StdioPrinter -o runner.cpp RGSTestSuite.cpp
+STUBS= stubs/RGSTest.h stubs/RGSTest.cc
 
-genstubs:
+IDLS: ../../idl/RGSTest.idl
+
+$(STUBS): $(IDLS)
 	mkdir -p stubs
 	cd stubs ; ${ORBIXBIN}/idl -base -poa ../../../idl/RGSTest.idl
 
+genstubs: $(STUBS)
+
+runner.cpp: RGSTestSuite.cpp
+	cxxtestgen.pl --runner=ErrorPrinter --abort-on-fail -o runner.cpp RGSTestSuite.cpp
+
+cxxtest: runner.cpp

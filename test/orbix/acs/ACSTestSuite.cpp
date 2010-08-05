@@ -46,7 +46,7 @@ class ACSTestSuite: public CxxTest::TestSuite {
     access_control_service::Lease lease;
     access_control_service::Lease lease2;
     std::string OPENBUS_SERVER_HOST;
-    unsigned short OPENBUS_SERVER_PORT;
+    std::string OPENBUS_SERVER_PORT;
 
   public:
     ACSTestSuite() {
@@ -84,7 +84,7 @@ class ACSTestSuite: public CxxTest::TestSuite {
           0, 
           NULL,
           const_cast<char*>(OPENBUS_SERVER_HOST.c_str()), 
-          OPENBUS_SERVER_PORT);
+          atoi(OPENBUS_SERVER_PORT.c_str()));
         credential2 = new access_control_service::Credential;
       }
       catch (const char* errmsg) {
@@ -93,8 +93,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
     }
 
     ~ACSTestSuite() {
-      bus->disconnect();
-      delete bus;
     }
 
     void setUP() {
@@ -110,9 +108,9 @@ class ACSTestSuite: public CxxTest::TestSuite {
         const char* argv[] = {
           "exec", 
           "-OpenbusHost", 
-          "localhost", 
+          OPENBUS_SERVER_HOST.c_str(), 
           "-OpenbusPort", 
-          "2089",
+          OPENBUS_SERVER_PORT.c_str(),
           "-OpenbusDebug",
           "ALL"}; 
         bus->init(7, (char**) argv);
@@ -304,30 +302,15 @@ class ACSTestSuite: public CxxTest::TestSuite {
       bus->setThreadCredential(trueCredential);
     }
 
-    void testFinish() {
-#if 0
-      bus->disconnect();
-      bus->finish(true);
-      try {
-        if (!CORBA::is_nil(bus->getORB())) {
-          TS_FAIL("ORB não finalizado.");
-        }
-      } catch(CORBA::SystemException& e) {
-      }
-
-      delete bus;
-#endif
-    }
-
     void testAddLeaseExpiredCbBeforeConnect() {
       bus->disconnect();
       bus = Openbus::getInstance();
       const char* argv[] = {
         "exec", 
         "-OpenbusHost", 
-        "localhost", 
+        OPENBUS_SERVER_HOST.c_str(), 
         "-OpenbusPort", 
-        "2089",
+        OPENBUS_SERVER_PORT.c_str(), 
         "-OpenbusTimeRenewing",
         "8"};
       bus->init(7, (char**) argv);
@@ -350,9 +333,9 @@ class ACSTestSuite: public CxxTest::TestSuite {
       const char* argv[] = {
         "exec", 
         "-OpenbusHost", 
-        "localhost", 
+        OPENBUS_SERVER_HOST.c_str(), 
         "-OpenbusPort", 
-        "2089",
+        OPENBUS_SERVER_PORT.c_str(), 
         "-OpenbusTimeRenewing",
         "8"};
       bus->init(7, (char**) argv);
@@ -367,6 +350,19 @@ class ACSTestSuite: public CxxTest::TestSuite {
       if (!leaseExpiredCallbackAfter) {
         TS_FAIL("Método MyCallbackAfter::expired() não foi chamado.");
       }
+    }
+
+    void testFinish() {
+      bus->disconnect();
+      bus->finish(true);
+      try {
+        if (!CORBA::is_nil(bus->getORB())) {
+          TS_FAIL("ORB não finalizado.");
+        }
+      } catch(CORBA::SystemException& e) {
+      }
+
+      delete bus;
     }
 };
 

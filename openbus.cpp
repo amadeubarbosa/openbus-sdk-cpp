@@ -30,6 +30,9 @@ namespace openbus {
   Logger* Openbus::logger  = 0;
   char* Openbus::debugFile = 0;
   interceptors::ORBInitializerImpl* Openbus::ini = 0;
+  CORBA::ORB_var Openbus::orb = CORBA::ORB::_nil();
+  bool Openbus::orbRunning = true;
+  PortableServer::POA_var Openbus::poa = PortableServer::POA::_nil();
   lua_State* Openbus::luaState = 0;
   char* Openbus::FTConfigFilename = 0;
 #ifndef OPENBUS_MICO
@@ -116,6 +119,7 @@ namespace openbus {
       logger->log(WARNING, 
         "Não foi possível se desconectar corretamente do barramento."); 
     }
+    bus->stop();
     delete bus;
     logger->dedent(INFO, "Openbus::terminationHandlerCallback() END");
   }
@@ -255,14 +259,28 @@ namespace openbus {
     }
   }
 
-  void Openbus::createOrbPoa() {
-    logger->log(INFO, "Obtendo ORB...");
-  #ifdef OPENBUS_MICO
-    orb = CORBA::ORB_init(_argc, _argv);    
-  #else
-    orb = CORBA::ORB_init(_argc, _argv, "tecgraf.openbus");
-  #endif
-    getRootPOA();
+  void Openbus::createORB() {
+    if (CORBA::is_nil(orb)) {
+      logger->log(INFO, "Criando ORB...");
+    #ifdef OPENBUS_MICO
+      orb = CORBA::ORB_init(_argc, _argv);    
+    #else
+      orb = CORBA::ORB_init(_argc, _argv, "tecgraf.openbus");
+    #endif
+      getRootPOA();
+    }
+  }
+
+  void Openbus::setRegistryService() {
+    if (!iRegistryService) {
+      iRegistryService = getRegistryService(); 
+    }
+  }
+
+  void Openbus::initialize() {
+    hostBus = "";
+    portBus = 2089;
+    componentBuilder = 0;
   }
 
   void Openbus::registerInterceptors() {
@@ -278,51 +296,10 @@ namespace openbus {
     connectionState = DISCONNECTED;
     credential = 0;
     lease = 0;
-    iAccessControlService = 
-      access_control_service::IAccessControlService::_nil();
+    iAccessControlService = access_control_service::IAccessControlService::_nil();
     iRegistryService = 0;
     iLeaseProvider = access_control_service::ILeaseProvider::_nil();
     iComponentAccessControlService = scs::core::IComponent::_nil();
-  }
-
-  void Openbus::initialize() {
-    hostBus = "";
-    portBus = 2089;
-  #ifndef OPENBUS_MICO
-    orb = CORBA::ORB::_nil();
-  #else
-    orb = 0;
-  #endif
-    poa = PortableServer::POA::_nil();
-    componentBuilder = 0;
-  }
-
- void Openbus::createProxyToIAccessControlService() {
-    logger->log(INFO, "Openbus::createProxyToIAccessControlService() BEGIN");
-    logger->indent();
-    std::stringstream corbalocIC;
-    corbalocIC << "corbaloc::" << hostBus << ":" << portBus << "/openbus_v1_05";
-    logger->log(INFO, "corbaloc IC do ACS: " + corbalocIC.str());
-    CORBA::Object_var objIC = 
-      orb->string_to_object(corbalocIC.str().c_str());
-    iComponentAccessControlService = scs::core::IComponent::_narrow(objIC);
-    CORBA::Object_var objLP = iComponentAccessControlService->getFacet(
-      "IDL:tecgraf/openbus/core/v1_05/access_control_service/ILeaseProvider:1.0");
-    iLeaseProvider = access_control_service::ILeaseProvider::_narrow(objLP);
-    CORBA::Object_var objACS = iComponentAccessControlService->getFacet(
-      "IDL:tecgraf/openbus/core/v1_05/access_control_service/IAccessControlService:1.0");
-    iAccessControlService = 
-      access_control_service::IAccessControlService::_narrow(objACS);
-    CORBA::Object_var objFT = iComponentAccessControlService->getFacet(
-      "IDL:tecgraf/openbus/fault_tolerance/v1_05/IFaultTolerantService:1.0");
-    iFaultTolerantService = IFaultTolerantService::_narrow(objFT);
-    logger->dedent(INFO, "Openbus::createProxyToIAccessControlService() END");
-  }
-
-  void Openbus::setRegistryService() {
-    if (!iRegistryService) {
-      iRegistryService = getRegistryService(); 
-    }
   }
 
   Openbus::Openbus() {
@@ -353,44 +330,17 @@ namespace openbus {
         logger->log(INFO, "Deletando objeto componentBuilder...");
         delete componentBuilder;
       }
-    #ifndef OPENBUS_MICO
       if (!CORBA::is_nil(orb)) {
-    #else
-      if (orb) {
-    #endif
-        logger->log(INFO, "Desligando o orb...");
       #ifdef OPENBUS_MICO
-      /*
-      * Alternativa para um memory leak.
-      * Referente ao Mico 2.3.11.
-      */
-        CORBA::Codeset::free();
-   
-    /*    PInterceptor::PI::S_initializers_.erase(
-          PInterceptor::PI::S_initializers_.begin(),
-          PInterceptor::PI::S_initializers_.end());
-    */      
-      /*
-      * Alternativa para o segundo problema apresentado em OPENBUS-427.
-      * Referente ao Mico 2.3.11.
-      */
-    /*  PInterceptor::PI::S_client_req_int_.erase(
-          PInterceptor::PI::S_client_req_int_.begin(),
-          PInterceptor::PI::S_client_req_int_.end());
-        PInterceptor::PI::S_server_req_int_.erase(
-          PInterceptor::PI::S_server_req_int_.begin(),
-          PInterceptor::PI::S_server_req_int_.end());
-    */      
         logger->log(INFO, "Removendo callback de renovação de credencial...");
         orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
-        // if (ini->_info) {
-        //   delete ini->_info;
-        // }
+      #else
+        // logger->log(INFO, "Desligando o orb...");
+        // logger->log(INFO, "Executando orb->shutdown() ...");
+        // orb->shutdown(0);
+        // logger->log(INFO, "Executando orb->destroy() ...");
+        // orb->destroy();
       #endif
-        logger->log(INFO, "Executando orb->shutdown() ...");
-        orb->shutdown(0);
-        logger->log(INFO, "Executando orb->destroy() ...");
-        orb->destroy();
       #ifdef OPENBUS_MICO 
         #ifdef MULTITHREAD
         /* provisório: orb->shutdown(0) não está fazendo o while() do orb->run() terminar. */
@@ -435,15 +385,26 @@ namespace openbus {
     int argc,
     char** argv)
   {
+    stringstream msgLog;
     _argc = argc;
     _argv = argv;
     commandLineParse();
     logger->setOutput(debugFile);
     logger->setLevel(debugLevel);
-    logger->log(INFO, "Openbus::init(int argc, char** argv) BEGIN");
+    logger->log(INFO, "Openbus::init() BEGIN");
     logger->indent();
-    createOrbPoa();
+    msgLog << "hostBus: " << hostBus;
+    logger->log(INFO, msgLog.str());
+    msgLog.str("");
+    msgLog << "portBus: " << portBus;
+    logger->log(INFO, msgLog.str());
+    msgLog.str("");
+    msgLog << "credentialValidationPolicy: " << credentialValidationPolicy;
+    logger->log(INFO, msgLog.str());
+    msgLog.str("");
+    createORB();
     if (!componentBuilder) {
+      logger->log(INFO, "Criando ComponentBuilder...");
       componentBuilder = new scs::core::ComponentBuilder(orb, poa);
     }
   #ifdef OPENBUS_MICO
@@ -469,15 +430,10 @@ namespace openbus {
     unsigned short port,
     interceptors::CredentialValidationPolicy policy)
   {
-    logger->log(INFO, "Openbus::init(int argc, char** argv, char* host, \
-      unsigned short port) BEGIN");
-    logger->indent();
-    init(argc, argv);
     hostBus = host;
     portBus = port;
     credentialValidationPolicy = policy;
-    logger->dedent(INFO, "Openbus::init(int argc, char** argv, char* host, \
-      unsigned short port) END");
+    init(argc, argv);
   }
 
   bool Openbus::isConnected() {
@@ -500,18 +456,8 @@ namespace openbus {
   PortableServer::POA* Openbus::getRootPOA() {
     logger->log(INFO, "Openbus::getRootPOA() BEGIN");
     logger->indent();
-  #ifdef OPENBUS_MICO
-    /*
-    * Alternativa para o segundo problema apresentado em OPENBUS-426.
-    * Referente ao Mico 2.3.11.
-    */
-    if (PortableServer::_the_poa_current) {
-      delete PortableServer::_the_poa_current;
-    }
-  #endif
-
-    if (CORBA::is_nil(poa)) {
-      logger->log(INFO, "Obtendo POA...");
+    if (CORBA::is_nil(poa) && !CORBA::is_nil(orb)) {
+      logger->log(INFO, "Criando POA...");
       CORBA::Object_var poa_obj = orb->resolve_initial_references("RootPOA");
       poa = PortableServer::POA::_narrow(poa_obj);
       poa_manager = poa->the_POAManager();
@@ -587,6 +533,28 @@ namespace openbus {
   void Openbus::removeLeaseExpiredCallback()
   {
     _leaseExpiredCallback = 0;
+  }
+
+  void Openbus::createProxyToIAccessControlService() {
+    logger->log(INFO, "Openbus::createProxyToIAccessControlService() BEGIN");
+    logger->indent();
+    std::stringstream corbalocIC;
+    corbalocIC << "corbaloc::" << hostBus << ":" << portBus << "/openbus_v1_05";
+    logger->log(INFO, "corbaloc IC do ACS: " + corbalocIC.str());
+    CORBA::Object_var objIC = 
+      orb->string_to_object(corbalocIC.str().c_str());
+    iComponentAccessControlService = scs::core::IComponent::_narrow(objIC);
+    CORBA::Object_var objLP = iComponentAccessControlService->getFacet(
+      "IDL:tecgraf/openbus/core/v1_05/access_control_service/ILeaseProvider:1.0");
+    iLeaseProvider = access_control_service::ILeaseProvider::_narrow(objLP);
+    CORBA::Object_var objACS = iComponentAccessControlService->getFacet(
+      "IDL:tecgraf/openbus/core/v1_05/access_control_service/IAccessControlService:1.0");
+    iAccessControlService = 
+      access_control_service::IAccessControlService::_narrow(objACS);
+    CORBA::Object_var objFT = iComponentAccessControlService->getFacet(
+      "IDL:tecgraf/openbus/fault_tolerance/v1_05/IFaultTolerantService:1.0");
+    iFaultTolerantService = IFaultTolerantService::_narrow(objFT);
+    logger->dedent(INFO, "Openbus::createProxyToIAccessControlService() END");
   }
 
   registry_service::IRegistryService* Openbus::connect(
@@ -883,13 +851,14 @@ namespace openbus {
         logger->log(WARNING, "Não foi possível realizar logout.");
       }
       openbus::interceptors::ClientInterceptor::credential = 0;
-#if 0
+    #if 0
       if (credential) {
         delete credential;
       }
-#endif
+    #endif
       newState();
     #ifndef OPENBUS_MICO
+      mutex.unlock();
       if (renewLeaseTimer) {
         renewLeaseTimer->stop();
         delete renewLeaseTimer;
@@ -898,7 +867,6 @@ namespace openbus {
         renewLeaseThread = 0;
       }
       logger->dedent(INFO, "Openbus::disconnect() END");
-      mutex.unlock();
     #endif
       return status;
     } else {
@@ -912,7 +880,16 @@ namespace openbus {
   }
 
   void Openbus::run() {
-    orb->run();
+    orbRunning = true;
+    while (orbRunning) {
+      if (orb->work_pending()) {
+        orb->perform_work();
+      }
+    }
+  }
+
+  void Openbus::stop() {
+    orbRunning = false;
   }
 
   void Openbus::finish(bool force) {
@@ -922,11 +899,8 @@ namespace openbus {
     msg << "Desligando orb com force = " << force; 
     logger->log(INFO, msg.str());
     orb->shutdown(force);
-  #ifndef OPENBUS_MICO
+    orb->destroy();
     orb = CORBA::ORB::_nil();
-  #else
-    orb = 0;
-  #endif
     logger->dedent(INFO, "Openbus::finish() END");
   }
 

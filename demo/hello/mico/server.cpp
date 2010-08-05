@@ -53,15 +53,7 @@ void termination_handler(int p) {
   } catch(CORBA::Exception& e) {
     cout << "Nao foi possivel remover a oferta de servico." << endl;
   }
-  try {
-    if (bus->isConnected()) {
-      bus->disconnect();
-    }
-  } catch(CORBA::Exception& e) {
-    cout << "Nao foi possivel se desconectar corretamente do barramento." 
-      << endl; 
-  }
-  delete bus;
+  openbus::Openbus::terminationHandlerCallback((long) signal);
 }
 
 int main(int argc, char* argv[]) {

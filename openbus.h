@@ -118,17 +118,37 @@ namespace openbus {
       static char* debugFile;
       Level debugLevel;
 
-  #ifndef OPENBUS_MICO
+    #ifndef OPENBUS_MICO
     /**
     * Mutex. 
     */
       static IT_Mutex mutex;
-  #endif
+    #endif
 
     /**
     * A instância única do barramento.
     */
       static Openbus* bus;
+
+    /**
+    * Inicializador do ORB. 
+    */
+      static interceptors::ORBInitializerImpl* ini;
+
+    /**
+    * ORB. 
+    */
+      static CORBA::ORB_var orb;
+      
+    /**
+    * Determina se o ORB está escutando requisições CORBA.
+    */
+      static bool orbRunning;
+
+    /**
+    * POA.
+    */
+      static PortableServer::POA_var poa;
 
     /**
     * Máquina virtual de Lua.
@@ -174,25 +194,6 @@ namespace openbus {
     * Ponteiro para o stub do serviço de tolerancia a falhas.
     */
       IFaultTolerantService_var iFaultTolerantService;
-
-    /**
-    * Inicializador do ORB. 
-    */
-      static interceptors::ORBInitializerImpl* ini;
-
-    /**
-    * ORB. 
-    */
-    #ifndef OPENBUS_MICO
-      CORBA::ORB_var orb;
-    #else
-      CORBA::ORB* orb;
-    #endif
-
-    /**
-    * POA.
-    */
-      PortableServer::POA_var poa;
 
     /**
     * Fábrica de componentes SCS. 
@@ -277,7 +278,7 @@ namespace openbus {
     /**
     * Cria implicitamente um ORB e um POA. 
     */
-      void createOrbPoa();
+      void createORB();
 
     /**
     * Registra os interceptadores cliente e servidor. 
@@ -446,6 +447,9 @@ namespace openbus {
     *     mecanismo de tolerância a falhas.
     *
     *   "-OpenbusTimeRenewing": Tempo em segundos de renovação da credencial.
+    *   
+    *   Atenção: Os parâmetros de linha de comando podem sobrescrer os parâmetros de função:
+    *     host, port e policy.
     *
     * @param[in] argc
     * @param[in] argv
@@ -623,13 +627,18 @@ namespace openbus {
     * Loop que processa requisições CORBA. [execução do orb->run()]. 
     */
       void run();
+      
+    /**
+    * Pára de processar requisições CORBA. Finaliza a execução do run.
+    */  
+      void stop();
 
     /**
     * Finaliza a execução do ORB.
     *
     * @param[in] bool force Se a finalização deve ser forçada ou não.
     */
-      void finish(bool force);
+      static void finish(bool force = 0);
 
     /**
     * Define se os métodos de uma determinada interface devem ou não ser interceptados pelo

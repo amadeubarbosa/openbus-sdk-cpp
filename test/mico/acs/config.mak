@@ -41,6 +41,7 @@ USE_LUA51= YES
 
 SRC= runner.cpp
 
-cxxtest:
-	cxxtestgen.pl --runner=StdioPrinter -o runner.cpp ACSTestSuite.cpp
+runner.cpp: ACSTestSuite.cpp
+	cxxtestgen.pl --runner=ErrorPrinter --abort-on-fail -o runner.cpp ACSTestSuite.cpp
 
+cxxtest: runner.cpp

@@ -16,29 +16,11 @@ namespace openbus {
     bool ORBInitializerImpl::singleInstance = false;
     ORBInitializerImpl::ORBInitializerImpl()
     {
-/*    clientInterceptor = 0;
-      serverInterceptor = 0;
-      */
-      _info = 0;
     }
 
     ORBInitializerImpl::~ORBInitializerImpl() {
       Openbus::logger->log(INFO, "ORBInitializerImpl::~ORBInitializerImpl() BEGIN");
       Openbus::logger->indent();
-    #ifdef OPENBUS_MICO
-/*
-      if (clientInterceptor) {
-        delete clientInterceptor;
-      }
-      if (serverInterceptor) {
-        delete serverInterceptor;
-      }
-      if (_info) {
-        delete _info->orb_id();
-        delete _info;
-      }
-      */
-    #endif
       Openbus::logger->dedent(INFO, "ORBInitializerImpl::~ORBInitializerImpl() END");
     }
 
@@ -47,31 +29,11 @@ namespace openbus {
       Openbus::logger->log(INFO, "ORBInitializerImpl::pre_init() BEGIN");
       Openbus::logger->indent();
       _info = info;
-    #ifdef OPENBUS_MICO
-/*      if (clientInterceptor) {
-        delete clientInterceptor;
-      }
-      if (serverInterceptor) {
-        delete serverInterceptor;
-      }
-      if (_info) {
-        delete _info;
-      }
-      */
-      if (!singleInstance) {
-        singleInstance = true;
-    #endif
       IOP::CodecFactory_var codec_factory = _info->codec_factory();
       IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
       codec = codec_factory->create_codec(cdr_encoding);
 
-    #ifdef OPENBUS_MICO
-      clientInterceptor = \
-          new ClientInterceptor(codec);
-    #else
-      PortableInterceptor::ClientRequestInterceptor_var clientInterceptor = \
-          new ClientInterceptor(codec);
-    #endif
+      PortableInterceptor::ClientRequestInterceptor_var clientInterceptor = new ClientInterceptor(codec);
       _info->add_client_request_interceptor(clientInterceptor);
 
       slotid = _info->allocate_slot_id();
@@ -88,9 +50,6 @@ namespace openbus {
       PortableInterceptor::ServerRequestInterceptor_var 
         serverRequestInterceptor = serverInterceptor ;
       _info->add_server_request_interceptor(serverRequestInterceptor) ;
-    #ifdef OPENBUS_MICO
-      }
-    #endif
       Openbus::logger->dedent(INFO, "ORBInitializerImpl::pre_init() END");
     }
 

@@ -51,7 +51,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
     openbus::util::PropertyListHelper* propertyListHelper2;
     scs::core::IComponent_var component;
     std::string OPENBUS_SERVER_HOST;
-    unsigned short OPENBUS_SERVER_PORT;
+    std::string OPENBUS_SERVER_PORT;
     std::string OPENBUS_USERNAME;
     std::string OPENBUS_PASSWORD;
     scs::core::ComponentBuilder* componentBuilder;
@@ -96,22 +96,6 @@ class RGSTestSuite: public CxxTest::TestSuite {
           }
         }
         inFile.close();
-        bus = Openbus::getInstance();
-        const char* argv[] = {
-          "exec",
-          "-OpenbusDebug",
-          "ALL"}; 
-        bus->init(
-          3, 
-          (char**) argv, 
-          const_cast<char*>(OPENBUS_SERVER_HOST.c_str()), 
-          OPENBUS_SERVER_PORT);
-        credential = new access_control_service::Credential;
-        rgs = bus->connect(
-         "TesteBarramento", 
-         "TesteBarramento.key", 
-         "AccessControlService.crt"); 
-        iAccessControlService = bus->getAccessControlService();
       }
       catch ( const char* errmsg ) {
         TS_FAIL( errmsg );
@@ -119,22 +103,6 @@ class RGSTestSuite: public CxxTest::TestSuite {
     }
 
     ~RGSTestSuite() {
-      try {
-/* Temporário... Vide OPENBUS-424.
-
-        delete context;
-*/
-        if (bus) {
-          if (bus->disconnect())
-            delete bus;
-        }
-        delete propertyListHelper;
-        delete propertyListHelper2;
-        delete credential;
-      }
-      catch (const char* errmsg ) {
-        TS_FAIL(errmsg);
-      }
     }
 
     void setUP() {
@@ -144,6 +112,22 @@ class RGSTestSuite: public CxxTest::TestSuite {
     }
 
     void testGetRegisterService() {
+      bus = Openbus::getInstance();
+      const char* argv[] = {
+        "exec",
+        "-OpenbusDebug",
+        "ALL"}; 
+      bus->init(
+        3, 
+        (char**) argv, 
+        const_cast<char*>(OPENBUS_SERVER_HOST.c_str()), 
+        (unsigned int) atoi(OPENBUS_SERVER_PORT.c_str()));
+      credential = new access_control_service::Credential;
+      rgs = bus->connect(
+       "TesteBarramento", 
+       "TesteBarramento.key", 
+       "AccessControlService.crt"); 
+      iAccessControlService = bus->getAccessControlService();
       try {
         rgs = bus->getRegistryService();
         TS_ASSERT(rgs);
@@ -155,10 +139,10 @@ class RGSTestSuite: public CxxTest::TestSuite {
     void testRegister() {
       try {
         componentBuilder = bus->getComponentBuilder();
-
+      
         scs::core::ComponentId id;
         fillComponentId(id);
-
+      
       /* Descrição das facetas. */
         std::list<scs::core::ExtendedFacetDescription> extFacets;
         scs::core::ExtendedFacetDescription desc;
@@ -167,13 +151,13 @@ class RGSTestSuite: public CxxTest::TestSuite {
         desc.instantiator = RGSTest::instantiate;
         desc.destructor = RGSTest::destruct;
         extFacets.push_back(desc);
-
+      
         context = componentBuilder->newComponent(extFacets, id);
         component = context->getIComponent();
-
+      
         propertyListHelper = new openbus::util::PropertyListHelper();
         propertyListHelper->add("description", "blabla");
-
+      
         registry_service::ServiceOffer serviceOffer;
         serviceOffer.properties = propertyListHelper->getPropertyList();
         serviceOffer.member = component;
@@ -187,10 +171,10 @@ class RGSTestSuite: public CxxTest::TestSuite {
           for (idx = 0; idx < length; idx++) {
             cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
           }
-
+      
           exit(-1);
         }
-
+      
         propertyListHelper2 = new openbus::util::PropertyListHelper();
         serviceOffer.properties = propertyListHelper2->getPropertyList();
         serviceOffer.member = component;
@@ -204,7 +188,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
           for (idx = 0; idx < length; idx++) {
             cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
           }
-
+      
           exit(-1);
         }
       } catch (const char* errmsg) {
@@ -216,7 +200,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
       openbus::util::FacetListHelper* facetListHelper = \
         new openbus::util::FacetListHelper();
       facetListHelper->add("IRGSTest");
-
+      
       registry_service::ServiceOfferList* serviceOfferList = 
         rgs->find(facetListHelper->getFacetList());
       TS_ASSERT(serviceOfferList->length() == 2);
@@ -228,7 +212,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
       openbus::util::FacetListHelper* facetListHelper = \
         new openbus::util::FacetListHelper();
       facetListHelper->add("IRGSTest");
-
+      
       registry_service::ServiceOfferList* serviceOfferList = \
         rgs->findByCriteria(
           facetListHelper->getFacetList(),

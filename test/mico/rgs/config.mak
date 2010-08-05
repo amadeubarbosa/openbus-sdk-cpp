@@ -44,10 +44,19 @@ SRC= runner.cpp \
      stubs/RGSTest.cc \
      RGSTestSuite.cpp
 
-cxxtest:
-	cxxtestgen.pl --runner=StdioPrinter -o runner.cpp RGSTestSuite.cpp
+STUBS= stubs/RGSTest.h stubs/RGSTest.cc
 
-genstubs:
+IDLS: ../../idl/RGSTest.idl
+
+$(STUBS): $(IDLS)
 	mkdir -p stubs
 	cd stubs ; ${MICO_BIN}/idl --poa ../../../idl/RGSTest.idl
+
+genstubs: $(STUBS)
+
+runner.cpp: RGSTestSuite.cpp
+	cxxtestgen.pl --runner=ErrorPrinter --abort-on-fail -o runner.cpp RGSTestSuite.cpp
+
+cxxtest: runner.cpp
+
 
