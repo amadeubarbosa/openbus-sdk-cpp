@@ -22,11 +22,6 @@ namespace openbus {
       Openbus::logger->indent();
       cdr_codec = pcdr_codec;
       faultToleranceManager = FaultToleranceManager::getInstance();
-      Openbus* bus = Openbus::getInstance();
-      Host* ACSHost = new Host;
-      ACSHost->name = (char*) bus->hostBus.c_str();
-      ACSHost->port = bus->portBus;
-      faultToleranceManager->setACSHostInUse(ACSHost);
       if (Openbus::FTConfigFilename) {
         faultToleranceManager->loadConfig(Openbus::FTConfigFilename);
       }
@@ -95,18 +90,21 @@ namespace openbus {
         CORBA::SystemException,
         PortableInterceptor::ForwardRequest)
     {
-      Openbus::logger->indent(INFO, 
-        "ClientInterceptor::receive_exception() BEGIN");
+      Openbus::logger->log(INFO, "ClientInterceptor::receive_exception() BEGIN");
+      Openbus::logger->indent();
       stringstream out;
       const char* received_exception_id = ri->received_exception_id();
       PortableInterceptor::ReplyStatus reply_status = ri->reply_status();
       out << "Exception: " << received_exception_id;
       Openbus::logger->log(INFO, out.str());
       out.str(" ");
-      out << "Reply Status: " << reply_status << endl;
+      out << "Reply Status: " << reply_status;
       Openbus::logger->log(INFO, out.str());
       out.str(" ");
-      if (reply_status == 1) {
+      if (reply_status == 1 
+          && 
+          strcmp(received_exception_id, "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) 
+      {
         Openbus::logger->log(ERROR, "TRATANDO EXCEÇÂO RECEBIDA DO SERVIDOR!");
         const char* operation = ri->operation();
         out << "Método: " << operation;

@@ -66,11 +66,6 @@ namespace openbus {
       void loadConfig(char* filename);
 
     /**
-    * Define a maquina em que esta o ACS em uso.
-    */
-      void setACSHostInUse(Host* host);
-
-    /**
     * Substitui a referência do ACS atual por uma outra replica 
     * do ACS que esteja na lista de replicas.
     */

@@ -96,17 +96,14 @@ namespace openbus {
     return faultToleranceManager;
   }
 
-  void FaultToleranceManager::setACSHostInUse(Host* host) {
-    acsHostInUse = host;
-  }
-
   Host* FaultToleranceManager::updateACSHostInUse() {
     Openbus::logger->log(INFO, 
       "FaultToleranceManager::updateACSHostInUse() BEGIN");
     Openbus::logger->indent();
+    Openbus* bus = Openbus::getInstance();
     stringstream out;
-    out << "Replica ACS em uso: [" << acsHostInUse->name << "::" << 
-      acsHostInUse->port << "]";
+    out << "Replica ACS em uso: [" << bus->hostBus << "::" << 
+      bus->portBus << "]";
     Openbus::logger->log(INFO, out.str());
     out.str(" ");
     if (acsHosts.size() > 0) {  
