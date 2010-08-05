@@ -233,10 +233,24 @@ class RGSTestSuite: public CxxTest::TestSuite {
       delete serviceOfferList;
       delete facetListHelper;
     }
-
-    void testUnregister() {
+    
+    void testSetInterceptable() {
+      openbus::util::FacetListHelper* facetListHelper = new openbus::util::FacetListHelper();
+      facetListHelper->add("IRGSTest");
+      
+      registry_service::ServiceOfferList_var serviceOfferList = rgs->find(facetListHelper->getFacetList());
+      registry_service::ServiceOffer serviceOffer = serviceOfferList[(CORBA::ULong) 0];
+      scs::core::IComponent_var component = serviceOffer.member;
+      CORBA::Object_var obj = component->getFacet("IDL:IRGSTest:1.0");
       TS_ASSERT(rgs->unregister(registryIdentifier));
       TS_ASSERT(rgs->unregister(registryIdentifier2));
+     bus->setInterceptable("IDL:IRGSTest:1.0", "foo", false);
+      iAccessControlService->logout(*(bus->getCredential()));
+      CORBA::Request_var request = obj->_request("foo");
+      request->invoke();
+    }
+
+    void testUnregister() {
       TS_ASSERT(!rgs->unregister((char*) "ID"));
     }
 };
