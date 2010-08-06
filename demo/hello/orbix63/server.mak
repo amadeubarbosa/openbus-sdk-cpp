@@ -28,7 +28,7 @@ SRC= server.cpp \
      stubs/helloC.cxx \
      stubs/helloS.cxx
 
-IDLS= ../../idl/hello.idl
+IDLS= ../idl/hello.idl
 
 STUBS= stubs/helloC.cxx stubs/helloS.cxx stubs/hello.hh
 

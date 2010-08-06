@@ -48,7 +48,7 @@ USE_NODEPEND= Yes
 SRC= server.cpp \
      stubs/hello.cc 
 
-IDLS= ../../idl/hello.idl
+IDLS= ../idl/hello.idl
 
 STUBS= stubs/hello.cc stubs/hello.h
 
@@ -57,4 +57,3 @@ $(STUBS): $(IDLS)
 	cd stubs ; ${MICO_BIN}/idl --poa ../../idl/hello.idl
 
 genstubs: $(STUBS)
-
