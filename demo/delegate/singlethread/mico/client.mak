@@ -1,9 +1,6 @@
 PROJNAME=client
 APPNAME=${PROJNAME}
 
-DEFINES=SCS_MICO
-DEFINES+=OPENBUS_MICO
-
 #Descomente as duas linhas abaixo para o uso em Valgrind.
 #DBG=YES
 #CPPFLAGS= -fno-inline

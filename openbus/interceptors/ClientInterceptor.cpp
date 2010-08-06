@@ -6,7 +6,7 @@
 
 #include "../../openbus.h"
 
-#ifndef OPENBUS_MICO
+#ifdef OPENBUS_ORBIX
   #include <it_ts/thread.h>
 #endif
 
@@ -121,14 +121,7 @@ namespace openbus {
         out.str(" ");
         
         Openbus* bus = Openbus::getInstance();
-      #ifdef OPENBUS_MICO
-        CORBA::Long objectKeyLen;
-        const CORBA::Octet* objectKeyOct = ri->target()->_ior()->get_profile(0) \
-          ->objectkey(objectKeyLen);
-        char* objectKey = new char[objectKeyLen+1];
-        memcpy(objectKey, objectKeyOct, objectKeyLen);
-        objectKey[objectKeyLen] = '\0';
-      #else
+      #ifdef OPENBUS_ORBIX
         char* objectKey = "(null)";
         lua_getglobal(Openbus::luaState, "IOR");
         lua_getfield(Openbus::luaState, -1, "IIOPProfileGetObjectKey");
@@ -141,6 +134,13 @@ namespace openbus {
         } else {
           objectKey = (char*) lua_tostring(Openbus::luaState, -1);
         }
+      #else
+        CORBA::Long objectKeyLen;
+        const CORBA::Octet* objectKeyOct = ri->target()->_ior()->get_profile(0) \
+          ->objectkey(objectKeyLen);
+        char* objectKey = new char[objectKeyLen+1];
+        memcpy(objectKey, objectKeyOct, objectKeyLen);
+        objectKey[objectKeyLen] = '\0';
       #endif
         
         out << "ObjectKey: " << objectKey;
@@ -159,19 +159,7 @@ namespace openbus {
 
             bus->createProxyToIAccessControlService();
 
-          #ifdef OPENBUS_MICO
-            if (!strcmp(objectKey, "LP_v1_05")) {
-              throw ForwardRequest(bus->iLeaseProvider, false);
-            } else if (!strcmp(objectKey, "ACS_v1_05")) {
-              throw ForwardRequest(bus->iAccessControlService, false);
-            } else if (!strcmp(objectKey, "RS_v1_05")) {
-              throw ForwardRequest(bus->iRegistryService, false);
-            } else if (!strcmp(objectKey, "openbus_v1_05")) {
-              throw ForwardRequest(bus->iComponentAccessControlService, false);
-            } else if (!strcmp(objectKey, "FTACS_v1_05")) {
-              throw ForwardRequest(bus->iFaultTolerantService, false);
-            }
-          #else
+          #ifdef OPENBUS_ORBIX
             if (!strcmp(objectKey, "LP_v1_05")) {
               throw ForwardRequest(bus->iLeaseProvider);
             } else if (!strcmp(objectKey, "ACS_v1_05")) {
@@ -182,6 +170,18 @@ namespace openbus {
               throw ForwardRequest(bus->iComponentAccessControlService);
             } else if (!strcmp(objectKey, "FTACS_v1_05")) {
               throw ForwardRequest(bus->iFaultTolerantService);
+            }
+          #else
+            if (!strcmp(objectKey, "LP_v1_05")) {
+              throw ForwardRequest(bus->iLeaseProvider, false);
+            } else if (!strcmp(objectKey, "ACS_v1_05")) {
+              throw ForwardRequest(bus->iAccessControlService, false);
+            } else if (!strcmp(objectKey, "RS_v1_05")) {
+              throw ForwardRequest(bus->iRegistryService, false);
+            } else if (!strcmp(objectKey, "openbus_v1_05")) {
+              throw ForwardRequest(bus->iComponentAccessControlService, false);
+            } else if (!strcmp(objectKey, "FTACS_v1_05")) {
+              throw ForwardRequest(bus->iFaultTolerantService, false);
             }
           #endif
           }

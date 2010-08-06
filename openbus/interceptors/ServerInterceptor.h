@@ -5,14 +5,14 @@
 #ifndef SERVERINTERCEPTOR_H_
 #define SERVERINTERCEPTOR_H_
 
-#ifdef OPENBUS_MICO
-  #include <CORBA.h>
-  #include "../../stubs/mico/access_control_service.h"
-#else
+#ifdef OPENBUS_ORBIX
   #include <orbix/corba.hh>
   #include <omg/PortableInterceptor.hh>
   #include <it_ts/timer.h>
   #include "../../stubs/orbix/access_control_service.hh"
+#else
+  #include <CORBA.h>
+  #include "../../stubs/mico/access_control_service.h"
 #endif
 
 #include <set>
@@ -25,7 +25,7 @@ namespace openbus {
   namespace interceptors {
 
     class ServerInterceptor : public ServerRequestInterceptor
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
                               ,public IT_CORBA::RefCountedLocalObject 
     #endif
     {
@@ -53,7 +53,18 @@ namespace openbus {
         static set<access_control_service::Credential>::iterator 
           itCredentialsCache;
 
-      #ifdef OPENBUS_MICO
+      #ifdef OPENBUS_ORBIX
+        class CredentialsValidationThread : public IT_ThreadBody {
+          public:
+            CredentialsValidationThread();
+            ~CredentialsValidationThread();
+            void* run();
+        };
+        friend class ServerInterceptor::CredentialsValidationThread;
+
+        CredentialsValidationThread* credentialsValidationThread;
+        IT_Timer* credentialsValidationTimer;
+      #else
         class CredentialsValidationCallback : 
           public CORBA::DispatcherCallback 
         {
@@ -67,18 +78,6 @@ namespace openbus {
       * Callback de validação do cache de credenciais.
       */
         CredentialsValidationCallback credentialsValidationCallback;
-
-      #else
-        class CredentialsValidationThread : public IT_ThreadBody {
-          public:
-            CredentialsValidationThread();
-            ~CredentialsValidationThread();
-            void* run();
-        };
-        friend class ServerInterceptor::CredentialsValidationThread;
-
-        CredentialsValidationThread* credentialsValidationThread;
-        IT_Timer* credentialsValidationTimer;
       #endif
 
       public:
@@ -94,10 +93,10 @@ namespace openbus {
         char* name();
         void destroy();
         access_control_service::Credential_var getCredential();
-      #ifdef OPENBUS_MICO
-        void registerValidationDispatcher();
-      #else
+      #ifdef OPENBUS_ORBIX
         void registerValidationTimer();
+      #else
+        void registerValidationDispatcher();
       #endif
         void setValidationTime(unsigned long pValidationTime);
         unsigned long getValidationTime();

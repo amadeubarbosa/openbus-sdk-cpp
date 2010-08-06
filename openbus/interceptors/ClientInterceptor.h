@@ -7,13 +7,13 @@
 
 #include <map>
 #include <string.h>
-#ifdef OPENBUS_MICO
-  #include <CORBA.h>
-  #include "../../stubs/mico/access_control_service.h"
-#else
+#ifdef OPENBUS_ORBIX
   #include <orbix/corba.hh>
   #include <omg/PortableInterceptor.hh>
   #include "../../stubs/orbix/access_control_service.hh"
+#else
+  #include <CORBA.h>
+  #include "../../stubs/mico/access_control_service.h"
 #endif
 #include "../../FaultToleranceManager.h"
 
@@ -23,7 +23,7 @@ using namespace tecgraf::openbus::core::v1_05;
 namespace openbus {
   namespace interceptors {
     class ClientInterceptor : public ClientRequestInterceptor 
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
                               ,public IT_CORBA::RefCountedLocalObject 
     #endif
     {

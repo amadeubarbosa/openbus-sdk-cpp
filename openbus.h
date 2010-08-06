@@ -12,12 +12,7 @@
 #include "openbus/interceptors/ORBInitializerImpl.h"
 #include <ComponentBuilder.h>
 
-#ifdef OPENBUS_MICO
-  #include <CORBA.h>
-  #include "stubs/mico/access_control_service.h"
-  #include "stubs/mico/session_service.h"
-  #include "stubs/mico/fault_tolerance.h"
-#else
+#ifdef OPENBUS_ORBIX
   #include <omg/orb.hh>
   #include <it_ts/thread.h>
   #include <it_ts/timer.h>
@@ -25,6 +20,11 @@
   #include "stubs/orbix/access_control_service.hh"
   #include "stubs/orbix/session_service.hh"
   #include "stubs/orbix/fault_tolerance.hh"
+#else
+  #include <CORBA.h>
+  #include "stubs/mico/access_control_service.h"
+  #include "stubs/mico/session_service.h"
+  #include "stubs/mico/fault_tolerance.h"
 #endif
 
 #include <stdexcept>
@@ -118,7 +118,7 @@ namespace openbus {
       static char* debugFile;
       Level debugLevel;
 
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
     /**
     * Mutex. 
     */
@@ -307,7 +307,7 @@ namespace openbus {
     */
       static LeaseExpiredCallback* _leaseExpiredCallback;
 
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       IT_Thread renewLeaseIT_Thread;
 
     /**
@@ -329,7 +329,7 @@ namespace openbus {
       static RenewLeaseThread* renewLeaseThread;
     #endif
 
-  #ifdef OPENBUS_MICO
+  #ifndef OPENBUS_ORBIX
     #ifdef MULTITHREAD
       class RunThread : public MICOMT::Thread {
         public:

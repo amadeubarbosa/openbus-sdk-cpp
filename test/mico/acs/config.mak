@@ -1,9 +1,6 @@
 PROJNAME= ACSTester
 APPNAME= acs
 
-DEFINES=SCS_MICO
-DEFINES+=OPENBUS_MICO
-
 #Descomente a linha abaixo para utilizar o Openbus Multithread.
 #LIBS=pthread
 

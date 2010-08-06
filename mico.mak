@@ -1,9 +1,6 @@
 PROJNAME= openbusmico
 LIBNAME= ${PROJNAME}
 
-DEFINES=SCS_MICO
-DEFINES+=OPENBUS_MICO
-
 #Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
 # compilado com suporte a multithread.

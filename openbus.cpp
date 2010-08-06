@@ -11,17 +11,17 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef OPENBUS_MICO
-  #include <CORBA.h>
-  #include <stubs/mico/scs.h>
-  #include <mico/pi_impl.h>
-#else
+#ifdef OPENBUS_ORBIX
   #include <omg/orb.hh>
   #include <it_ts/thread.h>
   #include <stubs/orbix/scs.hh>
-extern "C" {
-  #include <IOR.h>
-}
+  extern "C" {
+    #include <IOR.h>
+  }
+#else
+  #include <CORBA.h>
+  #include <stubs/mico/scs.h>
+  #include <mico/pi_impl.h>
 #endif
 
 #define CHALLENGE_SIZE 36
@@ -35,12 +35,12 @@ namespace openbus {
   PortableServer::POA_var Openbus::poa = PortableServer::POA::_nil();
   lua_State* Openbus::luaState = 0;
   char* Openbus::FTConfigFilename = 0;
-#ifndef OPENBUS_MICO
+#ifdef OPENBUS_ORBIX
   IT_Mutex Openbus::mutex;
 #endif
   Openbus* Openbus::bus = 0;
   Openbus::LeaseExpiredCallback* Openbus::_leaseExpiredCallback = 0;
-#ifndef OPENBUS_MICO
+#ifdef OPENBUS_ORBIX
   Openbus::RenewLeaseThread* Openbus::renewLeaseThread = 0;
   IT_Timer* Openbus::renewLeaseTimer = 0;
 #else
@@ -49,7 +49,7 @@ namespace openbus {
   #endif
 #endif
 
-#ifdef OPENBUS_MICO
+#ifndef OPENBUS_ORBIX
   #ifdef MULTITHREAD
     void Openbus::RunThread::_run(void*) {
       logger->log(INFO, "*** RunThread iniciada...");
@@ -124,7 +124,7 @@ namespace openbus {
     logger->dedent(INFO, "Openbus::terminationHandlerCallback() END");
   }
 
-#ifndef OPENBUS_MICO
+#ifdef OPENBUS_ORBIX
   Openbus::RenewLeaseThread::RenewLeaseThread() {
   }
 
@@ -137,23 +137,23 @@ namespace openbus {
   void* Openbus::RenewLeaseThread::run() {
     unsigned int timeRenewing;
     logger->log(INFO, "Openbus::RenewLeaseThread::run() BEGIN");
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.lock();
     #endif
       if (!bus) {
-      #ifndef OPENBUS_MICO
+      #ifdef OPENBUS_ORBIX
         mutex.unlock();
       #endif
       }
       timeRenewing = bus->timeRenewing;
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.unlock();
     #endif
       logger->indent();
       stringstream msg;
       msg << "Thread: " << this;
       logger->log(INFO, msg.str());
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.lock();
     #endif
       if (bus && bus->connectionState == CONNECTED) {
@@ -171,11 +171,11 @@ namespace openbus {
           if (!status) {
             logger->log(WARNING, "Não foi possível renovar a credencial!");
             if (_leaseExpiredCallback) {
-            #ifndef OPENBUS_MICO
+            #ifdef OPENBUS_ORBIX
               mutex.unlock();
             #endif
               _leaseExpiredCallback->expired();
-            #ifndef OPENBUS_MICO
+            #ifdef OPENBUS_ORBIX
               mutex.lock();
             #endif
             } else {
@@ -187,11 +187,11 @@ namespace openbus {
         } catch (CORBA::Exception& e) {
           logger->log(WARNING, "Não foi possível renovar a credencial!");
           if (_leaseExpiredCallback) {
-          #ifndef OPENBUS_MICO
+          #ifdef OPENBUS_ORBIX
             mutex.unlock();
           #endif
             _leaseExpiredCallback->expired();
-          #ifndef OPENBUS_MICO
+          #ifdef OPENBUS_ORBIX
             mutex.lock();
           #endif
           } else {
@@ -199,11 +199,11 @@ namespace openbus {
           }
         }
       } else {
-      #ifndef OPENBUS_MICO
+      #ifdef OPENBUS_ORBIX
         mutex.unlock();
       #endif
       }
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.unlock();
     #endif
     logger->dedent(INFO, "Openbus::RenewLeaseThread::run() END");
@@ -262,10 +262,10 @@ namespace openbus {
   void Openbus::createORB() {
     if (CORBA::is_nil(orb)) {
       logger->log(INFO, "Criando ORB...");
-    #ifdef OPENBUS_MICO
-      orb = CORBA::ORB_init(_argc, _argv);    
-    #else
+    #ifdef OPENBUS_ORBIX
       orb = CORBA::ORB_init(_argc, _argv, "tecgraf.openbus");
+    #else
+      orb = CORBA::ORB_init(_argc, _argv);    
     #endif
       getRootPOA();
     }
@@ -305,7 +305,7 @@ namespace openbus {
   Openbus::Openbus() {
     luaState = lua_open();
     luaL_openlibs(luaState);
-  #ifndef OPENBUS_MICO
+  #ifdef OPENBUS_ORBIX
     luaopen_IOR(luaState);
   #endif
     newState();
@@ -331,17 +331,17 @@ namespace openbus {
         delete componentBuilder;
       }
       if (!CORBA::is_nil(orb)) {
-      #ifdef OPENBUS_MICO
-        logger->log(INFO, "Removendo callback de renovação de credencial...");
-        orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
-      #else
+      #ifdef OPENBUS_ORBIX
         // logger->log(INFO, "Desligando o orb...");
         // logger->log(INFO, "Executando orb->shutdown() ...");
         // orb->shutdown(0);
         // logger->log(INFO, "Executando orb->destroy() ...");
         // orb->destroy();
+      #else
+        logger->log(INFO, "Removendo callback de renovação de credencial...");
+        orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
       #endif
-      #ifdef OPENBUS_MICO 
+      #ifndef OPENBUS_ORBIX
         #ifdef MULTITHREAD
         /* provisório: orb->shutdown(0) não está fazendo o while() do orb->run() terminar. */
           runThread->terminate();
@@ -349,11 +349,11 @@ namespace openbus {
         #endif
       #endif
       }
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.lock();
     #endif
       bus = 0;
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.unlock();
       if (renewLeaseTimer) {
         renewLeaseTimer->stop();
@@ -370,11 +370,11 @@ namespace openbus {
   Openbus* Openbus::getInstance() {
     logger = Logger::getInstance();
     if (!bus) {
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.lock();
     #endif
       bus = new Openbus();
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.unlock();
     #endif
     }
@@ -407,7 +407,11 @@ namespace openbus {
       logger->log(INFO, "Criando ComponentBuilder...");
       componentBuilder = new scs::core::ComponentBuilder(orb, poa);
     }
-  #ifdef OPENBUS_MICO
+  #ifdef OPENBUS_ORBIX
+    if (credentialValidationPolicy == interceptors::CACHED) {
+      ini->getServerInterceptor()->registerValidationTimer();
+    }
+  #else
     if (credentialValidationPolicy == interceptors::CACHED) {
       ini->getServerInterceptor()->registerValidationDispatcher();
     }
@@ -415,10 +419,6 @@ namespace openbus {
       runThread = new RunThread();
       runThread->start();
     #endif
-  #else
-    if (credentialValidationPolicy == interceptors::CACHED) {
-      ini->getServerInterceptor()->registerValidationTimer();
-    }
   #endif
     logger->dedent(INFO, "Openbus::init() END");
   }
@@ -584,13 +584,13 @@ namespace openbus {
         stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
         logger->log(INFO, iACSMSG.str());
-      #ifndef OPENBUS_MICO
+      #ifdef OPENBUS_ORBIX
         mutex.lock();
       #endif
         if (!iAccessControlService->loginByPassword(user, password, credential,
           lease))
         {
-        #ifndef OPENBUS_MICO
+        #ifdef OPENBUS_ORBIX
           mutex.unlock();
         #endif
           logger->log(ERROR, "Throwing LOGIN_FAILURE...");
@@ -607,10 +607,7 @@ namespace openbus {
             timeRenewing = lease/3;
           }
           setRegistryService();
-        #ifdef OPENBUS_MICO
-          orb->dispatcher()->tm_event(&renewLeaseCallback, 
-            timeRenewing*1000);
-        #else
+        #ifdef OPENBUS_ORBIX
           if (!renewLeaseTimer) {
             IT_Duration start(0);
             IT_Duration interval(timeRenewing, 0);
@@ -622,6 +619,9 @@ namespace openbus {
               true);
           }
           mutex.unlock();
+        #else
+          orb->dispatcher()->tm_event(&renewLeaseCallback, 
+            timeRenewing*1000);
         #endif
           logger->dedent(INFO, "Openbus::connect() END");
           return iRegistryService;
@@ -629,7 +629,7 @@ namespace openbus {
         }
 
       } catch (const CORBA::SystemException& systemException) {
-      #ifndef OPENBUS_MICO
+      #ifdef OPENBUS_ORBIX
         mutex.unlock();
       #endif
         logger->log(ERROR, "Throwing CORBA::SystemException...");
@@ -769,14 +769,14 @@ namespace openbus {
         stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
         logger->log(INFO, iACSMSG.str());
-      #ifndef OPENBUS_MICO
+      #ifdef OPENBUS_ORBIX
         mutex.lock();
       #endif
         if (!iAccessControlService->loginByCertificate(entity, answerOctetSeq,
           credential, lease))
         {
           free(answer);
-        #ifndef OPENBUS_MICO
+        #ifdef OPENBUS_ORBIX
           mutex.unlock();
         #endif
           throw LOGIN_FAILURE();
@@ -791,10 +791,7 @@ namespace openbus {
             timeRenewing = lease/3;
           }
           setRegistryService();
-        #ifdef OPENBUS_MICO
-          orb->dispatcher()->tm_event(&renewLeaseCallback, 
-            timeRenewing*1000);
-        #else
+        #ifdef OPENBUS_ORBIX
           if (!renewLeaseTimer) {
             IT_Duration start(0);
             IT_Duration interval(timeRenewing, 0);
@@ -806,12 +803,15 @@ namespace openbus {
               true);
           }
           mutex.unlock();
+        #else
+          orb->dispatcher()->tm_event(&renewLeaseCallback, 
+            timeRenewing*1000);
         #endif
           logger->dedent(INFO, "Openbus::connect() END");
           return iRegistryService;
         }
       } catch (const CORBA::SystemException& systemException) {
-      #ifndef OPENBUS_MICO
+      #ifdef OPENBUS_ORBIX
         mutex.unlock();
       #endif
         logger->log(ERROR, "Throwing CORBA::SystemException...");
@@ -828,13 +828,12 @@ namespace openbus {
   bool Openbus::disconnect() {
     logger->log(INFO, "Openbus::disconnect() BEGIN");
     logger->indent();
-  #ifndef OPENBUS_MICO
+  #ifdef OPENBUS_ORBIX
     mutex.lock();
   #endif
     if (connectionState == CONNECTED) {
-    #ifdef OPENBUS_MICO
+    #ifndef OPENBUS_ORBIX
       orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
-    #else
     #endif
       if (iRegistryService) {
         delete iRegistryService;
@@ -855,7 +854,7 @@ namespace openbus {
       }
     #endif
       newState();
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.unlock();
       if (renewLeaseTimer) {
         renewLeaseTimer->stop();
@@ -870,7 +869,7 @@ namespace openbus {
     } else {
       logger->log(INFO, "Não há conexão a ser desfeita.");
       logger->dedent(INFO, "Openbus::disconnect() END");
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
       mutex.unlock();
     #endif
       return false;

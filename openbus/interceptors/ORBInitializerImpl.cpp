@@ -2,7 +2,7 @@
 ** interceptors/ORBInitializerImpl.cpp
 */
 
-#ifndef OPENBUS_MICO
+#ifdef OPENBUS_ORBIX
   #include <omg/IOP.hh>
 #endif
 

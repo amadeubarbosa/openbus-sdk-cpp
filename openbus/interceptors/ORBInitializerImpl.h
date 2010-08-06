@@ -5,7 +5,7 @@
 #ifndef ORBINITIALIZERIMPL_H_
 #define ORBINITIALIZERIMPL_H_
 
-#ifndef OPENBUS_MICO
+#ifdef OPENBUS_ORBIX
   #include <omg/PortableInterceptor.hh>
 #endif
 
@@ -41,7 +41,7 @@ namespace openbus {
 
         
     class ORBInitializerImpl : public ORBInitializer
-    #ifndef OPENBUS_MICO
+    #ifdef OPENBUS_ORBIX
                               ,public IT_CORBA::RefCountedLocalObject 
     #endif
     {
