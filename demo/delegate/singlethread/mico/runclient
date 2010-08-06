@@ -1,0 +1,6 @@
+#!/bin/ksh
+
+. ./democonfig
+
+./client -OpenbusHost $HOSTBUS -OpenbusPort $PORTBUS -OpenbusDebug ALL "$@"
+

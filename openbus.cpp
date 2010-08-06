@@ -517,9 +517,7 @@ namespace openbus {
     return credentialValidationPolicy;
   }
 
-  void Openbus::setThreadCredential(
-    access_control_service::Credential* credential) 
-  {
+  void Openbus::setThreadCredential(access_control_service::Credential* credential) {
     this->credential = credential;
     openbus::interceptors::ClientInterceptor::credential = credential;
   }

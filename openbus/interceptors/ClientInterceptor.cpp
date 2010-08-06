@@ -44,8 +44,17 @@ namespace openbus {
       free(operation);
       if (credential) {
         stringstream msg;
-        msg << "Credential identifier: " << credential->identifier;
+        Openbus::logger->log(INFO, "Credential:");
+        Openbus::logger->indent();
+        msg << "[identifier]: " << credential->identifier;
         Openbus::logger->log(INFO, msg.str());
+        msg.str("");
+        msg << "[owner]: " << credential->owner;
+        Openbus::logger->log(INFO, msg.str());
+        msg.str("");
+        msg << "[delegate]: " << credential->delegate;
+        Openbus::logger->log(INFO, msg.str());
+        Openbus::logger->dedent();
         IOP::ServiceContext sc;
         sc.context_id = 1234;
 

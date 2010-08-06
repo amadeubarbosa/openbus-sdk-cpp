@@ -535,6 +535,10 @@ namespace openbus {
     * Define uma credencial a ser utilizada no lugar da credencial corrente. 
     * Útil para fornecer uma credencial com o campo delegate preenchido.
     * 
+    * !Atenção!
+    *   Nesta versão este método não considera um comportamento *multi  thread*, 
+    *   sendo assim a alteração de credencial será válida para todas as threads.
+    *
     * @param[in] credential Credencial a ser utilizada nas requisições a serem
     *   realizadas.
     */
