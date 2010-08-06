@@ -1,16 +1,15 @@
 /*
-* OpenBus Demo - delegate/singlethread/mico
+* OpenBus Demo - delegate/singlethread/orbix
 * client.cpp
 */
 
 #include <fstream>
 #include <iostream>
 
-#include "stubs/delegate.h"
+#include "stubs/delegate.hh"
 #include <openbus.h>
 
 using namespace std;
-using namespace tecgraf::openbus::core::v1_05;
 
 int main(int argc, char* argv[]) {
   openbus::Openbus* bus;
@@ -29,12 +28,12 @@ int main(int argc, char* argv[]) {
       "DelegateService.key", 
       "AccessControlService.crt");
   } catch (CORBA::SystemException& e) {
-    cout << "** Não foi possível se conectar ao barramento. **" << endl \
-         << "* Falha na comunicação. *" << endl;
+    cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
+         << "* Falha na comunicacao. *" << endl;
     exit(-1);
   } catch (openbus::LOGIN_FAILURE& e) {
-    cout << "** Não foi possível se conectar ao barramento. **" << endl \
-         << "* Par usuário/senha inválido. *" << endl;
+    cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
+         << "* Par usuario/senha inválido. *" << endl;
     exit(-1);
   }
 
@@ -51,18 +50,17 @@ int main(int argc, char* argv[]) {
 *  Uma lista de *ofertas de serviço* é retornada para o usuário.
 *  OBS.: Neste demo somente há uma oferta de serviço.
 */
-  registry_service::ServiceOfferList_var serviceOfferList = 
+  registry_service::ServiceOfferList_var serviceOfferList =
     registryService->find(facetListHelper->getFacetList());
   delete facetListHelper;
 
   if (serviceOfferList->length() > 0) {
     registry_service::ServiceOffer serviceOffer = serviceOfferList[(CORBA::ULong) 0];
-  
+
     scs::core::IComponent_var component = serviceOffer.member;
     CORBA::Object_var obj = component->getFacet("IDL:demoidl/demoDelegate/IHello:1.0");
     demoidl::demoDelegate::IHello_var hello = demoidl::demoDelegate::IHello::_narrow(obj);
 
-    
     access_control_service::Credential* myCredential = bus->getCredential();
     
     access_control_service::Credential_var newCredential = new access_control_service::Credential();
@@ -87,11 +85,11 @@ int main(int argc, char* argv[]) {
          << "[delegate] " << myCredential->delegate << endl << endl;
 
     hello->sayHello("Voltei!");
-    
+
   } else {
     cout << "Nenhuma oferta encontrada." << endl;
   }
-  
+
   cout << "Desconectando-se do barramento..." << endl;
 
   bus->disconnect();
