@@ -118,11 +118,13 @@ namespace openbus {
       static char* debugFile;
       Level debugLevel;
 
-    #ifdef OPENBUS_ORBIX
     /**
     * Mutex. 
     */
+    #ifdef OPENBUS_ORBIX
       static IT_Mutex mutex;
+    #else
+      static MICOMT::Mutex mutex;
     #endif
 
     /**
@@ -302,18 +304,17 @@ namespace openbus {
       void setRegistryService();
 
     /**
-    * Callback registrada para a notificação da 
-    * expiração do lease.
+    * Callback registrada para a notificação da expiração do lease.
     */
       static LeaseExpiredCallback* _leaseExpiredCallback;
 
+    /**
+    * Thread/Callback responsável pela renovação da credencial do usuário que está logado neste 
+    * barramento.
+    */
     #ifdef OPENBUS_ORBIX
       IT_Thread renewLeaseIT_Thread;
 
-    /**
-    * Thread responsável pela renovação da credencial do usuário que está 
-    * logado neste barramento.
-    */
       class RenewLeaseThread : public IT_ThreadBody {
         public:
           RenewLeaseThread();
@@ -322,35 +323,47 @@ namespace openbus {
       };
       friend class Openbus::RenewLeaseThread;
       static IT_Timer* renewLeaseTimer;
+      static RenewLeaseThread* renewLeaseThread;
+    #else
+      #ifdef MULTITHREAD
+        class RenewLeaseThread : public MICOMT::Thread {
+        public:
+          bool runningLeaseExpiredCallback;
+          RenewLeaseThread();
+          void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
+          void _run(void*);
+        };
+        static RenewLeaseThread* renewLeaseThread;
+      #else
+        class RenewLeaseCallback : public CORBA::DispatcherCallback {
+          public:
+            RenewLeaseCallback();
+            void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
+            void callback(
+              CORBA::Dispatcher* dispatcher, 
+              Event event);
+        };
+        RenewLeaseCallback renewLeaseCallback;
+      #endif
+    #endif
 
     /**
-    * Thread responsável pela renovação de credencial.
+    * [OPENBUS-410] - Mico
+    * 
+    * O modo reativo não funciona adequadamente na versão *multi thread*. A alternativa encontrada 
+    * foi utilizar uma thread dedicada ao orb->run() afim de evitar _deadlock_ distribuído.
     */
-      static RenewLeaseThread* renewLeaseThread;
+    #ifndef OPENBUS_ORBIX
+      #ifdef MULTITHREAD
+        class RunThread : public MICOMT::Thread {
+          public:
+            void _run(void*);
+        };
+        friend class Openbus::RunThread;
+
+        static RunThread* runThread;
+      #endif
     #endif
-
-  #ifndef OPENBUS_ORBIX
-    #ifdef MULTITHREAD
-      class RunThread : public MICOMT::Thread {
-        public:
-          void _run(void*);
-      };
-      friend class Openbus::RunThread;
-
-      static RunThread* runThread;
-    #endif
-    class RenewLeaseCallback : public CORBA::DispatcherCallback {
-      public:
-        RenewLeaseCallback();
-        void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
-        void callback(CORBA::Dispatcher* dispatcher, Event event);
-    };
-
-  /**
-  * Callbak responsável por renovar a credencial.
-  */
-    RenewLeaseCallback renewLeaseCallback;
-  #endif
 
     /**
     * Flag que informa se o mecanismo de tolerancia a falhas está 
@@ -474,7 +487,18 @@ namespace openbus {
       bool isConnected();
 
     /** 
-    *  Termination Handler disponível para a classe IT_TerminationHandler()
+    *  Disponibiliza um *termination handler* que desconecta o usuário do barramento e finaliza a 
+    *  execução do Openbus::run().
+    *
+    *  Essa callback pode ser utlizada em uma implementação de um *termination handler* a ser es-
+    *  crito pelo usuário. No caso do Orbix, o método pode ser registrado diretamente na   classe
+    *  IT_TerminationHandler(), e.g.:
+    *
+    *  IT_TerminationHandler termination_handler(openbus::Openbus::terminationHandlerCallback)
+    *
+    *  O método desconecta o usuário do barramento,   se   este   estiver  conectado,  executa um
+    *  Openbus::stop()  seguido  por  um  Openbus::finish(),  e,  por  último  faz   _delete_  da 
+    *  instanciação do Openbus.
     *
     *  @param signalType
     */
@@ -628,17 +652,23 @@ namespace openbus {
       bool disconnect();
 
     /**
-    * Loop que processa requisições CORBA. [execução do orb->run()]. 
+    * Loop que processa requisições CORBA.
+    *
+    * !Atenção! Este método na versão Mico *multi thread* faz um wait() na RunThread.
     */
       void run();
       
     /**
     * Pára de processar requisições CORBA. Finaliza a execução do run.
+    * 
+    * !Atenção! Não faz nada na versão Mico *multi thread*.
     */  
       void stop();
 
     /**
     * Finaliza a execução do ORB.
+    *
+    * O método chama a dupla orb->shutdown(force) e orb->destroy().
     *
     * @param[in] bool force Se a finalização deve ser forçada ou não.
     */

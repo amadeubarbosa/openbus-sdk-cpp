@@ -27,7 +27,9 @@ class MyCallbackBefore : public Openbus::LeaseExpiredCallback {
       TS_TRACE("Executando MyCallbackBefore()...");
       leaseExpiredCallbackBefore = true;
       bus->disconnect();
-      bus->stop();
+      #ifndef MULTITHREAD
+        bus->stop();
+      #endif
     }
 };
 
@@ -37,8 +39,9 @@ class MyCallbackAfter : public Openbus::LeaseExpiredCallback {
       TS_TRACE("Executando MyCallbackAfter()...");
       leaseExpiredCallbackAfter = true;
       bus->disconnect();
-      delete bus;
-      bus->stop();
+      #ifndef MULTITHREAD
+        bus->stop();
+      #endif
     }
 };
 
@@ -84,16 +87,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
           }
         }
         inFile.close();
-        bus = Openbus::getInstance();
-        char* argv[] = {
-          "exec", 
-          "-OpenbusDebug",
-          "ALL"}; 
-        bus->init(
-          3, 
-          argv,
-          const_cast<char*>(OPENBUS_SERVER_HOST.c_str()), 
-          (unsigned int) atoi(OPENBUS_SERVER_PORT.c_str()));
         credential2 = new access_control_service::Credential;
       }
       catch (const char* errmsg) {
@@ -112,7 +105,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
 
     void testInitWithArgcArgv() {
       try {
-        delete bus;
         bus = Openbus::getInstance();
         const char* argv[] = {
           "exec", 
@@ -121,8 +113,10 @@ class ACSTestSuite: public CxxTest::TestSuite {
           "-OpenbusPort", 
           OPENBUS_SERVER_PORT.c_str(),
           "-OpenbusDebug",
-          "ALL"}; 
-        bus->init(7, (char**) argv);
+          "ALL",
+          "-OpenbusTimeRenewing",
+          "2"};
+        bus->init(9, (char**) argv);
         bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
         bus->disconnect();
       } catch(CORBA::Exception& e) {
@@ -323,23 +317,28 @@ class ACSTestSuite: public CxxTest::TestSuite {
         "-OpenbusPort", 
         OPENBUS_SERVER_PORT.c_str(),
         "-OpenbusTimeRenewing",
-        "5"};
+        "2"};
       bus->init(7, (char**) argv);
       leaseExpiredCallbackBefore = false;
       MyCallbackBefore myCallback;
       bus->setLeaseExpiredCallback(&myCallback);
       bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       bus->getAccessControlService()->logout(*bus->getCredential());
-      TS_TRACE("bus->run()...");
-      bus->run();
-      TS_TRACE("Término do sleep...");
+      #ifdef MULTITHREAD
+        TS_TRACE("sleep...");
+        sleep(4);
+      #else
+        TS_TRACE("Openbus::run()...");
+        bus->run();
+      #endif
+      TS_TRACE("Término do Openbus::run()...");
       if (!leaseExpiredCallbackBefore) {
         TS_FAIL("Método MyCallbackBefore::expired() não foi chamado.");
       }
+      delete bus;
     }
 
     void testAddLeaseExpiredCbAfterConnect() {
-      bus->disconnect();
       bus = Openbus::getInstance();
       const char* argv[] = {
         "exec", 
@@ -348,16 +347,21 @@ class ACSTestSuite: public CxxTest::TestSuite {
         "-OpenbusPort", 
         OPENBUS_SERVER_PORT.c_str(),
         "-OpenbusTimeRenewing",
-        "5"};
+        "2"};
       bus->init(7, (char**) argv);
       leaseExpiredCallbackAfter = false;
       MyCallbackAfter myCallback;
       bus->connect(OPENBUS_USERNAME.c_str(), OPENBUS_PASSWORD.c_str());
       bus->setLeaseExpiredCallback(&myCallback);
       bus->getAccessControlService()->logout(*bus->getCredential());
-      TS_TRACE("bus->run()...");
-      bus->run();
-      TS_TRACE("Término do sleep...");
+      #ifdef MULTITHREAD
+        TS_TRACE("sleep...");
+        sleep(4);
+      #else
+        TS_TRACE("Openbus::run()...");
+        bus->run();
+      #endif
+      TS_TRACE("Término do Openbus::run()...");
       if (!leaseExpiredCallbackAfter) {
         TS_FAIL("Método MyCallbackAfter::expired() não foi chamado.");
       }

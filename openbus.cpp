@@ -29,133 +29,48 @@
 namespace openbus {
   Logger* Openbus::logger  = 0;
   char* Openbus::debugFile = 0;
+  char* Openbus::FTConfigFilename = 0;
+  bool Openbus::orbRunning = true;
   interceptors::ORBInitializerImpl* Openbus::ini = 0;
   CORBA::ORB_var Openbus::orb = CORBA::ORB::_nil();
-  bool Openbus::orbRunning = true;
   PortableServer::POA_var Openbus::poa = PortableServer::POA::_nil();
   lua_State* Openbus::luaState = 0;
-  char* Openbus::FTConfigFilename = 0;
-#ifdef OPENBUS_ORBIX
-  IT_Mutex Openbus::mutex;
-#endif
   Openbus* Openbus::bus = 0;
   Openbus::LeaseExpiredCallback* Openbus::_leaseExpiredCallback = 0;
 #ifdef OPENBUS_ORBIX
+  IT_Mutex Openbus::mutex;
   Openbus::RenewLeaseThread* Openbus::renewLeaseThread = 0;
   IT_Timer* Openbus::renewLeaseTimer = 0;
 #else
+  MICOMT::Mutex Openbus::mutex;
   #ifdef MULTITHREAD
     Openbus::RunThread* Openbus::runThread = 0;
+    Openbus::RenewLeaseThread* Openbus::renewLeaseThread = 0;
   #endif
 #endif
-
-#ifndef OPENBUS_ORBIX
-  #ifdef MULTITHREAD
-    void Openbus::RunThread::_run(void*) {
-      logger->log(INFO, "*** RunThread iniciada...");
-      bus->getORB()->run();
-      logger->log(INFO, "*** RunThread encerrada...");
-    }
-  #endif
-  Openbus::RenewLeaseCallback::RenewLeaseCallback() {
-  }
-
-  void Openbus::RenewLeaseCallback::setLeaseExpiredCallback(
-    LeaseExpiredCallback* obj) 
-  {
-    _leaseExpiredCallback = obj;
-  }
-
-  void Openbus::RenewLeaseCallback::callback(
-    CORBA::Dispatcher* dispatcher, 
-    Event event) 
-  {
-    logger->log(INFO, "Openbus::RenewLeaseCallback::callback() BEGIN");
-    logger->indent();
-    if (bus && bus->connectionState == CONNECTED) {
-      logger->log(INFO, "Renovando credencial...");
-      try {
-        bool status = bus->iLeaseProvider->renewLease(*bus->credential, 
-          bus->lease);
-        if (!bus->timeRenewingFixe) {
-          bus->timeRenewing = bus->lease/3;
-        }
-        stringstream msg;
-        msg << "Proximo intervalo de renovacao: " << bus->timeRenewing << 
-          "s";
-        logger->log(INFO, msg.str());
-        if (!status) {
-          logger->log(WARNING, "Nao foi possivel renovar a credencial!");
-          if (_leaseExpiredCallback) {
-            _leaseExpiredCallback->expired();
-          } else {
-            logger->log(INFO, "Nenhuma callback registrada.");
-          }
-        } else {
-          logger->log(INFO, "Credencial renovada!");
-          dispatcher->tm_event(this, bus->timeRenewing*1000);
-        }
-      } catch (CORBA::Exception& e) {
-        logger->log(WARNING, "Nao foi possivel renovar a credencial!");
-        if (_leaseExpiredCallback) {
-          _leaseExpiredCallback->expired();
-        } else {
-          logger->log(INFO, "Nenhuma callback registrada.");
-        }
-      }
-      logger->dedent(INFO, "Openbus::RenewLeaseCallback::callback() END");
-    }
-  }
-#endif
-
-  void Openbus::terminationHandlerCallback(long signalType) {
-    logger->log(INFO, "Openbus::terminationHandlerCallback() BEGIN");
-    logger->indent();
-    try {
-      if (bus->isConnected()) {
-        bus->disconnect();
-      }
-    } catch(CORBA::Exception& e) {
-      logger->log(WARNING, 
-        "Não foi possível se desconectar corretamente do barramento."); 
-    }
-    bus->stop();
-    delete bus;
-    logger->dedent(INFO, "Openbus::terminationHandlerCallback() END");
-  }
 
 #ifdef OPENBUS_ORBIX
   Openbus::RenewLeaseThread::RenewLeaseThread() {
   }
 
-  void Openbus::RenewLeaseThread::setLeaseExpiredCallback(
-    LeaseExpiredCallback* obj) 
-  {
+  void Openbus::RenewLeaseThread::setLeaseExpiredCallback(LeaseExpiredCallback* obj) {
     _leaseExpiredCallback = obj;
   }
 
   void* Openbus::RenewLeaseThread::run() {
     unsigned int timeRenewing;
     logger->log(INFO, "Openbus::RenewLeaseThread::run() BEGIN");
-    #ifdef OPENBUS_ORBIX
       mutex.lock();
-    #endif
       if (!bus) {
-      #ifdef OPENBUS_ORBIX
         mutex.unlock();
-      #endif
       }
       timeRenewing = bus->timeRenewing;
-    #ifdef OPENBUS_ORBIX
       mutex.unlock();
-    #endif
       logger->indent();
       stringstream msg;
       msg << "Thread: " << this;
       logger->log(INFO, msg.str());
-    #ifdef OPENBUS_ORBIX
       mutex.lock();
-    #endif
       if (bus && bus->connectionState == CONNECTED) {
         logger->log(INFO, "Renovando credencial...");
         try {
@@ -171,13 +86,9 @@ namespace openbus {
           if (!status) {
             logger->log(WARNING, "Não foi possível renovar a credencial!");
             if (_leaseExpiredCallback) {
-            #ifdef OPENBUS_ORBIX
               mutex.unlock();
-            #endif
               _leaseExpiredCallback->expired();
-            #ifdef OPENBUS_ORBIX
               mutex.lock();
-            #endif
             } else {
               logger->log(INFO, "Nenhuma callback registrada.");
             }
@@ -187,28 +98,148 @@ namespace openbus {
         } catch (CORBA::Exception& e) {
           logger->log(WARNING, "Não foi possível renovar a credencial!");
           if (_leaseExpiredCallback) {
-          #ifdef OPENBUS_ORBIX
             mutex.unlock();
-          #endif
             _leaseExpiredCallback->expired();
-          #ifdef OPENBUS_ORBIX
             mutex.lock();
-          #endif
           } else {
             logger->log(INFO, "Nenhuma callback registrada.");
           }
         }
       } else {
-      #ifdef OPENBUS_ORBIX
         mutex.unlock();
-      #endif
       }
-    #ifdef OPENBUS_ORBIX
       mutex.unlock();
-    #endif
     logger->dedent(INFO, "Openbus::RenewLeaseThread::run() END");
     return 0;
   }
+#else
+  #ifdef MULTITHREAD
+    void Openbus::RunThread::_run(void*) {
+      logger->log(INFO, "[RunThread Iniciada]");
+      orb->run();
+      logger->log(INFO, "[RunThread Encerrada]");
+    }
+
+    Openbus::RenewLeaseThread::RenewLeaseThread() {
+      runningLeaseExpiredCallback = false;
+    }
+
+    void Openbus::RenewLeaseThread::setLeaseExpiredCallback(LeaseExpiredCallback* obj) {
+      _leaseExpiredCallback = obj;
+    }
+
+    void Openbus::RenewLeaseThread::_run(void*) {
+      unsigned int timeRenewing = 1;
+      stringstream msg;
+      bool tryExec_LeaseExpiredCallback = false;
+      while (true) {
+        logger->log(INFO, "Openbus::RenewLeaseThread::run() BEGIN");
+        msg << "sleep [" << timeRenewing <<"]s ...";
+        logger->log(INFO, msg.str());
+        msg.str("");
+        sleep(timeRenewing);
+
+        mutex.lock();
+        if (bus) {
+          timeRenewing = bus->timeRenewing;
+          if (bus->connectionState != CONNECTED) {
+            mutex.unlock();
+            break;
+          } else {
+            logger->log(INFO, "Renovando credencial...");
+            try {
+              bool status = bus->iLeaseProvider->renewLease(*bus->credential, 
+                bus->lease);
+              if (!bus->timeRenewingFixe) {
+                bus->timeRenewing = bus->lease/3;
+              }
+              msg << "Próximo intervalo de renovação: " << bus->timeRenewing << "s";
+              logger->log(INFO, msg.str());
+              msg.str("");
+              if (!status) {
+                logger->log(WARNING, "Não foi possível renovar a credencial!");
+                tryExec_LeaseExpiredCallback = true;
+                break;
+              } else {
+                logger->log(INFO, "Credencial renovada!");
+              }
+              mutex.unlock();
+            } catch (CORBA::Exception& e) {
+              logger->log(WARNING, "Não foi possível renovar a credencial!");
+              tryExec_LeaseExpiredCallback = true;
+              break;
+            }
+            mutex.lock();
+            Openbus::logger->log(INFO, "Atualizando intervalo de tempo de na RewnewLeaseThread.");
+            timeRenewing = bus->timeRenewing;
+            mutex.unlock();  
+          }
+        }
+        mutex.unlock();
+        break;
+      } 
+      if (tryExec_LeaseExpiredCallback) {
+        if (_leaseExpiredCallback) {
+          runningLeaseExpiredCallback = true;
+          mutex.unlock();
+          _leaseExpiredCallback->expired();
+          Openbus::logger->log(INFO, "LeaseExpiredCallback executada.");
+        } else {
+          logger->log(INFO, "Nenhuma callback registrada.");
+        }       
+      } 
+      runningLeaseExpiredCallback = false;
+      mutex.unlock();
+      logger->log(INFO, "Openbus::RenewLeaseThread::run() END");
+    }
+  #else
+    Openbus::RenewLeaseCallback::RenewLeaseCallback() {
+    }
+
+    void Openbus::RenewLeaseCallback::setLeaseExpiredCallback(LeaseExpiredCallback* obj) {
+      _leaseExpiredCallback = obj;
+    }
+
+    void Openbus::RenewLeaseCallback::callback(
+      CORBA::Dispatcher* dispatcher, 
+      Event event) 
+    {
+      logger->log(INFO, "Openbus::RenewLeaseCallback::callback() BEGIN");
+      logger->indent();
+      if (bus && bus->connectionState == CONNECTED) {
+        logger->log(INFO, "Renovando credencial...");
+        try {
+          bool status = bus->iLeaseProvider->renewLease(*bus->credential, 
+            bus->lease);
+          if (!bus->timeRenewingFixe) {
+            bus->timeRenewing = bus->lease/3;
+          }
+          stringstream msg;
+          msg << "Proximo intervalo de renovacao: " << bus->timeRenewing << "s";
+          logger->log(INFO, msg.str());
+          if (!status) {
+            logger->log(WARNING, "Nao foi possivel renovar a credencial!");
+            if (_leaseExpiredCallback) {
+              _leaseExpiredCallback->expired();
+            } else {
+              logger->log(INFO, "Nenhuma callback registrada.");
+            }
+          } else {
+            logger->log(INFO, "Credencial renovada!");
+            dispatcher->tm_event(this, bus->timeRenewing*1000);
+          }
+        } catch (CORBA::Exception& e) {
+          logger->log(WARNING, "Nao foi possivel renovar a credencial!");
+          if (_leaseExpiredCallback) {
+            _leaseExpiredCallback->expired();
+          } else {
+            logger->log(INFO, "Nenhuma callback registrada.");
+          }
+        }
+        logger->dedent(INFO, "Openbus::RenewLeaseCallback::callback() END");
+      }
+    }
+  #endif
 #endif
 
   void Openbus::commandLineParse() {
@@ -331,30 +362,17 @@ namespace openbus {
         delete componentBuilder;
       }
       if (!CORBA::is_nil(orb)) {
-      #ifdef OPENBUS_ORBIX
-        // logger->log(INFO, "Desligando o orb...");
-        // logger->log(INFO, "Executando orb->shutdown() ...");
-        // orb->shutdown(0);
-        // logger->log(INFO, "Executando orb->destroy() ...");
-        // orb->destroy();
-      #else
-        logger->log(INFO, "Removendo callback de renovação de credencial...");
-        orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
-      #endif
-      #ifndef OPENBUS_ORBIX
-        #ifdef MULTITHREAD
-        /* provisório: orb->shutdown(0) não está fazendo o while() do orb->run() terminar. */
-          runThread->terminate();
-          // delete runThread;
+      #ifndef OPENBUS_ORBIX 
+        #ifndef MULTITHREAD
+          logger->log(INFO, "Removendo callback de renovação de credencial...");
+          orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
         #endif
       #endif
       }
-    #ifdef OPENBUS_ORBIX
       mutex.lock();
-    #endif
       bus = 0;
-    #ifdef OPENBUS_ORBIX
       mutex.unlock();
+    #ifdef OPENBUS_ORBIX
       if (renewLeaseTimer) {
         renewLeaseTimer->stop();
         delete renewLeaseTimer;
@@ -362,21 +380,61 @@ namespace openbus {
         delete renewLeaseThread;
         renewLeaseThread = 0;
       }
+    #else
+      #ifdef MULTITHREAD
+        if (renewLeaseThread) {
+          bool b;
+          mutex.lock();
+          b = renewLeaseThread->runningLeaseExpiredCallback;
+          mutex.unlock();
+          if (!b) {
+            Openbus::logger->log(INFO, "Aguardando término da renewLeaseThread...");
+          /* Por que o meu wait não fica bloqueado quando o LeaseExpiredCallback() chamda 
+          *  disconnect() ?!
+          */
+            renewLeaseThread->wait();
+            Openbus::logger->log(INFO, "delete renewLeaseThread.");
+            delete renewLeaseThread;
+            renewLeaseThread = 0;
+          } else {
+            Openbus::logger->log(WARNING, 
+              "Não é possível finalizar RenewLeaseThread porque estamos dentro de \
+              LeaseExpiredCallback");
+          }
+        }
+      #endif
     #endif
     }
     logger->dedent(INFO, "Openbus::~Openbus() END");
   }
 
+  void Openbus::terminationHandlerCallback(long signalType) {
+    logger->log(INFO, "Openbus::terminationHandlerCallback() BEGIN");
+    logger->indent();
+  /* Prevenção caso o usuário consiga executar o _termination handler_ mais de uma vez */
+    if (bus) {
+      try {
+        if (bus->isConnected()) {
+          Openbus::logger->log(INFO, "Desconectando usuário do barramento.");
+          bus->disconnect();
+        }
+      } catch(CORBA::Exception& e) {
+        logger->log(WARNING, 
+          "Não foi possível se desconectar corretamente do barramento."); 
+      }
+      bus->stop();
+      bus->finish();
+      delete bus;
+    }
+    logger->dedent(INFO, "Openbus::terminationHandlerCallback() END");      
+  }
+
   Openbus* Openbus::getInstance() {
     logger = Logger::getInstance();
     if (!bus) {
-    #ifdef OPENBUS_ORBIX
       mutex.lock();
-    #endif
       bus = new Openbus();
-    #ifdef OPENBUS_ORBIX
       mutex.unlock();
-    #endif
     }
     return bus;
   }
@@ -407,19 +465,22 @@ namespace openbus {
       logger->log(INFO, "Criando ComponentBuilder...");
       componentBuilder = new scs::core::ComponentBuilder(orb, poa);
     }
-  #ifdef OPENBUS_ORBIX
-    if (credentialValidationPolicy == interceptors::CACHED) {
-      ini->getServerInterceptor()->registerValidationTimer();
-    }
-  #else
-    if (credentialValidationPolicy == interceptors::CACHED) {
-      ini->getServerInterceptor()->registerValidationDispatcher();
-    }
-    #ifdef MULTITHREAD
-      runThread = new RunThread();
-      runThread->start();
+    #ifdef OPENBUS_ORBIX
+      if (credentialValidationPolicy == interceptors::CACHED) {
+        ini->getServerInterceptor()->registerValidationTimer();
+      }
+    #else
+      if (credentialValidationPolicy == interceptors::CACHED) {
+        ini->getServerInterceptor()->registerValidationDispatcher();
+      }
+      #ifdef MULTITHREAD
+        if (!runThread) {
+          Openbus::logger->log(INFO, "Criando uma RunThread.");
+          runThread = new RunThread();
+          runThread->start();
+        }
+      #endif
     #endif
-  #endif
     logger->dedent(INFO, "Openbus::init() END");
   }
 
@@ -584,15 +645,11 @@ namespace openbus {
         stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
         logger->log(INFO, iACSMSG.str());
-      #ifdef OPENBUS_ORBIX
         mutex.lock();
-      #endif
         if (!iAccessControlService->loginByPassword(user, password, credential,
           lease))
         {
-        #ifdef OPENBUS_ORBIX
           mutex.unlock();
-        #endif
           logger->log(ERROR, "Throwing LOGIN_FAILURE...");
           logger->dedent(INFO, "Openbus::connect() END");
           throw LOGIN_FAILURE();
@@ -618,20 +675,25 @@ namespace openbus {
               *renewLeaseThread, 
               true);
           }
-          mutex.unlock();
         #else
-          orb->dispatcher()->tm_event(&renewLeaseCallback, 
-            timeRenewing*1000);
+          #ifdef MULTITHREAD
+            if (!renewLeaseThread) {
+              Openbus::logger->log(INFO, "Criando uma RenewLeaseThread.");
+              renewLeaseThread = new RenewLeaseThread();
+              renewLeaseThread->start();
+            }
+          #else
+            Openbus::logger->log(INFO, "Registrando evento de renovação da credencial...");
+            orb->dispatcher()->tm_event(&renewLeaseCallback, timeRenewing*1000);
+          #endif
         #endif
+          mutex.unlock();
           logger->dedent(INFO, "Openbus::connect() END");
           return iRegistryService;
 
         }
-
       } catch (const CORBA::SystemException& systemException) {
-      #ifdef OPENBUS_ORBIX
         mutex.unlock();
-      #endif
         logger->log(ERROR, "Throwing CORBA::SystemException...");
         logger->dedent(INFO, "Openbus::connect() END");
         throw;
@@ -769,16 +831,12 @@ namespace openbus {
         stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
         logger->log(INFO, iACSMSG.str());
-      #ifdef OPENBUS_ORBIX
         mutex.lock();
-      #endif
         if (!iAccessControlService->loginByCertificate(entity, answerOctetSeq,
           credential, lease))
         {
           free(answer);
-        #ifdef OPENBUS_ORBIX
           mutex.unlock();
-        #endif
           throw LOGIN_FAILURE();
         } else {
           free(answer);
@@ -802,18 +860,24 @@ namespace openbus {
               *renewLeaseThread, 
               true);
           }
-          mutex.unlock();
         #else
-          orb->dispatcher()->tm_event(&renewLeaseCallback, 
-            timeRenewing*1000);
+          #ifdef MULTITHREAD
+            if (!renewLeaseThread) {
+              Openbus::logger->log(INFO, "Criando uma RenewLeaseThread.");
+              renewLeaseThread = new RenewLeaseThread();
+              renewLeaseThread->start();
+            }
+          #else
+            Openbus::logger->log(INFO, "Registrando evento de renovação da credencial...");
+            orb->dispatcher()->tm_event(&renewLeaseCallback, timeRenewing*1000);
+          #endif
         #endif
+          mutex.unlock();
           logger->dedent(INFO, "Openbus::connect() END");
           return iRegistryService;
         }
       } catch (const CORBA::SystemException& systemException) {
-      #ifdef OPENBUS_ORBIX
         mutex.unlock();
-      #endif
         logger->log(ERROR, "Throwing CORBA::SystemException...");
         logger->dedent(INFO, "Openbus::connect() END");
         throw;
@@ -828,12 +892,13 @@ namespace openbus {
   bool Openbus::disconnect() {
     logger->log(INFO, "Openbus::disconnect() BEGIN");
     logger->indent();
-  #ifdef OPENBUS_ORBIX
     mutex.lock();
-  #endif
     if (connectionState == CONNECTED) {
     #ifndef OPENBUS_ORBIX
-      orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
+      #ifndef MULTITHREAD
+        logger->log(INFO, "Removendo callback de renovação de credencial...");
+        orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
+      #endif
     #endif
       if (iRegistryService) {
         delete iRegistryService;
@@ -854,8 +919,8 @@ namespace openbus {
       }
     #endif
       newState();
-    #ifdef OPENBUS_ORBIX
       mutex.unlock();
+    #ifdef OPENBUS_ORBIX
       if (renewLeaseTimer) {
         renewLeaseTimer->stop();
         delete renewLeaseTimer;
@@ -863,30 +928,68 @@ namespace openbus {
         delete renewLeaseThread;
         renewLeaseThread = 0;
       }
-      logger->dedent(INFO, "Openbus::disconnect() END");
+    #else
+      #ifdef MULTITHREAD
+        if (renewLeaseThread) {
+          bool b;
+          mutex.lock();
+          b = renewLeaseThread->runningLeaseExpiredCallback;
+          mutex.unlock();
+          if (!b) {
+            Openbus::logger->log(INFO, "Aguardando término da renewLeaseThread...");
+          /* Por que o meu wait não fica bloqueado quando o LeaseExpiredCallback() chama 
+          *  disconnect() ?!
+          */
+            renewLeaseThread->wait();
+            Openbus::logger->log(INFO, "delete renewLeaseThread.");
+            delete renewLeaseThread;
+            renewLeaseThread = 0;
+          } else {
+            Openbus::logger->log(WARNING, 
+              "Não é possível finalizar RenewLeaseThread porque estamos dentro de \
+              LeaseExpiredCallback");
+          }
+        }
+      #endif
     #endif
+      logger->dedent(INFO, "Openbus::disconnect() END");
       return status;
     } else {
       logger->log(INFO, "Não há conexão a ser desfeita.");
       logger->dedent(INFO, "Openbus::disconnect() END");
-    #ifdef OPENBUS_ORBIX
       mutex.unlock();
-    #endif
       return false;
     }
   }
 
   void Openbus::run() {
-    orbRunning = true;
-    while (orbRunning) {
-      if (orb->work_pending()) {
-        orb->perform_work();
+    Openbus::logger->log(INFO, "Openbus::run()");
+    #if (!OPENBUS_ORBIX && MULTITHREAD)
+      /* Já temos uma runThread ? */
+        if (!runThread) {
+          Openbus::logger->log(INFO, "Criando uma RunThread.");
+          runThread = new RunThread();
+          runThread->start();
+        }
+        runThread->wait();
+    #else
+      orbRunning = true;
+      while (orbRunning) {
+        if (orb->work_pending()) {
+          orb->perform_work();
+        }
       }
-    }
+    #endif
   }
 
   void Openbus::stop() {
-    orbRunning = false;
+    Openbus::logger->log(INFO, "Openbus::stop() BEGIN");
+    #if (!OPENBUS_ORBIX && MULTITHREAD)
+      /* empty */
+    #else  
+      orbRunning = false;
+    #endif
+    Openbus::logger->log(INFO, "Openbus::stop() END");
   }
 
   void Openbus::finish(bool force) {
@@ -945,4 +1048,3 @@ namespace openbus {
     return faultToleranceEnable;
   }
 }
-
