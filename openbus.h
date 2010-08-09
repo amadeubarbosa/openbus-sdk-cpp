@@ -312,15 +312,13 @@ namespace openbus {
     * barramento.
     */
     #ifdef OPENBUS_ORBIX
-      IT_Thread renewLeaseIT_Thread;
-
       class RenewLeaseThread : public IT_ThreadBody {
         public:
+          bool runningLeaseExpiredCallback;
           RenewLeaseThread();
           void* run();
       };
-      friend class Openbus::RenewLeaseThread;
-      static IT_Timer* renewLeaseTimer;
+      IT_Thread renewLeaseIT_Thread;
       static RenewLeaseThread* renewLeaseThread;
     #else
       #ifdef MULTITHREAD
