@@ -317,7 +317,6 @@ namespace openbus {
       class RenewLeaseThread : public IT_ThreadBody {
         public:
           RenewLeaseThread();
-          void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
           void* run();
       };
       friend class Openbus::RenewLeaseThread;
@@ -329,7 +328,6 @@ namespace openbus {
         public:
           bool runningLeaseExpiredCallback;
           RenewLeaseThread();
-          void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
           void _run(void*);
         };
         static RenewLeaseThread* renewLeaseThread;
@@ -337,7 +335,6 @@ namespace openbus {
         class RenewLeaseCallback : public CORBA::DispatcherCallback {
           public:
             RenewLeaseCallback();
-            void setLeaseExpiredCallback(LeaseExpiredCallback* obj);
             void callback(
               CORBA::Dispatcher* dispatcher, 
               Event event);
@@ -584,8 +581,7 @@ namespace openbus {
     * @return True se a callback foi registrada com sucesso, ou false 
     * se a callback já estava registrada.
     */
-      void setLeaseExpiredCallback(
-        LeaseExpiredCallback* leaseExpiredCallback);
+      void setLeaseExpiredCallback(LeaseExpiredCallback* leaseExpiredCallback);
 
     /**
     * Remove uma callback previamente registra para a notificação de lease 
@@ -710,4 +706,3 @@ namespace openbus {
 }
 
 #endif
-
