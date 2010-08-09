@@ -23,7 +23,7 @@
 #else
   #include <CORBA.h>
   #include "stubs/mico/access_control_service.h"
-  #include "stubs/orbix/registry_service.h"
+  #include "stubs/mico/registry_service.h"
   #include "stubs/mico/fault_tolerance.h"
 #endif
 
