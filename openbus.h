@@ -18,12 +18,12 @@
   #include <it_ts/timer.h>
   #include <it_ts/mutex.h>
   #include "stubs/orbix/access_control_service.hh"
-  #include "stubs/orbix/session_service.hh"
+  #include "stubs/orbix/registry_service.hh"
   #include "stubs/orbix/fault_tolerance.hh"
 #else
   #include <CORBA.h>
   #include "stubs/mico/access_control_service.h"
-  #include "stubs/mico/session_service.h"
+  #include "stubs/orbix/registry_service.h"
   #include "stubs/mico/fault_tolerance.h"
 #endif
 
@@ -34,7 +34,6 @@
 #include <lua.hpp>
 
 using namespace tecgraf::openbus::core::v1_05;
-using namespace tecgraf::openbus::session_service::v1_05;
 using namespace tecgraf::openbus::fault_tolerance::v1_05;
 using namespace std;
 using namespace logger;
