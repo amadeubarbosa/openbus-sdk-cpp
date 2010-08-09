@@ -10,11 +10,24 @@ LIBNAME= ${PROJNAME}
 #DBG=YES
 #CPPFLAGS= -fno-inline
 
-ifeq "$(TEC_UNAME)" "SunOS510"
+ifeq "$(TEC_UNAME)" "SunOS510_64"
+  CPPFLAGS= -m64
+  LFLAGS= -m64
+  STDLFLAGS= -m64
+endif
+
+ifeq "$(TEC_SYSNAME)" "SunOS"
   USE_CC=Yes
-  CPPFLAGS= -library=stlport4
   AR= CC
-  STDLFLAGS= -xar -o	
+
+  # Multithread
+  CPPFLAGS+= -mt
+  STDLFLAgS+= -mt	
+  LFLAGS+= -mt
+  
+  CPPFLAGS+= -KPIC -library=stlport4
+  STDLFLAGS+= -KPIC -xar -o	
+  LFLAGS+= -library=stlport4 
 endif
 
 ifeq ($(TEC_WORDSIZE), TEC_64)
@@ -85,5 +98,5 @@ genstubs: $(STUBS)
 	
 sunosShared: $(OBJS)
 	rm -f lib/$(TEC_UNAME)/libopenbusmico.so
-	CC $(CPPFLAGS) -G -instances=extern -o lib/$(TEC_UNAME)/libopenbusmico.so $(OBJS)
+	CC $(LFLAGS) -G -instances=extern -o lib/$(TEC_UNAME)/libopenbusmico.so $(OBJS)
 
