@@ -102,8 +102,7 @@ namespace openbus {
     Openbus::logger->indent();
     Openbus* bus = Openbus::getInstance();
     stringstream out;
-    out << "Replica ACS em uso: [" << bus->hostBus << "::" << 
-      bus->portBus << "]";
+    out << "Replica ACS em uso: [" << bus->hostBus << "::" << bus->portBus << "]";
     Openbus::logger->log(INFO, out.str());
     out.str(" ");
     if (acsHosts.size() > 0) {  

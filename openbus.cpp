@@ -167,8 +167,7 @@ namespace openbus {
       if (bus && bus->connectionState == CONNECTED) {
         logger->log(INFO, "Renovando credencial...");
         try {
-          bool status = bus->iLeaseProvider->renewLease(*bus->credential, 
-            bus->lease);
+          bool status = bus->iLeaseProvider->renewLease(*bus->credential, bus->lease);
           if (!bus->timeRenewingFixe) {
             bus->timeRenewing = bus->lease/3;
           }
@@ -177,6 +176,7 @@ namespace openbus {
           logger->log(INFO, msg.str());
           if (!status) {
             logger->log(WARNING, "Nao foi possivel renovar a credencial!");
+            logger->log(WARNING, "ACS retornou credencial inválida.");
             if (_leaseExpiredCallback) {
               _leaseExpiredCallback->expired();
             } else {
@@ -188,6 +188,8 @@ namespace openbus {
           }
         } catch (CORBA::Exception& e) {
           logger->log(WARNING, "Nao foi possivel renovar a credencial!");
+        /* Passar para o logger. */
+          e._print_stack_trace(cout);
           if (_leaseExpiredCallback) {
             _leaseExpiredCallback->expired();
           } else {
