@@ -24,7 +24,7 @@ namespace openbus {
     /**
     * Maquina que contem a replica que esta sendo usada.
     */
-      Host* acsHostInUse;
+      Host acsHostInUse;
 
     /**
     * Lista das replicas disponiveis do ACS.

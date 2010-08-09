@@ -548,7 +548,8 @@ namespace openbus {
   void Openbus::createProxyToIAccessControlService() {
     logger->log(INFO, "Openbus::createProxyToIAccessControlService() BEGIN");
     logger->indent();
-    mutex.lock();
+  /* Pode ser chamado de dentro da RenewLeaseThread. */
+    mutex.trylock();
     std::stringstream corbalocIC;
     corbalocIC << "corbaloc::" << hostBus << ":" << portBus << "/openbus_v1_05";
     logger->log(INFO, "corbaloc IC do ACS: " + corbalocIC.str());

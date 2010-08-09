@@ -130,10 +130,9 @@ namespace openbus {
           itACSHosts = acsHosts.begin();
         }
       } 
-      acsHostInUse->name = (*itACSHosts)->name; 
-      acsHostInUse->port = (*itACSHosts)->port; 
-      out << "Nova replica ACS: [" << acsHostInUse->name  << "::" << 
-         acsHostInUse->port << "]";
+      acsHostInUse.name = (*itACSHosts)->name; 
+      acsHostInUse.port = (*itACSHosts)->port; 
+      out << "Nova replica ACS: [" << acsHostInUse.name  << "::" << acsHostInUse.port << "]";
       Openbus::logger->log(INFO, out.str());
     } else {
       Openbus::logger->log(WARNING, "Lista de replicas vazia.");
@@ -141,6 +140,6 @@ namespace openbus {
     }
     Openbus::logger->dedent(INFO, 
       "FaultToleranceManager::updateACSHostInUse() END");
-    return acsHostInUse;
+    return &acsHostInUse;
   }
 }
