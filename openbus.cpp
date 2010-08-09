@@ -52,6 +52,32 @@ namespace openbus {
   #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
     Openbus::RenewLeaseThread::RenewLeaseThread() {
       runningLeaseExpiredCallback = false;
+      sigINT = false;
+    }
+    
+    void Openbus::RenewLeaseThread::sleep(unsigned short time) {
+      unsigned short count = 0;
+      for (;count < time; count++) {
+        mutex.lock();
+        if (sigINT) {
+          sigINT = false;
+          mutex.unlock();
+          break;
+        } else {
+          mutex.unlock();
+        }
+        #ifdef OPENBUS_ORBIX
+          IT_CurrentThread::sleep(1000);
+        #else
+          ::sleep(1);
+        #endif
+      }
+    }
+    
+    void Openbus::RenewLeaseThread::stop() {
+      mutex.lock();
+      sigINT = true;
+      mutex.unlock();
     }
     
     #ifdef OPENBUS_ORBIX
@@ -67,11 +93,7 @@ namespace openbus {
         msg << "sleep [" << timeRenewing <<"]s ...";
         logger->log(INFO, msg.str());
         msg.str("");
-        #ifdef OPENBUS_ORBIX
-          IT_CurrentThread::sleep(timeRenewing*1000);
-        #else
-          sleep(timeRenewing);
-        #endif
+        this->sleep(timeRenewing);
 
         mutex.lock();
         if (bus) {
@@ -318,6 +340,7 @@ namespace openbus {
           /* Por que o meu wait não fica bloqueado quando o LeaseExpiredCallback() chamda 
           *  disconnect() ?!
           */
+            renewLeaseThread->stop();
             #ifdef OPENBUS_ORBIX
               renewLeaseIT_Thread.join();
             #else
@@ -855,6 +878,7 @@ namespace openbus {
           /* Por que o meu wait não fica bloqueado quando o LeaseExpiredCallback() chama 
           *  disconnect() ?!
           */
+            renewLeaseThread->stop();
             #ifdef OPENBUS_ORBIX
               renewLeaseIT_Thread.join();
             #else

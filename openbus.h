@@ -248,7 +248,7 @@ namespace openbus {
     * Intervalo de tempo em segundos que determina quando que a credencial 
     * será renovada.
     */
-      unsigned long timeRenewing;
+      unsigned short timeRenewing;
 
     /**
     * Especifica se o tempo de renovação de credencial é fixo.
@@ -311,34 +311,34 @@ namespace openbus {
     * Thread/Callback responsável pela renovação da credencial do usuário que está logado neste 
     * barramento.
     */
-    #ifdef OPENBUS_ORBIX
+    #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
+      #ifdef OPENBUS_ORBIX
+      IT_Thread renewLeaseIT_Thread;
       class RenewLeaseThread : public IT_ThreadBody {
         public:
+          void* run();
+      #else
+      class RenewLeaseThread : public MICOMT::Thread {
+        public:
+          void _run(void*);
+      #endif
           bool runningLeaseExpiredCallback;
           RenewLeaseThread();
-          void* run();
+          void stop();
+        private:
+          bool sigINT;
+          void sleep(unsigned short time);
       };
-      IT_Thread renewLeaseIT_Thread;
       static RenewLeaseThread* renewLeaseThread;
     #else
-      #ifdef MULTITHREAD
-        class RenewLeaseThread : public MICOMT::Thread {
+      class RenewLeaseCallback : public CORBA::DispatcherCallback {
         public:
-          bool runningLeaseExpiredCallback;
-          RenewLeaseThread();
-          void _run(void*);
-        };
-        static RenewLeaseThread* renewLeaseThread;
-      #else
-        class RenewLeaseCallback : public CORBA::DispatcherCallback {
-          public:
-            RenewLeaseCallback();
-            void callback(
-              CORBA::Dispatcher* dispatcher, 
-              Event event);
-        };
-        RenewLeaseCallback renewLeaseCallback;
-      #endif
+          RenewLeaseCallback();
+          void callback(
+            CORBA::Dispatcher* dispatcher, 
+            Event event);
+      };
+      RenewLeaseCallback renewLeaseCallback;
     #endif
 
     /**
