@@ -173,7 +173,8 @@ namespace openbus {
             mutex.lock();
             Openbus::logger->log(INFO, "Atualizando intervalo de tempo de na RewnewLeaseThread.");
             timeRenewing = bus->timeRenewing;
-            mutex.unlock();  
+            mutex.unlock();
+            continue; 
           }
         }
         mutex.unlock();
