@@ -6,12 +6,14 @@ APPNAME=${PROJNAME}
 # compilado com suporte a multithread.
 #DEFINES+=MULTITHREAD
 
-# Descomente a linha abaixo para utilizar o Openbus Multithread 
-# no Linux.
+# Descomente a linha abaixo para utilizar o Openbus Multithread.
 #LIBS=pthread
 
-# Descomente as duas linhas abaixo para o uso em Valgrind.
+# Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES
+
+# Descomente a linha abaixo para o uso em Valgrind.
+# p.s.: O modo debug(DBG) deve estar ativado.
 #CPPFLAGS= -fno-inline
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath

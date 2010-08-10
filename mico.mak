@@ -1,13 +1,16 @@
 PROJNAME= openbusmico
 LIBNAME= ${PROJNAME}
 
-#Descomente a linha abaixo para utilizar a versão multithread.
+# Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
 # compilado com suporte a multithread.
 #DEFINES+=MULTITHREAD
 
-#Descomente as duas linhas abaixo para o uso em Valgrind.
+# Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES
+
+# Descomente a linha abaixo para o uso em Valgrind.
+# p.s.: O modo debug(DBG) deve estar ativado.
 #CPPFLAGS= -fno-inline
 
 ifeq "$(TEC_UNAME)" "SunOS510_64"
