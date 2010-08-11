@@ -4,8 +4,11 @@ APPNAME= rgs
 DEFINES=SCS_ORBIX
 DEFINES+=OPENBUS_ORBIX
 
-#Descomente as duas linhas abaixo para o uso em Valgrind.
+# Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES
+
+# Descomente a linha abaixo para o uso em Valgrind.
+# p.s.: O modo debug(DBG) deve estar ativado.
 #CPPFLAGS= -fno-inline
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
