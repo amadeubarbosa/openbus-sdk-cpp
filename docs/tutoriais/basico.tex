@@ -4,6 +4,7 @@
 \usepackage[brazil]{babel}
 \usepackage{listings}
 \usepackage{verbatim}
+\usepackage{hyperref}
 
 \lstset{
   language = c++, 
@@ -12,7 +13,7 @@
   showlines = true
 }
 
-\title{Tutorial Openbus C++}
+\title{Tutorial Openbus C++ 1.5.0}
 \author{R. Cosme, C. Augusto, R. Cerqueira \\
         Tecgraf \\
         Pontifícia Universidade Católica do Rio de Janeiro 
@@ -26,10 +27,7 @@
 \maketitle
 
 \section{Introdução}
-Este documento é destinado aos usuários desenvolvedores de aplicações C++ que  
-desejam utilizar o Openbus. O processo de \emph{deployment} do barramento não é 
-coberto aqui neste tutorial. Considera-se como pré-requisitos para um bom   
-entendimento deste documento um conhecimento básico dos seguintes assuntos:
+Este documento é destinado aos usuários desenvolvedores de aplicações C++ que desejam utilizar o Openbus. O processo de \emph{deployment} do barramento não é coberto aqui neste tutorial. Considera-se como pré-requisitos para um bom entendimento deste documento um conhecimento básico dos seguintes assuntos:
 
 \begin{itemize}
   \item Linguagem de programação C++.
@@ -39,26 +37,35 @@ entendimento deste documento um conhecimento básico dos seguintes assuntos:
 \end{itemize}
 
 \section{Preparação do Ambiente}
-O Openbus é desenvolvido em CORBA, portanto é necessária a presença de 
-um ORB específico para a versão da biblioteca que o desenvolvedor 
-possui. Este ORB 
-a ser utilizado, precisa habilitar o mecanismo de interceptação de CORBA, 
-pois o Openbus utiliza este recurso no processo de controle de acesso aos 
-serviços. 
+O Openbus C++ suporta os ORB`s Mico 2.3.13 e Orbix 6.3 sp3. O usuário Mico pode escolher entre 
+a versão single ou multi thread. Abaixo explicamos o que deveria ser feito na configuração 
+destes ORB`s para que o usuário possa utilizar o Openbus. Assumimos que o usuário tenha adquirido 
+o ORB através de um pacote Openbus SDK C++ obtido em nosso site, ou que já tenha o ORB devidamente 
+instalado e apto a alterações em suas configurações.
 
-Após a chamada de requisição de login no barramento, todas as chamadas 
-seguintes devem estar com a credencial de acesso anexada. Sendo assim, 
-faz-se necessário a habilitação dos interceptadores frente ao ORB que será 
-utilizado.
+\subsection {Mico 2.3.13} 
 
-Alguns ORB's ativam este mecanismo por padrão, como o MICO. Outros necessitam 
-de algumas configurações específicas, como é o caso do Orbix.
-
-\subsection{Orbix 6.3 Service Pack 3}
+Para que se possa utilizar o Mico, deveria somente ser necessário carregar no shell do usuário 
+o arquivo de configurações \lstinline!mico-setup.sh!, para usuários tipo *bash*, ou, \lstinline!mico-setup.csh! para usuários tipo *csh*. O usuário que já tem o Mico instalado, 
+deve verificar se este arquivo está sendo carregado no seu ambiente. Este script fica localizado 
+na pasta \lstinline!lib! da instalação do Mico. 
+No caso do usuário que deseja utilizar o Mico compilado que é oferecido pelo pacote Openbus SDK
+ C++, o script acima será encontrado no diretório \lstinline!specs/shell! da instalação do 
+ pacote.
+ 
+\subsection {Orbix 6.3 sp3}
+No Orbix o usuário precisa habilitar o mecanismo de interceptação de CORBA, pois o Openbus
+ utiliza este recurso no processo de controle de acesso aos serviços, e o Orbix não disponibiliza 
+ este mecanismo por padrão. O usuário também precisa carregar um script de configuração do 
+ ambiente no seu shell.
+ 
 Este ORB é configurável através de domínios de configuração que por sua vez 
 formam um ambiente. O domínio é formado por escopos, e, é representado através 
 de um arquivo textual que pode ser editado diretamente pelo administrador. 
-As seguintes linhas abaixo devem ser adicionadas neste arquivo:
+Não vamos abordar aqui como criar um domínio, para tal o usuário deve consultar a documentação 
+do ORB.
+
+Considerando-se que o usuário tenha o seu domínio, as seguintes linhas abaixo devem ser adicionadas no arquivo de configuração do domínio:
 
 \lstset{language=bash}
 \begin{lstlisting}
@@ -97,7 +104,10 @@ definidas no escopo \lstinline!tecgraf.openbus!. A primeira define uma política 
 o plugin responsável pelo mecanismo de interceptação. As duas últimas registram 
 o interceptador (\lstinline!AccessControl!).
   
-\section{Teste}
+Por último, o usuário deve se certificar que o script shell que configura o domínio a ser 
+utilizado foi carregado, este arquivo é gerado como resultado do processo de configuração.
+
+\section{Testando o ambiente}
 Antes de se começar a programação, é aconselhável que o usuário coloque em 
 funcionamento  o \emph{demo} Hello que acompanha o pacote. O correto funcionamento 
 do \emph{demo}, elimina uma série de possíveis problemas que o desenvolvedor possa 
@@ -108,12 +118,25 @@ Naturalmente a execução do \emph{demo} necessita de um barramento em operação.
 O \emph{demo} pode ser executado seguindo os seguintes passos:
 
 \begin{enumerate}
-  \item Entrar no diretório \lstinline!$OPENBUS\HOME/demo/hello/orbix63!.
-  \item Editar o arquivo \lstinline!$OPENBUS\HOME/demo/hello/orbix63/democonfig!
-  e configurar a localização do barramento.
+  \item Definir a variável de ambiente \lstinline!OPENBUS_HOME! como o caminho absoluto da instalação 
+  do pacote Openbus SDK C++.
+  \item Definir a variável de ambiente \lstinline!TEC_UNAME! com o identificador da plataforma, que é a 
+  última sequência de caracteres após o último hífen do nome do pacote, por exemplo: Linux26, 
+  SunOS510 ou Linux26g4.
+  \item Disponibilizar na variável de ambiente  \lstinline!LD_LIBRARY_PATH! o caminho 
+   \lstinline!$OPENBUS_HOME/libpath/$TEC_UNAME!.
+  \item Entrar no diretório \lstinline!demo/hello/orbix! ou \lstinline!demo/hello/mico!, que 
+  está disponível na árvore do pacote. 
+  \item Gerar uma chave privada e um certificado digital com os respectivos nomes: 
+  \lstinline!HelloService.key! e \lstinline!HelloService.crt!. O segundo arquivo deve ser colocado
+   na pasta \lstinline!certificates! do barramento, e, o certificado  
+   \lstinline!AccessControlService.crt! deve   ser obtido junto ao administrador do barramento e
+   colocado na pasta atual, em conjunto  da chave privada HelloService.key.
+   \href{https://jira.tecgraf.puc-rio.br/confluence/display/ESDPUB/Geracao+de+Chaves+e+Certificados+Digitais} {Geracao de Chaves e Certificados Digitais}
+  \item Editar o arquivo \lstinline!democonfig! e configurar a localização do barramento.
   \item Executar o processo servidor: \lstinline!./runserver!
 
-  A mensagem "Serviço HELLO registrado no OpenBus..." deve ser retornada.
+  A mensagem "Servico IHello registrado." deve ser retornada.
   \item Executar o processo cliente: \lstinline!./runclient!
 
   Após a execução do cliente, no terminal do processo servidor a seguinte 
@@ -133,13 +156,10 @@ envolvidas.
 \lstset{language=c++}
 O serviço de acesso ao barramento é utilizado através de uma API proprietária,
 que é representada pelo arquivo \lstinline!openbus.h!, no entanto o serviço de 
-registro e o serviço de sessão, são acessados diretamente através dos 
-stubs disponibilizados. No caso do Mico a API para o serviço de registro
-é descrita através do arquivo \lstinline!stubs/mico/registry_service.h!, 
-e para o serviço de sessão é o arquivo \lstinline!stubs/mico/session_service.h!. 
+registro é acessado diretamente através de um stub previamente disponibilizado. No caso do Mico a API para o serviço de registro
+é descrita através do arquivo \lstinline!stubs/mico/registry_service.h!.
 Quanto ao Orbix, o serviço de registro é representado por 
-\lstinline!stubs/orbix/registry_service.hh! e 
-o serviço de sessão por \lstinline!stubs/orbix/session_service.hh!.
+\lstinline!stubs/orbix/registry_service.hh!.
 
 \subsubsection{openbus.h}
 
@@ -147,7 +167,7 @@ o serviço de sessão por \lstinline!stubs/orbix/session_service.hh!.
   static Openbus::getInstance()
 \end{lstlisting}
 
-Fornece a instância que representa um determinado barramento.
+Fornece a única instância do barramento.
 
 \begin{lstlisting}
   void Openbus::init(
@@ -155,15 +175,37 @@ Fornece a instância que representa um determinado barramento.
   char** argv)
 \end{lstlisting}
 
-Inicializa a referência para o barramento.
+Inicializa uma referência a um barramento.
+
 Um ORB e um POA são criados implicitamente.
 A fábrica de componentes SCS é criada.
-Parâmetros de linha de comando:
+Os argumentos Openbus de linha de comando (argc e argv) são tratados.
+Parâmetros de linha de comando: 
 \begin{description}
-  \item[-OpenbusHost] Máquina em que se encontra o barramento.
+  \item[-OpenbusHost]  Máquina em que se encontra o barramento.
   \item[-OpenbusPort] Porta do barramento.
-  \item[-TimeRenewing] Tempo em milisegundos de renovação da credencial.
-\end{description}
+  \item[-OpenbusDebug]
+    ALL - Ativa todos os níveis de verbose.
+    ERROR - Ativa o nível ERROR do debug.
+    INFO - Ativa o nível INFO do debug.
+    WARNING - Ativa o nível WARNING do debug.
+  \item[-OpenbusDebugFile] Caminho completo ou relativo do arquivo que armazenará as  mensagens 
+    de verbose. Se este parâmetro não for definido, a saída do verbose será a saída padrão.
+    OBS.:  Se for  definido, o  verbose  somente  será armazenado  no  arquivo  em questão, 
+    ou seja, a saída padrão não será mais utilizada.
+  \item[-OpenbusValidationPolicy] Define uma política de validação das credenciais. Por padrão, 
+    a política ALWAYS é adotada.
+    NONE: Não há validação de credenciais.
+    ALWAYS: Sempre valida cada credencial no ACS.
+    CACHED: Primeiro  tenta  validar  a   credencial    consultando    um    cache   local, 
+      se não conseguir, a validação  transcorre normalmente através de  uma  chamada remota 
+      ao ACS.
+  \item[-OpenbusValidationTime] Define o intervalo de tempo(em milisegundos)   de  validação do 
+    cache de credenciais. O tempo padrão é de 30000ms.
+  \item[-OpenbusFTConfigFilename] Caminho completo  ou  relativo  do  arquivo  que  descreve as 
+    réplicas a serem utilizadas pelo mecanismo de tolerância a falhas.
+  \item[-OpenbusTimeRenewing] Tempo em segundos de renovação da credencial.
+  \end{description}
 
 \begin{lstlisting}
   void Openbus::init(
@@ -173,14 +215,37 @@ Parâmetros de linha de comando:
     unsigned short port)
 \end{lstlisting}
 
-Inicializa a referência para o barramento.
-Um ORB e POA são criados implicitamente.
+
+Inicializa uma referência a um barramento.
+
+Um ORB e um POA são criados implicitamente.
 A fábrica de componentes SCS é criada.
-Parâmetros de linha de comando:
+Os argumentos Openbus de linha de comando (argc e argv) são tratados.
+Parâmetros de linha de comando: 
 \begin{description}
-  \item[-OpenbusHost] Máquina em que se encontra o barramento.
+  \item[-OpenbusHost]  Máquina em que se encontra o barramento.
   \item[-OpenbusPort] Porta do barramento.
-  \item[-TimeRenewing] Tempo em milisegundos de renovação da credencial.
+  \item[-OpenbusDebug]
+    ALL - Ativa todos os níveis de verbose.
+    ERROR - Ativa o nível ERROR do debug.
+    INFO - Ativa o nível INFO do debug.
+    WARNING - Ativa o nível WARNING do debug.
+  \item[-OpenbusDebugFile] Caminho completo ou relativo do arquivo que armazenará as  mensagens 
+    de verbose. Se este parâmetro não for definido, a saída do verbose será a saída padrão.
+    OBS.:  Se for  definido, o  verbose  somente  será armazenado  no  arquivo  em questão, 
+    ou seja, a saída padrão não será mais utilizada.
+  \item[-OpenbusValidationPolicy] Define uma política de validação das credenciais. Por padrão, 
+    a política ALWAYS é adotada.
+    NONE: Não há validação de credenciais.
+    ALWAYS: Sempre valida cada credencial no ACS.
+    CACHED: Primeiro  tenta  validar  a   credencial    consultando    um    cache   local, 
+      se não conseguir, a validação  transcorre normalmente através de  uma  chamada remota 
+      ao ACS.
+  \item[-OpenbusValidationTime] Define o intervalo de tempo(em milisegundos)   de  validação do 
+    cache de credenciais. O tempo padrão é de 30000ms.
+  \item[-OpenbusFTConfigFilename] Caminho completo  ou  relativo  do  arquivo  que  descreve as 
+    réplicas a serem utilizadas pelo mecanismo de tolerância a falhas.
+  \item[-OpenbusTimeRenewing] Tempo em segundos de renovação da credencial.
 \end{description}
 
 \begin{lstlisting}
@@ -193,9 +258,17 @@ Informa o estado de conexão com o barramento.
   static void Openbus::terminationHandlerCallback(long signalType)
 \end{lstlisting}
 
-Termination Handler disponível para a classe IT\_TerminationHandler(). 
-Este método desfaz a conexão para cada instância de barramento. 
-Vide server.cpp do \emph{demo} Hello. 
+Disponibiliza um \lstinline!termination handler! que desconecta o usuário do barramento e finaliza a 
+execução do Openbus::run().
+
+Essa callback pode ser utlizada em uma implementação de um \lstinline!termination handler! a ser es-
+crito pelo usuário. No caso do Orbix, o método pode ser registrado diretamente na   classe
+\lstinline!IT_TerminationHandler()!, e.g.:
+
+\lstinline!IT_TerminationHandler termination_handler(openbus::Openbus::terminationHandlerCallback)!
+
+O método desconecta o usuário do barramento,   se   este   estiver  conectado,  executa um
+\lstinline!Openbus::stop()!  seguido  por  um  \lstinline!Openbus::finish()!,  e,  por  último  faz   delete  da instanciação do Openbus.
 
 \begin{lstlisting}
   CORBA::ORB* Openbus::getORB()
@@ -220,7 +293,7 @@ Retorna a fábrica de componentes.
 \end{lstlisting}
 
 Retorna a credencial interceptada pelo interceptador servidor. 
-Esta operação somente deve ser chamada durante o processo de 
+!Atenção! Esta operação somente deve ser chamada durante o processo de 
 tratamento de requisição do serviço implementado.  
 
 \begin{lstlisting}
@@ -230,16 +303,10 @@ tratamento de requisição do serviço implementado.
 Retorna o serviço de acesso.
 
 \begin{lstlisting}
-  services::RegistryService* getRegistryService(); 
+  registry_service::IRegistryService* getRegistryService(); 
 \end{lstlisting}
 
 Retorna o serviço de registro.
-
-\begin{description}
-  \item[NO\_CONNECTED] Não há uma conexão estabelecida com nenhum barramento.
-  \item[NO\_SESSION\_SERVICE] Não é possível obter, a nível de CORBA, o serviço
-  de sessão no barramento em uso.
-\end{description}
 
 \begin{lstlisting}
   Credential* Openbus::getCredential()
@@ -253,6 +320,8 @@ Retorna a credencial de identificação do usuário frente ao barramento.
 
 Define uma credencial a ser utilizada no lugar da credencial corrente.
 Útil para fornecer uma credencial com o campo delegate preenchido.
+!Atenção! Nesta versão este método não considera um comportamento multithread, 
+ sendo assim a alteração de credencial será válida para todas as threads.
 
 \begin{lstlisting}
   class LeaseExpiredCallback {
@@ -264,7 +333,6 @@ Define uma credencial a ser utilizada no lugar da credencial corrente.
 Representa uma callback para a notificação de que o lease da credencial de 
 indentificação do usuário expirou. O usuário deve fornecer a implementação 
 da callback implementando o método expired().
-
 \begin{lstlisting}
   void setLeaseExpiredCallback(LeaseExpiredCallback* leaseExpiredCallback)
 \end{lstlisting}
@@ -343,7 +411,15 @@ contrário, o valor de retorno é false.
   void Openbus::run()
 \end{lstlisting}
 
-Loop que processa requisições remotas. Execução do orb->run().
+Loop que processa requisições CORBA.
+!Atenção! Este método na versão Mico *multi thread* faz um wait() na RunThread.
+
+\begin{lstlisting}
+  void stop()
+\end{lstlisting}
+
+Pára de processar requisições CORBA. Finaliza a execução do run.
+!Atenção! Não faz nada na versão Mico *multi thread*.
 
 \begin{lstlisting}
   void finish(bool force);
@@ -351,60 +427,49 @@ Loop que processa requisições remotas. Execução do orb->run().
 
 Finaliza a execução do ORB.
 
-\subsubsection{Stub do serviço de registro}
-
 \begin{lstlisting}
-  RegistryIdentifier _cxx_register(const ServiceOffer& aServiceOffer)
+  void setInterceptable(
+    string interfaceRepID, 
+    string method, 
+    bool isInterceptable)
 \end{lstlisting}
 
-Registra um serviço no barramento. O serviço é descrito através de uma 
-oferta de serviço. Caso o serviço seja registrado com sucesso, a 
-identificação do mesmo é retornada através de uma string.
+Define se os métodos de uma determinada interface devem ou não ser interceptados pelo
+interceptador servidor.
 
 \begin{lstlisting}
-  CORBA::Boolean unregister(const char* identifier)
+  bool isInterceptable(
+    string interfaceRepID, 
+    string method)
 \end{lstlisting}
 
-Remove uma oferta de serviço do barramento. Se a remoção ocorrer com sucesso,
-o valor true é retornado, caso contrário false é retornado.
+Consulta se o método está sendo interceptado.
 
 \begin{lstlisting}
-  ServiceOfferList* find(const FacetList& facets);
+  bool isFaultToleranceEnable()
 \end{lstlisting}
 
-Busca uma ou mais ofertas de serviço no barramento que implementam todas as
-facetas discriminadas em facets.
+Consulta se o mecanismo de tolerancia a falhas está ativado.
 
+\subsection{Tolerância a falhas}
+
+O usuário Orbix pode habilitar um mecanismo de tolerância a falhas em requisições 
+remotas destinadas aos serviços básicos do barramento. Para isto, é necessário 
+ter em mãos a lista de réplicas disponíveis para o serviço de acesso, e, descrevê-las 
+em um arquivo do tipo Lua. Um exemplo:
+
+\lstset{language=bash}
 \begin{lstlisting}
-  ServiceOfferList* findByCriteria(
-    const FacetList& facets,
-    const PropertyList* criteria);
+-- replicas.lua
+ACSHosts = {
+  {"nomeMaquinaA", 2089},
+  {"nomeMaquinaB", 4089},
+}
 \end{lstlisting}
 
-Busca uma ou mais ofertas de serviço no barramento que implementam todas as 
-as facetas discriminadas em facets, e, que atendam aos critérios descritos no 
-parâmetro criteria, que é uma lista de propriedades descrita através de strings
-no formato  chave = {valor1, valor2, ..., valorN}.
-
-\subsubsection{Log}
-
-A API utiliza o log criado no tecgraf, que se encontra atualmente no projeto 
- cpputils. O Log deve ser definido na chamada ao Openbus::init(). Abaixo temos a
- documentação encontrada na chamada init.
- 
-\begin{itemize}
- \item OpenbusDebug:
-  \subitem ALL Ativa todos os níveis de verbose.
-  \subitem ERROR Ativa o nível ERROR do debug.
-  \subitem INFO Ativa o nível INFO do debug.
-  \subitem WARNING Ativa o nível WARNING do debug.
- \item OpenbusDebugFile: Caminho completo ou relativo do arquivo que 
-  armazenará as mensagens de verbose. Se este parâmetro não 
-  for definido, a saída do verbose será a saída padrão. OBS.:
-  Se for definido, o verbose somente será armazenado no arquivo
-  em questão, ou seja, a saída padrão não será mais utilizada.
-\end{itemize}
-
+Essas informações devem ser obtidas com o administrador do barramento. A habilitação 
+do mecanismo é através do parâmetro de linha de comando \lstinline!-OpenbusFTConfigFilename!, 
+que deve receber o caminho relativo ou absoluto do arquivo acima.
 
 \subsection{Primeiros passos...}
 Basicamente há dois tipos de aplicações Openbus. Uma que oferta serviços e 
@@ -492,10 +557,10 @@ De posse desta fábrica, o usuário pode criar um componente pendurando uma
 ou mais facetas:
 
 \begin{lstlisting}
-/* Fábrica de componentes */
+/* Fabrica de componentes */
   scs::core::ComponentBuilder* componentBuilder = bus->getComponentBuilder();
 
-/* Definição do componente. */
+/* Definicao do componente. */
   scs::core::ComponentId componentId;
   componentId.name = "HelloComponent";
   componentId.major_version = '1';
@@ -503,7 +568,7 @@ ou mais facetas:
   componentId.patch_version = '0';
   componentId.platform_spec = "nenhuma";
 
-/* Descrição das facetas. */
+/* Descricao das facetas. */
   std::list<scs::core::ExtendedFacetDescription> extFacets;
   scs::core::ExtendedFacetDescription helloDesc;
   helloDesc.name = "IHello";
@@ -511,8 +576,7 @@ ou mais facetas:
   helloDesc.instantiator = HelloImpl::instantiate;
   helloDesc.destructor = HelloImpl::destruct;
   extFacets.push_back(helloDesc);
-  scs::core::ComponentContext* componentContext =
-    componentBuilder->newFullComponent(extFacets, componentId);
+  componentContext = componentBuilder->newComponent(extFacets, componentId);
 \end{lstlisting}
 
 O serviço a ser registrado no barramento deve ser descrito através de uma 
@@ -547,21 +611,21 @@ openbusidl::rs::PropertyList_var p = new openbusidl::rs::PropertyList(1);
 Agora, se a classe de auxílio for utilizada, reduzimos este código para:
 
 \begin{lstlisting}
-openbus::services::PropertyListHelper* PropertyListHelper =
-    new openbus::services::PropertyListHelper();
-  PropertyListHelper->add("description", "Serviço IHello");
+  openbus::util::PropertyListHelper* propertyListHelper = \
+    new openbus::util::PropertyListHelper();
 
-  
-  openbusidl::rs::ServiceOffer serviceOffer;
-  serviceOffer.properties = PropertyListHelper->getPropertyList();
-  serviceOffer.member = Icomponent->_this();
+/* Criacao de uma *oferta de servico*. */
+  registry_service::ServiceOffer serviceOffer;
+  serviceOffer.properties = propertyListHelper->getPropertyList();
+  serviceOffer.member = componentContext->getIComponent();
+  delete propertyListHelper;
 \end{lstlisting}
 
 De posse da lista de propriedades e do componente que representa o serviço, 
 é possível requisitar o registro do serviço:
 
 \begin{lstlisting}
-registryService->Register(serviceOffer, registryId);
+registryId = registryService->_cxx_register(serviceOffer);
 \end{lstlisting}
 
 Até este ponto, o servidor basicamente se autenticou ao barramento e registrou 
@@ -581,8 +645,7 @@ repetidos, com exceção de que o cliente se autentica através do mecanismo
 usuário e senha:
 
 \begin{lstlisting}
-services::RegistryService* registryService =
-      bus->connect(USER, PASSWORD);
+  registryService = bus->connect("tester", "tester");
 \end{lstlisting}
 
 Após a conexão bem sucedida com o barramento, o próximo passo é obter o 
@@ -597,19 +660,19 @@ Busca do serviço:
 *  O trabalho de criação da lista é facilitado pelo uso da classe 
 *  FacetListHelper.
 */
-  openbus::services::FacetListHelper* facetListHelper = \
-    new openbus::services::FacetListHelper();
+  openbus::util::FacetListHelper* facetListHelper =
+    new openbus::util::FacetListHelper();
   facetListHelper->add("IHello");
 
 /* Busca no barramento o serviço desejado.
 *  Uma lista de *ofertas de serviço* é retornada para o usuário.
 *  OBS.: Neste demo somente há uma oferta de serviço.
 */
-  openbus::services::ServiceOfferList_var serviceOfferList = \
+  registry_service::ServiceOfferList_var serviceOfferList =
     registryService->find(facetListHelper->getFacetList());
+  delete facetListHelper;
 
- CORBA::ULong idx = 0;
- openbus::services::ServiceOffer serviceOffer = serviceOfferList[idx];
+  registry_service::ServiceOffer serviceOffer = serviceOfferList[(CORBA::ULong) 0];
 \end{lstlisting}
 
 Como visto acima, a oferta de serviço armazena o serviço através de um 
@@ -620,15 +683,15 @@ método(getFacet) para que o usuário possa obter um objeto CORBA que
 represente o serviço desejado:
 
 \begin{lstlisting}
-scs::core::IComponent* component = serviceOffer.member;
-  CORBA::Object* obj = component->getFacet("IDL:demoidl/hello/IHello:1.0");
+scs::core::IComponent_var component = serviceOffer.member;
+CORBA::Object_var obj = component->getFacet("IDL:demoidl/hello/IHello:1.0");
 \end{lstlisting}
 
 De posse do objeto CORBA, o usuário deve efetuar um narrow para mapeá-lo para 
 a interface desejada:
 
 \begin{lstlisting}
-demoidl::hello::IHello* hello = demoidl::hello::IHello::_narrow(obj);
+demoidl::hello::IHello_var hello = demoidl::hello::IHello::_narrow(obj);
 \end{lstlisting}
 
 Daqui em diante o programador estará apto a utilizar o serviço.
@@ -636,31 +699,28 @@ Daqui em diante o programador estará apto a utilizar o serviço.
 \clearpage
 \subsection{Código servidor}
 
-\texttt{../demo/hello/orbix63/server.cpp} \\
-
 \begin{lstlisting}
 /*
-** OpenBus Demo - Orbix 6.3
+** OpenBus Demo - Mico
 ** server.cpp
 */
 
 #include <fstream>
 #include <iostream>
-#include <omg/orb.hh>
-#include <it_ts/thread.h>
-#include <it_ts/termination_handler.h>
+#include <CORBA.h>
+#include <csignal>
 
 #include <openbus.h>
-#include <ComponentBuilderOrbix.h>
+#include <ComponentBuilder.h>
 
-#include "stubs/helloS.hh"
+#include "stubs/hello.h"
 
 using namespace std;
-
-IT_USING_NAMESPACE_STD
+using namespace tecgraf::openbus::core::v1_05;
+using namespace tecgraf::openbus::core::v1_05::registry_service;
 
 openbus::Openbus* bus;
-openbus::services::RegistryService* registryService;
+registry_service::IRegistryService* registryService = 0;
 char* registryId;
 scs::core::ComponentContext* componentContext;
 
@@ -671,64 +731,67 @@ class HelloImpl : virtual public POA_demoidl::hello::IHello {
       this->componentContext = componentContext;
     }
   public:
-    static void* instantiate(scs::core::ComponentContext* componentContext) {
-      return (void*) new HelloImpl(componentContext);
+    static PortableServer::ServantBase* instantiate(
+      scs::core::ComponentContext* componentContext) 
+    {
+      return (PortableServer::ServantBase*) new HelloImpl(componentContext);
     }
     static void destruct(void* obj) {
       delete (HelloImpl*) obj;
     }
-    void sayHello() IT_THROW_DECL((CORBA::SystemException)) {
+    void sayHello() throw(CORBA::SystemException) {
       cout << "Servant diz: HELLO!" << endl;
-      openbusidl::acs::Credential_var credential = 
+      access_control_service::Credential_var credential = 
         bus->getInterceptedCredential();
       cout << "Usuario OpenBus que fez a chamada: " << credential->owner.in()
         << endl;
     };
 };
 
-static void myTerminationHandler(long signal) {
+void termination_handler(int p) {
   cout << "Encerrando o processo servidor..." << endl;
-  try {
-    registryService->unregister(registryId);
-  } catch(CORBA::Exception& e) {
-    cout << "Não foi possível remover a oferta de serviço." << endl;
+  if (registryService) {
+    try {
+      registryService->unregister(registryId);
+      registryService = 0;
+    } catch(CORBA::Exception& e) {
+      cout << "Nao foi possivel remover a oferta de servico." << endl;
+    }
   }
-  delete componentContext;
-  openbus::Openbus::terminationHandlerCallback(signal);
+  openbus::Openbus::terminationHandlerCallback((long) signal);
 }
 
 int main(int argc, char* argv[]) {
-  IT_TerminationHandler termination_handler(myTerminationHandler);
-
+  signal(SIGINT, termination_handler);
   bus = openbus::Openbus::getInstance();
 
   bus->init(argc, argv);
 
   cout << "Conectando no barramento..." << endl;
 
-/* Conexão com o barramento através de certificado. */
+/* Conexao com o barramento atraves de certificado. */
   try {
     registryService = bus->connect("HelloService", "HelloService.key",
       "AccessControlService.crt");
   } catch (CORBA::SystemException& e) {
-    cout << "** Não foi possível se conectar ao barramento. **" << endl \
-         << "* Falha na comunicação. *" << endl;
-    exit(-1);
+    cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
+         << "* Falha na comunicacao. *" << endl;
+    exit(1);
   } catch (openbus::LOGIN_FAILURE& e) {
-    cout << "** Não foi possível se conectar ao barramento. **" << endl \
-         << "* Par usuário/senha inválido. *" << endl;
-    exit(-1);
+    cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
+         << "* Par usuario/senha invalido. *" << endl;
+    exit(1);
   } catch (openbus::SECURITY_EXCEPTION& e) {
     cout << e.what() << endl;
-    exit(-1);
+    exit(1);
   }
 
-  cout << "Conexão com o barramento estabelecida com sucesso!" << endl;
+  cout << "Conexao com o barramento estabelecida com sucesso!" << endl;
 
-/* Fábrica de componentes */
+/* Fabrica de componentes */
   scs::core::ComponentBuilder* componentBuilder = bus->getComponentBuilder();
 
-/* Definição do componente. */
+/* Definicao do componente. */
   scs::core::ComponentId componentId;
   componentId.name = "HelloComponent";
   componentId.major_version = '1';
@@ -736,7 +799,7 @@ int main(int argc, char* argv[]) {
   componentId.patch_version = '0';
   componentId.platform_spec = "nenhuma";
 
-/* Descrição das facetas. */
+/* Descricao das facetas. */
   std::list<scs::core::ExtendedFacetDescription> extFacets;
   scs::core::ExtendedFacetDescription helloDesc;
   helloDesc.name = "IHello";
@@ -746,21 +809,37 @@ int main(int argc, char* argv[]) {
   extFacets.push_back(helloDesc);
   componentContext = componentBuilder->newComponent(extFacets, componentId);
 
-  openbus::services::PropertyListHelper* propertyListHelper = \
-    new openbus::services::PropertyListHelper();
+  openbus::util::PropertyListHelper* propertyListHelper = \
+    new openbus::util::PropertyListHelper();
 
-/* Criação de uma *oferta de serviço*. */
-  openbus::services::ServiceOffer serviceOffer;
+/* Criacao de uma *oferta de servico*. */
+  registry_service::ServiceOffer serviceOffer;
   serviceOffer.properties = propertyListHelper->getPropertyList();
   serviceOffer.member = componentContext->getIComponent();
   delete propertyListHelper;
 
-  cout << "Registrando serviço IHello no barramento..." << endl;
+  cout << "Registrando servico IHello no barramento..." << endl;
 
-/* Registro do serviço no barramento. */
-  registryService->Register(serviceOffer, registryId);
-  cout << "Serviço IHello registrado." << endl;
-  cout << "Aguardando requisições..." << endl;
+/* Registro do servico no barramento. */
+  try {
+    if (registryService) {
+      registryId = registryService->_cxx_register(serviceOffer);
+    } else {
+      cout << "Nao foi possivel adquirir um proxy para o servico de registro." 
+        << endl;
+      exit(1);
+    }
+  } catch (UnathorizedFacets& e) {
+    cout << "Nao foi possivel registrar IHello." << endl;
+    CORBA::ULong idx;
+    CORBA::ULong length = e.facets.length();
+    for (idx = 0; idx < length; idx++) {
+      cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
+    }
+    exit(1);
+  }
+  cout << "Servico IHello registrado." << endl;
+  cout << "Aguardando requisicoes..." << endl;
 
   bus->run();
 
@@ -774,21 +853,22 @@ int main(int argc, char* argv[]) {
 
 \begin{lstlisting}
 /*
-** OpenBus Demo - Orbix 6.3
+** OpenBus Demo - Mico
 ** client.cpp
 */
 
 #include <fstream>
 #include <iostream>
 
-#include "stubs/hello.hh"
+#include "stubs/hello.h"
 #include <openbus.h>
 
 using namespace std;
+using namespace tecgraf::openbus::core::v1_05;
 
 int main(int argc, char* argv[]) {
   openbus::Openbus* bus;
-  openbus::services::RegistryService* registryService;
+  registry_service::IRegistryService* registryService;
 
   bus = openbus::Openbus::getInstance();
 
@@ -815,30 +895,32 @@ int main(int argc, char* argv[]) {
 *  O trabalho de criação da lista é facilitado pelo uso da classe 
 *  FacetListHelper.
 */
-  openbus::services::FacetListHelper* facetListHelper =
-    new openbus::services::FacetListHelper();
+  openbus::util::FacetListHelper* facetListHelper =
+    new openbus::util::FacetListHelper();
   facetListHelper->add("IHello");
 
 /* Busca no barramento o serviço desejado.
 *  Uma lista de *ofertas de serviço* é retornada para o usuário.
 *  OBS.: Neste demo somente há uma oferta de serviço.
 */
-  openbus::services::ServiceOfferList_var serviceOfferList =
+  registry_service::ServiceOfferList_var serviceOfferList =
     registryService->find(facetListHelper->getFacetList());
   delete facetListHelper;
 
+  if (serviceOfferList->length() > 0) {
+    registry_service::ServiceOffer serviceOffer = serviceOfferList[(CORBA::ULong) 0];
+  
+    scs::core::IComponent_var component = serviceOffer.member;
+    CORBA::Object_var obj = component->getFacet("IDL:demoidl/hello/IHello:1.0");
+    demoidl::hello::IHello_var hello = demoidl::hello::IHello::_narrow(obj);
 
-  CORBA::ULong idx = 0;
-  openbus::services::ServiceOffer serviceOffer = serviceOfferList[idx];
+    cout << "Fazendo chamada remota sayHello()..." << endl;
 
-  scs::core::IComponent_var component = serviceOffer.member;
-  CORBA::Object_var obj = component->getFacet("IDL:demoidl/hello/IHello:1.0");
-  demoidl::hello::IHello_var hello = demoidl::hello::IHello::_narrow(obj);
-
-  cout << "Fazendo chamada remota sayHello()..." << endl;
-
-  hello->sayHello();
-
+    hello->sayHello();
+  } else {
+    cout << "Nenhuma oferta encontrada." << endl;
+  }
+  
   cout << "Desconectando-se do barramento..." << endl;
 
   bus->disconnect();
