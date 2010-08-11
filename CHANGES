@@ -1,0 +1,30 @@
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+     Openbus SDK C++ 1.5.0 (11 de agosto de 2010)
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
++ Versão para Mico 2.3.13 singlethread e multithread.
++ O _wrapper_ do serviço de registro  (services/RegistryService.h) foi removido.  Agora o  usuário 
+  deve utilizar o stub (stubs/registry_service).
++ Removido suporte ao serviço de sessão, que não é mais considerado  como  um  serviço   *básico*.
++ Removida exceção Openbus::NO_CONNECTED e NO_SESSION_SERVICE.
++ Não há mais a possibilidade de se recriar o ORB durante o ciclo-de-vida da aplicação.
++ O parâmetro de linha de comando -TimeRenewing foi substituído por -OpenbusTimeRenewing e  passou 
+  a aceitar segundos ao invés de milisegundos.
++ O modo debug não é mais ativado em tempo de compilação.   Controle de debug através do parâmetro 
+  de linha de comando -OpenbusDebug, que pode receber um dos seguintes  valores como especificação 
+  do nível de mensagem: ALL, ERROR, INFO e WARNING. 
++ Adoção de políticas de validação das credenciais.  O  usuário  pode escolher não validar nenhuma 
+  credencial, como também validar sempre as credenciais ou ainda manter um cache de credenciais.
+  - Este  comportamento  pode  ser  definido  através   do   parâmetro   de   linha   de   comando 
+    -OpenbusValidationPolicy.
++ Mecanismo de tolerância a falhas para uso com Orbix.
++ O método Openbus::addLeaseExpiredCallback() foi substituído por 
+  Openbus::setLeaseExpiredCallback().
++ Adição do método Openbus::stop(), que pára a execução de Openbus::run().
++ Mecanismo de controle dos métodos  que  devem ser  interceptados   pelo  interceptador servidor, 
+  através dos métodos setInterceptable() e isInterceptable().
++ O destrutor de Openbus não espera mais o término do sleep() da RenewLeaseThread.
++ As         classes            facilitadoras       openbus::services::PropertyListHelper        e 
+  openbus::services::FacetListHelper foram movidas para o módulo util/Helper.
++ O módulo *verbose* se transformou na biblioteca *logger*.
+
+Ricardo Cosme <rcosme@tecgraf.puc-rio.br>

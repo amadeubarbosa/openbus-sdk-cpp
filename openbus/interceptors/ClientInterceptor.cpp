@@ -16,8 +16,7 @@ namespace openbus {
   namespace interceptors {
     access_control_service::Credential* ClientInterceptor::credential = 0;
 
-    ClientInterceptor::ClientInterceptor(IOP::Codec_ptr pcdr_codec)  
-    {
+    ClientInterceptor::ClientInterceptor(IOP::Codec_ptr pcdr_codec) {
       Openbus::logger->log(INFO, "ClientInterceptor::ClientInterceptor() BEGIN");
       Openbus::logger->indent();
       cdr_codec = pcdr_codec;
@@ -28,7 +27,7 @@ namespace openbus {
       Openbus::logger->dedent(INFO, "ClientInterceptor::ClientInterceptor() END");
     }
 
-    ClientInterceptor::~ClientInterceptor() { }
+    ClientInterceptor::~ClientInterceptor() {}
 
     void ClientInterceptor::send_request(ClientRequestInfo_ptr ri) 
       throw(
@@ -87,12 +86,12 @@ namespace openbus {
     {
       return CORBA::string_dup("AccessControl");
     }
+    
     void ClientInterceptor::send_poll( ClientRequestInfo_ptr ri ) 
-      throw(CORBA::SystemException) 
-    {}
+      throw(CORBA::SystemException) {}
+    
     void ClientInterceptor::receive_reply( ClientRequestInfo_ptr ri ) 
-      throw(CORBA::SystemException) 
-    {}
+      throw(CORBA::SystemException) {}
 
     void ClientInterceptor::receive_exception( ClientRequestInfo_ptr ri ) 
       throw(
@@ -194,10 +193,8 @@ namespace openbus {
     void ClientInterceptor::receive_other( ClientRequestInfo_ptr ri ) 
       throw(
         CORBA::SystemException,
-        PortableInterceptor::ForwardRequest)
-    {}
+        PortableInterceptor::ForwardRequest) {}
     
     void ClientInterceptor::destroy() {}
   }
 }
-

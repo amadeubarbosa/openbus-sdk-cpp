@@ -70,8 +70,7 @@ namespace openbus {
   typedef map<string, MethodSet*> MethodsNotInterceptable;
 
 /**
-* \brief Falha no processo de login, ou seja, o par nome de usuário e senha não
-* foi validado.
+* \brief Falha no processo de login, ou seja, o par nome de usuário e senha não foi validado.
 */
   class LOGIN_FAILURE : public runtime_error {
     public:
@@ -141,7 +140,7 @@ namespace openbus {
       static lua_State* luaState;
 
     /**
-    * Nome do arquivo de configuracao das replicas.
+    * Nome do arquivo de configuração das réplicas.
     */
       static char* FTConfigFilename;
 
@@ -171,12 +170,12 @@ namespace openbus {
       access_control_service::ILeaseProvider_var iLeaseProvider;
 
     /**
-    * Ponteiro para o IComponent do servico de acesso. 
+    * Ponteiro para o IComponent do serviço de acesso. 
     */
       scs::core::IComponent_var iComponentAccessControlService;
 
     /**
-    * Ponteiro para o stub do serviço de tolerancia a falhas.
+    * Ponteiro para o stub do serviço de tolerância a falhas.
     */
       IFaultTolerantService_var iFaultTolerantService;
 
@@ -229,13 +228,12 @@ namespace openbus {
       ConnectionStates connectionState;
 
     /**
-    * Intervalo de tempo em segundos que determina quando que a credencial 
-    * será renovada.
+    * Intervalo de tempo em segundos que determina quando que a credencial será renovada.
     */
       unsigned short timeRenewing;
 
     /**
-    * Especifica se o tempo de renovação de credencial é fixo.
+    * Especifica se o tempo de renovação da credencial é fixo.
     */
       bool timeRenewingFixe;
 
@@ -245,8 +243,8 @@ namespace openbus {
       unsigned long credentialsValidationTime;
 
      /**
-     * Mapa de métodos relacionados a suas respectivas interfaces que devem ser ignorados 
-     * pelo interceptador servidor.
+     * Mapa de métodos relacionados a suas respectivas interfaces que devem ser ignorados pelo 
+     * interceptador servidor.
      */
       MethodsNotInterceptable methodsNotInterceptable;
 
@@ -328,7 +326,7 @@ namespace openbus {
     /**
     * [OPENBUS-410] - Mico
     * 
-    * O modo reativo não funciona adequadamente na versão *multi thread*. A alternativa encontrada 
+    * O modo reativo não funciona adequadamente na versão *multithread*. A alternativa encontrada 
     * foi utilizar uma thread dedicada ao orb->run() afim de evitar _deadlock_ distribuído.
     */
     #ifndef OPENBUS_ORBIX
@@ -344,8 +342,7 @@ namespace openbus {
     #endif
 
     /**
-    * Flag que informa se o mecanismo de tolerancia a falhas está 
-    * ativado.
+    * Flag que informa se o mecanismo de tolerância a falhas está ativado.
     */
       bool faultToleranceEnable;
 
@@ -378,24 +375,21 @@ namespace openbus {
     *     ERROR - Ativa o nível ERROR do debug.
     *     INFO - Ativa o nível INFO do debug.
     *     WARNING - Ativa o nível WARNING do debug.
-    *   "-OpenbusDebugFile": Caminho completo ou relativo do arquivo que 
-    *     armazenará as mensagens de verbose. Se este parâmetro não 
-    *     for definido, a saída do verbose será a saída padrão. OBS.:
-    *     Se for definido, o verbose somente será armazenado no arquivo
-    *     em questão, ou seja, a saída padrão não será mais utilizada.
-    *   "-OpenbusValidationPolicy": Define uma política de validação das 
-    *     credenciais. Por padrão, a política ALWAYS é adotada.
+    *   "-OpenbusDebugFile": Caminho completo ou relativo do arquivo que armazenará as  mensagens 
+    *     de verbose. Se este parâmetro não for definido, a saída do verbose será a saída padrão.
+    *     OBS.:  Se for  definido, o  verbose  somente  será armazenado  no  arquivo  em questão, 
+    *     ou seja, a saída padrão não será mais utilizada.
+    *   "-OpenbusValidationPolicy": Define uma política de validação das credenciais. Por padrão, 
+    *     a política ALWAYS é adotada.
     *     NONE: Não há validação de credenciais.
     *     ALWAYS: Sempre valida cada credencial no ACS.
-    *     CACHED: Primeiro tenta validar a credencial consultando um 
-    *       cache local, se não conseguir, a validação transcorre 
-    *       normalmente através de uma chamada remota ao ACS.
-    *   "-OpenbusValidationTime": Define o intervalo de tempo(em milisegundos)
-    *     de validação do cache de credenciais. O tempo padrão é de 3000ms.
-    *   "-OpenbusFTConfigFilename": Caminho completo ou relativo do 
-    *     arquivo que descreve as réplicas a serem utilizadas pelo 
-    *     mecanismo de tolerância a falhas.
-    *
+    *     CACHED: Primeiro  tenta  validar  a   credencial    consultando    um    cache   local, 
+    *       se não conseguir, a validação  transcorre normalmente através de  uma  chamada remota 
+    *       ao ACS.
+    *   "-OpenbusValidationTime": Define o intervalo de tempo(em milisegundos)   de  validação do 
+    *     cache de credenciais. O tempo padrão é de 30000ms.
+    *   "-OpenbusFTConfigFilename": Caminho completo  ou  relativo  do  arquivo  que  descreve as 
+    *     réplicas a serem utilizadas pelo mecanismo de tolerância a falhas.
     *   "-OpenbusTimeRenewing": Tempo em segundos de renovação da credencial.
     *
     * @param[in] argc
@@ -419,35 +413,32 @@ namespace openbus {
     *     ERROR - Ativa o nível ERROR do debug.
     *     INFO - Ativa o nível INFO do debug.
     *     WARNING - Ativa o nível WARNING do debug.
-    *   "-OpenbusDebugFile": Caminho completo ou relativo do arquivo que 
-    *     armazenará as mensagens de verbose. Se este parâmetro não 
-    *     for definido, a saída do verbose será a saída padrão. OBS.:
-    *     Se for definido, o verbose somente será armazenado no arquivo
-    *     em questão, ou seja, a saída padrão não será mais utilizada.
-    *   "-OpenbusValidationPolicy": Define uma política de validação das 
-    *     credenciais. Por padrão, a política ALWAYS é adotada.
+    *   "-OpenbusDebugFile": Caminho completo ou relativo do arquivo que armazenará as  mensagens 
+    *     de verbose. Se este parâmetro não for definido, a saída do verbose será a saída padrão.
+    *     OBS.:  Se for  definido, o  verbose  somente  será armazenado  no  arquivo  em questão, 
+    *     ou seja, a saída padrão não será mais utilizada.
+    *   "-OpenbusValidationPolicy": Define uma política de validação das credenciais. Por padrão, 
+    *     a política ALWAYS é adotada.
     *     NONE: Não há validação de credenciais.
     *     ALWAYS: Sempre valida cada credencial no ACS.
-    *     CACHED: Primeiro tenta validar a credencial consultando um 
-    *       cache local, se não conseguir, a validação transcorre 
-    *       normalmente através de uma chamada remota ao ACS.
-    *   "-OpenbusValidationTime": Define o intervalo de tempo(em milisegundos)
-    *     de validação do cache de credenciais. O tempo padrão é de 3000ms.
-    *   "-OpenbusFTConfigFilename": Caminho completo ou relativo do 
-    *     arquivo que descreve as réplicas a serem utilizadas pelo 
-    *     mecanismo de tolerância a falhas.
-    *
+    *     CACHED: Primeiro  tenta  validar  a   credencial    consultando    um    cache   local, 
+    *       se não conseguir, a validação  transcorre normalmente através de  uma  chamada remota 
+    *       ao ACS.
+    *   "-OpenbusValidationTime": Define o intervalo de tempo(em milisegundos)   de  validação do 
+    *     cache de credenciais. O tempo padrão é de 30000ms.
+    *   "-OpenbusFTConfigFilename": Caminho completo  ou  relativo  do  arquivo  que  descreve as 
+    *     réplicas a serem utilizadas pelo mecanismo de tolerância a falhas.
     *   "-OpenbusTimeRenewing": Tempo em segundos de renovação da credencial.
     *   
-    *   Atenção: Os parâmetros de linha de comando podem sobrescrer os parâmetros de função:
-    *     host, port e policy.
+    *   Atenção:Os parâmetros de linha de comando podem sobrescrer os parâmetros de função: host,
+    *           port e policy.
     *
     * @param[in] argc
     * @param[in] argv
     * @param[in] host Máquina em que se encontra o barramento.
     * @param[in] port A porta da máquina em que se encontra o barramento.
-    * @param[in] policy Política de renovação de credenciais. Este parâmetro
-    *   é opcional. O padrão é adotar a política ALWAYS.
+    * @param[in] policy Política de renovação de credenciais. Este parâmetro é opcional. O padrão
+    *   é adotar a política ALWAYS.
     */
       void init(
         int argc,
@@ -459,8 +450,7 @@ namespace openbus {
     /**
     * Informa o estado de conexão com o barramento.
     *
-    * @return true caso a conexão esteja ativa, ou false, caso
-    * contrário.
+    * @return true caso a conexão esteja ativa, ou false, caso contrário.
     */
       bool isConnected();
 
@@ -556,8 +546,8 @@ namespace openbus {
       };
 
     /**
-    * Registra uma callback para a notificação de que o lease da credencial
-    * de identificação do usuário, frente ao barramento, expirou.
+    * Registra uma callback para a notificação de que o lease da credencial de identificação 
+    * do usuário, frente ao barramento, expirou.
     *
     * @param[in] A callback a ser registrada.
     * @return True se a callback foi registrada com sucesso, ou false 
@@ -566,8 +556,7 @@ namespace openbus {
       void setLeaseExpiredCallback(LeaseExpiredCallback* leaseExpiredCallback);
 
     /**
-    * Remove uma callback previamente registra para a notificação de lease 
-    * expirado.
+    * Remove uma callback previamente registra para a notificação de lease expirado.
     *
     * @param[in] A callback a ser removida.
     * @return True se a callback foi removida com sucesso, ou false 
@@ -581,10 +570,9 @@ namespace openbus {
     *  @param[in] user Nome do usuário.
     *  @param[in] password Senha do usuário.
     *  @throw LOGIN_FAILURE O par nome de usuário e senha não foram validados.
-    *  @throw CORBA::SystemException Alguma falha de comunicação com o 
-    *    barramento ocorreu.
-    *  @return  Se a tentativa de conexão for bem sucedida, uma instância que 
-    *    representa o serviço é retornada.
+    *  @throw CORBA::SystemException Alguma falha de comunicação com o barramento ocorreu.
+    *  @return  Se a tentativa de conexão for bem sucedida, uma instância que representa o 
+    *    serviço é retornada.
     */
       registry_service::IRegistryService* connect(
         const char* user,
@@ -592,27 +580,22 @@ namespace openbus {
         throw (CORBA::SystemException, LOGIN_FAILURE);
 
     /**
-    *  Realiza uma tentativa de conexão com o barramento utilizando o
-    *    mecanismo de certificação para o processo de login.
+    *  Realiza uma tentativa de conexão com o barramento utilizando o mecanismo de 
+    *  certificação para o processo de login.
     *
-    *  @param[in] entity Nome da entidade a ser autenticada através de um
-    *    certificado digital.
-    *  @param[in] privateKeyFilename Nome do arquivo que armazena a chave
-    *    privada do serviço.
-    *  @param[in] ACSCertificateFilename Nome do arquivo que armazena o
-    *    certificado do serviço.
+    *  @param[in] entity Nome da entidade a ser autenticada através de um certificado digital.
+    *  @param[in] privateKeyFilename Nome do arquivo que armazena a chave privada do serviço.
+    *  @param[in] ACSCertificateFilename Nome do arquivo que armazena o certificado do serviço.
     *  @throw LOGIN_FAILURE O par nome de usuário e senha não foram validados.
-    *  @throw CORBA::SystemException Alguma falha de comunicação com o 
-    *    barramento ocorreu.
-    *  @throw SECURITY_EXCEPTION Falha no mecanismo de autenticação por 
-    *    certificado digital.
+    *  @throw CORBA::SystemException Alguma falha de comunicação com o barramento ocorreu.
+    *  @throw SECURITY_EXCEPTION Falha no mecanismo de autenticação por certificado digital.
     *    Algumas possíveis causas:
     *     + Não foi possível obter o desafio.
     *     + Falha na manipulação de uma chave privada ou pública.
     *     + Falha na manipulação de um certificado.
     *       entidade ou do certificado do ACS.
-    *  @return  Se a tentativa de conexão for bem sucedida, uma instância que 
-    *    representa o serviço é retornada.
+    *  @return  Se a tentativa de conexão for bem sucedida, uma instância que representa o 
+    *    serviço é retornada.
     */
       registry_service::IRegistryService* connect(
         const char* entity,
@@ -623,8 +606,8 @@ namespace openbus {
     /**
     *  Desfaz a conexão atual.
     *
-    *  @return Caso a conexão seja desfeita, true é retornado, caso contrário,
-    *  o valor de retorno é false.
+    *  @return Caso a conexão seja desfeita, true é retornado, caso contrário, o valor de 
+    *  retorno é false.
     */
       bool disconnect();
 

@@ -7,16 +7,12 @@
 
 namespace openbus {
   namespace interceptors {
-    unsigned long ServerInterceptor::validationTime = 30000;
-    set<access_control_service::Credential>::iterator 
-      ServerInterceptor::itCredentialsCache;
-    set<access_control_service::Credential, 
-      ServerInterceptor::setCredentialCompare> 
+    unsigned long ServerInterceptor::validationTime = 30000; /* ms */
+    set<access_control_service::Credential>::iterator ServerInterceptor::itCredentialsCache;
+    set<access_control_service::Credential, ServerInterceptor::setCredentialCompare> 
       ServerInterceptor::credentialsCache;
   #ifdef OPENBUS_ORBIX
-    ServerInterceptor::CredentialsValidationThread::
-      CredentialsValidationThread() 
-    {
+    ServerInterceptor::CredentialsValidationThread::CredentialsValidationThread() {
       Openbus::logger->log(INFO,
         "CredentialsValidationThread::CredentialsValidationThread() BEGIN");
       Openbus::logger->indent();
@@ -24,9 +20,7 @@ namespace openbus {
         "CredentialsValidationThread::CredentialsValidationThread() END");
     }
 
-    ServerInterceptor::CredentialsValidationThread::
-      ~CredentialsValidationThread() 
-    {
+    ServerInterceptor::CredentialsValidationThread::~CredentialsValidationThread() {
       Openbus::logger->log(INFO,
         "CredentialsValidationThread::~CredentialsValidationThread() BEGIN");
       Openbus::logger->indent();
@@ -46,8 +40,8 @@ namespace openbus {
            itCredentialsCache++)
       {
         stringstream out;
-        out << "Validando a credencial: " << 
-          (const char*) ((*itCredentialsCache).identifier) << " ...";
+        out << "Validando a credencial: " << (const char*) ((*itCredentialsCache).identifier) 
+          << " ...";
         Openbus::logger->log(INFO, out.str());
         try {
           if (iAccessControlService->isValid(*itCredentialsCache)) {
@@ -57,19 +51,16 @@ namespace openbus {
             credentialsCache.erase(itCredentialsCache);
           }
         } catch (CORBA::SystemException& e) {
-          Openbus::logger->log(ERROR, 
-            "Erro ao verificar validade da credencial");
+          Openbus::logger->log(ERROR, "Erro ao verificar validade da credencial");
         }
       }
       stringstream str;
       str << "Próxima validação em: " << validationTime << "ms" << endl;
       Openbus::logger->log(INFO, str.str());
-      Openbus::logger->dedent(INFO,
-        "CredentialsValidationThread::run() END");
+      Openbus::logger->dedent(INFO, "CredentialsValidationThread::run() END");
     }
   #else
-    ServerInterceptor::CredentialsValidationCallback::
-      CredentialsValidationCallback() {
+    ServerInterceptor::CredentialsValidationCallback::CredentialsValidationCallback() {
     };
 
     void ServerInterceptor::CredentialsValidationCallback::callback(
@@ -159,8 +150,7 @@ namespace openbus {
         free(repID);
         free(operation);
         Openbus::logger->log(WARNING, "Este método não será interceptado.");
-        Openbus::logger->dedent(INFO, 
-          "ServerInterceptor::receive_request() END");
+        Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
       } else {
         CORBA::ULong z;
         stringstream contextData;
@@ -173,10 +163,9 @@ namespace openbus {
         IOP::ServiceContext::_context_data_seq& context_data = sc->context_data;
 
         CORBA::OctetSeq octets(context_data.length(),
-                     context_data.length(),
-                   
-                     context_data.get_buffer(),
-                     0);
+          context_data.length(),
+          context_data.get_buffer(),
+          0);
 
         CORBA::Any_var any = cdr_codec->decode_value(
           octets, 
@@ -189,19 +178,14 @@ namespace openbus {
         any >>= c;
       #ifdef OPENBUS_ORBIX
         Openbus::logger->log(INFO, "credential->owner: " + (string) c->owner);
-        Openbus::logger->log(INFO, "credential->identifier: " + 
-          (string) c->identifier);
-        Openbus::logger->log(INFO, "credential->delegate: " + 
-          (string) c->delegate);
+        Openbus::logger->log(INFO, "credential->identifier: " + (string) c->identifier);
+        Openbus::logger->log(INFO, "credential->delegate: " + (string) c->delegate);
       #else
         Openbus::logger->log(INFO, "credential->owner: " + (string) c.owner);
-        Openbus::logger->log(INFO, "credential->identifier: " + 
-          (string) c.identifier);
-        Openbus::logger->log(INFO, "credential->delegate: " + 
-          (string) c.delegate);
+        Openbus::logger->log(INFO, "credential->identifier: " + (string) c.identifier);
+        Openbus::logger->log(INFO, "credential->delegate: " + (string) c.delegate);
       #endif
-        CredentialValidationPolicy policy = 
-          bus->getCredentialValidationPolicy(); 
+        CredentialValidationPolicy policy = bus->getCredentialValidationPolicy(); 
         picurrent->set_slot(slotid, any);
         if (policy == ALWAYS) {
           Openbus::logger->log(INFO, "Política de renovação de credenciais: " + 
@@ -214,20 +198,17 @@ namespace openbus {
             if (bus->getAccessControlService()->isValid(c)) {
           #endif
               Openbus::logger->log(INFO, "Credencial renovada.");
-              Openbus::logger->dedent(INFO,
-                "ServerInterceptor::receive_request() END");
+              Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
             } else {
               Openbus::logger->log(INFO, "Falha na renovação da credencial.");
               Openbus::logger->log(ERROR, "Throwing CORBA::NO_PERMISSION...");
-              Openbus::logger->dedent(INFO,
-                "ServerInterceptor::receive_request() END");
+              Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
               throw CORBA::NO_PERMISSION();
             }
           } catch (CORBA::SystemException& e) {
             Openbus::logger->log(INFO, "Falha na renovação da credencial.");
             Openbus::logger->log(ERROR, "Throwing CORBA::SystemException");
-            Openbus::logger->dedent(INFO,
-              "ServerInterceptor::receive_request() END");
+            Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
             throw;
           }
         } else if (policy == CACHED) {
@@ -263,8 +244,7 @@ namespace openbus {
               } else {
                 Openbus::logger->log(INFO, "Falha na validação da credencial.");
                 Openbus::logger->log(ERROR, "Throwing CORBA::NO_PERMISSION...");
-                Openbus::logger->dedent(INFO,
-                  "ServerInterceptor::receive_request() END");
+                Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
                 throw CORBA::NO_PERMISSION();
               }
               Openbus::logger->log(INFO, "Inserindo credencial no cache...");
@@ -273,21 +253,17 @@ namespace openbus {
             #else
               credentialsCache.insert(c);
             #endif  
-              Openbus::logger->dedent(INFO, 
-                "ServerInterceptor::receive_request() END");
+              Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
             } catch (CORBA::SystemException& e) {
               Openbus::logger->log(INFO, "Falha na validação da credencial.");
               Openbus::logger->log(ERROR, "Throwing CORBA::SystemException");
-              Openbus::logger->dedent(INFO,
-                "ServerInterceptor::receive_request() END");
+              Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
               throw;
             }
           }
         } else {
-          Openbus::logger->log(INFO, "Política de renovação de credenciais: " + 
-            (string) "NONE");
-          Openbus::logger->dedent(INFO, 
-            "ServerInterceptor::receive_request() END");
+          Openbus::logger->log(INFO, "Política de renovação de credenciais: " + (string) "NONE");
+          Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
         }
       }
     }          
@@ -318,12 +294,9 @@ namespace openbus {
       any >>= c;
       if (c) {
         Openbus::logger->log(INFO, "credential->owner: " + (string) c->owner);
-        Openbus::logger->log(INFO, "credential->identifier: " + 
-          (string) c->identifier);
-        Openbus::logger->log(INFO, "credential->delegate: " + 
-          (string) c->delegate);
-        access_control_service::Credential_var ret = 
-          new access_control_service::Credential();
+        Openbus::logger->log(INFO, "credential->identifier: " + (string) c->identifier);
+        Openbus::logger->log(INFO, "credential->delegate: " + (string) c->delegate);
+        access_control_service::Credential_var ret = new access_control_service::Credential();
         ret->owner = CORBA::string_dup(c->owner);
         ret->identifier = CORBA::string_dup(c->identifier);
         ret->delegate = CORBA::string_dup(c->delegate);
@@ -331,12 +304,9 @@ namespace openbus {
       access_control_service::Credential c;
       if (any >>=c) {
         Openbus::logger->log(INFO, "credential->owner: " + (string) c.owner);
-        Openbus::logger->log(INFO, "credential->identifier: " + 
-          (string) c.identifier);
-        Openbus::logger->log(INFO, "credential->delegate: " + 
-          (string) c.delegate);
-        access_control_service::Credential_var ret = 
-          new access_control_service::Credential();
+        Openbus::logger->log(INFO, "credential->identifier: " + (string) c.identifier);
+        Openbus::logger->log(INFO, "credential->delegate: " + (string) c.delegate);
+        access_control_service::Credential_var ret = new access_control_service::Credential();
         ret->owner = CORBA::string_dup(c.owner);
         ret->identifier = CORBA::string_dup(c.identifier);
         ret->delegate = CORBA::string_dup(c.delegate);
@@ -371,7 +341,6 @@ namespace openbus {
     void ServerInterceptor::setValidationTime(unsigned long pValidationTime) {
       validationTime = pValidationTime;
     }
-
 
     unsigned long ServerInterceptor::getValidationTime() {
       return validationTime;
