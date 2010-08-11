@@ -4,7 +4,7 @@ LIBNAME= ${PROJNAME}
 # Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
 # compilado com suporte a multithread.
-#DEFINES+=MULTITHREAD
+DEFINES+=MULTITHREAD
 
 # Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES
