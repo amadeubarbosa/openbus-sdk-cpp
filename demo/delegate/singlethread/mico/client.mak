@@ -21,10 +21,22 @@ OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
 EXTRA_CONFIG=config
 
-ifeq "$(TEC_UNAME)" "SunOS510"
+ifeq "$(TEC_UNAME)" "SunOS510_64"
+  CPPFLAGS= -m64
+  LFLAGS= -m64
+  STDLFLAGS= -m64
+endif
+
+ifeq "$(TEC_SYSNAME)" "SunOS"
   USE_CC=Yes
-  CPPFLAGS= -library=stlport4
-  LFLAGS= -library=stlport4
+
+  # Multithread
+  CPPFLAGS+= -mt
+  LFLAGS+= -mt
+  LIBS=
+  
+  CPPFLAGS+= -library=stlport4
+  LFLAGS+= -library=stlport4 
   LIBS= nsl socket
 endif
 
