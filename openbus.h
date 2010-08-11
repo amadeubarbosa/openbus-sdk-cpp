@@ -90,22 +90,6 @@ namespace openbus {
       SECURITY_EXCEPTION(const string& msg = "") : runtime_error(msg) {}
   };
 
-/**
-* \brief Não há conexão estabelecida com nenhum barramento.
-*/
-  class NO_CONNECTED : public runtime_error {
-    public:
-      NO_CONNECTED(const string& msg = "") : runtime_error(msg) {}
-  };
-
-/**
-* \brief Não é possível obter o serviço de sessão no barramento em uso.
-*/
-  class NO_SESSION_SERVICE : public runtime_error {
-    public:
-      NO_SESSION_SERVICE(const string& msg = "") : runtime_error(msg) {}
-  };
-
   /**
   * \brief Representa um barramento.
   */
