@@ -33,6 +33,7 @@ ifeq "$(TEC_SYSNAME)" "SunOS"
   # Multithread
   CPPFLAGS+= -mt
   LFLAGS+= -mt
+  LIBS=
   
   CPPFLAGS+= -library=stlport4
   LFLAGS+= -library=stlport4 
