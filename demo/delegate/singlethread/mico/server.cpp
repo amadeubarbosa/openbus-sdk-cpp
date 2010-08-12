@@ -49,14 +49,6 @@ class HelloImpl : virtual public POA_demoidl::demoDelegate::IHello {
 
 void termination_handler(int p) {
   cout << "Encerrando o processo servidor..." << endl;
-  if (registryService) {
-    try {
-      registryService->unregister(registryId);
-      registryService = 0;
-    } catch(CORBA::Exception& e) {
-      cout << "Nao foi possivel remover a oferta de servico." << endl;
-    }
-  }
   openbus::Openbus::terminationHandlerCallback((long) signal);
 }
 

@@ -49,15 +49,6 @@ class HelloImpl : virtual public POA_demoidl::hello::IHello {
 
 static void myTerminationHandler(long signal) {
   cout << "Encerrando o processo servidor..." << endl;
-  if (registryService) {
-    try {
-      registryService->unregister(registryId);
-      registryService = 0;
-    } catch(CORBA::Exception& e) {
-      cout << "Nao foi possivel remover a oferta de servico." << endl;
-    }
-  }
-
   scs::core::ComponentBuilder* componentBuilder = bus->getComponentBuilder();
   map<string, string>* errors = componentBuilder->deactivateComponent(componentContext);
   map<string, string>::iterator it;
