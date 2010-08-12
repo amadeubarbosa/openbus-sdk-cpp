@@ -309,13 +309,13 @@ Retorna o serviço de acesso.
 Retorna o serviço de registro.
 
 \begin{lstlisting}
-  Credential* Openbus::getCredential()
+  access_control_service::Credential* Openbus::getCredential()
 \end{lstlisting}
 
 Retorna a credencial de identificação do usuário frente ao barramento.
 
 \begin{lstlisting}
-  void setThreadCredential(Credential* credential)
+  void setThreadCredential(access_control_service::Credential* credential)
 \end{lstlisting}
 
 Define uma credencial a ser utilizada no lugar da credencial corrente.
@@ -392,7 +392,7 @@ caso contrário duas exceções podem ser lançadas:
   Os valores que definem a localização do barramento(host e porta) estão 
   incorretos.
   O mecanismo de interceptação não está sendo ativado. (rever o ítem 1)
-  SECURITY\_EXCEPTION: Falha no mecanismo de autenticação por certificado 
+  \item[SECURITY\_EXCEPTION] Falha no mecanismo de autenticação por certificado 
   digital. Algumas possíveis causas:
 
   Não foi possível obter o desafio.
