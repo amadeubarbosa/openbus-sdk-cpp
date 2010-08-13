@@ -11,6 +11,7 @@
 #include <cxxtest/TestSuite.h>
 #include <openbus.h>
 #include <fstream>
+#include <unistd.h>
 
 using namespace openbus;
 using namespace tecgraf::openbus::core::v1_05;
