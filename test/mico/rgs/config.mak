@@ -45,6 +45,7 @@ endif
 
 INCLUDES= . ./stubs ../../../stubs/mico\
   ${MICO_INC} \
+  ${OPENBUSINC}/mico-${MICOVERSION} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/cxxtest \
@@ -54,7 +55,7 @@ INCLUDES= . ./stubs ../../../stubs/mico\
 LDIR= ${MICO_LIB} \
   ${OPENBUSLIB}
 
-LIBS= crypto mico${MICOVERSION} dl ssl
+LIBS+= crypto mico${MICOVERSION} dl ssl
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
   ${OPENBUSLIB}/libscsmico.a \
