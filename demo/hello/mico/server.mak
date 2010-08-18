@@ -49,6 +49,7 @@ OBJROOT=obj
 INCLUDES= . \
   stubs \
   ${MICO_INC} \
+  ${OPENBUSINC}/mico-${MICOVERSION} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
   ${OPENBUSINC}/scs \

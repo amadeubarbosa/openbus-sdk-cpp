@@ -50,7 +50,7 @@ OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 OBJROOT= obj
 TARGETROOT= lib
 
-INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
+INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/mico-${MICOVERSION} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${MICO_LIB} ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS= mico${MICOVERSION} scsmico crypto dl logger

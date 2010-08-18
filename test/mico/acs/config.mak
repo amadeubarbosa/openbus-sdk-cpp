@@ -49,11 +49,12 @@ INCLUDES= . ../../../stubs/mico \
   ${OPENBUSINC}/cxxtest \
   ${OPENBUSINC}/openssl-0.9.9 \
   ${OPENBUSINC}/logger \
+  ${OPENBUSINC}/mico-${MICOVERSION} \
   ${MICO_INC}
 
 LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
-LIBS= crypto mico${MICOVERSION} dl ssl
+LIBS+= crypto mico${MICOVERSION} dl ssl
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/libscsmico.a \
