@@ -29,6 +29,7 @@ SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
       ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES
+USE_NODEPEND= YES
 
 SRC= client.cpp \
      stubs/delegateC.cxx

@@ -34,6 +34,7 @@ SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
   ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES
+USE_NODEPEND= YES
 
 SRC= runner.cpp \
      stubs/RGSTestC.cxx \
