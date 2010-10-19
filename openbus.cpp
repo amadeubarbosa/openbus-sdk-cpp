@@ -46,6 +46,7 @@ namespace openbus {
   #ifdef MULTITHREAD
     Openbus::RunThread* Openbus::runThread = 0;
     Openbus::RenewLeaseThread* Openbus::renewLeaseThread = 0;
+    MICOMT::Thread::ThreadKey Openbus::threadKey;
   #endif
 #endif
 
@@ -88,6 +89,7 @@ namespace openbus {
       unsigned int timeRenewing = 1;
       stringstream msg;
       bool tryExec_LeaseExpiredCallback = false;
+      bus->setThreadCredential(bus->credential);
       while (true) {
         logger->log(INFO, "Openbus::RenewLeaseThread::run() BEGIN");
         msg << "sleep [" << timeRenewing <<"]s ...";
@@ -285,6 +287,9 @@ namespace openbus {
     debugLevel = OFF;
     connectionState = DISCONNECTED;
     credential = 0;
+  #if (!OPENBUS_ORBIX && MULTITHREAD)    
+    MICOMT::Thread::set_specific(threadKey, 0);
+  #endif
     lease = 0;
     iAccessControlService = access_control_service::IAccessControlService::_nil();
     iRegistryService = 0;
@@ -297,6 +302,9 @@ namespace openbus {
     luaL_openlibs(luaState);
   #ifdef OPENBUS_ORBIX
     luaopen_IOR(luaState);
+  #endif
+  #if (!OPENBUS_ORBIX && MULTITHREAD)
+    MICOMT::Thread::create_key(threadKey, 0);
   #endif
     newState();
     credentialValidationPolicy = openbus::interceptors::ALWAYS;
@@ -357,6 +365,9 @@ namespace openbus {
               LeaseExpiredCallback");
           }
         }
+      #endif
+      #if (!OPENBUS_ORBIX && MULTITHREAD)
+        MICOMT::Thread::delete_key(threadKey);
       #endif
     }
     logger->dedent(INFO, "Openbus::~Openbus() END");
@@ -521,16 +532,29 @@ namespace openbus {
   } 
 
   access_control_service::Credential* Openbus::getCredential() {
+  #if (!OPENBUS_ORBIX && MULTITHREAD)
+    access_control_service::Credential* threadCredential = 
+      (access_control_service::Credential*) MICOMT::Thread::get_specific(threadKey);
+    if (threadCredential) {
+      return threadCredential;
+    } else {
+      return credential;
+    }
+  #else
     return credential;
-  }
+  #endif
+    }
 
   interceptors::CredentialValidationPolicy Openbus::getCredentialValidationPolicy() {
     return credentialValidationPolicy;
   }
 
   void Openbus::setThreadCredential(access_control_service::Credential* credential) {
+  #if (!OPENBUS_ORBIX && MULTITHREAD)
+    MICOMT::Thread::set_specific(threadKey, (void*) credential);
+  #else
     this->credential = credential;
-    openbus::interceptors::ClientInterceptor::credential = credential;
+  #endif
   }
 
   void Openbus::setLeaseExpiredCallback(LeaseExpiredCallback* leaseExpiredCallback) 
@@ -615,7 +639,7 @@ namespace openbus {
           msg << "Associando credencial " << credential << " ao ORB.";
           logger->log(INFO, msg.str());
           connectionState = CONNECTED;
-          openbus::interceptors::ClientInterceptor::credential = credential;
+          setThreadCredential(credential);
           if (!timeRenewingFixe) {
             timeRenewing = lease/3;
           }
@@ -797,7 +821,7 @@ namespace openbus {
           msg << "Associando credencial " << credential << " ao ORB."; 
           logger->log(INFO, msg.str());
           connectionState = CONNECTED;
-          openbus::interceptors::ClientInterceptor::credential = credential;
+          setThreadCredential(credential);
           if (!timeRenewingFixe) {
             timeRenewing = lease/3;
           }
@@ -862,7 +886,6 @@ namespace openbus {
       } catch (CORBA::Exception& e) {
         logger->log(WARNING, "Não foi possível realizar logout.");
       }
-      openbus::interceptors::ClientInterceptor::credential = 0;
       #if 0
         if (credential) {
           delete credential;
