@@ -10,7 +10,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+#if HAVE_UNISTD_H
+  #include <unistd.h>
+#endif
 
 #ifdef OPENBUS_ORBIX
   #include <omg/orb.hh>
@@ -70,7 +72,11 @@ namespace openbus {
         #ifdef OPENBUS_ORBIX
           IT_CurrentThread::sleep(1000);
         #else
+        #ifndef _WIN32
           ::sleep(1);
+        #else
+          _sleep(1);
+        #endif
         #endif
       }
     }
