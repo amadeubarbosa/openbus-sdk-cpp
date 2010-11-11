@@ -730,8 +730,8 @@ namespace openbus {
         unsigned char* challenge = octetSeq->get_buffer();
 
       /* Leitura da chave privada da entidade. */
-        FILE* fp = fopen(privateKeyFilename, "r");
-        if (fp == 0) {
+        BIO* bio = BIO_new( BIO_s_file() );
+        if (BIO_read_filename( bio, privateKeyFilename ) <= 0) {
           stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             privateKeyFilename;
@@ -741,8 +741,7 @@ namespace openbus {
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena a chave privada.");
         }
-        EVP_PKEY* privateKey = PEM_read_PrivateKey(fp, 0, 0, 0);
-        fclose(fp);
+        EVP_PKEY* privateKey  = PEM_read_bio_PrivateKey( bio, NULL, NULL, 0 );
         if (privateKey == 0) {
           logger->log(WARNING, "Não foi possível obter a chave privada da entidade.");
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
@@ -751,7 +750,7 @@ namespace openbus {
           throw SECURITY_EXCEPTION(
             "Não foi possível obter a chave privada da entidade.");
         }
-
+        
         int RSAModulusSize = EVP_PKEY_size(privateKey);
 
       /* Decifrando o desafio. */
@@ -762,26 +761,22 @@ namespace openbus {
         RSA_private_decrypt(RSAModulusSize, challenge, challengePlainText,
           privateKey->pkey.rsa, RSA_PKCS1_PADDING);
 
-      /* Leitura do certificado do ACS. */
-        FILE* certificateFile = fopen(ACSCertificateFilename, "rb");
-        if (certificateFile == 0) {
-          free(challengePlainText);
+        bio = BIO_new( BIO_s_file() );
+        if (BIO_read_filename( bio, ACSCertificateFilename ) <= 0) {
           stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             ACSCertificateFilename;
           logger->log(WARNING, filename.str());
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
-          EVP_PKEY_free(privateKey);
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena o certificado ACS.");
         }
-
-        EVP_PKEY_free(privateKey);
-
-        X509* x509 = d2i_X509_fp(certificateFile, 0);
-        fclose(certificateFile);
       
+        EVP_PKEY_free(privateKey);
+      
+        X509* x509 = d2i_X509_bio(bio, 0);
+
       /* Obtenção da chave pública do ACS. */
         EVP_PKEY* publicKey = X509_get_pubkey(x509);
         if (publicKey == 0) {
