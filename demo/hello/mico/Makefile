@@ -1,0 +1,69 @@
+#
+# Exemplo de arquivo makefile.
+#
+
+include config
+
+# Descomente a linha abaixo para compilar em 64 Bits.
+#MICO_64= -DMICO_64
+
+# Descomente as duas linhas abaixo para utilizar a versão multithread.
+# A versão multithread do Openbus deve ser utilizada com Mico
+# compilado com suporte a multithread.
+MULTITHREAD= -DMULTITHREAD
+PTHREAD= -lpthread
+
+CPPFLAGS= -Wall ${MICO_64} ${MULTITHREAD}
+
+OPENBUSINC= ${OPENBUS_HOME}/incpath
+OPENBUSLIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+
+SRC= client.cpp \
+     server.cpp \
+     stubs/hello.cc
+
+SLIB= ${OPENBUSLIB}/libopenbusmico.a \
+      ${OPENBUSLIB}/libscsmico.a \
+      ${OPENBUSLIB}/liblogger.a
+
+INCLUDES= -I. \
+				  -Istubs \
+				  -I${MICO_INC} \
+				  -I${OPENBUSINC}/openbus/cpp \
+				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
+				  -I${OPENBUSINC}/scs \
+				  -I${OPENBUSINC}/logger \
+          -I${OPENBUSINC}/lua5.1.3
+
+LDIR= -L${MICO_LIB} \
+		  -L${OPENBUSLIB}
+
+LIBS= -lmico${MICOVERSION} -ldl -lcrypto -lssl -llua5.1 ${PTHREAD}
+
+all: genstubs server client
+
+bin/${TEC_UNAME}/server: server.cpp
+	mkdir -p bin/${TEC_UNAME}
+	g++ ${CPPFLAGS} -o bin/${TEC_UNAME}/server server.cpp stubs/hello.cc ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
+
+bin/${TEC_UNAME}/client: client.cpp
+	mkdir -p bin/${TEC_UNAME}
+	g++ ${CPPFLAGS} -o bin/${TEC_UNAME}/client client.cpp stubs/hello.cc ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
+
+server: bin/${TEC_UNAME}/server
+	
+client: bin/${TEC_UNAME}/client
+	
+IDLS= ../idl/hello.idl
+
+STUBS= stubs/hello.cc stubs/hello.h
+
+${STUBS}: ${IDLS}
+	mkdir -p stubs
+	cd stubs ; ${MICO_BIN}/idl --poa ../../idl/hello.idl
+
+genstubs: ${STUBS}
+
+clean:
+	rm -rf bin/${TEC_UNAME}
+	rm -rf stubs
