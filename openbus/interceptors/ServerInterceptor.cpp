@@ -69,6 +69,7 @@ namespace openbus {
     {
       Openbus::logger->log(INFO, 
         "ServerInterceptor::CredentialsValidationCallback() BEGIN");
+    #ifndef _WIN32
       Openbus::logger->indent();
       openbus::Openbus* bus = openbus::Openbus::getInstance();
       access_control_service::IAccessControlService* iAccessControlService = 
@@ -97,6 +98,7 @@ namespace openbus {
       stringstream str;
       str << "Próxima validação em: " << validationTime << "ms" << endl;
       Openbus::logger->log(INFO, str.str());
+    #endif
       Openbus::logger->dedent(INFO, 
         "ServerInterceptor::CredentialsValidationCallback() END");
     }
