@@ -18,10 +18,6 @@ CPPFLAGS= -Wall ${MICO_64} ${MULTITHREAD}
 OPENBUSINC= ${OPENBUS_HOME}/incpath
 OPENBUSLIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
-SRC= client.cpp \
-     server.cpp \
-     stubs/hello.cc
-
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/libscsmico.a \
       ${OPENBUSLIB}/liblogger.a
