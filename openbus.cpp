@@ -101,7 +101,11 @@ namespace openbus {
         msg << "sleep [" << timeRenewing <<"]s ...";
         logger->log(INFO, msg.str());
         msg.str("");
+      #if _WIN32
+        this->sleep(timeRenewing * 100);
+      #else
         this->sleep(timeRenewing);
+      #endif
 
         mutex.lock();
         if (bus) {
