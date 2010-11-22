@@ -2,5 +2,5 @@
 
 . ./democonfig
 
-./client -OpenbusHost $HOSTBUS -OpenbusPort $PORTBUS -OpenbusDebug ALL "$@"
+bin/${TEC_UNAME}/client -OpenbusHost $HOSTBUS -OpenbusPort $PORTBUS -OpenbusDebug ALL "$@"
 
