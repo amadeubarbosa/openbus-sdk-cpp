@@ -22,8 +22,6 @@ APPNAME=${PROJNAME}
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
-EXTRA_CONFIG=config
-
 ifeq "$(TEC_UNAME)" "SunOS510_64"
   CPPFLAGS= -m64
   LFLAGS= -m64
@@ -48,14 +46,14 @@ OBJROOT=obj
 
 INCLUDES= . \
   stubs \
-  ${MICO_INC} \
+  ${OPENBUSINC}/mico-2.3.13 \
   ${OPENBUSINC}/mico-${MICOVERSION} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/logger
 
-LDIR= ${MICO_LIB} ${OPENBUSLIB}
+LDIR= ${OPENBUSLIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 

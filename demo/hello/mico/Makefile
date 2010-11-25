@@ -2,8 +2,6 @@
 # Exemplo de arquivo makefile.
 #
 
-include config
-
 # Descomente a linha abaixo para compilar em 64 Bits.
 #MICO_64= -DMICO_64
 
@@ -24,15 +22,14 @@ SLIB= ${OPENBUSLIB}/libopenbusmico.a \
 
 INCLUDES= -I. \
 				  -Istubs \
-				  -I${MICO_INC} \
+				  -I${OPENBUSINC}/mico-2.3.13 \
 				  -I${OPENBUSINC}/openbus/cpp \
 				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
 				  -I${OPENBUSINC}/scs \
 				  -I${OPENBUSINC}/logger \
           -I${OPENBUSINC}/lua5.1.3
 
-LDIR= -L${MICO_LIB} \
-		  -L${OPENBUSLIB}
+LDIR= -L${OPENBUSLIB}
 
 LIBS= -lmico${MICOVERSION} -ldl -lcrypto -lssl -llua5.1 ${PTHREAD}
 
@@ -56,7 +53,7 @@ STUBS= stubs/hello.cc stubs/hello.h
 
 ${STUBS}: ${IDLS}
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../../idl/hello.idl
+	cd stubs ; ${OPENBUS_HOME}/bin/${TEC_UNAME}/idl --poa ../../idl/hello.idl
 
 genstubs: ${STUBS}
 

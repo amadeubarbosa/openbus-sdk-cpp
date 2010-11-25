@@ -2,8 +2,6 @@
 # Exemplo de arquivo makefile.
 #
 
-include config
-
 # Descomente a linha abaixo para compilar em 64 Bits.
 #MICO_64= -DMICO_64
 
@@ -18,7 +16,7 @@ SLIB= ${OPENBUSLIB}/libopenbusmico.a \
 
 INCLUDES= -I. \
 				  -Istubs \
-				  -I${MICO_INC} \
+				  -I${OPENBUSINC}/mico-2.3.13 \
 				  -I${OPENBUSINC}/openbus/cpp \
 				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
 				  -I${OPENBUSINC}/scs \
@@ -50,7 +48,7 @@ STUBS= stubs/delegate.cc stubs/delegate.h
 
 ${STUBS}: ${IDLS}
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../../../idl/delegate.idl
+	cd stubs ; ${OPENBUS_HOME}/bin/${TEC_UNAME}/idl --poa ../../../idl/delegate.idl
 
 genstubs: ${STUBS}
 
