@@ -1,9 +1,9 @@
 
 #Máquina em que está o barramento.
-HostBus='gnaisse'
+HostBus='localhost'
 
 #Porta da máquina em que está o barramento.
-PortBus='3000'
+PortBus='2089'
 
 #Nome do usuário Openbus a ser utilizado pelo processo cliente.
 BusUser='tester'
