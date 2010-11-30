@@ -1,8 +1,24 @@
-#Localizacao do barramento.
 
 #Máquina em que está o barramento.
-HOSTBUS='localhost'
+HostBus='gnaisse'
 
 #Porta da máquina em que está o barramento.
-PORTBUS='2089'
+PortBus='3000'
 
+#Nome do usuário Openbus a ser utilizado pelo processo cliente.
+BusUser='tester'
+
+#Senha do usuário Openbus a ser utilizada pelo processo cliente.
+BusPassword='tester'
+
+#Nome da entidade a ser autenticada através de um certificado digital.
+EntityName='DelegateService'
+
+#Nome do arquivo referente a chave privada da entidade.
+PrivateKeyFilename='DelegateService.key'
+
+#Nome do arquivo referente ao certificado do ACS.
+ACSCertificateFilename='AccessControlService.crt'
+
+#Nome da faceta referente ao serviço Hello.
+FacetName='IHello'
