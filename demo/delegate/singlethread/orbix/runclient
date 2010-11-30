@@ -2,6 +2,4 @@
 
 . ./democonfig
 
-bin/${TEC_UNAME}/client -OpenbusHost $HOSTBUS -OpenbusPort $PORTBUS -OpenbusDebug ALL "$@"
- 
-
+bin/${TEC_UNAME}/client -OpenbusHost $HostBus -OpenbusPort $PortBus -OpenbusDebug ALL -EntityName $EntityName -PrivateKeyFilename $PrivateKeyFilename -ACSCertificateFilename $ACSCertificateFilename  -FacetName $FacetName "$@"
