@@ -11,6 +11,25 @@
 
 using namespace std;
 
+const char* busUser;
+const char* busPassword;
+const char* facetName;
+
+void commandLineParse(int argc, char* argv[]) {
+  for (short i = 1; i < argc; i++) {
+    if (!strcmp(argv[i], "-BusUser")) {
+      i++;
+      busUser = argv[i];
+    } else if (!strcmp(argv[i], "-BusPassword")) {
+      i++;
+      busPassword = argv[i];
+    } else if (!strcmp(argv[i], "-FacetName")) {
+      i++;
+      facetName = argv[i];
+    } 
+  }
+}
+
 int main(int argc, char* argv[]) {
   openbus::Openbus* bus;
   registry_service::IRegistryService* registryService;
@@ -19,11 +38,15 @@ int main(int argc, char* argv[]) {
 
   bus->init(argc, argv);
 
+  commandLineParse(argc, argv);
+
   cout << "Conectando no barramento..." << endl;
 
 /* Conexão com o barramento. */
   try {
-    registryService = bus->connect("tester", "tester");
+    registryService = bus->connect(
+      busUser,
+      busPassword);
   } catch (CORBA::SystemException& e) {
     cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
          << "* Falha na comunicacao. *" << endl;
@@ -42,7 +65,7 @@ int main(int argc, char* argv[]) {
 */
   openbus::util::FacetListHelper* facetListHelper =
     new openbus::util::FacetListHelper();
-  facetListHelper->add("IHello");
+  facetListHelper->add(facetName);
 
 /* Busca no barramento o serviço desejado.
 *  Uma lista de *ofertas de serviço* é retornada para o usuário.
