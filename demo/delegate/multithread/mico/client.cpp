@@ -15,6 +15,28 @@ using namespace tecgraf::openbus::core::v1_05;
 access_control_service::Credential* myCredential;
 openbus::Openbus* bus;
 demoidl::demoDelegate::IHello_var hello;
+const char* entityName;
+const char* privateKeyFilename;
+const char* ACSCertificateFilename;
+const char* facetName;
+
+void commandLineParse(int argc, char* argv[]) {
+  for (short i = 1; i < argc; i++) {
+    if (!strcmp(argv[i], "-EntityName")) {
+      i++;
+      entityName = argv[i];
+    } else if (!strcmp(argv[i], "-PrivateKeyFilename")) {
+      i++;
+      privateKeyFilename = argv[i];
+    } else if (!strcmp(argv[i], "-ACSCertificateFilename")) {
+      i++;
+      ACSCertificateFilename = argv[i];
+    } else if (!strcmp(argv[i], "-FacetName")) {
+      i++;
+      facetName = argv[i];
+    } 
+  }
+}
 
 class DelegateThread : public MICOMT::Thread {
   private:
@@ -50,14 +72,16 @@ int main(int argc, char* argv[]) {
 
   bus->init(argc, argv);
 
+  commandLineParse(argc, argv);
+
   cout << "Conectando no barramento..." << endl;
 
 /* Conexão com o barramento. */
   try {
     registryService = bus->connect(
-      "DelegateService", 
-      "DelegateService.key", 
-      "AccessControlService.crt");
+      entityName, 
+      privateKeyFilename,
+      ACSCertificateFilename);
   } catch (CORBA::SystemException& e) {
     cout << "** Não foi possível se conectar ao barramento. **" << endl \
          << "* Falha na comunicação. *" << endl;
@@ -75,7 +99,7 @@ int main(int argc, char* argv[]) {
 *  FacetListHelper.
 */
   openbus::util::FacetListHelper* facetListHelper = new openbus::util::FacetListHelper();
-  facetListHelper->add("IHello");
+  facetListHelper->add(facetName);
 
 /* Busca no barramento o serviço desejado.
 *  Uma lista de *ofertas de serviço* é retornada para o usuário.
