@@ -406,11 +406,11 @@ namespace openbus {
 
   Openbus* Openbus::getInstance() {
     logger = Logger::getInstance();
+    mutex.lock();
     if (!bus) {
-      mutex.lock();
       bus = new Openbus();
-      mutex.unlock();
     }
+    mutex.unlock();
     return bus;
   }
 
