@@ -87,18 +87,18 @@ ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/core.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/scs.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl stubs/mico
-	cd stubs/mico ; ${MICO_BIN}/idl --any --typecode access_control_service.idl 
-	cd stubs/mico ; ${MICO_BIN}/idl fault_tolerance.idl
-	cd stubs/mico ; ${MICO_BIN}/idl registry_service.idl
-	cd stubs/mico ; ${MICO_BIN}/idl session_service.idl
-	cd stubs/mico ; ${MICO_BIN}/idl core.idl
-	cd stubs/mico ; ${MICO_BIN}/idl scs.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths --any --typecode \
+	  ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/core.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/scs.idl
 
 genstubs: $(STUBS)
 	
