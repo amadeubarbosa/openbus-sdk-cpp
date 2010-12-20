@@ -2,7 +2,7 @@ PROJNAME=server
 APPNAME=${PROJNAME}
 
 # Descomente a linha abaixo para compilar em 64 Bits.
-#DEFINES+=MICO_64
+DEFINES+=MICO_64
 
 # Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
@@ -46,7 +46,6 @@ OBJROOT=obj
 
 INCLUDES= . \
   stubs \
-  ${OPENBUSINC}/mico-2.3.13 \
   ${OPENBUSINC}/mico-${MICOVERSION} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \

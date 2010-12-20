@@ -3,7 +3,7 @@
 #
 
 # Descomente a linha abaixo para compilar em 64 Bits.
-#MICO_64= -DMICO_64
+MICO_64= -DMICO_64
 
 CPPFLAGS= -Wall ${MICO_64}
 
@@ -16,7 +16,7 @@ SLIB= ${OPENBUSLIB}/libopenbusmico.a \
 
 INCLUDES= -I. \
 				  -Istubs \
-				  -I${OPENBUSINC}/mico-2.3.13 \
+				  -I${OPENBUSINC}/mico-${MICOVERSION} \
 				  -I${OPENBUSINC}/openbus/cpp \
 				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
 				  -I${OPENBUSINC}/scs \
