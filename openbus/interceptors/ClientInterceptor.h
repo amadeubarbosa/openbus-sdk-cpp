@@ -32,8 +32,6 @@ namespace openbus {
         FaultToleranceManager* faultToleranceManager;
         void loadOperationObjectKey();
       public:
-        static access_control_service::Credential* credential;
-
         ClientInterceptor(IOP::Codec_ptr pcdr_codec);
         ~ClientInterceptor();
         void send_request(ClientRequestInfo_ptr ri) 

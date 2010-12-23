@@ -1,30 +1,26 @@
 /*
-* OpenBus Demo - delegate/singlethread/orbix
+* OpenBus Demo - delegate/multithread/mico
 * server.cpp
 */
 
 #include <fstream>
 #include <iostream>
-#include <omg/orb.hh>
-#include <it_ts/thread.h>
-#include <it_ts/termination_handler.h>
+#include <CORBA.h>
+#include <csignal>
 
 #include <openbus.h>
 #include <ComponentBuilder.h>
 
-#include "stubs/delegateS.hh"
+#include "stubs/delegate.h"
 
 using namespace std;
+using namespace tecgraf::openbus::core::v1_05;
 using namespace tecgraf::openbus::core::v1_05::registry_service;
 
 openbus::Openbus* bus;
 registry_service::IRegistryService* registryService = 0;
 char* registryId;
 scs::core::ComponentContext* componentContext;
-const char* entityName;
-const char* privateKeyFilename;
-const char* ACSCertificateFilename;
-const char* facetName;
 
 class HelloImpl : virtual public POA_demoidl::demoDelegate::IHello {
   private:
@@ -51,55 +47,25 @@ class HelloImpl : virtual public POA_demoidl::demoDelegate::IHello {
     };
 };
 
-static void myTerminationHandler(long signal) {
+void termination_handler(int p) {
   cout << "Encerrando o processo servidor..." << endl;
-  scs::core::ComponentBuilder* componentBuilder = bus->getComponentBuilder();
-  map<string, string>* errors = componentBuilder->deactivateComponent(componentContext);
-  map<string, string>::iterator it;
-  for ( it = errors->begin() ; it != errors->end(); it++ ) {
-    string error = (string) (*it).second;
-    cout << "Erro ao desativar a faceta " << error << "." << endl;
-  }
-  delete errors;
-  delete componentContext;
-  openbus::Openbus::terminationHandlerCallback(signal);
-}
-
-void commandLineParse(int argc, char* argv[]) {
-  for (short i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "-EntityName")) {
-      i++;
-      entityName = argv[i];
-    } else if (!strcmp(argv[i], "-PrivateKeyFilename")) {
-      i++;
-      privateKeyFilename = argv[i];
-    } else if (!strcmp(argv[i], "-ACSCertificateFilename")) {
-      i++;
-      ACSCertificateFilename = argv[i];
-    } else if (!strcmp(argv[i], "-FacetName")) {
-      i++;
-      facetName = argv[i];
-    } 
-  }
+  openbus::Openbus::terminationHandlerCallback((long) signal);
 }
 
 int main(int argc, char* argv[]) {
-  IT_TerminationHandler termination_handler(myTerminationHandler);
-
+  signal(SIGINT, termination_handler);
   bus = openbus::Openbus::getInstance();
 
   bus->init(argc, argv);
 
-  commandLineParse(argc, argv);
-
   cout << "Conectando no barramento..." << endl;
 
-/* Conexão com o barramento através de certificado. */
+/* Conexao com o barramento atraves de certificado. */
   try {
     registryService = bus->connect(
-      entityName, 
-      privateKeyFilename,
-      ACSCertificateFilename);
+      "DelegateService", 
+      "DelegateService.key", 
+      "AccessControlService.crt");
   } catch (CORBA::SystemException& e) {
     cout << "** Não foi possível se conectar ao barramento. **" << endl \
          << "* Falha na comunicação. *" << endl;
@@ -129,7 +95,7 @@ int main(int argc, char* argv[]) {
 /* Descrição das facetas. */
   std::list<scs::core::ExtendedFacetDescription> extFacets;
   scs::core::ExtendedFacetDescription helloDesc;
-  helloDesc.name = facetName;
+  helloDesc.name = "IHello";
   helloDesc.interface_name = "IDL:demoidl/demoDelegate/IHello:1.0";
   helloDesc.instantiator = HelloImpl::instantiate;
   helloDesc.destructor = HelloImpl::destruct;
@@ -140,7 +106,7 @@ int main(int argc, char* argv[]) {
     new openbus::util::PropertyListHelper();
 
 /* Criação de uma *oferta de serviço*. */
-  openbus::util::ServiceOffer serviceOffer;
+  registry_service::ServiceOffer serviceOffer;
   serviceOffer.properties = propertyListHelper->getPropertyList();
   serviceOffer.member = componentContext->getIComponent();
   delete propertyListHelper;
@@ -152,16 +118,15 @@ int main(int argc, char* argv[]) {
     if (registryService) {
       registryId = registryService->_cxx_register(serviceOffer);
     } else {
-      cout << "Nao foi possivel adquirir um proxy para o servico de registro." 
-        << endl;
+      cout << "Não foi possível adquirir um proxy para o serviço de registro." << endl;
       exit(1);
     }
   } catch (UnathorizedFacets& e) {
-    cout << "Nao foi possivel registrar IHello." << endl;
+    cout << "Não foi possível registrar IHello." << endl;
     CORBA::ULong idx;
     CORBA::ULong length = e.facets.length();
     for (idx = 0; idx < length; idx++) {
-      cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
+      cout << "Faceta não autorizada: " << e.facets[idx] << endl;
     }
     exit(1);
   }
@@ -172,4 +137,3 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
-

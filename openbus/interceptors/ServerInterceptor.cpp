@@ -36,8 +36,8 @@ namespace openbus {
       access_control_service::IAccessControlService* iAccessControlService = 
         bus->getAccessControlService();
       for (itCredentialsCache = credentialsCache.begin();
-           itCredentialsCache != credentialsCache.end(); 
-           itCredentialsCache++)
+           itCredentialsCache != credentialsCache.end();
+          )
       {
         stringstream out;
         out << "Validando a credencial: " << (const char*) ((*itCredentialsCache).identifier) 
@@ -48,11 +48,13 @@ namespace openbus {
             Openbus::logger->log(INFO, "Credencial ainda é válida.");
           } else {
             Openbus::logger->log(WARNING, "Credencial NÃO é mais válida!");
-            credentialsCache.erase(itCredentialsCache);
+            credentialsCache.erase(itCredentialsCache++);
+            continue;
           }
         } catch (CORBA::SystemException& e) {
           Openbus::logger->log(ERROR, "Erro ao verificar validade da credencial");
         }
+        ++itCredentialsCache;
       }
       stringstream str;
       str << "Próxima validação em: " << validationTime << "ms" << endl;
@@ -69,13 +71,14 @@ namespace openbus {
     {
       Openbus::logger->log(INFO, 
         "ServerInterceptor::CredentialsValidationCallback() BEGIN");
+    #ifndef _WIN32
       Openbus::logger->indent();
       openbus::Openbus* bus = openbus::Openbus::getInstance();
       access_control_service::IAccessControlService* iAccessControlService = 
         bus->getAccessControlService();
       for (itCredentialsCache = credentialsCache.begin();
            itCredentialsCache != credentialsCache.end(); 
-           itCredentialsCache++)
+          )
       {
         stringstream out;
         out << "Validando a credencial: " << 
@@ -86,17 +89,20 @@ namespace openbus {
             Openbus::logger->log(INFO, "Credencial ainda é válida.");
           } else {
             Openbus::logger->log(WARNING, "Credencial NÃO é mais válida!");
-            credentialsCache.erase(itCredentialsCache);
+            credentialsCache.erase(itCredentialsCache++);
+            continue;
           }
         } catch (CORBA::SystemException& e) {
           Openbus::logger->log(ERROR, 
             "Erro ao verificar validade da credencial");
         }
+        ++itCredentialsCache;
       }
       dispatcher->tm_event(this, validationTime);
       stringstream str;
       str << "Próxima validação em: " << validationTime << "ms" << endl;
       Openbus::logger->log(INFO, str.str());
+    #endif
       Openbus::logger->dedent(INFO, 
         "ServerInterceptor::CredentialsValidationCallback() END");
     }

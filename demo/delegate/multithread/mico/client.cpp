@@ -12,47 +12,52 @@
 using namespace std;
 using namespace tecgraf::openbus::core::v1_05;
 
-const char* entityName;
-const char* privateKeyFilename;
-const char* ACSCertificateFilename;
-const char* facetName;
+access_control_service::Credential* myCredential;
+openbus::Openbus* bus;
+demoidl::demoDelegate::IHello_var hello;
 
-void commandLineParse(int argc, char* argv[]) {
-  for (short i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "-EntityName")) {
-      i++;
-      entityName = argv[i];
-    } else if (!strcmp(argv[i], "-PrivateKeyFilename")) {
-      i++;
-      privateKeyFilename = argv[i];
-    } else if (!strcmp(argv[i], "-ACSCertificateFilename")) {
-      i++;
-      ACSCertificateFilename = argv[i];
-    } else if (!strcmp(argv[i], "-FacetName")) {
-      i++;
-      facetName = argv[i];
-    } 
-  }
-}
+class DelegateThread : public MICOMT::Thread {
+  private:
+    char* myName;
+  public:
+    DelegateThread(char* name) {
+      myName = name;
+    }
+    
+    void _run(void*) {
+      for (int x=0; x<10; x++) {
+        access_control_service::Credential* newCredential = new access_control_service::Credential();
+        newCredential->identifier = myCredential->identifier;
+        newCredential->owner = myCredential->owner;
+        newCredential->delegate = myName;
+      
+        bus->setThreadCredential(newCredential);
+      
+        cout << "Fazendo chamada remota sayHello() com credencial: " << endl
+             << "[identifier] " << newCredential->identifier << endl 
+             << "[owner] " << newCredential->owner << endl
+             << "[delegate] " << newCredential->delegate << endl << endl;
+
+        hello->sayHello(myName);
+      }
+    }
+};
 
 int main(int argc, char* argv[]) {
-  openbus::Openbus* bus;
   registry_service::IRegistryService* registryService;
 
   bus = openbus::Openbus::getInstance();
 
   bus->init(argc, argv);
 
-  commandLineParse(argc, argv);
-
   cout << "Conectando no barramento..." << endl;
 
 /* Conexão com o barramento. */
   try {
     registryService = bus->connect(
-      entityName, 
-      privateKeyFilename,
-      ACSCertificateFilename);
+      "DelegateService", 
+      "DelegateService.key", 
+      "AccessControlService.crt");
   } catch (CORBA::SystemException& e) {
     cout << "** Não foi possível se conectar ao barramento. **" << endl \
          << "* Falha na comunicação. *" << endl;
@@ -70,7 +75,7 @@ int main(int argc, char* argv[]) {
 *  FacetListHelper.
 */
   openbus::util::FacetListHelper* facetListHelper = new openbus::util::FacetListHelper();
-  facetListHelper->add(facetName);
+  facetListHelper->add("IHello");
 
 /* Busca no barramento o serviço desejado.
 *  Uma lista de *ofertas de serviço* é retornada para o usuário.
@@ -85,33 +90,17 @@ int main(int argc, char* argv[]) {
   
     scs::core::IComponent_var component = serviceOffer.member;
     CORBA::Object_var obj = component->getFacet("IDL:demoidl/demoDelegate/IHello:1.0");
-    demoidl::demoDelegate::IHello_var hello = demoidl::demoDelegate::IHello::_narrow(obj);
+    hello = demoidl::demoDelegate::IHello::_narrow(obj);
 
+    myCredential = bus->getCredential();
     
-    access_control_service::Credential* myCredential = bus->getCredential();
-    
-    access_control_service::Credential_var newCredential = new access_control_service::Credential();
-    newCredential->identifier = myCredential->identifier;
-    newCredential->owner = myCredential->owner;
-    newCredential->delegate = "fulano";
-    
-    bus->setThreadCredential(newCredential);
-    
-    cout << "Fazendo chamada remota sayHello() com credencial: " << endl
-         << "[identifier] " << newCredential->identifier << endl 
-         << "[owner] " << newCredential->owner << endl
-         << "[delegate] " << newCredential->delegate << endl << endl;
-    
-    hello->sayHello("Olá!");
-    
-    bus->setThreadCredential(myCredential);
-    
-    cout << "Fazendo chamada remota sayHello() com credencial: " << endl
-         << "[identifier] " << myCredential->identifier << endl 
-         << "[owner] " << myCredential->owner << endl
-         << "[delegate] " << myCredential->delegate << endl << endl;
-
-    hello->sayHello("Voltei!");
+    DelegateThread* delegateThread_A = new DelegateThread("A");
+    DelegateThread* delegateThread_B = new DelegateThread("B");
+    delegateThread_A->start();
+    delegateThread_B->start();
+    delegateThread_A->wait();
+    delegateThread_B->wait();
+    // hello->sayHello("myName");
     
   } else {
     cout << "Nenhuma oferta encontrada." << endl;

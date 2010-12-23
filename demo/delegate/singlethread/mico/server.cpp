@@ -21,6 +21,10 @@ openbus::Openbus* bus;
 registry_service::IRegistryService* registryService = 0;
 char* registryId;
 scs::core::ComponentContext* componentContext;
+const char* entityName;
+const char* privateKeyFilename;
+const char* ACSCertificateFilename;
+const char* facetName;
 
 class HelloImpl : virtual public POA_demoidl::demoDelegate::IHello {
   private:
@@ -52,20 +56,40 @@ void termination_handler(int p) {
   openbus::Openbus::terminationHandlerCallback((long) signal);
 }
 
+void commandLineParse(int argc, char* argv[]) {
+  for (short i = 1; i < argc; i++) {
+    if (!strcmp(argv[i], "-EntityName")) {
+      i++;
+      entityName = argv[i];
+    } else if (!strcmp(argv[i], "-PrivateKeyFilename")) {
+      i++;
+      privateKeyFilename = argv[i];
+    } else if (!strcmp(argv[i], "-ACSCertificateFilename")) {
+      i++;
+      ACSCertificateFilename = argv[i];
+    } else if (!strcmp(argv[i], "-FacetName")) {
+      i++;
+      facetName = argv[i];
+    } 
+  }
+}
+
 int main(int argc, char* argv[]) {
   signal(SIGINT, termination_handler);
   bus = openbus::Openbus::getInstance();
 
   bus->init(argc, argv);
 
+  commandLineParse(argc, argv);
+
   cout << "Conectando no barramento..." << endl;
 
 /* Conexao com o barramento atraves de certificado. */
   try {
     registryService = bus->connect(
-      "DelegateService", 
-      "DelegateService.key", 
-      "AccessControlService.crt");
+      entityName, 
+      privateKeyFilename,
+      ACSCertificateFilename);
   } catch (CORBA::SystemException& e) {
     cout << "** Não foi possível se conectar ao barramento. **" << endl \
          << "* Falha na comunicação. *" << endl;
@@ -95,7 +119,7 @@ int main(int argc, char* argv[]) {
 /* Descrição das facetas. */
   std::list<scs::core::ExtendedFacetDescription> extFacets;
   scs::core::ExtendedFacetDescription helloDesc;
-  helloDesc.name = "IHello";
+  helloDesc.name = facetName;
   helloDesc.interface_name = "IDL:demoidl/demoDelegate/IHello:1.0";
   helloDesc.instantiator = HelloImpl::instantiate;
   helloDesc.destructor = HelloImpl::destruct;

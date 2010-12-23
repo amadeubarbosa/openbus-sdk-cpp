@@ -199,6 +199,10 @@ namespace openbus {
     */
       access_control_service::Credential* credential;
 
+    #if (!OPENBUS_ORBIX && MULTITHREAD)
+      static MICOMT::Thread::ThreadKey threadKey;
+    #endif
+    
     /**
     * Política de validação de credenciais.
     */

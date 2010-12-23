@@ -14,8 +14,6 @@ using namespace tecgraf::openbus::core::v1_05;
 
 namespace openbus {
   namespace interceptors {
-    access_control_service::Credential* ClientInterceptor::credential = 0;
-
     ClientInterceptor::ClientInterceptor(IOP::Codec_ptr pcdr_codec) {
       Openbus::logger->log(INFO, "ClientInterceptor::ClientInterceptor() BEGIN");
       Openbus::logger->indent();
@@ -41,6 +39,7 @@ namespace openbus {
       msg << "Method: " << operation;
       Openbus::logger->log(INFO, msg.str());
       free(operation);
+      access_control_service::Credential* credential = Openbus::bus->getCredential();
       if (credential) {
         stringstream msg;
         Openbus::logger->log(INFO, "Credential:");

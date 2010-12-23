@@ -10,7 +10,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+#if HAVE_UNISTD_H
+  #include <unistd.h>
+#endif
 
 #ifdef OPENBUS_ORBIX
   #include <omg/orb.hh>
@@ -46,6 +48,7 @@ namespace openbus {
   #ifdef MULTITHREAD
     Openbus::RunThread* Openbus::runThread = 0;
     Openbus::RenewLeaseThread* Openbus::renewLeaseThread = 0;
+    MICOMT::Thread::ThreadKey Openbus::threadKey;
   #endif
 #endif
 
@@ -69,7 +72,11 @@ namespace openbus {
         #ifdef OPENBUS_ORBIX
           IT_CurrentThread::sleep(1000);
         #else
+        #ifndef _WIN32
           ::sleep(1);
+        #else
+          _sleep(1);
+        #endif
         #endif
       }
     }
@@ -88,12 +95,17 @@ namespace openbus {
       unsigned int timeRenewing = 1;
       stringstream msg;
       bool tryExec_LeaseExpiredCallback = false;
+      bus->setThreadCredential(bus->credential);
       while (true) {
         logger->log(INFO, "Openbus::RenewLeaseThread::run() BEGIN");
         msg << "sleep [" << timeRenewing <<"]s ...";
         logger->log(INFO, msg.str());
         msg.str("");
+      #if _WIN32
+        this->sleep(timeRenewing * 100);
+      #else
         this->sleep(timeRenewing);
+      #endif
 
         mutex.lock();
         if (bus) {
@@ -285,6 +297,9 @@ namespace openbus {
     debugLevel = OFF;
     connectionState = DISCONNECTED;
     credential = 0;
+  #if (!OPENBUS_ORBIX && MULTITHREAD)    
+    MICOMT::Thread::set_specific(threadKey, 0);
+  #endif
     lease = 0;
     iAccessControlService = access_control_service::IAccessControlService::_nil();
     iRegistryService = 0;
@@ -297,6 +312,9 @@ namespace openbus {
     luaL_openlibs(luaState);
   #ifdef OPENBUS_ORBIX
     luaopen_IOR(luaState);
+  #endif
+  #if (!OPENBUS_ORBIX && MULTITHREAD)
+    MICOMT::Thread::create_key(threadKey, 0);
   #endif
     newState();
     credentialValidationPolicy = openbus::interceptors::ALWAYS;
@@ -358,6 +376,9 @@ namespace openbus {
           }
         }
       #endif
+      #if (!OPENBUS_ORBIX && MULTITHREAD)
+        MICOMT::Thread::delete_key(threadKey);
+      #endif
     }
     logger->dedent(INFO, "Openbus::~Openbus() END");
   }
@@ -385,11 +406,11 @@ namespace openbus {
 
   Openbus* Openbus::getInstance() {
     logger = Logger::getInstance();
+    mutex.lock();
     if (!bus) {
-      mutex.lock();
       bus = new Openbus();
-      mutex.unlock();
     }
+    mutex.unlock();
     return bus;
   }
 
@@ -521,16 +542,29 @@ namespace openbus {
   } 
 
   access_control_service::Credential* Openbus::getCredential() {
+  #if (!OPENBUS_ORBIX && MULTITHREAD)
+    access_control_service::Credential* threadCredential = 
+      (access_control_service::Credential*) MICOMT::Thread::get_specific(threadKey);
+    if (threadCredential) {
+      return threadCredential;
+    } else {
+      return credential;
+    }
+  #else
     return credential;
-  }
+  #endif
+    }
 
   interceptors::CredentialValidationPolicy Openbus::getCredentialValidationPolicy() {
     return credentialValidationPolicy;
   }
 
   void Openbus::setThreadCredential(access_control_service::Credential* credential) {
+  #if (!OPENBUS_ORBIX && MULTITHREAD)
+    MICOMT::Thread::set_specific(threadKey, (void*) credential);
+  #else
     this->credential = credential;
-    openbus::interceptors::ClientInterceptor::credential = credential;
+  #endif
   }
 
   void Openbus::setLeaseExpiredCallback(LeaseExpiredCallback* leaseExpiredCallback) 
@@ -615,7 +649,7 @@ namespace openbus {
           msg << "Associando credencial " << credential << " ao ORB.";
           logger->log(INFO, msg.str());
           connectionState = CONNECTED;
-          openbus::interceptors::ClientInterceptor::credential = credential;
+          setThreadCredential(credential);
           if (!timeRenewingFixe) {
             timeRenewing = lease/3;
           }
@@ -700,8 +734,8 @@ namespace openbus {
         unsigned char* challenge = octetSeq->get_buffer();
 
       /* Leitura da chave privada da entidade. */
-        FILE* fp = fopen(privateKeyFilename, "r");
-        if (fp == 0) {
+        BIO* bio = BIO_new( BIO_s_file() );
+        if (BIO_read_filename( bio, privateKeyFilename ) <= 0) {
           stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             privateKeyFilename;
@@ -711,8 +745,7 @@ namespace openbus {
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena a chave privada.");
         }
-        EVP_PKEY* privateKey = PEM_read_PrivateKey(fp, 0, 0, 0);
-        fclose(fp);
+        EVP_PKEY* privateKey  = PEM_read_bio_PrivateKey( bio, NULL, NULL, 0 );
         if (privateKey == 0) {
           logger->log(WARNING, "Não foi possível obter a chave privada da entidade.");
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
@@ -721,7 +754,7 @@ namespace openbus {
           throw SECURITY_EXCEPTION(
             "Não foi possível obter a chave privada da entidade.");
         }
-
+        
         int RSAModulusSize = EVP_PKEY_size(privateKey);
 
       /* Decifrando o desafio. */
@@ -732,26 +765,22 @@ namespace openbus {
         RSA_private_decrypt(RSAModulusSize, challenge, challengePlainText,
           privateKey->pkey.rsa, RSA_PKCS1_PADDING);
 
-      /* Leitura do certificado do ACS. */
-        FILE* certificateFile = fopen(ACSCertificateFilename, "rb");
-        if (certificateFile == 0) {
-          free(challengePlainText);
+        bio = BIO_new( BIO_s_file() );
+        if (BIO_read_filename( bio, ACSCertificateFilename ) <= 0) {
           stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             ACSCertificateFilename;
           logger->log(WARNING, filename.str());
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
-          EVP_PKEY_free(privateKey);
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena o certificado ACS.");
         }
-
-        EVP_PKEY_free(privateKey);
-
-        X509* x509 = d2i_X509_fp(certificateFile, 0);
-        fclose(certificateFile);
       
+        EVP_PKEY_free(privateKey);
+      
+        X509* x509 = d2i_X509_bio(bio, 0);
+
       /* Obtenção da chave pública do ACS. */
         EVP_PKEY* publicKey = X509_get_pubkey(x509);
         if (publicKey == 0) {
@@ -797,7 +826,7 @@ namespace openbus {
           msg << "Associando credencial " << credential << " ao ORB."; 
           logger->log(INFO, msg.str());
           connectionState = CONNECTED;
-          openbus::interceptors::ClientInterceptor::credential = credential;
+          setThreadCredential(credential);
           if (!timeRenewingFixe) {
             timeRenewing = lease/3;
           }
@@ -862,7 +891,6 @@ namespace openbus {
       } catch (CORBA::Exception& e) {
         logger->log(WARNING, "Não foi possível realizar logout.");
       }
-      openbus::interceptors::ClientInterceptor::credential = 0;
       #if 0
         if (credential) {
           delete credential;

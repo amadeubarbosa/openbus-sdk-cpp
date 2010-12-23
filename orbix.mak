@@ -32,7 +32,7 @@ ORBIXINC= ${ORBIX_HOME}/include
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
-OBJROOT= obj
+OBJROOT= obj/orbix
 TARGETROOT= lib
 PRECMP_DIR= obj/${TEC_UNAME}
 
@@ -42,7 +42,7 @@ LDIR= ${ORBIXLDIR} ${OPENBUSLIB} ${ORBIXLDIR}
 LIBS= it_poa it_art it_ifc it_portable_interceptor scsorbix crypto logger
 
 USE_LUA51=YES
-USE_NODEPEND= Yes
+USE_NODEPEND=YES
 
 SRC= openbus/interceptors/ClientInterceptor.cpp \
      openbus/interceptors/ServerInterceptor.cpp \

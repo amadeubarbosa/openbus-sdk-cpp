@@ -2,7 +2,7 @@ PROJNAME=client
 APPNAME=${PROJNAME}
 
 # Descomente a linha abaixo para compilar em 64 Bits.
-DEFINES+=MICO_64
+#DEFINES+=MICO_64
 
 # Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
@@ -21,6 +21,8 @@ LIBS=pthread
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+
+EXTRA_CONFIG=config
 
 ifeq "$(TEC_UNAME)" "SunOS510_64"
   CPPFLAGS= -m64
@@ -46,13 +48,14 @@ OBJROOT=obj
 
 INCLUDES= . \
   stubs \
+  ${MICO_INC} \
   ${OPENBUSINC}/mico-${MICOVERSION} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/logger
 
-LDIR= ${OPENBUSLIB}
+LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 

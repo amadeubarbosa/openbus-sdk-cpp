@@ -2,12 +2,12 @@ PROJNAME= openbusmico
 LIBNAME= ${PROJNAME}
 
 # Descomente a linha abaixo para compilar em 64 Bits.
-#DEFINES+=MICO_64
+DEFINES+=MICO_64
 
 # Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
 # compilado com suporte a multithread.
-#DEFINES+=MULTITHREAD
+DEFINES+=MULTITHREAD
 
 # Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES
@@ -47,7 +47,7 @@ MICO_LIB=${MICODIR}/lib/${TEC_UNAME}
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
-OBJROOT= obj
+OBJROOT= obj/mico
 TARGETROOT= lib
 
 INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/mico-${MICOVERSION} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
@@ -87,18 +87,18 @@ ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/core.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/scs.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl stubs/mico
-	ln -fs ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl stubs/mico
-	cd stubs/mico ; ${MICO_BIN}/idl --any --typecode access_control_service.idl 
-	cd stubs/mico ; ${MICO_BIN}/idl fault_tolerance.idl
-	cd stubs/mico ; ${MICO_BIN}/idl registry_service.idl
-	cd stubs/mico ; ${MICO_BIN}/idl session_service.idl
-	cd stubs/mico ; ${MICO_BIN}/idl core.idl
-	cd stubs/mico ; ${MICO_BIN}/idl scs.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths --any --typecode \
+	  ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/core.idl
+	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
+	  ${OPENBUS_HOME}/idlpath/v1_05/scs.idl
 
 genstubs: $(STUBS)
 	
