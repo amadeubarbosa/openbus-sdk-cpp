@@ -56,7 +56,7 @@ LDIR= ${MICO_LIB} ${OPENBUSLIB} ${MICO_LIB}
 LIBS= mico${MICOVERSION} scsmico crypto dl logger
 
 USE_LUA51= YES
-USE_NODEPEND= Yes
+USE_NODEPEND= YES
 
 SRC= openbus/interceptors/ClientInterceptor.cpp \
      openbus/interceptors/ServerInterceptor.cpp \
