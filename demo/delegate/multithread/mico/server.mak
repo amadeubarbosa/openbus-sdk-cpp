@@ -61,7 +61,7 @@ SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES
-USE_NODEPEND= Yes
+USE_NODEPEND= YES
 
 SRC= server.cpp \
      stubs/delegate.cc 
