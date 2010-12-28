@@ -2,7 +2,7 @@ PROJNAME=server
 APPNAME=${PROJNAME}
 
 # Descomente a linha abaixo para compilar em 64 Bits.
-#DEFINES+=MICO_64
+DEFINES+=MICO_64
 
 # Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
@@ -21,8 +21,6 @@ LIBS=pthread
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
-
-EXTRA_CONFIG=config
 
 ifeq "$(TEC_UNAME)" "SunOS510_64"
   CPPFLAGS= -m64
@@ -48,14 +46,13 @@ OBJROOT=obj
 
 INCLUDES= . \
   stubs \
-  ${MICO_INC} \
   ${OPENBUSINC}/mico-${MICOVERSION} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/logger
 
-LDIR= ${MICO_LIB} ${OPENBUSLIB}
+LDIR= ${OPENBUSLIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
@@ -75,7 +72,7 @@ STUBS= stubs/delegate.cc stubs/delegate.h
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../../../idl/delegate.idl
+	cd stubs ; ${OPENBUS_HOME}/bin/${TEC_UNAME}/idl --poa ../../../idl/delegate.idl
 
 genstubs: $(STUBS)
 
