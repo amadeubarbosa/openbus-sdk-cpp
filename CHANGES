@@ -1,4 +1,22 @@
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+     Openbus SDK C++ 1.5.1 (13 de janeiro de 2011)
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
++ Versão Mico multithread para o método setThreadCredential().
++ BugFix: Iterador invalidado no ServerInterceptor.cpp.
++ BugFix: Eliminação de condição de corrida no método getInstance().
++ Algumas variáveis de configuração das demos foram movidas do esquema "hard-coded" para arquivos 
+  do tipo democonfig.
++ A localização padrão do Mico passa a apontar para o Mico fornecido pelo pacote Openbus SDK C++.
++ Arquivo README para as demos.
++ Versão para windows usando Mico. Disponibilização de um Makefile.win testado com vc9.
++ Arquivos do tipo Makefile (GNU) para as demos.
++ Documentação do processo de compilação das demos no tutorial.
+  - Pequenos ajustes no tutorial.
++ BugFix: Demo Hello Mico Singlethread não conseguia renovar credencial após redirecionamento do 
+  mecanismo de tolerância a falhas.
+  - Reparos no path do Mico de 13SET2010.
+  
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
      Openbus SDK C++ 1.5.0 (11 de agosto de 2010)
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 + Versão para Mico 2.3.13 singlethread e multithread.

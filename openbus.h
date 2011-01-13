@@ -532,7 +532,7 @@ namespace openbus {
     * Útil para fornecer uma credencial com o campo delegate preenchido.
     * 
     * !Atenção!
-    *   Nesta versão este método não considera um comportamento *multi  thread*, 
+    *   Na versão Orbix este método não considera um comportamento multithread, 
     *   sendo assim a alteração de credencial será válida para todas as threads.
     *
     * @param[in] credential Credencial a ser utilizada nas requisições a serem
@@ -618,14 +618,14 @@ namespace openbus {
     /**
     * Loop que processa requisições CORBA.
     *
-    * !Atenção! Este método na versão Mico *multi thread* faz um wait() na RunThread.
+    * !Atenção! Este método na versão Mico multithread faz um wait() na RunThread.
     */
       void run();
       
     /**
     * Pára de processar requisições CORBA. Finaliza a execução do run.
     * 
-    * !Atenção! Não faz nada na versão Mico *multi thread*.
+    * !Atenção! Não faz nada na versão Mico multithread.
     */  
       void stop();
 

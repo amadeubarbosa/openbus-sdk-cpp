@@ -4,14 +4,6 @@ APPNAME=${PROJNAME}
 # Descomente a linha abaixo para compilar em 64 Bits.
 DEFINES+=MICO_64
 
-# Descomente a linha abaixo para utilizar a versão multithread.
-# A versão multithread do Openbus deve ser utilizada com Mico
-# compilado com suporte a multithread.
-DEFINES+=MULTITHREAD
-
-# Descomente a linha abaixo para utilizar o Openbus Multithread.
-LIBS=pthread
-
 # Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES
 
