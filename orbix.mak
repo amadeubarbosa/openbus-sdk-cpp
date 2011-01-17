@@ -36,7 +36,7 @@ OBJROOT= obj/orbix
 TARGETROOT= lib
 PRECMP_DIR= obj/${TEC_UNAME}
 
-INCLUDES= . $(PRECMP_DIR) ${ORBIXINC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
+INCLUDES= . ${PRECMP_DIR} ${ORBIXINC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${ORBIXLDIR} ${OPENBUSLIB} ${ORBIXLDIR}
 
 LIBS= it_poa it_art it_ifc it_portable_interceptor scsorbix crypto logger
@@ -55,7 +55,7 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
      openbus.cpp \
      openbus/util/Helper.cpp \
      FaultToleranceManager.cpp \
-     $(PRECMP_DIR)/IOR.c
+     ${PRECMP_DIR}/IOR.c
 
 IDLS= ${OPENBUS_HOME}/idlpath/v1_05/core.idl \
 ${OPENBUS_HOME}/idlpath/v1_05/scs.idl \
@@ -89,4 +89,5 @@ sunos: $(OBJS)
 	CC $(CPPFLAGS) -G -instances=extern -o lib/$(TEC_UNAME)/libopenbusorbix.so $(OBJS)
 
 precompile:
-	${LUA51}/bin/${TEC_UNAME}/lua5.1 precompiler.lua -l lua -f IOR IOR.lua
+	mkdir -p ${PRECMP_DIR}
+	${LUA51}/bin/${TEC_UNAME}/lua5.1 precompiler.lua -d ${PRECMP_DIR} -l lua -f IOR IOR.lua
