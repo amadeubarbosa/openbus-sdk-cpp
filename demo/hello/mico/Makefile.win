@@ -41,7 +41,7 @@ $(STUBS): $(IDLS)
 	-mkdir stubs
 	cd stubs
 	$(MICO_BIN)\idl --poa ..\..\idl\hello.idl
-	cd ..\..\
+	cd ..
 
 genstubs: $(STUBS)
 
