@@ -8,24 +8,28 @@
 #include <CORBA.h>
 #include <csignal>
 
-#include <openbus.h>
+#include <openbus/openbus.h>
 #include <ComponentBuilder.h>
+
+#include <boost/optional.hpp>
 
 #include "stubs/hello.h"
 
 using namespace std;
-using namespace tecgraf::openbus::core::v1_05;
-using namespace tecgraf::openbus::core::v1_05::registry_service;
+using namespace tecgraf::openbus::core:: OPENBUS_IDL_VERSION_NAMESPACE;
+using namespace tecgraf::openbus::core:: OPENBUS_IDL_VERSION_NAMESPACE ::registry_service;
 
-openbus::Openbus* bus;
+boost::optional<openbus::Openbus&> bus;
 registry_service::IRegistryService* registryService = 0;
 char* registryId;
 scs::core::ComponentContext* componentContext;
 
-class HelloImpl : virtual public POA_demoidl::hello::IHello {
+class HelloImpl : virtual public POA_demoidl::hello::IHello
+{
   private:
     scs::core::ComponentContext* componentContext;
-    HelloImpl(scs::core::ComponentContext* componentContext) {
+    HelloImpl(scs::core::ComponentContext* componentContext)
+    {
       this->componentContext = componentContext;
     }
   public:
@@ -39,39 +43,48 @@ class HelloImpl : virtual public POA_demoidl::hello::IHello {
     }
     void sayHello() throw(CORBA::SystemException) {
       cout << "Servant diz: HELLO!" << endl;
+      assert(!!bus);
       access_control_service::Credential_var credential = 
         bus->getInterceptedCredential();
-      cout << "Usuario OpenBus que fez a chamada: " << credential->owner.in()
-        << endl;
+      access_control_service::Credential* credential_ptr = credential;
+      if(credential_ptr)
+        cout << "Usuario OpenBus que fez a chamada: " << credential->owner.in() << endl;
+      else
+        std::cout << "Intercepted Credential is nil" << std::endl;
     };
 };
 
-void termination_handler(int p) {
-  cout << "Encerrando o processo servidor..." << endl;
-  openbus::Openbus::terminationHandlerCallback((long) signal);
-}
+// void termination_handler(int p) {
+//   cout << "Encerrando o processo servidor..." << endl;
+//   openbus::Openbus::terminationHandlerCallback((long) signal);
+// }
 
 int main(int argc, char* argv[]) {
-  signal(SIGINT, termination_handler);
-  bus = openbus::Openbus::getInstance();
-
-  bus->init(argc, argv);
-
+  //signal(SIGINT, termination_handler);
+  openbus::Openbus bus(argc, argv);
+  ::bus = bus;
   cout << "Conectando no barramento..." << endl;
 
 /* Conexao com o barramento atraves de certificado. */
-  try {
-    registryService = bus->connect("HelloService", "HelloService.key",
+  try
+  {
+    registryService = bus.connect("HelloService", "HelloService.key",
       "AccessControlService.crt");
-  } catch (CORBA::SystemException& e) {
+  }
+  catch (CORBA::SystemException& e)
+  {
     cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
-         << "* Falha na comunicacao. *" << endl;
+         << "* Falha na comunicacao. * " << e << endl;
     exit(1);
-  } catch (openbus::LOGIN_FAILURE& e) {
+  }
+  catch (openbus::login_error& e)
+  {
     cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
          << "* Par usuario/senha invalido. *" << endl;
     exit(1);
-  } catch (openbus::SECURITY_EXCEPTION& e) {
+  }
+  catch (openbus::security_error& e)
+  {
     cout << e.what() << endl;
     exit(1);
   }
@@ -79,7 +92,7 @@ int main(int argc, char* argv[]) {
   cout << "Conexao com o barramento estabelecida com sucesso!" << endl;
 
 /* Fabrica de componentes */
-  scs::core::ComponentBuilder* componentBuilder = bus->getComponentBuilder();
+  scs::core::ComponentBuilder& componentBuilder = bus.getComponentBuilder();
 
 /* Definicao do componente. */
   scs::core::ComponentId componentId;
@@ -97,16 +110,23 @@ int main(int argc, char* argv[]) {
   helloDesc.instantiator = HelloImpl::instantiate;
   helloDesc.destructor = HelloImpl::destruct;
   extFacets.push_back(helloDesc);
-  componentContext = componentBuilder->newComponent(extFacets, componentId);
+  componentContext = componentBuilder.newComponent(extFacets, componentId);
 
-  openbus::util::PropertyListHelper* propertyListHelper = \
-    new openbus::util::PropertyListHelper();
-
+  openbus::util::PropertyListHelper propertyListHelper;
 /* Criacao de uma *oferta de servico*. */
   registry_service::ServiceOffer serviceOffer;
-  serviceOffer.properties = propertyListHelper->getPropertyList();
+  serviceOffer.properties = propertyListHelper.getPropertyList();
   serviceOffer.member = componentContext->getIComponent();
-  delete propertyListHelper;
+
+  std::cout << "calling ourselves" << std::endl;
+
+  scs::core::IComponent_var comp = componentContext->getIComponent();
+  CORBA::Object_var facet = comp->getFacet("IDL:demoidl/hello/IHello:1.0");
+  if(!CORBA::is_nil(facet))
+  {
+    demoidl::hello::IHello_var hello = demoidl::hello::IHello::_narrow(facet);
+    hello->sayHello();
+  }
 
   cout << "Registrando servico IHello no barramento..." << endl;
 
@@ -114,6 +134,7 @@ int main(int argc, char* argv[]) {
   try {
     if (registryService) {
       registryId = registryService->_cxx_register(serviceOffer);
+      std::cout << registryId << std::endl;
     } else {
       cout << "Nao foi possivel adquirir um proxy para o servico de registro." 
         << endl;
@@ -131,8 +152,9 @@ int main(int argc, char* argv[]) {
   cout << "Servico IHello registrado." << endl;
   cout << "Aguardando requisicoes..." << endl;
 
-  bus->run();
+  bus.run();
+
+  ::bus = boost::none;
 
   return 0;
 }
-

@@ -7,7 +7,7 @@ APPNAME=${PROJNAME}
 # Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
 # compilado com suporte a multithread.
-#DEFINES+=MULTITHREAD
+DEFINES+=MULTITHREAD
 
 # Descomente a linha abaixo para utilizar o Openbus Multithread.
 #LIBS=pthread
@@ -49,11 +49,13 @@ OBJROOT=obj
 INCLUDES= . \
   stubs \
   ${MICO_INC} \
+  ${OPENBUSINC} \
   ${OPENBUSINC}/mico-${MICOVERSION} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
   ${OPENBUSINC}/scs \
-  ${OPENBUSINC}/logger
+  ${OPENBUSINC}/logger \
+  ${OPENBUSINC}/../../lib/boost_1_44_0
 
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 

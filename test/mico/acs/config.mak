@@ -44,7 +44,10 @@ ifeq "$(TEC_SYSNAME)" "SunOS"
 endif
 
 INCLUDES= . ../../../stubs/mico \
+  ${OPENBUSINC} \
   ${OPENBUSINC}/openbus/cpp \
+  ${OPENBUSINC}/openbus/cpp/stubs/mico \
+  ${OPENBUSINC}/boost \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/cxxtest \
   ${OPENBUSINC}/openssl-0.9.9 \
