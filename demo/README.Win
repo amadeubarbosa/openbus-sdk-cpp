@@ -1,0 +1,47 @@
+Openbus SDK C++ - Demos - README.Win
+
+[1] Demo HELLO
+
+  [1.1] Descrição
+    Demo composta de um servidor que disponibiliza um serviço do tipo Hello, 
+  que exibe uma mensagem na tela informando o usuário que fez a chamada, e ,
+  de um cliente que faz uma única requisição ao serviço em questão.
+    Disponível para Mico.
+  
+  [1.2] Localização
+  $OPENBUS_HOME/demo/hello/mico
+
+[2] Como compilar
+  [2.1] Edite o arquivo Makefile.win e defina o valor da variável OPENBUS_HOME.
+    Deve-se  atribuir  a variável  o caminho  completo  do  local em  que  está 
+    instalado o pacote Openbus SDK C++,
+  [2.2] Execute o nmake:
+    >nmake /f Makefile.win
+
+[3] Como executar
+  [3.1] Edite o arquivo 'democonfigWin.cmd' e faça as devidas configurações   
+    conforme o seu ambiente. Por exemplo:  o  nome  do  usuário  que   terá 
+    acesso  ao barramento e a localização do barramento.
+    [3.1.1] Defina o par certificado/chave privada  a  ser   utilizado     pelo 
+      processo servidor. Informações de como gerar o   certificado  podem   ser 
+      obtidas em:
+      https://jira.tecgraf.puc-rio.br/confluence/display/ESDPUB/
+        Geracao+de+Chaves+e+Certificados+Digitais
+    [3.1.2] Disponibilize a chave privada gerada acima no diretório corrente da 
+      demo. Como também o certificado do serviço de controle de acesso (ACS).
+      Este pode ser obtido com o administrador do barramento.
+      Sendo assim, o diretório corrente da demo deve ser alimentado com dois 
+      arquivos, como por exemplo: 
+        HelloService.key: Chave privada gerada acima.
+        AccessControlService.crt: Certificado    do    ACS   obtido   junto  ao 
+          administrador do barramento.
+    [3.1.3] Entregue ao administrador a sua chave pública(certificado) para que 
+      ele possa cadastrá-la no barramento.
+  [3.2] Certifique-se   de   ter definido a variável OPENBUS_HOME   e   de  ter 
+    carregado os scripts de configuração do Mico ou Orbix.
+    (para maiores informações ver tutorial Openbus SDK C++)
+  [3.3] Inicie o processo servidor através do script 'runserver.bat':
+    >runserver
+  [3.4] Inicie o processo cliente através do script 'runclient.bat':
+    >runclient
+  
