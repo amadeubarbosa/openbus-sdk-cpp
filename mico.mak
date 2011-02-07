@@ -17,9 +17,8 @@ DEFINES+=MULTITHREAD
 #CPPFLAGS= -fno-inline
 
 ifeq "$(TEC_UNAME)" "SunOS510_64"
-  CPPFLAGS= -m64
+  CPPFLAGS= -m64 
   LFLAGS= -m64
-  STDLFLAGS= -m64
 endif
 
 ifeq "$(TEC_SYSNAME)" "SunOS"
@@ -31,8 +30,8 @@ ifeq "$(TEC_SYSNAME)" "SunOS"
   STDLFLAgS+= -mt	
   LFLAGS+= -mt
   
-  CPPFLAGS+= -KPIC -library=stlport4
-  STDLFLAGS+= -KPIC -xar -o	
+  CPPFLAGS+= -xcode=pic32 -library=stlport4 
+  STDLFLAGS+=  -xar -o	
   LFLAGS+= -library=stlport4 
 endif
 
