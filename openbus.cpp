@@ -745,17 +745,17 @@ namespace openbus {
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena a chave privada.");
         }
-        EVP_PKEY* privateKey  = PEM_read_bio_PrivateKey( bio, NULL, NULL, 0 );
-        if (privateKey == 0) {
+        EVP_PKEY* EntityPrivateKey  = PEM_read_bio_PrivateKey( bio, NULL, NULL, 0 );
+        if (EntityPrivateKey == 0) {
           logger->log(WARNING, "Não foi possível obter a chave privada da entidade.");
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
-          EVP_PKEY_free(privateKey);
+          EVP_PKEY_free(EntityPrivateKey);
           throw SECURITY_EXCEPTION(
             "Não foi possível obter a chave privada da entidade.");
         }
         
-        int RSAModulusSize = EVP_PKEY_size(privateKey);
+        int RSAModulusSize = EVP_PKEY_size(EntityPrivateKey);
 
       /* Decifrando o desafio. */
         unsigned char* challengePlainText =
@@ -763,7 +763,7 @@ namespace openbus {
         memset(challengePlainText, ' ', RSAModulusSize);
 
         RSA_private_decrypt(RSAModulusSize, challenge, challengePlainText,
-          privateKey->pkey.rsa, RSA_PKCS1_PADDING);
+          EntityPrivateKey->pkey.rsa, RSA_PKCS1_PADDING);
 
         bio = BIO_new( BIO_s_file() );
         if (BIO_read_filename( bio, ACSCertificateFilename ) <= 0) {
@@ -777,18 +777,18 @@ namespace openbus {
             "Não foi possível abrir o arquivo que armazena o certificado ACS.");
         }
       
-        EVP_PKEY_free(privateKey);
+        EVP_PKEY_free(EntityPrivateKey);
       
         X509* x509 = d2i_X509_bio(bio, 0);
 
       /* Obtenção da chave pública do ACS. */
-        EVP_PKEY* publicKey = X509_get_pubkey(x509);
-        if (publicKey == 0) {
+        EVP_PKEY* ACSPublicKey = X509_get_pubkey(x509);
+        if (ACSPublicKey == 0) {
           logger->log(WARNING, "Não foi possível obter a chave pública do ACS.");
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
           free(challengePlainText);
-          EVP_PKEY_free(publicKey);
+          EVP_PKEY_free(ACSPublicKey);
           X509_free(x509);
           throw SECURITY_EXCEPTION(
             "Não foi possível obter a chave pública do ACS.");
@@ -799,7 +799,7 @@ namespace openbus {
       */
         unsigned char* answer = (unsigned char*) malloc(RSAModulusSize);
         RSA_public_encrypt(CHALLENGE_SIZE, challengePlainText, answer,
-          publicKey->pkey.rsa, RSA_PKCS1_PADDING);
+          ACSPublicKey->pkey.rsa, RSA_PKCS1_PADDING);
 
         free(challengePlainText);
 
@@ -807,7 +807,7 @@ namespace openbus {
           (CORBA::ULong) RSAModulusSize, (CORBA::ULong) RSAModulusSize,
           (CORBA::Octet*)answer, 0);
 
-        EVP_PKEY_free(publicKey);
+        EVP_PKEY_free(ACSPublicKey);
         X509_free(x509);
 
         stringstream iACSMSG;
