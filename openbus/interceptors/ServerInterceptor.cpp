@@ -320,6 +320,9 @@ namespace openbus {
         Openbus::logger->dedent(INFO, "ServerInterceptor::getCredential() END");
         return ret._retn();
       } else {
+        Openbus::logger->log(WARNING, "Nao foi possivel adquirir uma credencial. " + 
+          (string) + "Verifique se esta chamada esta sendo realizada dentro de um metodo " + 
+          (string) + "disponibilizado remotamente.");
         Openbus::logger->dedent(INFO, "ServerInterceptor::getCredential() END");
         return 0;
       }
