@@ -19,6 +19,7 @@ DEFINES+=MULTITHREAD
 ifeq "$(TEC_UNAME)" "SunOS510_64"
   CPPFLAGS= -m64 
   LFLAGS= -m64
+  STDLFLAGS= -m64 -KPIC -xar -o
 endif
 
 ifeq "$(TEC_SYSNAME)" "SunOS"
@@ -27,11 +28,11 @@ ifeq "$(TEC_SYSNAME)" "SunOS"
 
   # Multithread
   CPPFLAGS+= -mt
-  STDLFLAgS+= -mt	
+  STDLFLAGS= -mt -KPIC -xar -o	
   LFLAGS+= -mt
   
   CPPFLAGS+= -xcode=pic32 -library=stlport4 
-  STDLFLAGS+=  -xar -o	
+  STDLFLAGS= -KPIC -xar -o	
   LFLAGS+= -library=stlport4 
 endif
 
