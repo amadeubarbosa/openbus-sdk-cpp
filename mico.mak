@@ -16,24 +16,20 @@ DEFINES+=MULTITHREAD
 # p.s.: O modo debug(DBG) deve estar ativado.
 #CPPFLAGS= -fno-inline
 
-ifeq "$(TEC_UNAME)" "SunOS510_64"
-  CPPFLAGS= -m64 
-  LFLAGS= -m64
-  STDLFLAGS= -m64 -KPIC -xar -o
-endif
-
-ifeq "$(TEC_SYSNAME)" "SunOS"
+ifeq "$(TEC_UNAME)" "SunOS510"
   USE_CC=Yes
   AR= CC
+  
+  CPPFLAGS= -m64 -KPIC -library=stlport4
+  STDLFLAGS= -m64 -xar -o  
+  LFLAGS= -m64 -instances=extern -library=stlport4 
+  LIBS= nsl socket
+  NO_LOCAL_LD=Yes
 
   # Multithread
   CPPFLAGS+= -mt
-  STDLFLAGS= -mt -KPIC -xar -o	
   LFLAGS+= -mt
-  
-  CPPFLAGS+= -xcode=pic32 -library=stlport4 
-  STDLFLAGS= -KPIC -xar -o	
-  LFLAGS+= -library=stlport4 
+  STDLFLAGS= -mt -m64 -xar -o
 endif
 
 ifeq ($(TEC_WORDSIZE), TEC_64)
@@ -102,7 +98,3 @@ $(STUBS): $(IDLS)
 
 genstubs: $(STUBS)
 	
-sunosShared: $(OBJS)
-	rm -f lib/$(TEC_UNAME)/libopenbusmico.so
-	CC $(LFLAGS) -G -instances=extern -o lib/$(TEC_UNAME)/libopenbusmico.so $(OBJS)
-
