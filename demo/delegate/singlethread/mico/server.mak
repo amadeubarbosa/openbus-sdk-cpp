@@ -14,23 +14,16 @@ DEFINES+=MICO_64
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
-ifeq "$(TEC_UNAME)" "SunOS510_64"
-  CPPFLAGS= -m64
-  LFLAGS= -m64
-  STDLFLAGS= -m64
-endif
-
-ifeq "$(TEC_SYSNAME)" "SunOS"
+ifeq "$(TEC_UNAME)" "SunOS510"
   USE_CC=Yes
+
+  CPPFLAGS= -m64 -library=stlport4
+  LFLAGS= -m64 -library=stlport4 
+  LIBS= nsl socket
 
   # Multithread
   CPPFLAGS+= -mt
   LFLAGS+= -mt
-  LIBS=
-  
-  CPPFLAGS+= -library=stlport4
-  LFLAGS+= -library=stlport4 
-  LIBS= nsl socket
 endif
 
 TARGETROOT=bin
