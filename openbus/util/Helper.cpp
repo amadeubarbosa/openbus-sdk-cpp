@@ -20,9 +20,11 @@ namespace openbus {
     }
 
     void FacetListHelper::add(const char* facet) {
-      facetList->length(numElements + 1);
-      facetList[numElements] = facet;
-      numElements++;
+      if (facet) {
+        facetList->length(numElements + 1);
+        facetList[numElements] = facet;
+        numElements++;
+      }
     }
 
     registry_service::FacetList_var FacetListHelper::getFacetList() {
