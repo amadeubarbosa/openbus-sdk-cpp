@@ -406,7 +406,7 @@ namespace openbus {
 
   Openbus* Openbus::getInstance() {
     logger = Logger::getInstance();
-    mutex.lock();
+    mutex.trylock();
     if (!bus) {
       bus = new Openbus();
     }
