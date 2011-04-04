@@ -157,6 +157,9 @@ namespace openbus {
       runningLeaseExpiredCallback = false;
       mutex.unlock();
       logger->log(INFO, "Openbus::RenewLeaseThread::run() END");
+    #ifdef OPENBUS_ORBIX
+      return 0;
+    #endif
     }
     
     #ifdef MULTITHREAD
