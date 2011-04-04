@@ -60,6 +60,7 @@ namespace openbus {
       str << "Próxima validação em: " << validationTime << "ms" << endl;
       Openbus::logger->log(INFO, str.str());
       Openbus::logger->dedent(INFO, "CredentialsValidationThread::run() END");
+      return 0;
     }
   #else
     ServerInterceptor::CredentialsValidationCallback::CredentialsValidationCallback() {
