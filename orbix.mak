@@ -17,7 +17,7 @@ else
   ORBIXLDIR=${ORBIX_HOME}/lib
 endif
 
-ifeq "$(TEC_SYSNAME)" "SunOS510_64"
+ifeq "$(TEC_UNAME)" "SunOS510_64"
   USE_CC=Yes
   AR= CC
   
@@ -26,6 +26,11 @@ ifeq "$(TEC_SYSNAME)" "SunOS510_64"
     CPPFLAGS= -g
     STDLFLAGS= -g
     LFLAGS= -g
+  else
+    FLAGS=
+    CPPFLAGS=
+    STDLFLAGS=
+    LFLAGS=
   endif
 
   FLAGS+= -m64 -xcode=pic32 -mt=yes 

@@ -23,6 +23,8 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
 
   ifeq "$(DBG)" "YES"
     CPPFLAGS= -g
+  else
+    CPPFLAGS=
   endif
 
   CPPFLAGS+= +p -KPIC -mt -m64 -D_REENTRANT -library=stlport4
