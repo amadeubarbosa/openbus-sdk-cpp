@@ -4,10 +4,6 @@ APPNAME=${PROJNAME}
 DEFINES=SCS_ORBIX
 DEFINES+=OPENBUS_ORBIX
 
-#Descomente as duas linhas abaixo para o uso em Valgrind.
-#DBG=YES
-#CPPFLAGS= -fno-inline
-
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 

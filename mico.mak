@@ -16,10 +16,16 @@ DEFINES+=MULTITHREAD
 # p.s.: O modo debug(DBG) deve estar ativado.
 #CPPFLAGS= -fno-inline
 
-ifeq "$(TEC_UNAME)" "SunOS510"
+ifeq "$(TEC_UNAME)" "SunOS510_64"
   USE_CC=Yes
   AR= CC
   
+  ifeq "$(DBG)" "YES"
+    CPPFLAGS= -g
+    STDLFLAGS= -g
+    LFLAGS= -g
+  endif
+
   CPPFLAGS= -m64 -KPIC -library=stlport4
   STDLFLAGS= -m64 -xar -o  
   LFLAGS= -m64 -instances=extern -library=stlport4 
@@ -30,10 +36,6 @@ ifeq "$(TEC_UNAME)" "SunOS510"
   CPPFLAGS+= -mt
   LFLAGS+= -mt
   STDLFLAGS= -mt -m64 -xar -o
-endif
-
-ifeq ($(TEC_WORDSIZE), TEC_64)
-  CPPFLAGS+= -m64
 endif
 
 MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}

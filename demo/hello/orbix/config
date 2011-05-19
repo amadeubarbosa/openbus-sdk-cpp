@@ -1,4 +1,8 @@
 
+#Descomente as duas linhas abaixo para o uso em Valgrind.
+#DBG=YES
+#CPPFLAGS= -fno-inline
+
 ORBIX_HOME=${IT_PRODUCT_DIR}/asp/6.3
 
 ORBIXSHLIBDIR=${IT_PRODUCT_DIR}/shlib/sparcv9
@@ -14,14 +18,15 @@ else
   ORBIXLDIR=${ORBIX_HOME}/lib
 endif
 
-# solaris specific
-ifeq "$(TEC_SYSNAME)" "SunOS"
+ifeq "$(TEC_UNAME)" "SunOS510_64"
   USE_CC=Yes
-  CPPFLAGS= -g +p -KPIC -mt -D_REENTRANT -library=stlport4
-  ifeq ($(TEC_WORDSIZE), TEC_64)
-    CPPFLAGS+= -m64
-    ORBIXLDIR=${ORBIX_HOME}/lib/sparcv9
+
+  ifeq "$(DBG)" "YES"
+    CPPFLAGS= -g
   endif
+
+  CPPFLAGS+= +p -KPIC -mt -m64 -D_REENTRANT -library=stlport4
+  ORBIXLDIR=${ORBIX_HOME}/lib/sparcv9
   LFLAGS= $(CPPFLAGS) -xildoff
 endif
 
