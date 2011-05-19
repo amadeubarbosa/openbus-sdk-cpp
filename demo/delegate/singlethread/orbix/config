@@ -13,3 +13,33 @@ ifeq ($(TEC_WORDSIZE), TEC_64)
 else
   ORBIXLDIR=${ORBIX_HOME}/lib
 endif
+
+# Descomente a linha abaixo para ativar o modo debug.
+#DBG=YES
+
+# Descomente a linha abaixo para o uso em Valgrind.
+# p.s.: O modo debug(DBG) deve estar ativado.
+#CPPFLAGS= -fno-inline
+
+ifeq "$(TEC_UNAME)" "SunOS510_64"
+  USE_CC=Yes
+  AR= CC
+  
+  ifeq "$(DBG)" "YES"
+    CPPFLAGS= -g
+    STDLFLAGS= -g
+    LFLAGS= -g
+  endif
+
+  CPPFLAGS+= -m64 -KPIC -library=stlport4
+  STDLFLAGS+= -m64 -xar -o  
+  LFLAGS+= -m64 -instances=extern -library=stlport4 
+  LIBS= nsl socket
+  NO_LOCAL_LD=Yes
+
+  # Multithread
+  CPPFLAGS+= -mt
+  LFLAGS+= -mt
+  STDLFLAGS= -mt -m64 -xar -o
+endif
+

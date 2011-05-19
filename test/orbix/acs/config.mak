@@ -4,23 +4,10 @@ APPNAME= acs
 DEFINES=SCS_ORBIX
 DEFINES+=OPENBUS_ORBIX
 
-# Descomente a linha abaixo para ativar o modo debug.
-#DBG=YES
-
-# Descomente a linha abaixo para o uso em Valgrind.
-# p.s.: O modo debug(DBG) deve estar ativado.
-#CPPFLAGS= -fno-inline
-
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
 include ../config
-
-ifeq "$(TEC_SYSNAME)" "SunOS"
-  USE_CC=Yes
-  CPPFLAGS= -g +p -KPIC -xarch=v8  -mt -D_REENTRANT
-  LFLAGS= $(CPPFLAGS) -xildoff
-endif
 
 INCLUDES= . \
   ${ORBIXINC} \

@@ -17,13 +17,24 @@ else
   ORBIXLDIR=${ORBIX_HOME}/lib
 endif
 
-ifeq "$(TEC_SYSNAME)" "SunOS"
+ifeq "$(TEC_SYSNAME)" "SunOS510_64"
   USE_CC=Yes
-  CPPFLAGS= -g +p -KPIC -mt -D_REENTRANT -library=stlport4
-  ifeq ($(TEC_WORDSIZE), TEC_64)
-    CPPFLAGS+= -m64
-    ORBIXLDIR=${ORBIX_HOME}/lib/sparcv9
+  AR= CC
+  
+  ifeq "$(DBG)" "YES"
+    FLAGS= -g
+    CPPFLAGS= -g
+    STDLFLAGS= -g
+    LFLAGS= -g
   endif
+
+  FLAGS+= -m64 -xcode=pic32 -mt=yes 
+  CPPFLAGS+= -m64 -KPIC -mt -library=stlport4
+  STDLFLAGS+= -mt -m64 -xar -o
+  LFLAGS+= -mt -m64 -instances=extern -library=stlport4
+  NO_LOCAL_LD=Yes
+  
+  ORBIXLDIR=${ORBIX_HOME}/lib/sparcv9
 endif
 
 ORBIX_HOME= ${IT_PRODUCT_DIR}/asp/6.3

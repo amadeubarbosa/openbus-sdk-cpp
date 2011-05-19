@@ -1,38 +1,10 @@
 PROJNAME=client
 APPNAME=${PROJNAME}
 
-# Descomente a linha abaixo para compilar em 64 Bits.
-DEFINES+=MICO_64
-
-# Descomente a linha abaixo para utilizar a versão multithread.
-# A versão multithread do Openbus deve ser utilizada com Mico
-# compilado com suporte a multithread.
-DEFINES+=MULTITHREAD
-
-# Descomente a linha abaixo para utilizar o Openbus Multithread.
-LIBS=pthread
-
-# Descomente a linha abaixo para ativar o modo debug.
-#DBG=YES
-
-# Descomente a linha abaixo para o uso em Valgrind.
-# p.s.: O modo debug(DBG) deve estar ativado.
-#CPPFLAGS= -fno-inline
+include config
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
-
-ifeq "$(TEC_UNAME)" "SunOS510"
-  USE_CC=Yes
-
-  CPPFLAGS= -m64 -library=stlport4
-  LFLAGS= -m64 -library=stlport4 
-  LIBS= nsl socket
-
-  # Multithread
-  CPPFLAGS+= -mt
-  LFLAGS+= -mt
-endif
 
 TARGETROOT=bin
 OBJROOT=obj

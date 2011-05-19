@@ -96,22 +96,6 @@ class RGSTestSuite: public CxxTest::TestSuite {
           }
         }
         inFile.close();
-        bus = Openbus::getInstance();
-        const char* argv[] = {
-          "exec", 
-          "-OpenbusHost", 
-          const_cast<char*>(OPENBUS_SERVER_HOST.c_str()), 
-          "-OpenbusPort", 
-          OPENBUS_SERVER_PORT.c_str(),
-          "-OpenbusDebug",
-          "ALL"}; 
-        bus->init(7, (char**) argv);
-        credential = new access_control_service::Credential;
-        rgs = bus->connect(
-         "TesteBarramento", 
-         "TesteBarramento.key", 
-         "AccessControlService.crt"); 
-        iAccessControlService = bus->getAccessControlService();
       }
       catch ( const char* errmsg ) {
         TS_FAIL( errmsg );
@@ -141,6 +125,22 @@ class RGSTestSuite: public CxxTest::TestSuite {
 
     void testGetRegisterService() {
       try {
+        bus = Openbus::getInstance();
+        const char* argv[] = {
+          "exec", 
+          "-OpenbusHost", 
+          const_cast<char*>(OPENBUS_SERVER_HOST.c_str()), 
+          "-OpenbusPort", 
+          OPENBUS_SERVER_PORT.c_str(),
+          "-OpenbusDebug",
+          "ALL"}; 
+        bus->init(7, (char**) argv);
+        credential = new access_control_service::Credential;
+        rgs = bus->connect(
+         "TesteBarramento", 
+         "TesteBarramento.key", 
+         "AccessControlService.crt"); 
+        iAccessControlService = bus->getAccessControlService();
         rgs = bus->getRegistryService();
         TS_ASSERT(rgs);
       } catch (const char* errmsg) {

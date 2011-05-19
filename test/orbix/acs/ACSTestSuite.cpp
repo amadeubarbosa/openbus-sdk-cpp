@@ -79,12 +79,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
           }
         }
         inFile.close();
-        bus = Openbus::getInstance();
-        bus->init(
-          0, 
-          NULL,
-          const_cast<char*>(OPENBUS_SERVER_HOST.c_str()), 
-          atoi(OPENBUS_SERVER_PORT.c_str()));
         credential2 = new access_control_service::Credential;
       }
       catch (const char* errmsg) {
@@ -103,7 +97,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
 
     void testInitWithArgcArgv() {
       try {
-        delete bus;
         bus = Openbus::getInstance();
         const char* argv[] = {
           "exec", 
