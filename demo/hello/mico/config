@@ -1,18 +1,13 @@
+# Descomente a linha abaixo para compilar em 64 Bits.
+DEFINES+=MICO_64
 
-ORBIX_HOME=${IT_PRODUCT_DIR}/asp/6.3
+# Descomente a linha abaixo para utilizar a versão multithread.
+# A versão multithread do Openbus deve ser utilizada com Mico
+# compilado com suporte a multithread.
+DEFINES+=MULTITHREAD
 
-ORBIXSHLIBDIR=${IT_PRODUCT_DIR}/shlib/sparcv9
-
-ORBIXBIN=${ORBIX_HOME}/bin
-ORBIXINC=${ORBIX_HOME}/include
-ORBIXLDIR=${ORBIX_HOME}/lib
-
-# general config
-ifeq ($(TEC_WORDSIZE), TEC_64)
-  ORBIXLDIR=${ORBIX_HOME}/lib/lib64
-else
-  ORBIXLDIR=${ORBIX_HOME}/lib
-endif
+# Descomente a linha abaixo para utilizar o Openbus Multithread.
+LIBS=pthread
 
 # Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES
@@ -29,11 +24,6 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
     CPPFLAGS= -g
     STDLFLAGS= -g
     LFLAGS= -g
-  else
-    FLAGS=
-    CPPFLAGS=
-    STDLFLAGS=
-    LFLAGS=
   endif
 
   CPPFLAGS+= -m64 -KPIC -library=stlport4

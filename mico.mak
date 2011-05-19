@@ -24,6 +24,11 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
     CPPFLAGS= -g
     STDLFLAGS= -g
     LFLAGS= -g
+  else
+    FLAGS=
+    CPPFLAGS=
+    STDLFLAGS=
+    LFLAGS=
   endif
 
   CPPFLAGS= -m64 -KPIC -library=stlport4
