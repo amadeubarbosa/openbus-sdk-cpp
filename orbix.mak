@@ -98,11 +98,5 @@ $(STUBS): $(IDLS)
 
 genstubs: $(STUBS)
 	
-sunos: $(OBJS)
-	rm -f lib/$(TEC_UNAME)/libopenbusorbix.a
-	CC $(CPPFLAGS) -xar -instances=extern -o lib/$(TEC_UNAME)/libopenbusorbix.a $(OBJS)
-	rm -f lib/$(TEC_UNAME)/libopenbusorbix.so
-	CC $(CPPFLAGS) -G -instances=extern -o lib/$(TEC_UNAME)/libopenbusorbix.so $(OBJS)
-
 precompile:
 	${LUA51}/bin/${TEC_UNAME}/lua5.1 precompiler.lua -l lua -f IOR IOR.lua
