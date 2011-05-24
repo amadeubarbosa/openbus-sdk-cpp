@@ -1,4 +1,9 @@
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+     Openbus SDK C++ 1.5.2 (23 de maio de 2011)
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
++ Suporte ao Orbix em Solaris 10 SPARC 64bits com Sun Studio 12.1.
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
      Openbus SDK C++ 1.5.1 (13 de janeiro de 2011)
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 + Versão Mico multithread para o método setThreadCredential().
