@@ -1,0 +1,6 @@
+
+set(CORE_IDL_ROOT_DIR ../core_idl)
+SET(MICO_ROOT_DIR /usr)
+SET(MICO_INCLUDE_DIR /usr/include)
+SET(MICO_LIBRARIES /usr/lib/libmico2.3.13.a)
+SET(BOOST_ROOT ../../boost_1_46_1)
