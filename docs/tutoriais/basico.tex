@@ -22,6 +22,8 @@
 %% Removes hyperlinks borders
 \hypersetup{
   pdfborder = {0 0 0},
+  %colorlinks=true,
+  %urlcolor=blue,
 }
 
 \newcommand{\code}[1]{\texttt{#1}}
@@ -62,7 +64,7 @@ Este documento tem por objetivo servir como ponto de partida para os usuários de
 \end{itemize}
 
 Maiores informações podem ser obtidas em:
-http://www.tecgraf.puc-rio.br/openbus
+\url{http://www.tecgraf.puc-rio.br/openbus}
 
 \section{Preparação do Ambiente}
 O Openbus C++ suporta os ORB`s Mico 2.3.13 e Orbix 6.3 Service Pack 3. O usuário Mico pode escolher entre 
@@ -137,6 +139,7 @@ da \emph{demo} elimina possíveis problemas que o desenvolvedor possa
 enfrentar durante o seu projeto, como por exemplo: falhas de comunicação 
 com o barramento, mecanismo de interceptação não habilitado e ausência de 
 bibliotecas dinâmicas externas.
+
 Naturalmente a execução da \emph{demo} necessita de um barramento em operação. 
 A \emph{demo} pode ser executada seguindo os seguintes passos:
 
@@ -148,11 +151,12 @@ A \emph{demo} pode ser executada seguindo os seguintes passos:
 \emph{\$OPENBUS\_HOME/libpath/\$TEC\_UNAME}.
   \item Entrar no diretório \emph{demo/hello/orbix} ou \emph{demo/hello/mico}, que está disponível na árvore do pacote. 
   \item Gerar uma chave privada e um certificado digital. Os arquivos devem ser disponibilizados no 
-   diretório da demo. O arquivo referente ao certificado deve ser colocado
-   na pasta \emph{certificates} do barramento, e o certificado referente ao serviço de acesso 
-   deve   ser obtido junto ao administrador do barramento e
-   colocado na pasta atual, em conjunto  da chave privada que foi gerada.
-   \href{https://jira.tecgraf.puc-rio.br/confluence/display/ESDPUB/Geracao+de+Chaves+e+Certificados+Digitais} {Geracao de Chaves e Certificados Digitais}
+  diretório da demo. O arquivo referente ao certificado deve ser colocado
+  na pasta \emph{certificates} do barramento, e o certificado referente ao
+  serviço de acesso deve   ser obtido junto ao administrador do barramento e
+  colocado na pasta atual, em conjunto  da chave privada que foi gerada.
+  Maiores informações sobre a geração de chaves e certificados digitais 
+  podem ser encontradas no site do OpenBus. \url{https://jira.tecgraf.puc-rio.br/confluence/display/OpenBus/Geracao+de+Chaves+e+Certificados+Digitais}
   \item Editar o arquivo \emph{democonfig} e configurar a localização do barramento como também o nome 
   da chave privada e do certificado do serviço de controle de acesso.
   \item Executar o processo servidor: \emph{./runserver}
@@ -293,7 +297,7 @@ exceções podem ser lançadas:
     ocorreu.
     Possíveis causas:
     \begin{itemize}
-      \item Os valores que definem a localização do barramento(máquina e porta) 
+      \item Os valores que definem a localização do barramento(host e porta) 
       estão incorretos.
       \item O mecanismo de interceptação não está sendo ativado. (rever o ítem 1)
     \end{itemize}
@@ -584,6 +588,8 @@ demoidl::hello::IHello_var hello = demoidl::hello::IHello::_narrow(obj);
 \end{labeledcode}
 
 Daqui em diante o programador estará apto a utilizar o serviço.
+
+Os códigos completos podem ser conferidos na demos dos projeto.
 
 \end{document}
 
