@@ -69,13 +69,12 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
      stubs/mico/session_service.cc \
      stubs/mico/fault_tolerance.cc \
      stubs/mico/core.cc \
-     stubs/mico/scs.cc \
      openbus.cpp \
      openbus/util/Helper.cpp \
      FaultToleranceManager.cpp
 
 STUBS= stubs/mico/core.h stubs/mico/core.cc \
-stubs/mico/scs.h stubs/mico/scs.cc \
+stubs/mico/scs.h \
 stubs/mico/access_control_service.h stubs/mico/access_control_service.cc \
 stubs/mico/registry_service.h stubs/mico/registry_service.cc \
 stubs/mico/fault_tolerance.h stubs/mico/fault_tolerance.cc \
