@@ -1,9 +1,6 @@
 PROJNAME= openbusmico
 LIBNAME= ${PROJNAME}
 
-# Descomente a linha abaixo para compilar em 64 Bits.
-DEFINES+=MICO_64
-
 # Descomente a linha abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
 # compilado com suporte a multithread.
@@ -44,8 +41,7 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
 endif
 
 MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}
-MICO_INC= ${MICODIR}/include
-MICO_LIB=${MICODIR}/lib/${TEC_UNAME}
+MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}/${TEC_UNAME}
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
@@ -53,7 +49,7 @@ OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 OBJROOT= obj/mico
 TARGETROOT= lib
 
-INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/mico-${MICOVERSION} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
+INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${MICO_LIB} ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS= mico${MICOVERSION} scsmico crypto dl logger
