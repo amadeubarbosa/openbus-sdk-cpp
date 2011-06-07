@@ -212,7 +212,7 @@ stub do serviço de registro, que no caso do Mico é o arquivo
 \emph{stubs/orbix/registry\_service.hh}. A documentação da API também está 
 presente na forma de comentários nos arquivos citados acima.
 
-\subsubsection{openbus.h}
+\subsubsection{openbus.h}\label{api}
 
 \begin{itemize}
   \item \code{static Openbus::getInstance()}: Fornece a única instância do barramento.
@@ -440,7 +440,8 @@ um componente (\emph{member}) SCS.
   };
 \end{labeledcode}
 
-Através da lista de propriedades é possível caracterizar o serviço. 
+A lista de propriedades pode ser utilizada para adicionar características para o serviço, a fim de facilitar a identificação por parte dos clientes.
+
 A arquitetura do Openbus é baseada no modelo de componentes SCS. O 
 serviço é representado por um componente que pode apresentar 
 distintas facetas (interfaces). Sendo assim, o primeiro passo para o 
@@ -520,17 +521,14 @@ De posse da lista de propriedades e do componente que representa o serviço,
 é possível requisitar o registro do serviço. Vide o código~\ref{lst:register}.
 
 \begin{labeledcode}[c++]{register}{Registrando o Serviço}
+// registrando o serviço
 registryId = registryService->_cxx_register(serviceOffer);
 \end{labeledcode}
 
 Até este ponto, o servidor basicamente se autenticou ao barramento e registrou 
 o serviço. O último passo necessário para se finalizar o código do servidor é 
 habilitar o processo servidor a escutar as requisições CORBA que serão 
-direcionadas para o serviço ofertado. Vide o código~\ref{lst:run}. 
-
-\begin{labeledcode}[c++]{run}{Disparando o processo do servidor para escutar as requisições CORBA}
-bus->run();
-\end{labeledcode}
+direcionadas para o serviço ofertado, o que pode ser feito com o uso do método da API \emph{run()} descrito anteriormente na Seção \ref{api}.
 
 \subsection{Processo cliente}
 
@@ -540,7 +538,8 @@ repetidos, com exceção de que o cliente provavelmente vai desejar se
 autenticar com o barramento através do mecanismo usuário e senha. O código~\ref{lst:connect-client} ilustra essa autenticação no barramento. 
 
 \begin{labeledcode}[c++]{connect-client}{Autenticação no barramento via usuário e senha}
-  registryService = bus->connect("tester", "tester");
+// conectando via usuário e senha
+registryService = bus->connect("tester", "tester");
 \end{labeledcode}
 
 Após a conexão bem sucedida com o barramento, o próximo passo é obter o 
@@ -572,22 +571,20 @@ registry_service::ServiceOffer serviceOffer = serviceOfferList[(CORBA::ULong) 0]
 Como visto acima, a oferta de serviço armazena o serviço através de um 
 componente SCS. Como este componente pode apresentar diversas facetas, 
 o usuário deve informar qual faceta deseja utilizar. No exemplo utilizado, 
-somente há uma faceta IHello. O componente oferece um método(getFacet) para que
-o usuário possa obter um objeto CORBA que represente o serviço desejado. Vide o código~\ref{lst:getFacet}.
+somente há uma faceta IHello. O componente oferece um método (getFacet) para que
+o usuário possa obter um objeto CORBA que represente o serviço desejado. De
+posse do objeto CORBA, o usuário deve efetuar um narrow para mapeá-lo para 
+a interface desejada, e daí em diante o programador estará apto a utilizar o 
+serviço. Vide o código~\ref{lst:getFacet}.
 
-\begin{labeledcode}[c++]{getFacet}{Recuperando a faceta do serviço desejado.}
+\begin{labeledcode}[c++]{getFacet}{Acesso ao serviço desejado.}
+// obtendo o serviço IHello
 scs::core::IComponent_var component = serviceOffer.member;
 CORBA::Object_var obj = component->getFacet("IDL:demoidl/hello/IHello:1.0");
-\end{labeledcode}
 
-De posse do objeto CORBA, o usuário deve efetuar um narrow para mapeá-lo para 
-a interface desejada. Vide o código~\ref{lst:narrow}.
-
-\begin{labeledcode}[c++]{narrow}{Realizando o mapeamento para a interface desejada}
+// mapeando para a interface desejada
 demoidl::hello::IHello_var hello = demoidl::hello::IHello::_narrow(obj);
 \end{labeledcode}
-
-Daqui em diante o programador estará apto a utilizar o serviço.
 
 Os códigos completos podem ser conferidos na demos dos projeto.
 
