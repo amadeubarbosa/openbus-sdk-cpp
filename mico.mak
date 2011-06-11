@@ -40,8 +40,15 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   STDLFLAGS= -mt -m64 -xar -o
 endif
 
-MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}
-MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}/${TEC_UNAME}
+ifdef $(MULTITHREAD)
+  MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-multithread
+  MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
+  MICO_LIB= ${OPENBUS_HOME}/libpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
+else
+  MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
+  MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
+  MICO_LIB= ${OPENBUS_HOME}/libpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
+endif
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
@@ -50,7 +57,7 @@ OBJROOT= obj/mico
 TARGETROOT= lib
 
 INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
-LDIR= ${MICO_LIB} ${OPENBUSLIB} ${MICO_LIB}
+LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
 LIBS= mico${MICOVERSION} scsmico crypto dl logger
 
