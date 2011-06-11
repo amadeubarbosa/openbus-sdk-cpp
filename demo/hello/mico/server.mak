@@ -11,13 +11,13 @@ OBJROOT=obj
 
 INCLUDES= . \
   stubs \
-  ${OPENBUSINC}/mico-${MICOVERSION}/${TEC_UNAME} \
+  ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/logger
 
-LDIR= ${OPENBUSLIB}
+LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
@@ -37,6 +37,6 @@ STUBS= stubs/hello.cc stubs/hello.h
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${OPENBUS_HOME}/bin/${TEC_UNAME}/idl --poa ../../idl/hello.idl
+	cd stubs ; ${MICO_BIN}/idl --poa ../../idl/hello.idl
 
 genstubs: $(STUBS)

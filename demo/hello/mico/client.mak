@@ -11,13 +11,13 @@ OBJROOT=obj
 
 INCLUDES= . \
   stubs \
-  ${OPENBUSINC}/mico-${MICOVERSION}/${TEC_UNAME} \
+  ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
   ${OPENBUSINC}/scs \
   ${OPENBUSINC}/logger
 
-LDIR= ${OPENBUSLIB}
+LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
