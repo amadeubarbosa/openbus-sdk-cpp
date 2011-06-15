@@ -156,7 +156,7 @@ int main(int argc, char* argv[]) {
         << endl;
       exit(1);
     }
-  } catch (UnathorizedFacets& e) {
+  } catch (UnauthorizedFacets& e) {
     cout << "Nao foi possivel registrar IHello." << endl;
     CORBA::ULong idx;
     CORBA::ULong length = e.facets.length();

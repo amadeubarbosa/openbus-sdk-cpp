@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
       cout << "Não foi possível adquirir um proxy para o serviço de registro." << endl;
       exit(1);
     }
-  } catch (UnathorizedFacets& e) {
+  } catch (UnauthorizedFacets& e) {
     cout << "Não foi possível registrar IHello." << endl;
     CORBA::ULong idx;
     CORBA::ULong length = e.facets.length();
