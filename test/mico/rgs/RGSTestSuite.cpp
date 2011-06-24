@@ -165,7 +165,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
         try {
           registryIdentifier = rgs->_cxx_register(serviceOffer);
           TS_ASSERT(registryIdentifier);
-        } catch (UnauthorizedFacets& e) {
+        } catch (UnathorizedFacets& e) {
           cout << "Nao foi possivel registrar a oferta." << endl;
           CORBA::ULong idx;
           CORBA::ULong length = e.facets.length();
@@ -182,7 +182,7 @@ class RGSTestSuite: public CxxTest::TestSuite {
         try {
           registryIdentifier2 = rgs->_cxx_register(serviceOffer);
           TS_ASSERT(registryIdentifier2);
-        } catch (UnauthorizedFacets& e) {
+        } catch (UnathorizedFacets& e) {
           cout << "Nao foi possivel registrar a oferta." << endl;
           CORBA::ULong idx;
           CORBA::ULong length = e.facets.length();
