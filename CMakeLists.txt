@@ -1,0 +1,111 @@
+
+cmake_minimum_required (VERSION 2.6)
+project (openbus_sdk)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+find_package (Mico)
+if (NOT DEFINED MICO_FOUND OR DEFINED OPENBUS_SDK_USE_ORBIX)
+find_package (Orbix)
+if (NOT DEFINED ORBIX_FOUND)
+message(FATAL "Mico nor Orbix was found")
+endif (NOT DEFINED ORBIX_FOUND)
+endif (NOT DEFINED MICO_FOUND OR DEFINED OPENBUS_SDK_USE_ORBIX)
+if (NOT DEFINED OPENSSL_FOUND)
+find_package (OpenSSL)
+endif (NOT DEFINED OPENSSL_FOUND)
+if (NOT DEFINED OPENBUS_CORE_IDL_FOUND)
+find_package (Core_Idl)
+endif (NOT DEFINED OPENBUS_CORE_IDL_FOUND)
+if (NOT DEFINED SCS_IDL_FOUND)
+find_package (Scs_Idl)
+endif (NOT DEFINED SCS_IDL_FOUND)
+find_package (Threads)
+
+include_directories (include)
+include_directories (${LOGGER_ROOT})
+include_directories (${CMAKE_CURRENT_BINARY_DIR})
+
+if (DEFINED MICO_FOUND)
+  include_directories (${MICO_INCLUDE_DIR})
+
+  mico_idl(${SCS_IDL_IDL_DIR}/scs.idl)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS --any --typecode)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl)
+
+  set(SOURCES
+    ${CMAKE_CURRENT_BINARY_DIR}/scs.h
+    ${CMAKE_CURRENT_BINARY_DIR}/registry_service.h
+    ${CMAKE_CURRENT_BINARY_DIR}/core.h
+    ${CMAKE_CURRENT_BINARY_DIR}/access_control_service.h
+    ${CMAKE_CURRENT_BINARY_DIR}/fault_tolerance.h
+    ${CMAKE_CURRENT_BINARY_DIR}/scs.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/core.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/access_control_service.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/fault_tolerance.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/registry_service.cc)
+
+else (DEFINED MICO_FOUND)
+  add_definitions(-DSCS_ORBIX)
+  include_directories (${ORBIX_INCLUDE_DIR})
+
+   orbix_idl(${SCS_IDL_IDL_DIR}/scs.idl ARGS -base -poa)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl ARGS -base -poa)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS -base -poa)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl ARGS -base -poa)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl ARGS -base -poa)
+
+   set(SOURCES
+     ${CMAKE_CURRENT_BINARY_DIR}/scsS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/scs.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/scsC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/scsS.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/coreS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/core.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/coreC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/coreS.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/access_control_serviceS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/access_control_service.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/access_control_serviceC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/access_control_serviceS.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/registry_serviceS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/registry_service.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/registry_serviceC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/registry_serviceS.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/fault_toleranceS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/fault_tolerance.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/fault_toleranceC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/fault_toleranceS.cxx)
+
+endif (DEFINED MICO_FOUND)
+
+set(SOURCES ${SOURCES}
+  openbus.cpp
+  FaultToleranceManager.cpp
+  openbus/interceptors/ServerInterceptor.cpp
+  openbus/interceptors/ClientInterceptor.cpp
+  openbus/interceptors/ORBInitializerImpl.cpp
+  openbus/util/Helper.cpp)
+
+add_library(openbus_logger_static STATIC ${LOGGER_ROOT}/logger.cpp)
+add_library(openbus_logger_shared STATIC ${LOGGER_ROOT}/logger.cpp)
+
+add_library(openbus_sdk_static STATIC ${SOURCES})
+add_library(openbus_sdk_shared SHARED ${SOURCES})
+
+
+if (DEFINED MICO_FOUND)
+  target_link_libraries(openbus_sdk_static ${MICO_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_static)
+  target_link_libraries(openbus_sdk_shared ${MICO_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_shared)
+
+  set_target_properties(openbus_sdk_static PROPERTIES OUTPUT_NAME "sdkmico" PREFIX "lib")
+  set_target_properties(openbus_sdk_shared PROPERTIES OUTPUT_NAME "sdkmico" PREFIX "lib")
+else (DEFINED MICO_FOUND)
+  target_link_libraries(openbus_sdk_static ${ORBIX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_static)
+  target_link_libraries(openbus_sdk_shared ${ORBIX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_shared)
+
+  set_target_properties(openbus_sdk_static PROPERTIES OUTPUT_NAME "sdkorbix" PREFIX "lib")
+  set_target_properties(openbus_sdk_shared PROPERTIES OUTPUT_NAME "sdkorbix" PREFIX "lib")
+endif (DEFINED MICO_FOUND)
