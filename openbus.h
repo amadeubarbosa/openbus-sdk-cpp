@@ -10,21 +10,20 @@
 #include "openbus/util/Helper.h"
 
 #include "openbus/interceptors/ORBInitializerImpl.h"
-#include <ComponentBuilder.h>
 
 #ifdef OPENBUS_ORBIX
   #include <omg/orb.hh>
   #include <it_ts/thread.h>
   #include <it_ts/timer.h>
   #include <it_ts/mutex.h>
-  #include "stubs/orbix/access_control_service.hh"
-  #include "stubs/orbix/registry_service.hh"
-  #include "stubs/orbix/fault_tolerance.hh"
+  #include "access_control_service.hh"
+  #include "registry_service.hh"
+  #include "fault_tolerance.hh"
 #else
   #include <CORBA.h>
-  #include "stubs/mico/access_control_service.h"
-  #include "stubs/mico/registry_service.h"
-  #include "stubs/mico/fault_tolerance.h"
+  #include "access_control_service.h"
+  #include "registry_service.h"
+  #include "fault_tolerance.h"
 #endif
 
 #include <stdexcept>
@@ -178,11 +177,6 @@ namespace openbus {
     * Ponteiro para o stub do serviço de tolerância a falhas.
     */
       IFaultTolerantService_var iFaultTolerantService;
-
-    /**
-    * Fábrica de componentes SCS. 
-    */
-      scs::core::ComponentBuilder* componentBuilder;
 
     /**
     * Gerenciador do POA. 
@@ -490,12 +484,6 @@ namespace openbus {
     *  @return POA
     */
       PortableServer::POA* getRootPOA();
-
-    /**
-    * Retorna a fábrica de componentes. 
-    * @return Fábrica de componentes
-    */
-      scs::core::ComponentBuilder* getComponentBuilder();
 
     /**
     * Retorna a credencial interceptada pelo interceptador servidor. 

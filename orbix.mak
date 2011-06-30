@@ -52,7 +52,7 @@ OBJROOT= obj/orbix
 TARGETROOT= lib
 PRECMP_DIR= obj/orbix/${TEC_UNAME}
 
-INCLUDES= . ${PRECMP_DIR} ${ORBIXINC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
+INCLUDES= . ./stubs/orbix ${PRECMP_DIR} ${ORBIXINC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${ORBIXLDIR} ${OPENBUSLIB} ${ORBIXLDIR}
 
 LIBS= it_poa it_art it_ifc it_portable_interceptor scsorbix crypto logger

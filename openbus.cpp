@@ -17,13 +17,13 @@
 #ifdef OPENBUS_ORBIX
   #include <omg/orb.hh>
   #include <it_ts/thread.h>
-  #include <stubs/orbix/scs.hh>
+  #include <scs.hh>
   extern "C" {
     #include <IOR.h>
   }
 #else
   #include <CORBA.h>
-  #include <stubs/mico/scs.h>
+  #include <scs.h>
   #include <mico/pi_impl.h>
 #endif
 
@@ -285,7 +285,6 @@ namespace openbus {
   void Openbus::initialize() {
     hostBus = "";
     portBus = 2089;
-    componentBuilder = 0;
   }
 
   void Openbus::registerInterceptors() {
@@ -336,10 +335,6 @@ namespace openbus {
         methodsNotInterceptable.erase(iter++);
         methods->clear();
         delete methods;
-      }
-      if (componentBuilder) {
-        logger->log(INFO, "Deletando objeto componentBuilder...");
-        delete componentBuilder;
       }
       if (!CORBA::is_nil(orb)) {
       #ifndef OPENBUS_ORBIX 
@@ -439,10 +434,6 @@ namespace openbus {
     logger->log(INFO, msgLog.str());
     msgLog.str("");
     createORB();
-    if (!componentBuilder) {
-      logger->log(INFO, "Criando ComponentBuilder...");
-      componentBuilder = new scs::core::ComponentBuilder(orb, poa);
-    }
     #ifdef OPENBUS_ORBIX
       if (credentialValidationPolicy == interceptors::CACHED) {
         ini->getServerInterceptor()->registerValidationTimer();
@@ -504,10 +495,6 @@ namespace openbus {
     }
     logger->dedent(INFO, "Openbus::getRootPOA() END");
     return poa;
-  }
-
-  scs::core::ComponentBuilder* Openbus::getComponentBuilder() {
-    return componentBuilder;
   }
 
   access_control_service::Credential_var Openbus::getInterceptedCredential() {

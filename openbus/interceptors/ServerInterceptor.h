@@ -9,10 +9,10 @@
   #include <orbix/corba.hh>
   #include <omg/PortableInterceptor.hh>
   #include <it_ts/timer.h>
-  #include "../../stubs/orbix/access_control_service.hh"
+  #include "access_control_service.hh"
 #else
   #include <CORBA.h>
-  #include "../../stubs/mico/access_control_service.h"
+  #include "access_control_service.h"
 #endif
 
 #include <set>
