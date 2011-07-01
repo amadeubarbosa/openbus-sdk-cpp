@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "stubs/delegate.h"
+#include "delegate.h"
 #include <openbus.h>
 
 using namespace std;
@@ -40,9 +40,9 @@ void commandLineParse(int argc, char* argv[]) {
 
 class DelegateThread : public MICOMT::Thread {
   private:
-    char* myName;
+    const char* myName;
   public:
-    DelegateThread(char* name) {
+    DelegateThread(const char* name) {
       myName = name;
     }
     
