@@ -22,7 +22,10 @@ find_package (Scs_Idl)
 endif (NOT DEFINED SCS_IDL_FOUND)
 find_package (Threads)
 
-include_directories (include)
+find_package (Lua51)
+find_package (Scs)
+
+include_directories (.)
 include_directories (${LOGGER_ROOT})
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
 
@@ -109,3 +112,5 @@ else (DEFINED MICO_FOUND)
   set_target_properties(openbus_sdk_static PROPERTIES OUTPUT_NAME "sdkorbix" PREFIX "lib")
   set_target_properties(openbus_sdk_shared PROPERTIES OUTPUT_NAME "sdkorbix" PREFIX "lib")
 endif (DEFINED MICO_FOUND)
+
+add_subdirectory(demo)
