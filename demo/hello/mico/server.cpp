@@ -9,9 +9,9 @@
 #include <csignal>
 
 #include <openbus.h>
-#include <ComponentBuilder.h>
+#include <scs/ComponentContext.h>
 
-#include "stubs/hello.h"
+#include "hello.h"
 
 using namespace std;
 using namespace tecgraf::openbus::core::v1_05;
@@ -26,21 +26,7 @@ const char* privateKeyFilename;
 const char* ACSCertificateFilename;
 const char* facetName;
 
-class HelloImpl : virtual public POA_demoidl::hello::IHello {
-  private:
-    scs::core::ComponentContext* componentContext;
-    HelloImpl(scs::core::ComponentContext* componentContext) {
-      this->componentContext = componentContext;
-    }
-  public:
-    static PortableServer::ServantBase* instantiate(
-      scs::core::ComponentContext* componentContext) 
-    {
-      return (PortableServer::ServantBase*) new HelloImpl(componentContext);
-    }
-    static void destruct(void* obj) {
-      delete (HelloImpl*) obj;
-    }
+struct HelloImpl : virtual public POA_demoidl::hello::IHello {
     void sayHello() throw(CORBA::SystemException) {
       cout << "Servant diz: HELLO!" << endl;
       access_control_service::Credential_var credential = 
@@ -104,9 +90,6 @@ int main(int argc, char* argv[]) {
 
   cout << "Conexao com o barramento estabelecida com sucesso!" << endl;
 
-/* Fabrica de componentes */
-  scs::core::ComponentBuilder* componentBuilder = bus->getComponentBuilder();
-
 /* Definicao do componente. */
   scs::core::ComponentId componentId;
   componentId.name = "HelloComponent";
@@ -115,15 +98,21 @@ int main(int argc, char* argv[]) {
   componentId.patch_version = '0';
   componentId.platform_spec = "nenhuma";
 
-/* Descricao das facetas. */
-  std::list<scs::core::ExtendedFacetDescription> extFacets;
-  scs::core::ExtendedFacetDescription helloDesc;
-  helloDesc.name = facetName;
-  helloDesc.interface_name = "IDL:demoidl/hello/IHello:1.0";
-  helloDesc.instantiator = HelloImpl::instantiate;
-  helloDesc.destructor = HelloImpl::destruct;
-  extFacets.push_back(helloDesc);
-  componentContext = componentBuilder->newComponent(extFacets, componentId);
+  ::componentContext = new scs::core::ComponentContext(bus->getORB(), componentId);
+
+  std::auto_ptr<PortableServer::ServantBase> facet(new HelloImpl);
+  ::componentContext->addFacet(facetName, "IDL:demoidl/hello/IHello:1.0", facet);
+  assert(facet.get() == 0);
+
+// /* Descricao das facetas. */
+//   std::list<scs::core::ExtendedFacetDescription> extFacets;
+//   scs::core::ExtendedFacetDescription helloDesc;
+//   helloDesc.name = facetName;
+//   helloDesc.interface_name = "IDL:demoidl/hello/IHello:1.0";
+//   helloDesc.instantiator = HelloImpl::instantiate;
+//   helloDesc.destructor = HelloImpl::destruct;
+//   extFacets.push_back(helloDesc);
+//   componentContext = componentBuilder->newComponent(extFacets, componentId);
 
   openbus::util::PropertyListHelper* propertyListHelper = \
     new openbus::util::PropertyListHelper();
