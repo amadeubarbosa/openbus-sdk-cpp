@@ -89,12 +89,12 @@ stubs/orbix/session_serviceC.cxx stubs/orbix/session_service.hh
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs/orbix
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl 
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl 
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/core.idl
-	cd stubs/orbix ; ${ORBIX_HOME}/bin/idl -base -poa ${OPENBUS_HOME}/idlpath/v1_05/scs.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl 
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl 
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/core.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base -poa ${OPENBUS_HOME}/idlpath/v1_05/scs.idl
 
 genstubs: $(STUBS)
 	

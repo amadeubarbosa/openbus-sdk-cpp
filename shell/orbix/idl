@@ -1,0 +1,9 @@
+#!/bin/ksh
+
+if [ -z "${ORBIX_HOME}" ]; then
+  echo 'Variavel de ambiente ORBIX_HOME nao definida.'
+else
+  export LD_LIBRARY_PATH="${ORBIX_HOME}/../../shlib:${ORBIX_HOME}/../../shlib/default"
+  ${ORBIX_HOME}/bin/idl "$@"
+fi
+
