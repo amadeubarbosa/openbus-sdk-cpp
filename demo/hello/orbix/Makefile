@@ -14,16 +14,16 @@ SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
       ${OPENBUSLIB}/liblogger.a
 
 INCLUDES= -I. \
-				  -Istubs \
-				  -I${ORBIXINC} \
-				  -I${OPENBUSINC}/openbus/cpp \
-				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
-				  -I${OPENBUSINC}/scs \
-				  -I${OPENBUSINC}/logger \
+	  -Istubs \
+	  -I${ORBIXINC} \
+	  -I${OPENBUSINC}/openbus/cpp \
+	  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
+	  -I${OPENBUSINC}/scs \
+	  -I${OPENBUSINC}/logger \
           -I${OPENBUSINC}/lua5.1.3
 
 LDIR= -L${ORBIXLDIR} \
-		  -L${OPENBUSLIB}
+      -L${OPENBUSLIB}
 
 LIBS= -lit_poa -lit_art -lit_ifc -lit_portable_interceptor -ldl -lcrypto -lssl -llua5.1
 
@@ -49,7 +49,7 @@ STUBS= stubs/helloC.cxx stubs/helloS.cxx stubs/hello.hh
 
 ${STUBS}: ${IDLS}
 	mkdir -p stubs
-	cd stubs ; ${ORBIXBIN}/idl -base -poa ../../idl/hello.idl
+	cd stubs ; ${OPENBUS_HOME}/specs/shell/orbix/idl -base -poa ../../idl/hello.idl
 
 genstubs: ${STUBS}
 

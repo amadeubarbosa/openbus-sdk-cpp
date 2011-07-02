@@ -40,7 +40,7 @@ IDLS: ../../idl/RGSTest.idl
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${ORBIXBIN}/idl -base -poa ../../../idl/RGSTest.idl
+	cd stubs ; ../../../../shell/orbix/idl -base -poa ../../../idl/RGSTest.idl
 
 genstubs: $(STUBS)
 
