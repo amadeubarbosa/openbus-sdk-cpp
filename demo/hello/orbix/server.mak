@@ -34,6 +34,6 @@ STUBS= stubs/helloC.cxx stubs/helloS.cxx stubs/hello.hh
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${ORBIXBIN}/idl -base -poa ../../idl/hello.idl
+	cd stubs ; ../../../../shell/orbix/idl -base -poa ../../idl/hello.idl
 
 genstubs: $(STUBS)

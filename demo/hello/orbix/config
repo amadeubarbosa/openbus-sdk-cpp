@@ -12,7 +12,7 @@ ORBIXINC=${ORBIX_HOME}/include
 ORBIXLDIR=${ORBIX_HOME}/lib
 
 # general config
-ifeq ($(TEC_WORDSIZE), TEC_64)
+ifeq "$(TEC_SYSARCH)" "x64"
   ORBIXLDIR=${ORBIX_HOME}/lib/lib64
 else
   ORBIXLDIR=${ORBIX_HOME}/lib
