@@ -5,21 +5,21 @@ project (openbus_sdk)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package (Mico)
-if (NOT DEFINED MICO_FOUND OR DEFINED OPENBUS_SDK_USE_ORBIX)
+if (NOT MICO_FOUND OR DEFINED OPENBUS_SDK_USE_ORBIX)
 find_package (Orbix)
-if (NOT DEFINED ORBIX_FOUND)
+if (NOT ORBIX_FOUND)
 message(FATAL "Mico nor Orbix was found")
-endif (NOT DEFINED ORBIX_FOUND)
-endif (NOT DEFINED MICO_FOUND OR DEFINED OPENBUS_SDK_USE_ORBIX)
-if (NOT DEFINED OPENSSL_FOUND)
+endif (NOT ORBIX_FOUND)
+endif (NOT MICO_FOUND OR DEFINED OPENBUS_SDK_USE_ORBIX)
+if (NOT OPENSSL_FOUND)
 find_package (OpenSSL)
-endif (NOT DEFINED OPENSSL_FOUND)
-if (NOT DEFINED OPENBUS_CORE_IDL_FOUND)
+endif (NOT OPENSSL_FOUND)
+if (NOT OPENBUS_CORE_IDL_FOUND)
 find_package (Core_Idl)
-endif (NOT DEFINED OPENBUS_CORE_IDL_FOUND)
-if (NOT DEFINED SCS_IDL_FOUND)
+endif (NOT OPENBUS_CORE_IDL_FOUND)
+if (NOT SCS_IDL_FOUND)
 find_package (Scs_Idl)
-endif (NOT DEFINED SCS_IDL_FOUND)
+endif (NOT SCS_IDL_FOUND)
 find_package (Threads)
 
 find_package (Lua51)
@@ -29,8 +29,10 @@ include_directories (.)
 include_directories (${LOGGER_ROOT})
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
 
-if (DEFINED MICO_FOUND)
+if (MICO_FOUND)
   include_directories (${MICO_INCLUDE_DIR})
+  add_definitions(-DOPENBUS_MICO)
+  add_definitions(-DSCS_MICO)
 
   mico_idl(${SCS_IDL_IDL_DIR}/scs.idl)
   mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl)
@@ -50,7 +52,8 @@ if (DEFINED MICO_FOUND)
     ${CMAKE_CURRENT_BINARY_DIR}/fault_tolerance.cc
     ${CMAKE_CURRENT_BINARY_DIR}/registry_service.cc)
 
-else (DEFINED MICO_FOUND)
+else (MICO_FOUND)
+  add_definitions(-DOPENBUS_ORBIX)
   add_definitions(-DSCS_ORBIX)
   include_directories (${ORBIX_INCLUDE_DIR})
 
@@ -82,7 +85,7 @@ else (DEFINED MICO_FOUND)
      ${CMAKE_CURRENT_BINARY_DIR}/fault_toleranceC.cxx
      ${CMAKE_CURRENT_BINARY_DIR}/fault_toleranceS.cxx)
 
-endif (DEFINED MICO_FOUND)
+endif (MICO_FOUND)
 
 set(SOURCES ${SOURCES}
   openbus.cpp
@@ -99,18 +102,18 @@ add_library(openbus_sdk_static STATIC ${SOURCES})
 add_library(openbus_sdk_shared SHARED ${SOURCES})
 
 
-if (DEFINED MICO_FOUND)
+if (MICO_FOUND)
   target_link_libraries(openbus_sdk_static ${MICO_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_static)
   target_link_libraries(openbus_sdk_shared ${MICO_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_shared)
 
   set_target_properties(openbus_sdk_static PROPERTIES OUTPUT_NAME "sdkmico" PREFIX "lib")
   set_target_properties(openbus_sdk_shared PROPERTIES OUTPUT_NAME "sdkmico" PREFIX "lib")
-else (DEFINED MICO_FOUND)
+else (MICO_FOUND)
   target_link_libraries(openbus_sdk_static ${ORBIX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_static)
   target_link_libraries(openbus_sdk_shared ${ORBIX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_shared)
 
   set_target_properties(openbus_sdk_static PROPERTIES OUTPUT_NAME "sdkorbix" PREFIX "lib")
   set_target_properties(openbus_sdk_shared PROPERTIES OUTPUT_NAME "sdkorbix" PREFIX "lib")
-endif (DEFINED MICO_FOUND)
+endif (MICO_FOUND)
 
 add_subdirectory(demo)
