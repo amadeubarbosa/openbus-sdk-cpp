@@ -3,7 +3,8 @@
 */
 
 #ifdef OPENBUS_ORBIX
-  #include <omg/IOP.hh>
+#  include <cstdio>
+#  include <omg/IOP.hh>
 #endif
 
 #include "ORBInitializerImpl.h"

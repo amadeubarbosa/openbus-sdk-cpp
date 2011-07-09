@@ -6,6 +6,7 @@
 *
 */
 
+#include <cstdio>
 #include "Helper.h"
 
 namespace openbus {

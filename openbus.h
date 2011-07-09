@@ -13,6 +13,7 @@
 
 #ifdef OPENBUS_ORBIX
   #include <omg/orb.hh>
+  #include <omg/PortableServer.hh>
   #include <it_ts/thread.h>
   #include <it_ts/timer.h>
   #include <it_ts/mutex.h>

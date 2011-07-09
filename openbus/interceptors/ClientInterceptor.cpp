@@ -2,6 +2,7 @@
 ** interceptors/ClientInterceptor.cpp
 */
 
+#include <cstdio>
 #include "ClientInterceptor.h"
 
 #include "../../openbus.h"
@@ -120,7 +121,7 @@ namespace openbus {
         
         Openbus* bus = Openbus::getInstance();
       #ifdef OPENBUS_ORBIX
-        char* objectKey = "(null)";
+        const char* objectKey = "(null)";
         lua_getglobal(Openbus::luaState, "IOR");
         lua_getfield(Openbus::luaState, -1, "IIOPProfileGetObjectKey");
         lua_pushstring(Openbus::luaState, 

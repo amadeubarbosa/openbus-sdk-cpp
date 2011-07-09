@@ -2,6 +2,7 @@
 ** interceptors/ServerInterceptor.cpp
 */
 
+#include <cstdio>
 #include "ServerInterceptor.h"
 #include "../../openbus.h"
 
