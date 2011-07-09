@@ -193,10 +193,6 @@ class ACSTestSuite: public CxxTest::TestSuite {
       TS_ASSERT(bus->getRootPOA());
     }
 
-    void testGetComponentBuilder() {
-      TS_ASSERT(bus->getComponentBuilder());
-    }
-
     void testGetAccessControlService() {
       try {
         iAccessControlService = bus->getAccessControlService();
