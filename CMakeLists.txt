@@ -116,4 +116,7 @@ else (MICO_FOUND)
   set_target_properties(openbus_sdk_shared PROPERTIES OUTPUT_NAME "sdkorbix" PREFIX "lib")
 endif (MICO_FOUND)
 
+enable_testing()
+
 add_subdirectory(demo)
+add_subdirectory(test)

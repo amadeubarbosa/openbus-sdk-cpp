@@ -30,7 +30,7 @@ USE_NODEPEND= YES
 
 SRC= runner.cpp
 
-runner.cpp: ACSTestSuite.cpp
-	cxxtestgen.pl --runner=ErrorPrinter --abort-on-fail -o runner.cpp ACSTestSuite.cpp
+runner.cpp: ACSTestSuite.h
+	cxxtestgen.pl --runner=ErrorPrinter --abort-on-fail -o runner.cpp ACSTestSuite.h
 
 cxxtest: runner.cpp

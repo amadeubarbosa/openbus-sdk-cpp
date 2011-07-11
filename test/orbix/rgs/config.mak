@@ -32,7 +32,7 @@ USE_NODEPEND= YES
 SRC= runner.cpp \
      stubs/RGSTestC.cxx \
      stubs/RGSTestS.cxx \
-     RGSTestSuite.cpp
+     RGSTestSuite.h
 
 STUBS= stubs/RGSTest.h stubs/RGSTest.cc
 
@@ -44,7 +44,7 @@ $(STUBS): $(IDLS)
 
 genstubs: $(STUBS)
 
-runner.cpp: RGSTestSuite.cpp
-	cxxtestgen.pl --runner=ErrorPrinter --abort-on-fail -o runner.cpp RGSTestSuite.cpp
+runner.cpp: RGSTestSuite.h
+	cxxtestgen.pl --runner=ErrorPrinter --abort-on-fail -o runner.cpp RGSTestSuite.h
 
 cxxtest: runner.cpp

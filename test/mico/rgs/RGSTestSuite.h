@@ -11,27 +11,14 @@
 #include <fstream>
 #include <cxxtest/TestSuite.h>
 #include <openbus.h>
-#include "stubs/RGSTest.h"
+#include "RGSTest.h"
+#include <scs/ComponentContext.h>
 
 using namespace openbus;
 using namespace tecgraf::openbus::core::v1_05;
 using namespace tecgraf::openbus::core::v1_05::registry_service;
 
 class RGSTest : virtual public POA_IRGSTest {
-  private:
-    scs::core::ComponentContext* componentContext;
-    RGSTest(scs::core::ComponentContext* componentContext) {
-      this->componentContext = componentContext;
-    }
-  public:
-    static PortableServer::ServantBase* instantiate(
-      scs::core::ComponentContext* componentContext) 
-    {
-      return (PortableServer::ServantBase*) new RGSTest(componentContext);
-    }
-    static void destruct(void* obj) {
-      delete (RGSTest*) obj;
-    }
     void foo() 
       throw(CORBA::SystemException) 
     {
@@ -55,7 +42,6 @@ class RGSTestSuite: public CxxTest::TestSuite {
     std::string OPENBUS_SERVER_PORT;
     std::string OPENBUS_USERNAME;
     std::string OPENBUS_PASSWORD;
-    scs::core::ComponentBuilder* componentBuilder;
     scs::core::ComponentContext* context;
 
     void fillComponentId(scs::core::ComponentId& id) {
@@ -139,21 +125,11 @@ class RGSTestSuite: public CxxTest::TestSuite {
 
     void testRegister() {
       try {
-        componentBuilder = bus->getComponentBuilder();
-      
         scs::core::ComponentId id;
         fillComponentId(id);
       
-      /* Descrição das facetas. */
-        std::list<scs::core::ExtendedFacetDescription> extFacets;
-        scs::core::ExtendedFacetDescription desc;
-        desc.name = "IRGSTest";
-        desc.interface_name = "IDL:IRGSTest:1.0";
-        desc.instantiator = RGSTest::instantiate;
-        desc.destructor = RGSTest::destruct;
-        extFacets.push_back(desc);
-      
-        context = componentBuilder->newComponent(extFacets, id);
+        context = new scs::core::ComponentContext(bus->getORB(), id);
+        context->addFacet("IRGSTest", "IDL:IRGSTest:1.0", new RGSTest);
         component = context->getIComponent();
       
         propertyListHelper = new openbus::util::PropertyListHelper();
