@@ -11,7 +11,7 @@
 #include <openbus.h>
 #include <scs/ComponentContext.h>
 
-#include "hello.h"
+#include "stubs/hello.h"
 
 using namespace std;
 using namespace tecgraf::openbus::core::v1_05;

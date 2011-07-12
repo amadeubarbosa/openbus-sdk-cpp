@@ -12,7 +12,7 @@
 #include <openbus.h>
 #include <scs/ComponentContext.h>
 
-#include "helloS.hh"
+#include "stubs/helloS.hh"
 
 using namespace std;
 using namespace tecgraf::openbus::core::v1_05::registry_service;

@@ -17,14 +17,14 @@
   #include <it_ts/thread.h>
   #include <it_ts/timer.h>
   #include <it_ts/mutex.h>
-  #include "access_control_service.hh"
-  #include "registry_service.hh"
-  #include "fault_tolerance.hh"
+  #include "stubs/orbix/access_control_service.hh"
+  #include "stubs/orbix/registry_service.hh"
+  #include "stubs/orbix/fault_tolerance.hh"
 #else
   #include <CORBA.h>
-  #include "access_control_service.h"
-  #include "registry_service.h"
-  #include "fault_tolerance.h"
+  #include "stubs/mico/access_control_service.h"
+  #include "stubs/mico/registry_service.h"
+  #include "stubs/mico/fault_tolerance.h"
 #endif
 
 #include <stdexcept>

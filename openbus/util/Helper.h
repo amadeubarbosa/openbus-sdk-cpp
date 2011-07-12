@@ -10,9 +10,9 @@
 #define HELPER_H_
 
 #ifdef OPENBUS_ORBIX
-  #include "registry_service.hh"
+  #include "stubs/orbix/registry_service.hh"
 #else
-  #include "registry_service.h"
+  #include "stubs/mico/registry_service.h"
 #endif
 
 using namespace tecgraf::openbus::core::v1_05;

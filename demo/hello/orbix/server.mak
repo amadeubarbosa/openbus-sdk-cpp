@@ -12,7 +12,7 @@ include config
 TARGETROOT=bin
 OBJROOT=obj
 
-INCLUDES= . ${ORBIXINC} ${OPENBUSINC}/openbus/cpp ${OPENBUSINC}/scs ${OPENBUSINC}/logger
+INCLUDES= . ${ORBIXINC} ${OPENBUSINC}/openbus/cpp ${OPENBUSINC} ${OPENBUSINC}/logger
 LDIR= ${ORBIXLDIR} ${OPENBUSLIB}
 
 LIBS+= it_poa it_art it_ifc it_portable_interceptor crypto
