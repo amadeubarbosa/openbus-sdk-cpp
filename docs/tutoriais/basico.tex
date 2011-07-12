@@ -253,8 +253,6 @@ O método desconecta o usuário do barramento, se este estiver conectado, executa 
 
   \item \code{PortableServer::POA* getRootPOA()}: Retorna o RootPOA.
 
-  \item \code{scs::core::ComponentBuilder* Openbus::getComponentBuilder()}: Retorna a fábrica de componentes.
-
   \item \code{Credential\_var Openbus::getInterceptedCredential()}: Retorna a credencial interceptada pelo interceptador servidor. \textbf{Atenção!} Esta operação somente deve ser chamada durante o processo de tratamento de requisição do serviço implementado.  
 
   \item \code{openbusidl::acs::IAccessControlService* \\
@@ -447,16 +445,12 @@ serviço é representado por um componente que pode apresentar
 distintas facetas (interfaces). Sendo assim, o primeiro passo para o 
 registro de um serviço é criar um componente que represente o serviço 
 desejado. 
-Uma fábrica de componentes (componentBuilder) pode ser adquirida 
-através do método \emph{Openbus::getComponentBuilder()}.  
-De posse desta fábrica, o usuário pode criar um componente atribuindo uma 
-ou mais facetas, como mostra o código~\ref{lst:fabrica}.
+Um componente pode ser construido utilizando o construtor de
+ComponentContext, e de posse desse componente ele pode
+adicionar uma ou mais facetas, como mostra o código~\ref{lst:componentcontext}.
 
-\begin{labeledcode}[c++]{fabrica}{Uso da fábrica para construção de componente}
-  /* Fabrica de componentes */
-  scs::core::ComponentBuilder* componentBuilder = bus->getComponentBuilder();
-
-  /* Definicao do componente. */
+\begin{labeledcode}[c++]{componentcontext}{Construção de componente}
+  /* Definicao do componenteId. */
   scs::core::ComponentId componentId;
   componentId.name = "HelloComponent";
   componentId.major_version = '1';
@@ -464,15 +458,11 @@ ou mais facetas, como mostra o código~\ref{lst:fabrica}.
   componentId.patch_version = '0';
   componentId.platform_spec = "nenhuma";
 
-  /* Descricao das facetas. */
-  std::list<scs::core::ExtendedFacetDescription> extFacets;
-  scs::core::ExtendedFacetDescription helloDesc;
-  helloDesc.name = "IHello";
-  helloDesc.interface_name = "IDL:demoidl/hello/IHello:1.0";
-  helloDesc.instantiator = HelloImpl::instantiate;
-  helloDesc.destructor = HelloImpl::destruct;
-  extFacets.push_back(helloDesc);
-  componentContext = componentBuilder->newComponent(extFacets, componentId);
+  /* Construção do componente */
+  componentContext = new scs::core::ComponentContext(bus->getORB(), componentId);
+
+  /* Adição de faceta IHello */
+  componentContext->addFacet("IHello", "IDL:demoidl/hello/IHello:1.0", new HelloImpl);
 \end{labeledcode}
 
 O serviço a ser registrado no barramento deve ser descrito através de uma 
