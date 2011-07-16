@@ -10,9 +10,10 @@ OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 include ../config
 
 INCLUDES= . \
+  stubs \
   ${ORBIXINC} \
+  ${OPENBUSINC} \
   ${OPENBUSINC}/openbus/cpp \
-  ${OPENBUSINC}/scs \
   ${OPENBUSINC}/cxxtest \
   ${OPENBUSINC}/openssl-0.9.9 \
   ${OPENBUSINC}/logger
@@ -31,10 +32,9 @@ USE_NODEPEND= YES
 
 SRC= runner.cpp \
      stubs/RGSTestC.cxx \
-     stubs/RGSTestS.cxx \
-     RGSTestSuite.h
+     stubs/RGSTestS.cxx
 
-STUBS= stubs/RGSTest.h stubs/RGSTest.cc
+STUBS= stubs/RGSTest.hh stubs/RGSTestS.cxx
 
 IDLS: ../../idl/RGSTest.idl
 
