@@ -9,7 +9,7 @@
 #include <csignal>
 
 #include <openbus.h>
-#include <ComponentBuilder.h>
+#include <scs/ComponentContext.h>
 
 #include "stubs/delegate.h"
 
@@ -27,28 +27,14 @@ const char* ACSCertificateFilename;
 const char* facetName;
 
 class HelloImpl : virtual public POA_demoidl::demoDelegate::IHello {
-  private:
-    scs::core::ComponentContext* componentContext;
-    HelloImpl(scs::core::ComponentContext* componentContext) {
-      this->componentContext = componentContext;
-    }
-  public:
-    static PortableServer::ServantBase* instantiate(
-      scs::core::ComponentContext* componentContext) 
-    {
-      return (PortableServer::ServantBase*) new HelloImpl(componentContext);
-    }
-    static void destruct(void* obj) {
-      delete (HelloImpl*) obj;
-    }
-    void sayHello(const char* name) throw(CORBA::SystemException) {
-      cout << "Servant diz: " << name << endl;
-      access_control_service::Credential_var credential = bus->getInterceptedCredential();
-      cout << "Usuário OpenBus que fez a chamada: " << endl 
-           << "[owner] " << credential->owner.in() << endl 
-           << "[identifier] " << credential->identifier.in() << endl 
-           << "[delegate] " << credential->delegate.in() << endl;
-    };
+  void sayHello(const char* name) throw(CORBA::SystemException) {
+    cout << "Servant diz: " << name << endl;
+    access_control_service::Credential_var credential = bus->getInterceptedCredential();
+    cout << "Usuário OpenBus que fez a chamada: " << endl 
+         << "[owner] " << credential->owner.in() << endl 
+         << "[identifier] " << credential->identifier.in() << endl 
+         << "[delegate] " << credential->delegate.in() << endl;
+  };
 };
 
 void termination_handler(int p) {
@@ -96,7 +82,7 @@ int main(int argc, char* argv[]) {
     exit(1);
   } catch (openbus::LOGIN_FAILURE& e) {
     cout << "** Não foi possível se conectar ao barramento. **" << endl \
-         << "* Par usuário/senha inválido. *" << endl;
+         << "* Falha no processo de autenticação. *" << endl;
     exit(1);
   } catch (openbus::SECURITY_EXCEPTION& e) {
     cout << e.what() << endl;
@@ -105,10 +91,7 @@ int main(int argc, char* argv[]) {
 
   cout << "Conexão com o barramento estabelecida com sucesso!" << endl;
 
-/* Fábrica de componentes */
-  scs::core::ComponentBuilder* componentBuilder = bus->getComponentBuilder();
-
-/* Definição do componente. */
+/* Definicao do componente. */
   scs::core::ComponentId componentId;
   componentId.name = "HelloComponent";
   componentId.major_version = '1';
@@ -116,15 +99,11 @@ int main(int argc, char* argv[]) {
   componentId.patch_version = '0';
   componentId.platform_spec = "nenhuma";
 
-/* Descrição das facetas. */
-  std::list<scs::core::ExtendedFacetDescription> extFacets;
-  scs::core::ExtendedFacetDescription helloDesc;
-  helloDesc.name = facetName;
-  helloDesc.interface_name = "IDL:demoidl/demoDelegate/IHello:1.0";
-  helloDesc.instantiator = HelloImpl::instantiate;
-  helloDesc.destructor = HelloImpl::destruct;
-  extFacets.push_back(helloDesc);
-  componentContext = componentBuilder->newComponent(extFacets, componentId);
+  ::componentContext = new scs::core::ComponentContext(bus->getORB(), componentId);
+
+  std::auto_ptr<PortableServer::ServantBase> facet(new HelloImpl);
+  ::componentContext->addFacet(facetName, "IDL:demoidl/demoDelegate/IHello:1.0", facet);
+  assert(facet.get() == 0);
 
   openbus::util::PropertyListHelper* propertyListHelper = \
     new openbus::util::PropertyListHelper();

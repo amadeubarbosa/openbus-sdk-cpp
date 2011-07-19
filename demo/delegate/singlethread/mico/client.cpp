@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     exit(-1);
   } catch (openbus::LOGIN_FAILURE& e) {
     cout << "** Não foi possível se conectar ao barramento. **" << endl \
-         << "* Par usuário/senha inválido. *" << endl;
+         << "* Falha no processo de autenticação. *" << endl;
     exit(-1);
   }
 
