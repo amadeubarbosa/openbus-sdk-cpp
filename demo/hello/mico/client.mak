@@ -14,16 +14,22 @@ INCLUDES= . \
   ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
-  ${OPENBUSINC}/scs \
+  ${OPENBUSINC} \
   ${OPENBUSINC}/logger
 
 LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
-SLIB= ${OPENBUSLIB}/libopenbusmico.a \
-      ${OPENBUSLIB}/libscsmico.a \
-      ${OPENBUSLIB}/liblogger.a
+ifeq "$(MULTITHREAD)" "Yes"
+  SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
+        ${OPENBUSLIB}/libscsmicoMT.a \
+        ${OPENBUSLIB}/liblogger.a
+else
+  SLIB= ${OPENBUSLIB}/libopenbusmicoST.a \
+        ${OPENBUSLIB}/libscsmicoST.a \
+        ${OPENBUSLIB}/liblogger.a
+endif
 
 USE_LUA51= YES
 USE_NODEPEND= Yes

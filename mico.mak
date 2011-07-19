@@ -1,10 +1,9 @@
-PROJNAME= openbusmico
+ifeq "$(MULTITHREAD)" "Yes"
+  PROJNAME=openbusmicoMT
+else
+  PROJNAME=openbusmicoST
+endif
 LIBNAME= ${PROJNAME}
-
-# Descomente a linha abaixo para utilizar a versão multithread.
-# A versão multithread do Openbus deve ser utilizada com Mico
-# compilado com suporte a multithread.
-DEFINES+=MULTITHREAD
 
 # Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES
@@ -34,16 +33,18 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   LIBS= nsl socket
   NO_LOCAL_LD=Yes
 
-  # Multithread
-  CPPFLAGS+= -mt
-  LFLAGS+= -mt
-  STDLFLAGS= -mt -m64 -xar -o
+  ifeq "$(MULTITHREAD)" "Yes"
+    CPPFLAGS+= -mt
+    LFLAGS+= -mt
+    STDLFLAGS= -mt -m64 -xar -o
+  endif
 endif
 
-ifdef $(MULTITHREAD)
+ifeq "$(MULTITHREAD)" "Yes"
   MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-multithread
   MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
   MICO_LIB= ${OPENBUS_HOME}/libpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
+  DEFINES+=MULTITHREAD
 else
   MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
   MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
@@ -59,7 +60,11 @@ TARGETROOT= lib
 INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
-LIBS= mico${MICOVERSION} scsmico crypto dl logger
+ifeq "$(MULTITHREAD)" "Yes"
+  LIBS= mico${MICOVERSION} scsmicoMT crypto dl logger
+else
+  LIBS= mico${MICOVERSION} scsmicoST crypto dl logger
+endif
 
 USE_LUA51= YES
 USE_NODEPEND= YES
