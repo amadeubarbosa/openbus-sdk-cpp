@@ -14,15 +14,15 @@ INCLUDES= . \
   ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
-  ${OPENBUSINC}/scs \
+  ${OPENBUSINC} \
   ${OPENBUSINC}/logger
 
 LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
-SLIB= ${OPENBUSLIB}/libopenbusmico.a \
-      ${OPENBUSLIB}/libscsmico.a \
+SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
+      ${OPENBUSLIB}/libscsmicoMT.a \
       ${OPENBUSLIB}/liblogger.a
 
 USE_LUA51= YES

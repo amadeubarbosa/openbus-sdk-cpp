@@ -27,14 +27,14 @@ const char* ACSCertificateFilename;
 const char* facetName;
 
 struct HelloImpl : virtual public POA_demoidl::demoDelegate::IHello {
-    void sayHello(const char* name) throw(CORBA::SystemException) {
-      cout << "Servant diz: " << name << endl;
-      access_control_service::Credential_var credential = bus->getInterceptedCredential();
-      cout << "Usuário OpenBus que fez a chamada: " << endl 
-           << "[owner] " << credential->owner.in() << endl 
-           << "[identifier] " << credential->identifier.in() << endl 
-           << "[delegate] " << credential->delegate.in() << endl;
-    };
+  void sayHello(const char* name) throw(CORBA::SystemException) {
+    cout << "Servant diz: " << name << endl;
+    access_control_service::Credential_var credential = bus->getInterceptedCredential();
+    cout << "Usuário OpenBus que fez a chamada: " << endl 
+         << "[owner] " << credential->owner.in() << endl 
+         << "[identifier] " << credential->identifier.in() << endl 
+         << "[delegate] " << credential->delegate.in() << endl;
+  };
 };
 
 void termination_handler(int p) {
