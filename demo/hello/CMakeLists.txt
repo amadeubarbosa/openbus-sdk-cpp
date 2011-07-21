@@ -37,13 +37,25 @@ if (MICO_FOUND)
 else (MICO_FOUND)
   orbix_idl (${CMAKE_CURRENT_SOURCE_DIR}/idl/hello.idl ARGS -base -poa SUBDIR stubs)
 
-   orbix_idl(${SCS_IDL_IDL_DIR}/scs.idl ARGS -base -poa)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl ARGS -base -poa SUBDIR stubs/orbix)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS -base -poa SUBDIR stubs/orbix)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl ARGS -base -poa SUBDIR stubs/orbix)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl ARGS -base -poa SUBDIR stubs/orbix)
+   orbix_idl(${SCS_IDL_IDL_DIR}/scs.idl ARGS -base -poa
+     SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl ARGS -base -poa
+     SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS -base -poa
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scs.idl
+     SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl ARGS -base -poa
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_service.idl
+     SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl ARGS -base -poa
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_service.idl
+     SUBDIR stubs/orbix)
 
-  include_directories(orbix ${CMAKE_CURRENT_BINARY_DIR} ${OPENBUS_INCLUDE_DIRECTORIES})
+  include_directories(orbix ${CMAKE_CURRENT_BINARY_DIR} ${OPENBUS_INCLUDE_DIRECTORIES}
+   ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix)
 
   add_executable (hello_client orbix/client.cpp ${CMAKE_CURRENT_BINARY_DIR}/stubs/hello.hh
     ${CMAKE_CURRENT_BINARY_DIR}/stubs/helloS.cxx
