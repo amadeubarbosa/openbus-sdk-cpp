@@ -31,26 +31,27 @@ include_directories (${CMAKE_CURRENT_BINARY_DIR})
 
 if (MICO_FOUND)
   include_directories (${MICO_INCLUDE_DIR})
+  include_directories (${CMAKE_CURRENT_BINARY_DIR}/stubs/mico)
   add_definitions(-DOPENBUS_MICO)
   add_definitions(-DSCS_MICO)
 
-  mico_idl(${SCS_IDL_IDL_DIR}/scs.idl)
-  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl)
-  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS --any --typecode)
-  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl)
-  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl)
+  mico_idl(${SCS_IDL_IDL_DIR}/scs.idl SUBDIR stubs/mico)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl SUBDIR stubs/mico)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS --any --typecode SUBDIR stubs/mico)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl SUBDIR stubs/mico)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl SUBDIR stubs/mico)
 
   set(SOURCES
-    ${CMAKE_CURRENT_BINARY_DIR}/scs.h
-    ${CMAKE_CURRENT_BINARY_DIR}/registry_service.h
-    ${CMAKE_CURRENT_BINARY_DIR}/core.h
-    ${CMAKE_CURRENT_BINARY_DIR}/access_control_service.h
-    ${CMAKE_CURRENT_BINARY_DIR}/fault_tolerance.h
-    ${CMAKE_CURRENT_BINARY_DIR}/scs.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/core.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/access_control_service.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/fault_tolerance.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/registry_service.cc)
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/scs.h
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/registry_service.h
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/core.h
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/access_control_service.h
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/fault_tolerance.h
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/scs.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/core.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/access_control_service.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/fault_tolerance.cc
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/registry_service.cc)
 
 else (MICO_FOUND)
   add_definitions(-DOPENBUS_ORBIX)
