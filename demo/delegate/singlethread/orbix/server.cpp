@@ -12,7 +12,7 @@
 #include <openbus.h>
 #include <scs/ComponentContext.h>
 
-#include "delegateS.hh"
+#include "stubs/delegateS.hh"
 
 using namespace std;
 using namespace tecgraf::openbus::core::v1_05::registry_service;

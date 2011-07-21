@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "delegate.hh"
+#include "stubs/delegate.hh"
 #include <openbus.h>
 
 using namespace std;
