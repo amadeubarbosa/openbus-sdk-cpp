@@ -66,33 +66,44 @@ else (MICO_FOUND)
   add_definitions(-DSCS_ORBIX)
   include_directories (${ORBIX_INCLUDE_DIR})
 
-   orbix_idl(${SCS_IDL_IDL_DIR}/scs.idl ARGS -base -poa)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl ARGS -base -poa)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS -base -poa)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl ARGS -base -poa)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl ARGS -base -poa)
+   orbix_idl(${SCS_IDL_IDL_DIR}/scs.idl ARGS -base -poa
+     SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl ARGS -base -poa
+     SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS -base -poa
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scs.idl
+     SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl ARGS -base -poa
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_service.idl
+     SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl ARGS -base -poa
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_service.idl
+     SUBDIR stubs/orbix)
 
    set(SOURCES
-     ${CMAKE_CURRENT_BINARY_DIR}/scsS.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/scs.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/scsC.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/scsS.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/coreS.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/core.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/coreC.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/coreS.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/access_control_serviceS.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/access_control_service.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/access_control_serviceC.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/access_control_serviceS.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/registry_serviceS.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/registry_service.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/registry_serviceC.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/registry_serviceS.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/fault_toleranceS.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/fault_tolerance.hh
-     ${CMAKE_CURRENT_BINARY_DIR}/fault_toleranceC.cxx
-     ${CMAKE_CURRENT_BINARY_DIR}/fault_toleranceS.cxx)
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scsS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scs.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scsC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scsS.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/coreS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/core.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/coreC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/coreS.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_serviceS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_service.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_serviceC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_serviceS.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/registry_serviceS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/registry_service.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/registry_serviceC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/registry_serviceS.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/fault_toleranceS.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/fault_tolerance.hh
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/fault_toleranceC.cxx
+     ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/fault_toleranceS.cxx)
 
 endif (MICO_FOUND)
 
@@ -127,5 +138,5 @@ endif (MICO_FOUND)
 
 enable_testing()
 
-add_subdirectory(demo)
-add_subdirectory(test)
+#add_subdirectory(demo)
+#add_subdirectory(test)
