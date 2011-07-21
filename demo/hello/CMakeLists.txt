@@ -6,9 +6,18 @@ if (MICO_FOUND)
 
   mico_idl(${SCS_IDL_IDL_DIR}/scs.idl SUBDIR stubs/mico)
   mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl SUBDIR stubs/mico)
-  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS --any --typecode SUBDIR stubs/mico)
-  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl SUBDIR stubs/mico)
-  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl SUBDIR stubs/mico)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS --any --typecode
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/scs.idl
+    SUBDIR stubs/mico)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl 
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/access_control_service.idl
+    SUBDIR stubs/mico)
+  mico_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/core.idl
+            ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/access_control_service.idl
+    SUBDIR stubs/mico)
 
   include_directories(mico ${CMAKE_CURRENT_BINARY_DIR} ${OPENBUS_INCLUDE_DIRECTORIES} ${CMAKE_CURRENT_BINARY_DIR}/stubs ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico)
 
