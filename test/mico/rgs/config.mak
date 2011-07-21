@@ -1,52 +1,38 @@
 PROJNAME= RGSTester
 APPNAME= rgs
 
+include ../config
+
 OPENBUSINC = ${OPENBUS_HOME}/incpath
 OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
 
-EXTRA_CONFIG=../config
-
-ifeq "$(TEC_UNAME)" "SunOS510_64"
-  CPPFLAGS= -m64
-  LFLAGS= -m64
-  STDLFLAGS= -m64
-endif
-
-ifeq "$(TEC_SYSNAME)" "SunOS"
-  USE_CC=Yes
-
-  # Multithread
-  CPPFLAGS+= -mt
-  LFLAGS+= -mt
-  LIBS=
-  
-  CPPFLAGS+= -library=stlport4
-  LFLAGS+= -library=stlport4 
-  LIBS= nsl socket
-endif
-
-INCLUDES= . ./stubs ../../../stubs/mico\
+INCLUDES= . \
+  stubs \
   ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
-  ${OPENBUSINC}/scs \
-  ${OPENBUSINC}/cxxtest \
-  ${OPENBUSINC}/openssl-0.9.9 \
-  ${OPENBUSINC}/logger
+  ${OPENBUSINC}/openbus/cpp/stubs/mico \
+  ${OPENBUSINC} \
+  ${OPENBUSINC}/logger \
+  ${OPENBUSINC}/cxxtest
 
-LDIR= ${MICO_LIB} \
-  ${OPENBUSLIB}
+LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
-LIBS+= crypto mico${MICOVERSION} dl ssl
+LIBS+= mico${MICOVERSION} dl crypto ssl
 
-SLIB= ${OPENBUSLIB}/libopenbusmico.a \
-  ${OPENBUSLIB}/libscsmico.a \
-  ${OPENBUSLIB}/liblogger.a
+ifeq "$(MULTITHREAD)" "Yes"
+  SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
+        ${OPENBUSLIB}/libscsmicoMT.a \
+        ${OPENBUSLIB}/liblogger.a
+else
+  SLIB= ${OPENBUSLIB}/libopenbusmicoST.a \
+        ${OPENBUSLIB}/libscsmicoST.a \
+        ${OPENBUSLIB}/liblogger.a
+endif
 
 USE_LUA51= YES
+USE_NODEPEND= Yes
 
-SRC= runner.cpp \
-     stubs/RGSTest.cc \
-     RGSTestSuite.h
+SRC= runner.cpp stubs/RGSTest.cc
 
 STUBS= stubs/RGSTest.h stubs/RGSTest.cc
 
