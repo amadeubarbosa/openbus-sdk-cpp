@@ -19,7 +19,7 @@ INCLUDES= . \
 
 LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
-LIBS+= mico${MICOVERSION} dl crypto ssl
+LIBS+= mico${MICOVERSION} dl crypto ssl pthread
 
 SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
       ${OPENBUSLIB}/libscsmicoMT.a \

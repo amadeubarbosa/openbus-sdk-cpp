@@ -17,7 +17,7 @@ INCLUDES= . \
   ${OPENBUSINC} \
   ${OPENBUSINC}/logger
 
-LDIR= ${OPENBUSLIB} ${MICO_LIB}
+LDIR= ${OPENBUSLIB} ${MICO_LIB} pthread
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
