@@ -46,5 +46,7 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   CPPFLAGS+= -mt
   LFLAGS+= -mt
   STDLFLAGS= -mt -m64 -xar -o
+  
+  ORBIXLDIR=${ORBIX_HOME}/lib/sparcv9
 endif
 
