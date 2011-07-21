@@ -34,6 +34,6 @@ STUBS= stubs/delegateC.cxx stubs/delegateS.cxx stubs/delegate.hh
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ../../../../shell/orbix/idl -base -poa ../../../idl/delegate.idl
+	cd stubs ; ../../../../../shell/orbix/idl -base -poa ../../../idl/delegate.idl
 
 genstubs: $(STUBS)
