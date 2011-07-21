@@ -65,6 +65,8 @@ else (MICO_FOUND)
   add_definitions(-DOPENBUS_ORBIX)
   add_definitions(-DSCS_ORBIX)
   include_directories (${ORBIX_INCLUDE_DIR})
+  include_directories (${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix)
+  include_directories (${CMAKE_CURRENT_BINARY_DIR})
 
    orbix_idl(${SCS_IDL_IDL_DIR}/scs.idl ARGS -base -poa
      SUBDIR stubs/orbix)
@@ -83,7 +85,16 @@ else (MICO_FOUND)
             ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_service.idl
      SUBDIR stubs/orbix)
 
+   add_custom_command(
+     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/IOR.h
+     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/IOR.c
+     COMMAND lua precompiler.lua -d ${CMAKE_CURRENT_BINARY_DIR} -l ${CMAKE_CURRENT_SOURCE_DIR}/lua/*.lua -o IOR -n IOR
+     WORKING_DIRECTORY ${LOOP_PRECOMPILER_DIR}
+     DEPENDS lua/IOR.lua)
+
    set(SOURCES
+     ${CMAKE_CURRENT_BINARY_DIR}/IOR.h
+     ${CMAKE_CURRENT_BINARY_DIR}/IOR.c
      ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scsS.hh
      ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scs.hh
      ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scsC.cxx
@@ -138,5 +149,5 @@ endif (MICO_FOUND)
 
 enable_testing()
 
-#add_subdirectory(demo)
-#add_subdirectory(test)
+add_subdirectory(demo)
+add_subdirectory(test)

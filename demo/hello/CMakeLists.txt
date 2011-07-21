@@ -37,26 +37,26 @@ if (MICO_FOUND)
 else (MICO_FOUND)
   orbix_idl (${CMAKE_CURRENT_SOURCE_DIR}/idl/hello.idl ARGS -base -poa SUBDIR stubs)
 
-   orbix_idl(${SCS_IDL_IDL_DIR}/scs.idl ARGS -base -poa SUBDIR stubs/mico)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl ARGS -base -poa SUBDIR stubs/mico)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS -base -poa SUBDIR stubs/mico)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl ARGS -base -poa SUBDIR stubs/mico)
-   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl ARGS -base -poa SUBDIR stubs/mico)
+   orbix_idl(${SCS_IDL_IDL_DIR}/scs.idl ARGS -base -poa)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/core.idl ARGS -base -poa SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/access_control_service.idl ARGS -base -poa SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/registry_service.idl ARGS -base -poa SUBDIR stubs/orbix)
+   orbix_idl(${OPENBUS_CORE_IDL_IDL_DIR}/fault_tolerance.idl ARGS -base -poa SUBDIR stubs/orbix)
 
   include_directories(orbix ${CMAKE_CURRENT_BINARY_DIR} ${OPENBUS_INCLUDE_DIRECTORIES})
 
   add_executable (hello_client orbix/client.cpp ${CMAKE_CURRENT_BINARY_DIR}/stubs/hello.hh
     ${CMAKE_CURRENT_BINARY_DIR}/stubs/helloS.cxx
     ${CMAKE_CURRENT_BINARY_DIR}/stubs/helloC.cxx
-    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/core.hh
-    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/access_control_service.hh
-    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/scs.hh
-    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/registry_service.hh
-    ${CMAKE_CURRENT_BINARY_DIR}/stubs/mico/fault_tolerance.hh)
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/core.hh
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/access_control_service.hh
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/scs.hh
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/registry_service.hh
+    ${CMAKE_CURRENT_BINARY_DIR}/stubs/orbix/fault_tolerance.hh)
   add_executable (hello_server orbix/server.cpp ${CMAKE_CURRENT_BINARY_DIR}/stubs/hello.hh
     ${CMAKE_CURRENT_BINARY_DIR}/stubs/helloC.cxx ${CMAKE_CURRENT_BINARY_DIR}/stubs/helloS.cxx)
 
-  target_link_libraries(hello_client ${ORBIX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_static ${OPENSSL_LIBRARIES} ${LUA_LIBRARIES} ${SCS_LIBRARIES})
-  target_link_libraries(hello_server ${ORBIX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_logger_static ${OPENSSL_LIBRARIES} ${LUA_LIBRARIES} ${SCS_LIBRARIES})
+  target_link_libraries(hello_client ${ORBIX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_sdk_static openbus_logger_static ${OPENSSL_LIBRARIES} ${LUA_LIBRARIES} ${SCS_LIBRARIES})
+  target_link_libraries(hello_server ${ORBIX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} openbus_sdk_static openbus_logger_static ${OPENSSL_LIBRARIES} ${LUA_LIBRARIES} ${SCS_LIBRARIES})
 endif (MICO_FOUND)
 
