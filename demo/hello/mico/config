@@ -33,6 +33,7 @@ ifeq "$(MULTITHREAD)" "Yes"
   MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
   MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-multithread
   DEFINES+=MULTITHREAD
+  DEFINES+=SCS_THREADING_ENABLED
   LIBS=pthread
 else
   MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
