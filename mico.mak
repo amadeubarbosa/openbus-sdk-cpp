@@ -43,13 +43,13 @@ endif
 ifeq "$(MULTITHREAD)" "Yes"
   MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-multithread
   MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
-  MICO_LIB= ${OPENBUS_HOME}/libpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
+  MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-multithread
   DEFINES+=MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
 else
   MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
   MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
-  MICO_LIB= ${OPENBUS_HOME}/libpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
+  MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
 endif
 
 OPENBUSINC = ${OPENBUS_HOME}/incpath
