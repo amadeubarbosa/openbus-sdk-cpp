@@ -50,7 +50,7 @@ namespace openbus {
 
         static set<access_control_service::Credential, setCredentialCompare> 
           credentialsCache;
-        static set<access_control_service::Credential>::iterator 
+        static set<access_control_service::Credential, setCredentialCompare>::iterator 
           itCredentialsCache;
 
       #ifdef OPENBUS_ORBIX

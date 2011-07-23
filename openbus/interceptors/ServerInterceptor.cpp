@@ -9,7 +9,7 @@
 namespace openbus {
   namespace interceptors {
     unsigned long ServerInterceptor::validationTime = 30000; /* ms */
-    set<access_control_service::Credential>::iterator ServerInterceptor::itCredentialsCache;
+    set<access_control_service::Credential, ServerInterceptor::setCredentialCompare>::iterator ServerInterceptor::itCredentialsCache;
     set<access_control_service::Credential, ServerInterceptor::setCredentialCompare> 
       ServerInterceptor::credentialsCache;
   #ifdef OPENBUS_ORBIX
