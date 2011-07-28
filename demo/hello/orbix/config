@@ -1,6 +1,6 @@
 
 #Descomente as duas linhas abaixo para o uso em Valgrind.
-#DBG=YES
+#DBG=Yes
 #CPPFLAGS= -fno-inline
 
 ORBIX_HOME=${IT_PRODUCT_DIR}/asp/6.3
@@ -21,7 +21,7 @@ endif
 ifeq "$(TEC_UNAME)" "SunOS510_64"
   USE_CC=Yes
 
-  ifeq "$(DBG)" "YES"
+  ifeq "$(DBG)" "Yes"
     CPPFLAGS= -g
   else
     CPPFLAGS=
