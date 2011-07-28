@@ -863,6 +863,7 @@ namespace openbus {
     logger->indent();
     mutex.lock();
     if (connectionState == CONNECTED) {
+      mutex.unlock();
     #ifndef OPENBUS_ORBIX
       #ifndef MULTITHREAD
         logger->log(INFO, "Removendo callback de renovação de credencial...");
@@ -886,6 +887,7 @@ namespace openbus {
           delete credential;
         }
       #endif
+      mutex.lock();
       newState();
       mutex.unlock();
       #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))

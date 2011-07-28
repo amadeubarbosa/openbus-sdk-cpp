@@ -220,10 +220,10 @@ class RGSTestSuite: public CxxTest::TestSuite {
       CORBA::Object_var obj = component->getFacet("IDL:IRGSTest:1.0");
       TS_ASSERT(rgs->unregister(registryIdentifier));
       TS_ASSERT(rgs->unregister(registryIdentifier2));
-     bus->setInterceptable("IDL:IRGSTest:1.0", "foo", false);
+      bus->setInterceptable("IDL:IRGSTest:1.0", "foo", false);
       iAccessControlService->logout(*(bus->getCredential()));
-      CORBA::Request_var request = obj->_request("foo");
-      request->invoke();
+      IRGSTest *stub = IRGSTest::_narrow(obj);
+      stub->foo();
     }
 
     void testUnregister() {
