@@ -1,14 +1,15 @@
 VISUAL_STUDIO_VERSION= vc9
-OPENBUS_HOME= z:\work\openbus\install\tags\OB_v1_05_02_2011_01_07
+OPENBUS_HOME= e:\work\openbus\install\trunk
 
 OPENBUS_INC= $(OPENBUS_HOME)\incpath
 OPENBUS_LIB= $(OPENBUS_HOME)\libpath\$(VISUAL_STUDIO_VERSION)
 
 MICO_HOME= $(OPENBUS_HOME)
 MICO_BIN= $(MICO_HOME)\bin\$(VISUAL_STUDIO_VERSION)
-MICO_INC= $(MICO_HOME)\incpath\mico-2.3.13
-MICO_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\libmico.lib
-MICO_PTHREAD_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\pthreads.lib
+MICO_INC= $(MICO_HOME)\incpath\mico-2.3.13-multithread\$(VISUAL_STUDIO_VERSION)
+MICO_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\libmico.lib
+MICO_PTHREAD_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\pthreads.lib
+MICO_EAY32_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\libeay32.lib
 PTHREADS_WIN32_INC= $(OPENBUS_HOME)\incpath\pthreadsWin32
 
 INCLUDE= $(INCLUDE).;stubs\mico\;$(MICO_INC);$(PTHREADS_WIN32_INC);$(OPENBUS_INC)\logger;$(OPENBUS_INC)\scs;$(OPENBUS_INC)\lua5.1.3;$(OPENBUS_INC)\openssl-0.9.9
@@ -81,7 +82,7 @@ $(SLIB): $(OBJ)
 	LIB /nologo /OUT:$(SLIB) $(OBJ)
 
 $(DLL): $(OBJ)
-	LINK /nologo /DLL /OUT:$(DLL) $(OBJ) $(MICO_LIB) $(MICO_PTHREAD_LIB) $(OPENBUS_LIB)\logger.lib $(OPENBUS_LIB)\lua5.1.lib $(OPENBUS_LIB)\libeay32.lib $(OPENBUS_LIB)/scsmico.lib wsock32.lib
+	LINK /nologo /DLL /OUT:$(DLL) $(OBJ) $(MICO_LIB) $(MICO_PTHREAD_LIB) $(OPENBUS_LIB)\logger.lib $(OPENBUS_LIB)\lua5.1.lib $(MICO_EAY32_LIB) $(OPENBUS_LIB)/scsmico.lib wsock32.lib
 
 clean:
 	rmdir /S /Q stubs
