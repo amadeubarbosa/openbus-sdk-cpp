@@ -6,7 +6,7 @@ endif
 LIBNAME= ${PROJNAME}
 
 # Descomente a linha abaixo para ativar o modo debug.
-#DBG=YES
+#DBG=Yes
 
 # Descomente a linha abaixo para o uso em Valgrind.
 # p.s.: O modo debug(DBG) deve estar ativado.
@@ -16,7 +16,7 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   USE_CC=Yes
   AR= CC
   
-  ifeq "$(DBG)" "YES"
+  ifeq "$(DBG)" "Yes"
     CPPFLAGS= -g
     STDLFLAGS= -g
     LFLAGS= -g
@@ -27,9 +27,9 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
     LFLAGS=
   endif
 
-  CPPFLAGS= -m64 -KPIC -library=stlport4
-  STDLFLAGS= -m64 -xar -o  
-  LFLAGS= -m64 -instances=extern -library=stlport4 
+  CPPFLAGS+= -erroff=badargtype2w -m64 -KPIC -library=stlport4
+  STDLFLAGS+= -m64 -xar -o  
+  LFLAGS+= -m64 -instances=extern -library=stlport4 
   LIBS= nsl socket
   NO_LOCAL_LD=Yes
 

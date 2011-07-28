@@ -15,9 +15,9 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
     LFLAGS= -g
   endif
 
-  CPPFLAGS+= -m64 -KPIC -library=stlport4
+  CPPFLAGS+= -erroff=badargtype2w -m64 -library=stlport4
   STDLFLAGS+= -m64 -xar -o  
-  LFLAGS+= -m64 -instances=extern -library=stlport4 
+  LFLAGS+= -m64 -library=stlport4 
   LIBS= nsl socket
   NO_LOCAL_LD=Yes
 
@@ -34,7 +34,7 @@ ifeq "$(MULTITHREAD)" "Yes"
   MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-multithread
   DEFINES+=MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
-  LIBS=pthread
+  LIBS+=pthread
 else
   MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
   MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
