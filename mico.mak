@@ -89,27 +89,27 @@ stubs/mico/registry_service.h stubs/mico/registry_service.cc \
 stubs/mico/fault_tolerance.h stubs/mico/fault_tolerance.cc \
 stubs/mico/session_service.h stubs/mico/session_service.cc
 
-IDLS= ${OPENBUS_HOME}/idl/openbus_v1_05/core.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/scs.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/access_control_service.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/registry_service.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/fault_tolerance.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/session_service.idl 
+IDLS= ${OPENBUS_HOME}/idl/v1_05/core.idl \
+${OPENBUS_HOME}/idl/v1_05/scs.idl \
+${OPENBUS_HOME}/idl/v1_05/access_control_service.idl \
+${OPENBUS_HOME}/idl/v1_05/registry_service.idl \
+${OPENBUS_HOME}/idl/v1_05/fault_tolerance.idl \
+${OPENBUS_HOME}/idl/v1_05/session_service.idl 
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs/mico
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths --any --typecode \
-	  ${OPENBUS_HOME}/idl/openbus_v1_05/access_control_service.idl
+	  ${OPENBUS_HOME}/idl/v1_05/access_control_service.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/openbus_v1_05/fault_tolerance.idl
+	  ${OPENBUS_HOME}/idl/v1_05/fault_tolerance.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/openbus_v1_05/registry_service.idl
+	  ${OPENBUS_HOME}/idl/v1_05/registry_service.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/openbus_v1_05/session_service.idl
+	  ${OPENBUS_HOME}/idl/v1_05/session_service.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/openbus_v1_05/core.idl
+	  ${OPENBUS_HOME}/idl/v1_05/core.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/openbus_v1_05/scs.idl
+	  ${OPENBUS_HOME}/idl/v1_05/scs.idl
 
 genstubs: $(STUBS)
 	

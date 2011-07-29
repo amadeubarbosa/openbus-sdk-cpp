@@ -73,12 +73,12 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
      FaultToleranceManager.cpp \
      ${PRECMP_DIR}/IOR.c
 
-IDLS= ${OPENBUS_HOME}/idl/openbus_v1_05/core.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/scs.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/access_control_service.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/registry_service.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/fault_tolerance.idl \
-${OPENBUS_HOME}/idl/openbus_v1_05/session_service.idl 
+IDLS= ${OPENBUS_HOME}/idl/v1_05/core.idl \
+${OPENBUS_HOME}/idl/v1_05/scs.idl \
+${OPENBUS_HOME}/idl/v1_05/access_control_service.idl \
+${OPENBUS_HOME}/idl/v1_05/registry_service.idl \
+${OPENBUS_HOME}/idl/v1_05/fault_tolerance.idl \
+${OPENBUS_HOME}/idl/v1_05/session_service.idl 
 
 STUBS= stubs/orbix/coreC.cxx stubs/orbix/core.hh \
 stubs/orbix/scsC.cxx stubs/orbix/scs.hh \
@@ -89,12 +89,12 @@ stubs/orbix/session_serviceC.cxx stubs/orbix/session_service.hh
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs/orbix
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/openbus_v1_05/fault_tolerance.idl 
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/openbus_v1_05/access_control_service.idl 
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/openbus_v1_05/registry_service.idl
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/openbus_v1_05/session_service.idl
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/openbus_v1_05/core.idl
-	cd stubs/orbix ; ../../shell/orbix/idl -base -poa ${OPENBUS_HOME}/idl/openbus_v1_05/scs.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/fault_tolerance.idl 
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/access_control_service.idl 
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/registry_service.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/session_service.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/core.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base -poa ${OPENBUS_HOME}/idl/v1_05/scs.idl
 
 genstubs: $(STUBS)
 	
