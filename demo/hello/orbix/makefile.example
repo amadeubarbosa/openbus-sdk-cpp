@@ -12,8 +12,8 @@
 
 include config
 
-OPENBUSINC = ${OPENBUS_HOME}/incpath
-OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+OPENBUSINC = ${OPENBUS_HOME}/include
+OPENBUSLIB = ${OPENBUS_HOME}/lib
 
 SERVERSRC= server.cpp stubs/helloC.cxx stubs/helloS.cxx
 CLIENTSRC= client.cpp stubs/helloC.cxx
@@ -22,7 +22,7 @@ server:
 	g++ -o server \
         ${SERVERSRC} \
         ${OPENBUSLIB}/libscsorbix.a \
-        ${OPENBUS_HOME}/core/utilities/orbix/lib/${TEC_UNAME}/libopenbus.a \
+        ${OPENBUS_HOME}/core/utilities/orbix/lib/liblibopenbus.a \
         -L${ORBIXLDIR} \
         -I. -I${ORBIXINC} -I${OPENBUS_HOME}/core/utilities/orbix -I${OPENBUSINC}/scs \
         -lit_poa -lit_art -lit_ifc -lit_portable_interceptor 
@@ -30,7 +30,7 @@ server:
 client:
 	g++ -o client \
         ${CLIENTSRC} \
-        ${OPENBUS_HOME}/core/utilities/orbix/lib/${TEC_UNAME}/libopenbus.a \
+        ${OPENBUS_HOME}/core/utilities/orbix/lib/liblibopenbus.a \
         ${OPENBUSLIB}/libscsorbix.a \
         -L${ORBIXLDIR} \
         -I. -I${ORBIXINC} -I${OPENBUS_HOME}/core/utilities/orbix -I${OPENBUSINC}/scs \

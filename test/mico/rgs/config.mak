@@ -3,8 +3,8 @@ APPNAME= rgs
 
 include ../config
 
-OPENBUSINC = ${OPENBUS_HOME}/incpath
-OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+OPENBUSINC = ${OPENBUS_HOME}/include
+OPENBUSLIB = ${OPENBUS_HOME}/lib
 
 INCLUDES= . \
   stubs \

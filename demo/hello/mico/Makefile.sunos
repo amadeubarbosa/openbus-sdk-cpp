@@ -15,8 +15,8 @@ PTHREAD= -lpthread
 CPPFLAGS= -m64 -library=stlport4 -DMICO_64 ${MULTITHREAD}
 LFLAGS= -m64 -library=stlport4
 
-OPENBUSINC= ${OPENBUS_HOME}/incpath
-OPENBUSLIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+OPENBUSINC= ${OPENBUS_HOME}/include
+OPENBUSLIB= ${OPENBUS_HOME}/lib
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/libscsmico.a \
@@ -37,20 +37,20 @@ LIBS= -lmico${MICOVERSION} -ldl -lcrypto -lssl -llua5.1 -lnsl -lsocket ${PTHREAD
 
 all: genstubs server client
 
-bin/${TEC_UNAME}/server: server.cpp
-	mkdir -p bin/${TEC_UNAME}
-	mkdir -p obj/${TEC_UNAME}
-	CC -c ${CPPFLAGS} -o obj/${TEC_UNAME}/hello.o stubs/hello.cc ${INCLUDES}
-	CC -c ${CPPFLAGS} -o obj/${TEC_UNAME}/server.o server.cpp ${INCLUDES}
-	CC ${LFLAGS} -o bin/${TEC_UNAME}/server obj/${TEC_UNAME}/server.o obj/${TEC_UNAME}/hello.o ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
+bin/server: server.cpp
+	mkdir -p bin
+	mkdir -p obj
+	CC -c ${CPPFLAGS} -o obj/hello.o stubs/hello.cc ${INCLUDES}
+	CC -c ${CPPFLAGS} -o obj/server.o server.cpp ${INCLUDES}
+	CC ${LFLAGS} -o bin/server obj/server.o obj/hello.o ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
 
-bin/${TEC_UNAME}/client: client.cpp
-	CC -c ${CPPFLAGS} -o obj/${TEC_UNAME}/client.o client.cpp ${INCLUDES}
-	CC ${LFLAGS} -o bin/${TEC_UNAME}/client obj/${TEC_UNAME}/client.o obj/${TEC_UNAME}/hello.o ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
+bin/client: client.cpp
+	CC -c ${CPPFLAGS} -o obj/client.o client.cpp ${INCLUDES}
+	CC ${LFLAGS} -o bin/client obj/client.o obj/hello.o ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
 
-server: bin/${TEC_UNAME}/server
+server: bin/server
 	
-client: bin/${TEC_UNAME}/client
+client: bin/client
 	
 IDLS= ../idl/hello.idl
 
@@ -58,12 +58,12 @@ STUBS= stubs/hello.cc stubs/hello.h
 
 ${STUBS}: ${IDLS}
 	mkdir -p stubs
-	cd stubs ; ${OPENBUS_HOME}/bin/${TEC_UNAME}/idl --poa ../../idl/hello.idl
+	cd stubs ; ${OPENBUS_HOME}/bin/idl --poa ../../idl/hello.idl
 
 genstubs: ${STUBS}
 
 clean:
-	rm -rf bin/${TEC_UNAME}
-	rm -rf obj/${TEC_UNAME}
+	rm -rf bin
+	rm -rf obj
 	rm -rf stubs
 

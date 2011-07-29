@@ -22,6 +22,6 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   NO_LOCAL_LD=Yes
 endif
 
-MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
-MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
-MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
+MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-singlethread
+MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread
+MICO_LIB= ${OPENBUS_HOME}/libpath/mico-${MICOVERSION}-singlethread

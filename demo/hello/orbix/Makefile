@@ -6,8 +6,8 @@ include config
 
 CPPFLAGS= -Wall -DSCS_ORBIX -DOPENBUS_ORBIX
 
-OPENBUSINC= ${OPENBUS_HOME}/incpath
-OPENBUSLIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+OPENBUSINC= ${OPENBUS_HOME}/include
+OPENBUSLIB= ${OPENBUS_HOME}/lib
 
 SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
       ${OPENBUSLIB}/libscsorbix.a \
@@ -29,19 +29,19 @@ LIBS= -lit_poa -lit_art -lit_ifc -lit_portable_interceptor -ldl -lcrypto -lssl -
 
 all: genstubs server client
 
-bin/${TEC_UNAME}/server: server.cpp
-	mkdir -p bin/${TEC_UNAME}
-	g++ ${CPPFLAGS} -o bin/${TEC_UNAME}/server server.cpp stubs/helloC.cxx stubs/helloS.cxx \
+bin/server: server.cpp
+	mkdir -p bin
+	g++ ${CPPFLAGS} -o bin/server server.cpp stubs/helloC.cxx stubs/helloS.cxx \
 		${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
 
-bin/${TEC_UNAME}/client: client.cpp
-	mkdir -p bin/${TEC_UNAME}
-	g++ ${CPPFLAGS} -o bin/${TEC_UNAME}/client client.cpp stubs/helloC.cxx \
+bin/client: client.cpp
+	mkdir -p bin
+	g++ ${CPPFLAGS} -o bin/client client.cpp stubs/helloC.cxx \
 	 	${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
 
-server: bin/${TEC_UNAME}/server
+server: bin/server
 	
-client: bin/${TEC_UNAME}/client
+client: bin/client
 	
 IDLS= ../idl/hello.idl
 
@@ -54,5 +54,5 @@ ${STUBS}: ${IDLS}
 genstubs: ${STUBS}
 
 clean:
-	rm -rf bin/${TEC_UNAME}
+	rm -rf bin
 	rm -rf stubs

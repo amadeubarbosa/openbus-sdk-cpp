@@ -1,16 +1,16 @@
 VISUAL_STUDIO_VERSION= vc9
 OPENBUS_HOME= e:\work\openbus\install\trunk
 
-OPENBUS_INC= $(OPENBUS_HOME)\incpath
-OPENBUS_LIB= $(OPENBUS_HOME)\libpath\$(VISUAL_STUDIO_VERSION)
+OPENBUS_INC= $(OPENBUS_HOME)\include
+OPENBUS_LIB= $(OPENBUS_HOME)\lib\$(VISUAL_STUDIO_VERSION)
 
 MICO_HOME= $(OPENBUS_HOME)
 MICO_BIN= $(MICO_HOME)\bin\$(VISUAL_STUDIO_VERSION)
-MICO_INC= $(MICO_HOME)\incpath\mico-2.3.13-multithread\$(VISUAL_STUDIO_VERSION)
-MICO_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\libmico.lib
-MICO_PTHREAD_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\pthreads.lib
-MICO_EAY32_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\libeay32.lib
-PTHREADS_WIN32_INC= $(OPENBUS_HOME)\incpath\pthreadsWin32
+MICO_INC= $(MICO_HOME)\include\mico-2.3.13-multithread\$(VISUAL_STUDIO_VERSION)
+MICO_LIB= $(MICO_HOME)\lib\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\libmico.lib
+MICO_PTHREAD_LIB= $(MICO_HOME)\lib\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\pthreads.lib
+MICO_EAY32_LIB= $(MICO_HOME)\lib\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\libeay32.lib
+PTHREADS_WIN32_INC= $(OPENBUS_HOME)\include\pthreadsWin32
 
 INCLUDE= $(INCLUDE).;stubs;$(MICO_INC);$(OPENBUS_INC)\openbus\cpp;$(OPENBUS_INC)\openbus\cpp\stubs\mico;$(OPENBUS_INC)\logger;$(OPENBUS_INC);$(OPENBUS_INC)\lua5.1.3;$(OPENBUS_INC)\openssl-0.9.9
 CFLAGS= /nologo /EHsc
