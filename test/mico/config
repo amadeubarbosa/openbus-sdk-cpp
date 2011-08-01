@@ -30,13 +30,13 @@ endif
 
 ifeq "$(MULTITHREAD)" "Yes"
   MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-multithread
-  MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-multithread
-  MICO_LIB= ${OPENBUS_HOME}/libpath/mico-${MICOVERSION}-multithread
+  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread
+  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread
   DEFINES+=MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
   LIBS+=pthread
 else
   MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-singlethread
-  MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread
-  MICO_LIB= ${OPENBUS_HOME}/libpath/mico-${MICOVERSION}-singlethread
+  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread
+  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread
 endif
