@@ -1,0 +1,60 @@
+#
+# Exemplo de arquivo makefile para Solaris 5.10 64bits e 
+# Sun Studio 12.1.
+#
+
+CPPFLAGS= -m64 -library=stlport4 -mt -DMULTITHREAD -DSCS_THREADING_ENABLED
+LFLAGS= -m64 -library=stlport4
+
+OPENBUSINC= ${OPENBUS_HOME}/include
+OPENBUSLIB= ${OPENBUS_HOME}/lib
+
+SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
+      ${OPENBUSLIB}/libscsmicoMT.a \
+      ${OPENBUSLIB}/liblogger.a
+
+INCLUDES= -I. \
+          -Istubs \
+          -I${OPENBUSINC}/mico-${MICOVERSION} \
+          -I${OPENBUSINC}/openbus/cpp \
+          -I${OPENBUSINC}/openbus/cpp/stubs/mico \
+          -I${OPENBUSINC} \
+          -I${OPENBUSINC}/logger \
+          -I${OPENBUSINC}/lua5.1.3
+          
+LDIR= -L${OPENBUSLIB}
+
+LIBS= -lmico${MICOVERSION} -ldl -lcrypto -lssl -llua5.1 -lnsl -lsocket -lpthread
+
+all: genstubs server client
+
+bin/server: server.cpp
+	mkdir -p bin
+	mkdir -p obj
+	CC -c ${CPPFLAGS} -o obj/hello.o stubs/hello.cc ${INCLUDES}
+	CC -c ${CPPFLAGS} -o obj/server.o server.cpp ${INCLUDES}
+	CC ${LFLAGS} -o bin/server obj/server.o obj/hello.o ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
+
+bin/client: client.cpp
+	CC -c ${CPPFLAGS} -o obj/client.o client.cpp ${INCLUDES}
+	CC ${LFLAGS} -o bin/client obj/client.o obj/hello.o ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
+
+server: bin/server
+	
+client: bin/client
+	
+IDLS= ../idl/hello.idl
+
+STUBS= stubs/hello.cc stubs/hello.h
+
+${STUBS}: ${IDLS}
+	mkdir -p stubs
+	cd stubs ; ${MICOBIN}/idl --poa ../../idl/hello.idl
+
+genstubs: ${STUBS}
+
+clean:
+	rm -rf bin
+	rm -rf obj
+	rm -rf stubs
+

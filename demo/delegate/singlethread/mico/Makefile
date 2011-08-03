@@ -2,10 +2,7 @@
 # Exemplo de arquivo makefile.
 #
 
-# Descomente a linha abaixo para compilar em 64 Bits.
-MICO_64= -DMICO_64
-
-CPPFLAGS= -Wall ${MICO_64}
+CPPFLAGS= -Wall
 
 OPENBUSINC= ${OPENBUS_HOME}/incpath
 OPENBUSLIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}
@@ -19,7 +16,7 @@ INCLUDES= -I. \
 				  -I${OPENBUSINC}/mico-${MICOVERSION} \
 				  -I${OPENBUSINC}/openbus/cpp \
 				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
-				  -I${OPENBUSINC}/scs \
+				  -I${OPENBUSINC} \
 				  -I${OPENBUSINC}/logger \
           -I${OPENBUSINC}/lua5.1.3
 
@@ -48,7 +45,7 @@ STUBS= stubs/delegate.cc stubs/delegate.h
 
 ${STUBS}: ${IDLS}
 	mkdir -p stubs
-	cd stubs ; ${OPENBUS_HOME}/bin/${TEC_UNAME}/idl --poa ../../../idl/delegate.idl
+	cd stubs ; ${MICOBIN}/idl --poa ../../../idl/delegate.idl
 
 genstubs: ${STUBS}
 

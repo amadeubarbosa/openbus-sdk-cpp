@@ -3,16 +3,13 @@
 # Sun Studio 12.1.
 #
 
-# Descomente a linha abaixo para compilar em 64 Bits.
-MICO_64= -DMICO_64
-
 # Descomente as duas linhas abaixo para utilizar a versão multithread.
 # A versão multithread do Openbus deve ser utilizada com Mico
 # compilado com suporte a multithread.
 MULTITHREAD= -DMULTITHREAD -mt
 PTHREAD= -lpthread
 
-CPPFLAGS= -m64 -library=stlport4 -DMICO_64 ${MULTITHREAD}
+CPPFLAGS= -m64 -library=stlport4 ${MULTITHREAD}
 LFLAGS= -m64 -library=stlport4
 
 OPENBUSINC= ${OPENBUS_HOME}/incpath
@@ -27,7 +24,7 @@ INCLUDES= -I. \
           -I${OPENBUSINC}/mico-${MICOVERSION} \
           -I${OPENBUSINC}/openbus/cpp \
           -I${OPENBUSINC}/openbus/cpp/stubs/mico \
-          -I${OPENBUSINC}/scs \
+          -I${OPENBUSINC} \
           -I${OPENBUSINC}/logger \
           -I${OPENBUSINC}/lua5.1.3
           
@@ -58,7 +55,7 @@ STUBS= stubs/delegate.cc stubs/delegate.h
 
 ${STUBS}: ${IDLS}
 	mkdir -p stubs
-	cd stubs ; ${OPENBUS_HOME}/bin/${TEC_UNAME}/idl --poa ../../../idl/delegate.idl
+	cd stubs ; ${MICOBIN}/idl --poa ../../../idl/delegate.idl
 
 genstubs: ${STUBS}
 
