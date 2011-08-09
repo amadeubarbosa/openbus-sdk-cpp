@@ -18,7 +18,7 @@ INCLUDES= -I. \
 				  -I${ORBIXINC} \
 				  -I${OPENBUSINC}/openbus/cpp \
 				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
-				  -I${OPENBUSINC} \
+				  -I${OPENBUSINC}/scs \
 				  -I${OPENBUSINC}/logger \
           -I${OPENBUSINC}/lua5.1.3
 
