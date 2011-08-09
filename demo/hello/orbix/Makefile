@@ -14,12 +14,12 @@ SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
       ${OPENBUSLIB}/liblogger.a
 
 INCLUDES= -I. \
-	  -Istubs \
-	  -I${ORBIXINC} \
-	  -I${OPENBUSINC}/openbus/cpp \
-	  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
-	  -I${OPENBUSINC}/scs \
-	  -I${OPENBUSINC}/logger \
+				  -Istubs \
+				  -I${ORBIXINC} \
+				  -I${OPENBUSINC}/openbus/cpp \
+				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
+				  -I${OPENBUSINC} \
+				  -I${OPENBUSINC}/logger \
           -I${OPENBUSINC}/lua5.1.3
 
 LDIR= -L${ORBIXLDIR} \
