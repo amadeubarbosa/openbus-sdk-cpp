@@ -45,12 +45,12 @@ endif
 ORBIX_HOME= ${IT_PRODUCT_DIR}/asp/6.3
 ORBIXINC= ${ORBIX_HOME}/include
 
-OPENBUSINC = ${OPENBUS_HOME}/incpath
-OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+OPENBUSINC = ${OPENBUS_HOME}/include
+OPENBUSLIB = ${OPENBUS_HOME}/lib
 
 OBJROOT= obj/orbix
 TARGETROOT= lib
-PRECMP_DIR= obj/orbix/${TEC_UNAME}
+PRECMP_DIR= obj/orbix
 
 INCLUDES= . ./stubs/orbix ${PRECMP_DIR} ${ORBIXINC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
 LDIR= ${ORBIXLDIR} ${OPENBUSLIB} ${ORBIXLDIR}
@@ -73,12 +73,12 @@ SRC= openbus/interceptors/ClientInterceptor.cpp \
      FaultToleranceManager.cpp \
      ${PRECMP_DIR}/IOR.c
 
-IDLS= ${OPENBUS_HOME}/idlpath/v1_05/core.idl \
-${OPENBUS_HOME}/idlpath/v1_05/scs.idl \
-${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl \
-${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl \
-${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl \
-${OPENBUS_HOME}/idlpath/v1_05/session_service.idl 
+IDLS= ${OPENBUS_HOME}/idl/v1_05/core.idl \
+${OPENBUS_HOME}/idl/v1_05/scs.idl \
+${OPENBUS_HOME}/idl/v1_05/access_control_service.idl \
+${OPENBUS_HOME}/idl/v1_05/registry_service.idl \
+${OPENBUS_HOME}/idl/v1_05/fault_tolerance.idl \
+${OPENBUS_HOME}/idl/v1_05/session_service.idl 
 
 STUBS= stubs/orbix/coreC.cxx stubs/orbix/core.hh \
 stubs/orbix/scsC.cxx stubs/orbix/scs.hh \
@@ -89,12 +89,12 @@ stubs/orbix/session_serviceC.cxx stubs/orbix/session_service.hh
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs/orbix
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl 
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl 
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
-	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idlpath/v1_05/core.idl
-	cd stubs/orbix ; ../../shell/orbix/idl -base -poa ${OPENBUS_HOME}/idlpath/v1_05/scs.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/fault_tolerance.idl 
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/access_control_service.idl 
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/registry_service.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/session_service.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base  ${OPENBUS_HOME}/idl/v1_05/core.idl
+	cd stubs/orbix ; ../../shell/orbix/idl -base -poa ${OPENBUS_HOME}/idl/v1_05/scs.idl
 
 genstubs: $(STUBS)
 	

@@ -29,14 +29,14 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
 endif
 
 ifeq "$(MULTITHREAD)" "Yes"
-  MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-multithread
-  MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
-  MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-multithread
+  MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-multithread
+  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread
+  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread
   DEFINES+=MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
   LIBS+=pthread
 else
-  MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
-  MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
-  MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
+  MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-singlethread
+  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread
+  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread
 endif

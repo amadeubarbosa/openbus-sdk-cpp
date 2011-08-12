@@ -4,8 +4,8 @@
 
 CPPFLAGS= -Wall
 
-OPENBUSINC= ${OPENBUS_HOME}/incpath
-OPENBUSLIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+OPENBUSINC= ${OPENBUS_HOME}/include
+OPENBUSLIB= ${OPENBUS_HOME}/lib
 
 SLIB= ${OPENBUSLIB}/libopenbusmico.a \
       ${OPENBUSLIB}/libscsmico.a \
@@ -27,17 +27,17 @@ LIBS= -lmico${MICOVERSION} -ldl -lcrypto -lssl -llua5.1
 
 all: genstubs server client
 
-bin/${TEC_UNAME}/server: server.cpp
-	mkdir -p bin/${TEC_UNAME}
-	g++ ${CPPFLAGS} -o bin/${TEC_UNAME}/server server.cpp stubs/delegate.cc ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
+bin/server: server.cpp
+	mkdir -p bin
+	g++ ${CPPFLAGS} -o bin/server server.cpp stubs/delegate.cc ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
 
-bin/${TEC_UNAME}/client: client.cpp
-	mkdir -p bin/${TEC_UNAME}
-	g++ ${CPPFLAGS} -o bin/${TEC_UNAME}/client client.cpp stubs/delegate.cc ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
+bin/client: client.cpp
+	mkdir -p bin
+	g++ ${CPPFLAGS} -o bin/client client.cpp stubs/delegate.cc ${INCLUDES} ${LDIR} ${SLIB} ${LIBS}
 
-server: bin/${TEC_UNAME}/server
+server: bin/server
 	
-client: bin/${TEC_UNAME}/client
+client: bin/client
 	
 IDLS= ../../idl/delegate.idl
 
@@ -50,5 +50,5 @@ ${STUBS}: ${IDLS}
 genstubs: ${STUBS}
 
 clean:
-	rm -rf bin/${TEC_UNAME}
+	rm -rf bin
 	rm -rf stubs

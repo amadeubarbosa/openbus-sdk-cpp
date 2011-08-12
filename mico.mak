@@ -41,19 +41,19 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
 endif
 
 ifeq "$(MULTITHREAD)" "Yes"
-  MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-multithread
-  MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-multithread/${TEC_UNAME}
-  MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-multithread
+  MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-multithread
+  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread
+  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread
   DEFINES+=MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
 else
-  MICO_BIN= ${MICODIR}/bin/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
-  MICO_INC= ${OPENBUS_HOME}/incpath/mico-${MICOVERSION}-singlethread/${TEC_UNAME}
-  MICO_LIB= ${OPENBUS_HOME}/libpath/${TEC_UNAME}/mico-${MICOVERSION}-singlethread
+  MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-singlethread
+  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread
+  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread
 endif
 
-OPENBUSINC = ${OPENBUS_HOME}/incpath
-OPENBUSLIB = ${OPENBUS_HOME}/libpath/${TEC_UNAME}
+OPENBUSINC = ${OPENBUS_HOME}/include
+OPENBUSLIB = ${OPENBUS_HOME}/lib
 
 OBJROOT= obj/mico
 TARGETROOT= lib
@@ -89,27 +89,27 @@ stubs/mico/registry_service.h stubs/mico/registry_service.cc \
 stubs/mico/fault_tolerance.h stubs/mico/fault_tolerance.cc \
 stubs/mico/session_service.h stubs/mico/session_service.cc
 
-IDLS= ${OPENBUS_HOME}/idlpath/v1_05/core.idl \
-${OPENBUS_HOME}/idlpath/v1_05/scs.idl \
-${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl \
-${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl \
-${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl \
-${OPENBUS_HOME}/idlpath/v1_05/session_service.idl 
+IDLS= ${OPENBUS_HOME}/idl/v1_05/core.idl \
+${OPENBUS_HOME}/idl/v1_05/scs.idl \
+${OPENBUS_HOME}/idl/v1_05/access_control_service.idl \
+${OPENBUS_HOME}/idl/v1_05/registry_service.idl \
+${OPENBUS_HOME}/idl/v1_05/fault_tolerance.idl \
+${OPENBUS_HOME}/idl/v1_05/session_service.idl 
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs/mico
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths --any --typecode \
-	  ${OPENBUS_HOME}/idlpath/v1_05/access_control_service.idl
+	  ${OPENBUS_HOME}/idl/v1_05/access_control_service.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idlpath/v1_05/fault_tolerance.idl
+	  ${OPENBUS_HOME}/idl/v1_05/fault_tolerance.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idlpath/v1_05/registry_service.idl
+	  ${OPENBUS_HOME}/idl/v1_05/registry_service.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idlpath/v1_05/session_service.idl
+	  ${OPENBUS_HOME}/idl/v1_05/session_service.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idlpath/v1_05/core.idl
+	  ${OPENBUS_HOME}/idl/v1_05/core.idl
 	cd stubs/mico ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idlpath/v1_05/scs.idl
+	  ${OPENBUS_HOME}/idl/v1_05/scs.idl
 
 genstubs: $(STUBS)
 	

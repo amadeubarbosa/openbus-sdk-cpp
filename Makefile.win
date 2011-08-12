@@ -1,26 +1,26 @@
 VISUAL_STUDIO_VERSION= vc9
-OPENBUS_HOME= e:\work\openbus\install\trunk
+OPENBUS_HOME= e:\work\openbus\install\branches\OB_v1_05_03_2011_07_28\vc9
 
-OPENBUS_INC= $(OPENBUS_HOME)\incpath
-OPENBUS_LIB= $(OPENBUS_HOME)\libpath\$(VISUAL_STUDIO_VERSION)
+OPENBUS_INC= $(OPENBUS_HOME)\include
+OPENBUS_LIB= $(OPENBUS_HOME)\lib
 
 MICO_HOME= $(OPENBUS_HOME)
-MICO_BIN= $(MICO_HOME)\bin\$(VISUAL_STUDIO_VERSION)
-MICO_INC= $(MICO_HOME)\incpath\mico-2.3.13-multithread\$(VISUAL_STUDIO_VERSION)
-MICO_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\libmico.lib
-MICO_PTHREAD_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\pthreads.lib
-MICO_EAY32_LIB= $(MICO_HOME)\libpath\$(VISUAL_STUDIO_VERSION)\mico-2.3.13-multithread\libeay32.lib
-PTHREADS_WIN32_INC= $(OPENBUS_HOME)\incpath\pthreadsWin32
+MICO_BIN= $(MICO_HOME)\bin
+MICO_INC= $(MICO_HOME)\include\mico-2.3.13-multithread
+MICO_LIB= $(MICO_HOME)\lib\mico-2.3.13-multithread\libmico.lib
+MICO_PTHREAD_LIB= $(MICO_HOME)\lib\mico-2.3.13-multithread\pthreads.lib
+MICO_EAY32_LIB= $(MICO_HOME)\lib\mico-2.3.13-multithread\libeay32.lib
+PTHREADS_WIN32_INC= $(OPENBUS_HOME)\include\pthreadsWin32
 
 INCLUDE= $(INCLUDE).;stubs\mico\;$(MICO_INC);$(PTHREADS_WIN32_INC);$(OPENBUS_INC)\logger;$(OPENBUS_INC)\scs;$(OPENBUS_INC)\lua5.1.3;$(OPENBUS_INC)\openssl-0.9.9
 CFLAGS= /nologo /EHsc /DMULTITHREAD /DHAVE_THREADS /DHAVE_PTHREADS
 
-IDLS= $(OPENBUS_HOME)/idlpath/v1_05/core.idl \
-      $(OPENBUS_HOME)/idlpath/v1_05/scs.idl \
-      $(OPENBUS_HOME)/idlpath/v1_05/access_control_service.idl \
-      $(OPENBUS_HOME)/idlpath/v1_05/registry_service.idl \
-      $(OPENBUS_HOME)/idlpath/v1_05/fault_tolerance.idl \
-      $(OPENBUS_HOME)/idlpath/v1_05/session_service.idl 
+IDLS= $(OPENBUS_HOME)/idl/v1_05/core.idl \
+      $(OPENBUS_HOME)/idl/v1_05/scs.idl \
+      $(OPENBUS_HOME)/idl/v1_05/access_control_service.idl \
+      $(OPENBUS_HOME)/idl/v1_05/registry_service.idl \
+      $(OPENBUS_HOME)/idl/v1_05/fault_tolerance.idl \
+      $(OPENBUS_HOME)/idl/v1_05/session_service.idl 
 
 STUBS= stubs/mico/core.h stubs/mico/core.cc \
        stubs/mico/scs.h stubs/mico/scs.cc \
@@ -55,20 +55,20 @@ OBJ= obj\mico\$(VISUAL_STUDIO_VERSION)\ClientInterceptor.obj \
      obj\mico\$(VISUAL_STUDIO_VERSION)\Helper.obj \
      obj\mico\$(VISUAL_STUDIO_VERSION)\FaultToleranceManager.obj
 
-SLIB= lib\$(VISUAL_STUDIO_VERSION)\openbusmico.lib
-DLL= lib\$(VISUAL_STUDIO_VERSION)\openbusmico.dll
+SLIB= lib\openbusmico.lib
+DLL= lib\openbusmico.dll
 
 all: genstubs $(OBJ) $(SLIB) $(DLL)
 
 $(STUBS): $(IDLS)
 	-mkdir stubs\mico
 	cd stubs\mico
-	$(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idlpath/v1_05/core.idl
-  $(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idlpath/v1_05/scs.idl
-  $(MICO_BIN)\idl --no-paths --any --typecode $(OPENBUS_HOME)/idlpath/v1_05/access_control_service.idl
-  $(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idlpath/v1_05/registry_service.idl
-  $(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idlpath/v1_05/fault_tolerance.idl
-  $(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idlpath/v1_05/session_service.idl
+	$(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idl/v1_05/core.idl
+  $(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idl/v1_05/scs.idl
+  $(MICO_BIN)\idl --no-paths --any --typecode $(OPENBUS_HOME)/idl/v1_05/access_control_service.idl
+  $(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idl/v1_05/registry_service.idl
+  $(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idl/v1_05/fault_tolerance.idl
+  $(MICO_BIN)\idl --no-paths $(OPENBUS_HOME)/idl/v1_05/session_service.idl
 	cd ..\..\
 
 genstubs: $(STUBS)
