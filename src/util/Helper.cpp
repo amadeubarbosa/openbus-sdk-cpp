@@ -7,7 +7,7 @@
 */
 
 #include <cstdio>
-#include "Helper.h"
+#include "util/Helper.h"
 
 namespace openbus {
   namespace util {

@@ -7,8 +7,8 @@
 #  include <omg/IOP.hh>
 #endif
 
-#include "ORBInitializerImpl.h"
-#include "../../openbus.h"
+#include "interceptors/ORBInitializerImpl.h"
+#include "openbus.h"
 
 using namespace std;
 
