@@ -58,7 +58,14 @@ OPENBUSLIB = ${OPENBUS_HOME}/lib
 OBJROOT= obj/mico
 TARGETROOT= lib
 
-INCLUDES= . ./stubs/mico ${MICO_INC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
+INCLUDES= . \
+  include \
+  stubs/mico \
+  ${MICO_INC} \
+  ${OPENBUSINC}/scs \
+  ${OPENBUSINC}/openssl-0.9.9 \
+  ${OPENBUSINC}/logger
+  
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
 ifeq "$(MULTITHREAD)" "Yes"
@@ -70,17 +77,17 @@ endif
 USE_LUA51= YES
 USE_NODEPEND= YES
 
-SRC= openbus/interceptors/ClientInterceptor.cpp \
-     openbus/interceptors/ServerInterceptor.cpp \
-     openbus/interceptors/ORBInitializerImpl.cpp \
+SRC= src/interceptors/ClientInterceptor.cpp \
+     src/interceptors/ServerInterceptor.cpp \
+     src/interceptors/ORBInitializerImpl.cpp \
      stubs/mico/access_control_service.cc \
      stubs/mico/registry_service.cc \
      stubs/mico/session_service.cc \
      stubs/mico/fault_tolerance.cc \
      stubs/mico/core.cc \
-     openbus.cpp \
-     openbus/util/Helper.cpp \
-     FaultToleranceManager.cpp
+     src/openbus.cpp \
+     src/util/Helper.cpp \
+     src/FaultToleranceManager.cpp
 
 STUBS= stubs/mico/core.h stubs/mico/core.cc \
 stubs/mico/scs.h \

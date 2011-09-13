@@ -3,8 +3,8 @@
 */
 
 #include <cstdio>
-#include "ServerInterceptor.h"
-#include "../../openbus.h"
+#include "interceptors/ServerInterceptor.h"
+#include "openbus.h"
 
 namespace openbus {
   namespace interceptors {

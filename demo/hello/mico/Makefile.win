@@ -1,5 +1,5 @@
 VISUAL_STUDIO_VERSION= vc9
-OPENBUS_HOME= e:\work\openbus\install\branches\OB_v1_05_03_2011_07_28\vc9
+OPENBUS_HOME= z:\work\openbus\install\trunk\vc9
 
 OPENBUS_INC= $(OPENBUS_HOME)\include
 OPENBUS_LIB= $(OPENBUS_HOME)\lib

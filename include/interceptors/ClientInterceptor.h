@@ -15,7 +15,7 @@
   #include <CORBA.h>
   #include "stubs/mico/access_control_service.h"
 #endif
-#include "../../FaultToleranceManager.h"
+#include "FaultToleranceManager.h"
 
 using namespace PortableInterceptor;
 using namespace tecgraf::openbus::core::v1_05;

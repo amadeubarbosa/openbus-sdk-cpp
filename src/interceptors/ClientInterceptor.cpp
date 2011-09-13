@@ -3,9 +3,9 @@
 */
 
 #include <cstdio>
-#include "ClientInterceptor.h"
+#include "interceptors/ClientInterceptor.h"
 
-#include "../../openbus.h"
+#include "openbus.h"
 
 #ifdef OPENBUS_ORBIX
   #include <it_ts/thread.h>

@@ -7,9 +7,9 @@
 #define OPENBUS_H_
 
 #include "logger.h"
-#include "openbus/util/Helper.h"
+#include "util/Helper.h"
 
-#include "openbus/interceptors/ORBInitializerImpl.h"
+#include "interceptors/ORBInitializerImpl.h"
 
 #ifdef OPENBUS_ORBIX
   #include <omg/orb.hh>
