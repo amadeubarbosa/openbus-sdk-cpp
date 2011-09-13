@@ -52,7 +52,15 @@ OBJROOT= obj/orbix
 TARGETROOT= lib
 PRECMP_DIR= obj/orbix
 
-INCLUDES= . ./stubs/orbix ${PRECMP_DIR} ${ORBIXINC} ${OPENBUSINC}/scs ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC}/logger
+INCLUDES= . \
+  include \
+  ./stubs/orbix \
+  ${PRECMP_DIR} \
+  ${ORBIXINC} \
+  ${OPENBUSINC}/scs \
+  ${OPENBUSINC}/openssl-0.9.9 \
+  ${OPENBUSINC}/logger
+
 LDIR= ${ORBIXLDIR} ${OPENBUSLIB} ${ORBIXLDIR}
 
 LIBS= it_poa it_art it_ifc it_portable_interceptor scsorbix crypto logger
@@ -60,17 +68,17 @@ LIBS= it_poa it_art it_ifc it_portable_interceptor scsorbix crypto logger
 USE_LUA51=YES
 USE_NODEPEND=YES
 
-SRC= openbus/interceptors/ClientInterceptor.cpp \
-     openbus/interceptors/ServerInterceptor.cpp \
-     openbus/interceptors/ORBInitializerImpl.cpp \
+SRC= src/interceptors/ClientInterceptor.cpp \
+     src/interceptors/ServerInterceptor.cpp \
+     src/interceptors/ORBInitializerImpl.cpp \
      stubs/orbix/access_control_serviceC.cxx \
      stubs/orbix/registry_serviceC.cxx \
      stubs/orbix/session_serviceC.cxx \
      stubs/orbix/fault_toleranceC.cxx \
      stubs/orbix/coreC.cxx \
-     openbus.cpp \
-     openbus/util/Helper.cpp \
-     FaultToleranceManager.cpp \
+     src/openbus.cpp \
+     src/util/Helper.cpp \
+     src/FaultToleranceManager.cpp \
      ${PRECMP_DIR}/IOR.c
 
 IDLS= ${OPENBUS_HOME}/idl/v1_05/core.idl \
