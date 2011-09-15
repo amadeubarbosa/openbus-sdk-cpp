@@ -929,7 +929,10 @@ namespace openbus {
 
   void Openbus::run() {
     Openbus::logger->log(INFO, "Openbus::run()");
-    #if (!OPENBUS_ORBIX && MULTITHREAD)
+    #if (OPENBUS_ORBIX)
+      orb->run();
+    #else
+      #if (MULTITHREAD)
       /* Já temos uma runThread ? */
         if (!runThread) {
           Openbus::logger->log(INFO, "Criando uma RunThread.");
@@ -937,21 +940,20 @@ namespace openbus {
           runThread->start();
         }
         runThread->wait();
-    #else
+      #else
       orbRunning = true;
       while (orbRunning) {
         if (orb->work_pending()) {
           orb->perform_work();
         }
       }
+      #endif
     #endif
   }
 
   void Openbus::stop() {
     Openbus::logger->log(INFO, "Openbus::stop() BEGIN");
-    #if (!OPENBUS_ORBIX && MULTITHREAD)
-      /* empty */
-    #else  
+    #if (!OPENBUS_ORBIX && !MULTITHREAD)
       orbRunning = false;
     #endif
     Openbus::logger->log(INFO, "Openbus::stop() END");
