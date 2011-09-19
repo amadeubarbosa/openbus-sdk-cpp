@@ -40,3 +40,36 @@ else
   MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread
   MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread
 endif
+
+OPENBUSINC = ${OPENBUS_HOME}/include
+OPENBUSLIB = ${OPENBUS_HOME}/lib
+
+INCLUDES= . \
+  tests \
+  util \
+  ${MICO_INC} \
+  ${OPENBUSINC}/openbus/cpp \
+  ${OPENBUSINC}/openbus/cpp/stubs/mico \
+  ${OPENBUSINC} \
+  ${OPENBUSINC}/logger \
+  ${OPENBUSINC}/cxxtest
+  
+LDIR= ${OPENBUSLIB} ${MICO_LIB}
+
+LIBS+= mico${MICOVERSION} dl crypto ssl
+
+ifeq "$(MULTITHREAD)" "Yes"
+  SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
+        ${OPENBUSLIB}/libscsmicoMT.a \
+        ${OPENBUSLIB}/liblogger.a
+else
+  SLIB= ${OPENBUSLIB}/libopenbusmicoST.a \
+        ${OPENBUSLIB}/libscsmicoST.a \
+        ${OPENBUSLIB}/liblogger.a
+endif
+
+USE_LUA51= YES
+USE_NODEPEND= Yes
+
+OBJROOT= obj
+TARGETROOT= bin
