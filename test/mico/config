@@ -45,8 +45,8 @@ OPENBUSINC = ${OPENBUS_HOME}/include
 OPENBUSLIB = ${OPENBUS_HOME}/lib
 
 INCLUDES= . \
-  tests \
-  util \
+  ../../util \
+  ../stubs \
   ${MICO_INC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs/mico \
@@ -54,6 +54,9 @@ INCLUDES= . \
   ${OPENBUSINC}/logger \
   ${OPENBUSINC}/cxxtest
   
+  
+AUXILIAR_SRC= ../../util/auxiliar.cpp
+
 LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl

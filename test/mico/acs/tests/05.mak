@@ -3,5 +3,5 @@ APPNAME= 05
 
 include ../../config
 
-SRC= 05.cpp \
-  ../util/auxiliar.cpp
+SRC= $(APPNAME).cpp \
+  $(AUXILIAR_SRC)
