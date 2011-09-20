@@ -1,0 +1,8 @@
+#!/bin/ksh
+
+tests="01 02 03 04 05 06"
+
+cd tests
+for test in $tests ; do
+  $TECMAKE_HOME/tecmake MULTITHREAD=Yes MF=$test $@
+done
