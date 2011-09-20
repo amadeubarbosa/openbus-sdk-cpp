@@ -30,3 +30,35 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   ORBIXLDIR=${ORBIX_HOME}/lib/sparcv9
   LFLAGS= $(CPPFLAGS) -xildoff
 endif
+
+DEFINES=SCS_ORBIX
+DEFINES+=OPENBUS_ORBIX
+
+OPENBUSINC = ${OPENBUS_HOME}/include
+OPENBUSLIB = ${OPENBUS_HOME}/lib
+
+INCLUDES= . \
+  ../../util \
+  ../stubs \
+  ${ORBIXINC} \
+  ${OPENBUSINC}/openbus/cpp \
+  ${OPENBUSINC} \
+  ${OPENBUSINC}/cxxtest \
+  ${OPENBUSINC}/openssl-0.9.9 \
+  ${OPENBUSINC}/logger
+
+AUXILIAR_SRC= ../../util/auxiliar.cpp
+
+LDIR= ${ORBIXLDIR} ${OPENBUSLIB}
+
+LIBS= crypto it_poa it_art it_ifc it_portable_interceptor logger
+
+SLIB= ${OPENBUSLIB}/libopenbusorbix.a \
+      ${OPENBUSLIB}/libscsorbix.a \
+      ${OPENBUSLIB}/liblogger.a
+
+USE_LUA51= YES
+USE_NODEPEND= YES
+
+OBJROOT= obj
+TARGETROOT= bin
