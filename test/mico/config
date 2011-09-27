@@ -55,7 +55,7 @@ INCLUDES= . \
   ${OPENBUSINC}/cxxtest
   
   
-AUXILIAR_SRC= ../../util/auxiliar.cpp
+AUXILIAR_SRC= ../util/auxiliar.cpp
 
 LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
@@ -76,3 +76,13 @@ USE_NODEPEND= Yes
 
 OBJROOT= obj
 TARGETROOT= bin
+
+STUBS= ../stubs/RGSTest.h ../stubs/RGSTest.cc
+
+IDLS: ../idl/RGSTest.idl
+
+$(STUBS): $(IDLS)
+	mkdir -p ../stubs
+	cd ../stubs ; ${MICO_BIN}/idl --poa ../../idl/RGSTest.idl
+
+genstubs: $(STUBS)
