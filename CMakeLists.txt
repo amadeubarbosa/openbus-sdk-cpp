@@ -25,7 +25,7 @@ find_package (Threads)
 find_package (Lua51)
 find_package (Scs)
 
-include_directories (.)
+include_directories (include)
 include_directories (${LOGGER_ROOT})
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
 
@@ -94,7 +94,7 @@ else (MICO_FOUND)
    add_custom_command(
      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/IOR.h
      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/IOR.c
-     COMMAND lua precompiler.lua -d ${CMAKE_CURRENT_BINARY_DIR} -l ${CMAKE_CURRENT_SOURCE_DIR}/lua/*.lua -o IOR -n IOR
+     COMMAND lua ${CMAKE_CURRENT_SOURCE_DIR}/precompiler.lua -d ${CMAKE_CURRENT_BINARY_DIR} -l ${CMAKE_CURRENT_SOURCE_DIR}/lua -f IOR IOR.lua
      WORKING_DIRECTORY ${LOOP_PRECOMPILER_DIR}
      DEPENDS lua/IOR.lua)
 
@@ -125,12 +125,12 @@ else (MICO_FOUND)
 endif (MICO_FOUND)
 
 set(SOURCES ${SOURCES}
-  openbus.cpp
-  FaultToleranceManager.cpp
-  openbus/interceptors/ServerInterceptor.cpp
-  openbus/interceptors/ClientInterceptor.cpp
-  openbus/interceptors/ORBInitializerImpl.cpp
-  openbus/util/Helper.cpp)
+  src/openbus.cpp
+  src/FaultToleranceManager.cpp
+  src/interceptors/ServerInterceptor.cpp
+  src/interceptors/ClientInterceptor.cpp
+  src/interceptors/ORBInitializerImpl.cpp
+  src/util/Helper.cpp)
 
 add_library(openbus_logger_static STATIC ${LOGGER_ROOT}/logger.cpp)
 add_library(openbus_logger_shared STATIC ${LOGGER_ROOT}/logger.cpp)
@@ -156,4 +156,4 @@ endif (MICO_FOUND)
 enable_testing()
 
 add_subdirectory(demo)
-add_subdirectory(test)
+#add_subdirectory(test)
