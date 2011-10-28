@@ -77,13 +77,12 @@ namespace auxiliar {
 
   void fail(const char* testcase, const char* msg) {
     failFlag = true;
-    std::cout << "[FAILED]" << std::endl <<
+    std::cout << "[ERROR]" << std::endl <<
       "......" << msg << std::endl;
   }
   
   void finish(const char* testcase) {
     if (!failFlag) {
-      std::cout << "[PASSED]" << std::endl;
       exit(0);    
     } else {
       exit(-1);    
