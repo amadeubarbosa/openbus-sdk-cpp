@@ -111,6 +111,7 @@ namespace openbus {
         if (bus) {
           timeRenewing = bus->timeRenewing;
           if (bus->connectionState != CONNECTED) {
+            mutex.unlock();
             break;
           } else {
             logger->log(INFO, "Renovando credencial...");
@@ -126,13 +127,17 @@ namespace openbus {
               if (!status) {
                 logger->log(WARNING, "Não foi possível renovar a credencial!");
                 tryExec_LeaseExpiredCallback = true;
+                mutex.unlock();
                 break;
               } else {
                 logger->log(INFO, "Credencial renovada!");
+                mutex.unlock();
+                break;
               }
             } catch (CORBA::Exception& e) {
               logger->log(WARNING, "Não foi possível renovar a credencial!");
               tryExec_LeaseExpiredCallback = true;
+              mutex.unlock();
               break;
             }
             Openbus::logger->log(INFO, "Atualizando intervalo de tempo de na RewnewLeaseThread.");
@@ -141,13 +146,10 @@ namespace openbus {
             continue; 
           }
         }
-        mutex.unlock();
-        break;
       } 
       if (tryExec_LeaseExpiredCallback) {
         if (_leaseExpiredCallback) {
           runningLeaseExpiredCallback = true;
-          mutex.unlock();
           _leaseExpiredCallback->expired();
           Openbus::logger->log(INFO, "LeaseExpiredCallback executada.");
         } else {
@@ -155,7 +157,6 @@ namespace openbus {
         }       
       } 
       runningLeaseExpiredCallback = false;
-      mutex.unlock();
       logger->log(INFO, "Openbus::RenewLeaseThread::run() END");
     #ifdef OPENBUS_ORBIX
       return 0;
@@ -670,7 +671,6 @@ namespace openbus {
 
         }
       } catch (const CORBA::SystemException& systemException) {
-        mutex.unlock();
         logger->log(ERROR, "Throwing CORBA::SystemException...");
         logger->dedent(INFO, "Openbus::connect() END");
         throw;
@@ -846,7 +846,6 @@ namespace openbus {
           return iRegistryService;
         }
       } catch (const CORBA::SystemException& systemException) {
-        mutex.unlock();
         logger->log(ERROR, "Throwing CORBA::SystemException...");
         logger->dedent(INFO, "Openbus::connect() END");
         throw;
