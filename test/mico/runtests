@@ -16,4 +16,5 @@ done
 
 if [ $failFlag -ne 0 ] ; then
   echo "[***WARNING***] There is at least one fail."
+  exit 1
 fi
