@@ -1,5 +1,8 @@
 #include <openbus.h>
 #include <iostream>
+#if HAVE_UNISTD_H
+  #include <unistd.h>
+#endif
 #include "../util/auxiliar.h"
 
 #define TESTCASE "14"
