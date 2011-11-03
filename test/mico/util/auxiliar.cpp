@@ -1,6 +1,8 @@
 #include "auxiliar.h"
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
+#include <string.h>
 
 namespace auxiliar {
   std::string OPENBUS_USERNAME;
