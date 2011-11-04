@@ -34,9 +34,9 @@ int main(int argc, char* argv[]) {
     const char* argv[] = {
       "exec", 
       "-OpenbusHost", 
-      getServerHost().c_str(), 
+      getServerHost(), 
       "-OpenbusPort", 
-      getServerPort().c_str(),
+      getServerPort(),
       "-OpenbusDebug",
       getOpenbusDebug(),
       "-OpenbusTimeRenewing",
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     bus->init(9, (char**) argv);
     leaseExpiredCallbackAfter = false;
     MyCallbackAfter myCallback;
-    bus->connect(getUsername().c_str(), getPassword().c_str());
+    bus->connect(getUsername(), getPassword());
     bus->setLeaseExpiredCallback(&myCallback);
     bus->getAccessControlService()->logout(*bus->getCredential());
     #ifdef MULTITHREAD
