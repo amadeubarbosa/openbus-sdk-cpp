@@ -18,15 +18,15 @@ int main(int argc, char* argv[]) {
     const char* argv[] = {
       "exec", 
       "-OpenbusHost", 
-      getServerHost().c_str(), 
+      getServerHost(), 
       "-OpenbusPort", 
-      getServerPort().c_str(),
+      getServerPort(),
       "-OpenbusDebug",
       getOpenbusDebug(),
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) argv);
-    bus->connect(getUsername().c_str(), getPassword().c_str());
+    bus->connect(getUsername(), getPassword());
     bus->disconnect();
     bus->finish(0);
     if (!CORBA::is_nil(bus->getORB())) {

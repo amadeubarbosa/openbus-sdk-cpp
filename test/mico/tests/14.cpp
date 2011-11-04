@@ -34,9 +34,9 @@ int main(int argc, char* argv[]) {
     const char* argv[] = {
       "exec", 
       "-OpenbusHost", 
-      getServerHost().c_str(), 
+      getServerHost(), 
       "-OpenbusPort", 
-      getServerPort().c_str(),
+      getServerPort(),
       "-OpenbusDebug",
       getOpenbusDebug(),
       "-OpenbusTimeRenewing",
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     leaseExpiredCallbackBefore = false;
     MyCallbackBefore myCallback;
     bus->setLeaseExpiredCallback(&myCallback);
-    bus->connect(getUsername().c_str(), getPassword().c_str());
+    bus->connect(getUsername(), getPassword());
     bus->getAccessControlService()->logout(*bus->getCredential());
     #ifdef MULTITHREAD
       std::cout << "(sleep)" << std::endl;
