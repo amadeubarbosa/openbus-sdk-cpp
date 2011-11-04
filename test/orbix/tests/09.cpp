@@ -17,20 +17,20 @@ int main(int argc, char* argv[]) {
     const char* _args[] = {
       "exec", 
       "-OpenbusHost", 
-      getServerHost().c_str(),
+      getServerHost(),
       "-OpenbusPort", 
-      getServerPort().c_str(),
+      getServerPort(),
       "-OpenbusDebug",
       getOpenbusDebug(),
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) _args);
-    bus->connect(getUsername().c_str(), getPassword().c_str());
+    bus->connect(getUsername(), getPassword());
     iAccessControlService = bus->getAccessControlService();
     access_control_service::Credential_var c;
     access_control_service::Lease l;
-    iAccessControlService->loginByPassword(getUsername().c_str(), 
-      getPassword().c_str(),
+    iAccessControlService->loginByPassword(getUsername(), 
+      getPassword(),
       c, l);
     if (!iAccessControlService->logout(c)) {
       fail(TESTCASE, "Falha no logout.");      

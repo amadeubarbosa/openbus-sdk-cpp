@@ -15,15 +15,15 @@ int main(int argc, char* argv[]) {
     const char* _args[] = {
       "exec", 
       "-OpenbusHost", 
-      getServerHost().c_str(),
+      getServerHost(),
       "-OpenbusPort", 
-      getServerPort().c_str(),
+      getServerPort(),
       "-OpenbusDebug",
       getOpenbusDebug(),
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) _args);
-    bus->connect(getUsername().c_str(), "wrong");
+    bus->connect(getUsername(), "wrong");
   } catch (LOGIN_FAILURE& e) {
     /* pass */
     finish(TESTCASE);

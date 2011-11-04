@@ -18,15 +18,15 @@ int main(int argc, char* argv[]) {
     const char* _args[] = {
       "exec", 
       "-OpenbusHost", 
-      getServerHost().c_str(),
+      getServerHost(),
       "-OpenbusPort", 
-      getServerPort().c_str(),
+      getServerPort(),
       "-OpenbusDebug",
       getOpenbusDebug(),
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) _args);
-    rgs = bus->connect(getUsername().c_str(), getPassword().c_str());
+    rgs = bus->connect(getUsername(), getPassword());
     if (!rgs) {
       fail(TESTCASE, "Nao foi possivel obter o servico de registro.");
     }

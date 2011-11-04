@@ -5,10 +5,10 @@
 
 namespace auxiliar {
   void loadConfigFile();
-  std::string getUsername();
-  std::string getPassword();
-  std::string getServerHost();
-  std::string getServerPort();
+  const char* getUsername();
+  const char* getPassword();
+  const char* getServerHost();
+  const char* getServerPort();
   const char* getOpenbusDebug();
   void begin(const char* testcase);
   void fail(const char* testcase, const char* msg);

@@ -35,9 +35,9 @@ int main(int argc, char* argv[]) {
     const char* _args[] = {
       "exec", 
       "-OpenbusHost", 
-      getServerHost().c_str(),
+      getServerHost(),
       "-OpenbusPort", 
-      getServerPort().c_str(),
+      getServerPort(),
       "-OpenbusDebug",
       getOpenbusDebug(),
       "-OpenbusTimeRenewing",

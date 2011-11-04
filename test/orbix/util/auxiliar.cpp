@@ -47,20 +47,28 @@ namespace auxiliar {
     inFile.close();
   }
 
-  std::string getUsername() {
-    return OPENBUS_USERNAME;
+  const char* getUsername() {
+    char* username = new char[OPENBUS_USERNAME.size() + 1];
+    strcpy(username, OPENBUS_USERNAME.c_str());
+    return username;
   }
 
-  std::string getPassword() {
-    return OPENBUS_PASSWORD;
+  const char* getPassword() {
+    char* password = new char[OPENBUS_PASSWORD.size() + 1];
+    strcpy(password, OPENBUS_PASSWORD.c_str());
+    return password;
   }
 
-  std::string getServerHost() {
-    return OPENBUS_SERVER_HOST;
+  const char* getServerHost() {
+    char* serverHost = new char[OPENBUS_SERVER_HOST.size() + 1];
+    strcpy(serverHost, OPENBUS_SERVER_HOST.c_str());
+    return serverHost;
   }
 
-  std::string getServerPort() {
-    return OPENBUS_SERVER_PORT;
+  const char* getServerPort() {
+    char* serverPort = new char[OPENBUS_SERVER_PORT.size() + 1];
+    strcpy(serverPort, OPENBUS_SERVER_PORT.c_str());
+    return serverPort;
   }
   
   const char* getOpenbusDebug() {
