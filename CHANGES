@@ -1,4 +1,11 @@
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+     Openbus SDK C++ 1.5.4_1 (24 de novembro de 2011)
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
++ Processo servidor Orbix estava consumindo uma quantidade de CPU desnecessária.
++ Reorganização da árvore de diretórios. (include e src)
++ Um processo para cada caso de teste. Remoção do cxxtest.
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
      Openbus SDK C++ 1.5.4 (03 de agosto de 2011)
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 + SCS 1.2.
