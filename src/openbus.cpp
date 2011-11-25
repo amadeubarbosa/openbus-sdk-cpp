@@ -131,7 +131,6 @@ namespace openbus {
                 break;
               } else {
                 logger->log(INFO, "Credencial renovada!");
-                mutex.unlock();
               }
             } catch (CORBA::Exception& e) {
               logger->log(WARNING, "Não foi possível renovar a credencial!");
@@ -327,6 +326,7 @@ namespace openbus {
   Openbus::~Openbus() {
     logger->log(INFO, "Openbus::~Openbus() BEGIN");
     logger->indent();
+    mutex.lock();
     if (bus) {
       logger->log(INFO, "Deletando lista de métodos interceptáveis...");
       MethodsNotInterceptable::iterator iter = methodsNotInterceptable.begin();
@@ -344,15 +344,11 @@ namespace openbus {
         #endif
       #endif
       }
-      mutex.lock();
       bus = 0;
-      mutex.unlock();
       #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
         if (renewLeaseThread) {
           bool b;
-          mutex.lock();
           b = renewLeaseThread->runningLeaseExpiredCallback;
-          mutex.unlock();
           if (!b) {
             Openbus::logger->log(INFO, "Aguardando término da renewLeaseThread...");
           /* Por que o meu wait não fica bloqueado quando o LeaseExpiredCallback() chamda 
@@ -378,6 +374,7 @@ namespace openbus {
         MICOMT::Thread::delete_key(threadKey);
       #endif
     }
+    mutex.unlock();
     logger->dedent(INFO, "Openbus::~Openbus() END");
   }
 
