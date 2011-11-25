@@ -132,7 +132,6 @@ namespace openbus {
               } else {
                 logger->log(INFO, "Credencial renovada!");
                 mutex.unlock();
-                break;
               }
             } catch (CORBA::Exception& e) {
               logger->log(WARNING, "Não foi possível renovar a credencial!");
