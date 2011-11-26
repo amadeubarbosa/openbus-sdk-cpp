@@ -4,6 +4,8 @@
 + Processo servidor Orbix estava consumindo uma quantidade de CPU desnecessária.
 + Reorganização da árvore de diretórios. (include e src)
 + Um processo para cada caso de teste. Remoção do cxxtest.
++ Eliminação de chamadas consecutivas a mutex.unlock() durante o processo de 
+  desconexão do barramento.
 
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
      Openbus SDK C++ 1.5.4 (03 de agosto de 2011)
