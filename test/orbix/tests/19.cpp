@@ -10,6 +10,7 @@ using namespace openbus;
 using namespace auxiliar;
 using namespace tecgraf::openbus::core::v1_05;
 using namespace tecgraf::openbus::core::v1_05::registry_service;
+stringstream offerId;
 
 registry_service::IRegistryService* rgs;
 access_control_service::Credential* credential;
@@ -64,7 +65,8 @@ int main(int argc, char* argv[]) {
   
     openbus::util::PropertyListHelper* propertyListHelper = 
       new openbus::util::PropertyListHelper();
-    propertyListHelper->add("description", "blabla");
+    offerId << getenv("TEC_UNAME") << TESTCASE;
+    propertyListHelper->add("id", offerId.str().c_str());
   
     registry_service::ServiceOffer serviceOffer;
     serviceOffer.properties = propertyListHelper->getPropertyList();
