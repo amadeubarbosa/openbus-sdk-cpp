@@ -17,7 +17,7 @@ char* registryIdentifier;
 char* registryIdentifier2;
 openbus::util::PropertyListHelper* propertyListHelper;
 openbus::util::PropertyListHelper* propertyListHelper2;
-stringstream offerIdl;
+stringstream offerId;
 
 class RGSTest : virtual public POA_IRGSTest {
     void foo() 
