@@ -18,6 +18,7 @@ char* registryIdentifier;
 char* registryIdentifier2;
 openbus::util::PropertyListHelper* propertyListHelper;
 openbus::util::PropertyListHelper* propertyListHelper2;
+stringstream offerId;
 
 class RGSTest : virtual public POA_IRGSTest {
     void foo() 
@@ -66,7 +67,8 @@ int main(int argc, char* argv[]) {
       
     openbus::util::PropertyListHelper* propertyListHelper = 
       new openbus::util::PropertyListHelper();
-    propertyListHelper->add("description", "blabla");
+    offerId << getenv("TEC_UNAME") << TESTCASE;
+    propertyListHelper->add("id", offerId.str().c_str());
       
     registry_service::ServiceOffer serviceOffer;
     serviceOffer.properties = propertyListHelper->getPropertyList();
