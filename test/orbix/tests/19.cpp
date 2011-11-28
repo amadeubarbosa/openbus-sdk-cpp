@@ -11,6 +11,8 @@ using namespace auxiliar;
 using namespace tecgraf::openbus::core::v1_05;
 using namespace tecgraf::openbus::core::v1_05::registry_service;
 stringstream offerId;
+stringstream entityName;
+stringstream privateKeyFilename;
 
 registry_service::IRegistryService* rgs;
 access_control_service::Credential* credential;
@@ -43,10 +45,12 @@ int main(int argc, char* argv[]) {
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) _args);
+    entityName << "TesteBarramento" << getenv("TEC_UNAME");
+    privateKeyFilename << "TesteBarramento" << getenv("TEC_UNAME") << ".key";
     rgs = bus->connect(
-     "TesteBarramento", 
-     "TesteBarramento.key", 
-     "AccessControlService.crt"); 
+      entityName.str().c_str(), 
+      privateKeyFilename.str().c_str(), 
+      "AccessControlService.crt"); 
     if (!rgs) {
       fail(TESTCASE, "Nao foi possivel obter o servico de registro.");
     }
