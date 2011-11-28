@@ -18,6 +18,8 @@ char* registryIdentifier2;
 openbus::util::PropertyListHelper* propertyListHelper;
 openbus::util::PropertyListHelper* propertyListHelper2;
 stringstream offerId;
+stringstream entityName;
+stringstream privateKeyFilename;
 
 class RGSTest : virtual public POA_IRGSTest {
     void foo() 
@@ -43,10 +45,12 @@ int main(int argc, char* argv[]) {
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) _args);
+    entityName << "TesteBarramento" << getenv("TEC_UNAME");
+    privateKeyFilename << "TesteBarramento" << getenv("TEC_UNAME") << ".key";
     rgs = bus->connect(
-     "TesteBarramento", 
-     "TesteBarramento.key", 
-     "AccessControlService.crt"); 
+      entityName.str().c_str(), 
+      privateKeyFilename.str().c_str(), 
+      "AccessControlService.crt"); 
     if (!rgs) {
       fail(TESTCASE, "Nao foi possivel obter o servico de registro.");
     }
