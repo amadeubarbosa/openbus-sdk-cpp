@@ -1,6 +1,7 @@
 #include <openbus.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
+#include <unistd.h>
 #include "../util/auxiliar.h"
 #include "../stubs/RGSTestS.hh"
 
