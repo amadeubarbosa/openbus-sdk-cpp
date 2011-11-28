@@ -19,6 +19,8 @@ char* registryIdentifier2;
 openbus::util::PropertyListHelper* propertyListHelper;
 openbus::util::PropertyListHelper* propertyListHelper2;
 stringstream offerId;
+stringstream entityName;
+stringstream privateKeyFilename;
 
 class RGSTest : virtual public POA_IRGSTest {
     void foo() 
@@ -44,12 +46,15 @@ int main(int argc, char* argv[]) {
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) _args);
+    entityName << "TesteBarramento" << getenv("TEC_UNAME");
+    privateKeyFilename << "TesteBarramento" << getenv("TEC_UNAME") << ".key";
     rgs = bus->connect(
-     "TesteBarramento", 
-     "TesteBarramento.key", 
-     "AccessControlService.crt"); 
+      entityName.str().c_str(), 
+      privateKeyFilename.str().c_str(), 
+      "AccessControlService.crt"); 
     if (!rgs) {
       fail(TESTCASE, "Nao foi possivel obter o servico de registro.");
+      finish(TESTCASE);
     }
     iAccessControlService = bus->getAccessControlService();
     
@@ -77,6 +82,7 @@ int main(int argc, char* argv[]) {
       registryIdentifier = rgs->_cxx_register(serviceOffer);
       if (!registryIdentifier) {
         fail(TESTCASE, "Falha no _cxx_register().");
+        finish(TESTCASE);
       }
     } catch (UnathorizedFacets& e) {
       cout << "Nao foi possivel registrar a oferta." << endl;
@@ -95,6 +101,7 @@ int main(int argc, char* argv[]) {
       registryIdentifier2 = rgs->_cxx_register(serviceOffer);
       if (!registryIdentifier2) {
         fail(TESTCASE, "Falha no _cxx_register().");
+        finish(TESTCASE);
       }
     } catch (UnathorizedFacets& e) {
       cout << "Nao foi possivel registrar a oferta." << endl;
@@ -104,6 +111,7 @@ int main(int argc, char* argv[]) {
         cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
       }
       fail(TESTCASE, "UnathorizedFacet");
+      finish(TESTCASE);
     }
     
     openbus::util::FacetListHelper* facetListHelper = new openbus::util::FacetListHelper();
@@ -115,9 +123,11 @@ int main(int argc, char* argv[]) {
     CORBA::Object_var obj = component->getFacet("IDL:IRGSTest:1.0");
     if (!rgs->unregister(registryIdentifier)) {
       fail(TESTCASE, "Nao foi possivel remover a oferta.");
+      finish(TESTCASE);
     }
     if (!rgs->unregister(registryIdentifier2)) {
       fail(TESTCASE, "Nao foi possivel remover a oferta.");
+      finish(TESTCASE);
     }
     bus->setInterceptable("IDL:IRGSTest:1.0", "foo", false);
     iAccessControlService->logout(*(bus->getCredential()));
@@ -130,7 +140,7 @@ int main(int argc, char* argv[]) {
   } catch (CORBA::Exception& e) {
     fail(TESTCASE, "CORBA::Exception");
   } catch (...) {
-    fail(TESTCASE, "Exceção desconhecida");
+    fail(TESTCASE, "ExceÃ§Ã£o desconhecida");
   }
   finish(TESTCASE);
 }
