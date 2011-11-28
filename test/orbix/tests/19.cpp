@@ -115,8 +115,9 @@ int main(int argc, char* argv[]) {
     
     registry_service::ServiceOfferList* serviceOfferList = 
       rgs->find(facetListHelper->getFacetList());
-    if (serviceOfferList->length() != 2) {
-      fail(TESTCASE, "Deveria existir duas ofertas.");
+    if (serviceOfferList->length() < 1) {
+      fail(TESTCASE, "Deveria existir pelo menos uma oferta.");
+      finish(TESTCASE);
     }
     
     bus->disconnect();
