@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
   
     openbus::util::PropertyListHelper* propertyListHelper = 
       new openbus::util::PropertyListHelper();
-    offerId << getenv("TEC_UNAME") << TESTCASE;
+    offerId << getenv("TEC_UNAME") << TESTCASE << getpid();
     propertyListHelper->add("id", offerId.str().c_str());
 
     registry_service::ServiceOffer serviceOffer;
