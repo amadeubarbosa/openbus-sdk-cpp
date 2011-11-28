@@ -111,7 +111,6 @@ namespace openbus {
         if (bus) {
           timeRenewing = bus->timeRenewing;
           if (bus->connectionState != CONNECTED) {
-            mutex.unlock();
             break;
           } else {
             logger->log(INFO, "Renovando credencial...");
@@ -127,7 +126,6 @@ namespace openbus {
               if (!status) {
                 logger->log(WARNING, "Não foi possível renovar a credencial!");
                 tryExec_LeaseExpiredCallback = true;
-                mutex.unlock();
                 break;
               } else {
                 logger->log(INFO, "Credencial renovada!");
@@ -135,7 +133,6 @@ namespace openbus {
             } catch (CORBA::Exception& e) {
               logger->log(WARNING, "Não foi possível renovar a credencial!");
               tryExec_LeaseExpiredCallback = true;
-              mutex.unlock();
               break;
             }
             Openbus::logger->log(INFO, "Atualizando intervalo de tempo de na RewnewLeaseThread.");
@@ -148,13 +145,16 @@ namespace openbus {
       if (tryExec_LeaseExpiredCallback) {
         if (_leaseExpiredCallback) {
           runningLeaseExpiredCallback = true;
+          mutex.unlock();
           _leaseExpiredCallback->expired();
+          mutex.lock();
           Openbus::logger->log(INFO, "LeaseExpiredCallback executada.");
         } else {
           logger->log(INFO, "Nenhuma callback registrada.");
         }       
       } 
       runningLeaseExpiredCallback = false;
+      mutex.unlock();
       logger->log(INFO, "Openbus::RenewLeaseThread::run() END");
     #ifdef OPENBUS_ORBIX
       return 0;
@@ -354,12 +354,14 @@ namespace openbus {
           /* Por que o meu wait não fica bloqueado quando o LeaseExpiredCallback() chamda 
           *  disconnect() ?!
           */
+            mutex.unlock();
             renewLeaseThread->stop();
             #ifdef OPENBUS_ORBIX
               renewLeaseIT_Thread.join();
             #else
               renewLeaseThread->wait();
             #endif
+            mutex.lock();
             Openbus::logger->log(INFO, "delete renewLeaseThread.");
             delete renewLeaseThread;
             renewLeaseThread = 0;
@@ -858,7 +860,6 @@ namespace openbus {
     logger->indent();
     mutex.lock();
     if (connectionState == CONNECTED) {
-      mutex.unlock();
     #ifndef OPENBUS_ORBIX
       #ifndef MULTITHREAD
         logger->log(INFO, "Removendo callback de renovação de credencial...");
@@ -882,26 +883,24 @@ namespace openbus {
           delete credential;
         }
       #endif
-      mutex.lock();
       newState();
-      mutex.unlock();
       #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
         if (renewLeaseThread) {
           bool b;
-          mutex.lock();
           b = renewLeaseThread->runningLeaseExpiredCallback;
-          mutex.unlock();
           if (!b) {
             Openbus::logger->log(INFO, "Aguardando término da renewLeaseThread...");
           /* Por que o meu wait não fica bloqueado quando o LeaseExpiredCallback() chama 
           *  disconnect() ?!
           */
+            mutex.unlock();
             renewLeaseThread->stop();
             #ifdef OPENBUS_ORBIX
               renewLeaseIT_Thread.join();
             #else
               renewLeaseThread->wait();
             #endif
+            mutex.lock();
             Openbus::logger->log(INFO, "delete renewLeaseThread.");
             delete renewLeaseThread;
             renewLeaseThread = 0;
@@ -912,6 +911,7 @@ namespace openbus {
           }
         }
       #endif
+      mutex.unlock();
       logger->dedent(INFO, "Openbus::disconnect() END");
       return status;
     } else {
