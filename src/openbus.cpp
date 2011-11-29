@@ -61,13 +61,10 @@ namespace openbus {
     void Openbus::RenewLeaseThread::sleep(unsigned short time) {
       unsigned short count = 0;
       for (;count < time; count++) {
-        mutex.lock();
         if (sigINT) {
           sigINT = false;
-          mutex.unlock();
           break;
         } else {
-          mutex.unlock();
         }
         #ifdef OPENBUS_ORBIX
           IT_CurrentThread::sleep(1000);
@@ -82,9 +79,7 @@ namespace openbus {
     }
     
     void Openbus::RenewLeaseThread::stop() {
-      mutex.lock();
       sigINT = true;
-      mutex.unlock();
     }
     
     #ifdef OPENBUS_ORBIX
@@ -574,7 +569,6 @@ namespace openbus {
     logger->log(INFO, "Openbus::createProxyToIAccessControlService() BEGIN");
     logger->indent();
   /* Pode ser chamado de dentro da RenewLeaseThread. */
-    mutex.trylock();
     std::stringstream corbalocIC;
     corbalocIC << "corbaloc::" << hostBus << ":" << portBus << "/openbus_v1_05";
     logger->log(INFO, "corbaloc IC do ACS: " + corbalocIC.str());
@@ -591,7 +585,6 @@ namespace openbus {
     CORBA::Object_var objFT = iComponentAccessControlService->getFacet(
       "IDL:tecgraf/openbus/fault_tolerance/v1_05/IFaultTolerantService:1.0");
     iFaultTolerantService = IFaultTolerantService::_narrow(objFT);
-    mutex.unlock();
     logger->dedent(INFO, "Openbus::createProxyToIAccessControlService() END");
   }
 
@@ -602,6 +595,7 @@ namespace openbus {
   {
     logger->log(INFO, "Openbus::connect() BEGIN");
     logger->indent();
+    mutex.lock();
     if (connectionState == DISCONNECTED) {
       try {
         std::stringstream portMSG;
@@ -624,7 +618,6 @@ namespace openbus {
         stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
         logger->log(INFO, iACSMSG.str());
-        mutex.lock();
         if (!iAccessControlService->loginByPassword(user, password, credential,
           lease))
         {
@@ -633,7 +626,6 @@ namespace openbus {
           logger->dedent(INFO, "Openbus::connect() END");
           throw LOGIN_FAILURE();
         } else {
-
           stringstream msg;
           msg << "Associando credencial " << credential << " ao ORB.";
           logger->log(INFO, msg.str());
@@ -663,19 +655,20 @@ namespace openbus {
               orb->dispatcher()->tm_event(&renewLeaseCallback, timeRenewing*1000);
             #endif
           #endif
-          mutex.unlock();
           logger->dedent(INFO, "Openbus::connect() END");
+          mutex.unlock();
           return iRegistryService;
-
         }
       } catch (const CORBA::SystemException& systemException) {
         logger->log(ERROR, "Throwing CORBA::SystemException...");
         logger->dedent(INFO, "Openbus::connect() END");
+        mutex.unlock();
         throw;
       }
     } else {
       logger->log(INFO, "Ja ha uma conexão ativa.");
       logger->dedent(INFO, "Openbus::connect() END");
+      mutex.unlock();
       throw LOGIN_FAILURE();
     }
   }
@@ -686,6 +679,7 @@ namespace openbus {
     const char* ACSCertificateFilename)
     throw (CORBA::SystemException, LOGIN_FAILURE, SECURITY_EXCEPTION)
   {
+    mutex.lock();
     logger->log(INFO, "Openbus::connect() BEGIN");
     logger->indent();
     if (connectionState == DISCONNECTED) {
@@ -716,6 +710,7 @@ namespace openbus {
         if (octetSeq->length() == 0) {
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
+          mutex.unlock();
           throw SECURITY_EXCEPTION(
             "O ACS não encontrou o certificado do serviço.");
         }
@@ -730,6 +725,7 @@ namespace openbus {
           logger->log(WARNING, filename.str());
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
+          mutex.unlock();
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena a chave privada.");
         }
@@ -739,6 +735,7 @@ namespace openbus {
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
           EVP_PKEY_free(EntityPrivateKey);
+          mutex.unlock();
           throw SECURITY_EXCEPTION(
             "Não foi possível obter a chave privada da entidade.");
         }
@@ -761,6 +758,7 @@ namespace openbus {
           logger->log(WARNING, filename.str());
           logger->log(ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(INFO, "Openbus::connect() END");
+          mutex.unlock();
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena o certificado ACS.");
         }
@@ -778,6 +776,7 @@ namespace openbus {
           free(challengePlainText);
           EVP_PKEY_free(ACSPublicKey);
           X509_free(x509);
+          mutex.unlock();
           throw SECURITY_EXCEPTION(
             "Não foi possível obter a chave pública do ACS.");
         }
@@ -801,7 +800,6 @@ namespace openbus {
         stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
         logger->log(INFO, iACSMSG.str());
-        mutex.lock();
         if (!iAccessControlService->loginByCertificate(entity, answerOctetSeq,
           credential, lease))
         {
@@ -846,11 +844,13 @@ namespace openbus {
       } catch (const CORBA::SystemException& systemException) {
         logger->log(ERROR, "Throwing CORBA::SystemException...");
         logger->dedent(INFO, "Openbus::connect() END");
+        mutex.unlock();
         throw;
       }
     } else {
       logger->log(INFO, "Ja ha uma conexão ativa.");
       logger->dedent(INFO, "Openbus::connect() END");
+      mutex.unlock();
       throw LOGIN_FAILURE();
     }
   }
@@ -878,11 +878,6 @@ namespace openbus {
       } catch (CORBA::Exception& e) {
         logger->log(WARNING, "Não foi possível realizar logout.");
       }
-      #if 0
-        if (credential) {
-          delete credential;
-        }
-      #endif
       newState();
       #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
         if (renewLeaseThread) {
