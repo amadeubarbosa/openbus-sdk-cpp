@@ -8,6 +8,8 @@ using namespace openbus;
 using namespace auxiliar;
 
 access_control_service::IAccessControlService* iAccessControlService;
+stringstream entityName;
+stringstream privateKeyFilename;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();
@@ -25,9 +27,11 @@ int main(int argc, char* argv[]) {
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) _args);
+    entityName << "TesteBarramento" << getenv("TEC_UNAME");
+    privateKeyFilename << "TesteBarramento" << getenv("TEC_UNAME") << ".key";
     bus->connect(
-      "TesteBarramento", 
-      "TesteBarramento.key", 
+      entityName.str().c_str(), 
+      privateKeyFilename.str().c_str(), 
       "AccessControlService.crt"); 
     access_control_service::Credential* trueCredential = 
       bus->getCredential();
@@ -41,9 +45,11 @@ int main(int argc, char* argv[]) {
       bool status = iAccessControlService->isValid(wrongCredential);
       if (status) {
         fail(TESTCASE, "Uma credencial invalida conseguiu ser validada.");
+        finish(TESTCASE);
       }
     } catch(CORBA::NO_PERMISSION& e) {
       fail(TESTCASE, "CORBA::NO_PERMISSION");
+      finish(TESTCASE);
     }
     bus->setThreadCredential(trueCredential);
   } catch (SECURITY_EXCEPTION& e) {

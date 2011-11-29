@@ -205,10 +205,10 @@ namespace openbus {
           #else
             if (bus->getAccessControlService()->isValid(c)) {
           #endif
-              Openbus::logger->log(INFO, "Credencial renovada.");
+              Openbus::logger->log(INFO, "Credencial validada.");
               Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
             } else {
-              Openbus::logger->log(INFO, "Falha na renovação da credencial.");
+              Openbus::logger->log(INFO, "Falha na validação da credencial.");
               Openbus::logger->log(ERROR, "Throwing CORBA::NO_PERMISSION...");
               Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
               throw CORBA::NO_PERMISSION();

@@ -9,6 +9,8 @@ using namespace auxiliar;
 
 registry_service::IRegistryService* rgs;
 access_control_service::Credential* credential;
+stringstream entityName;
+stringstream privateKeyFilename;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();
@@ -26,12 +28,15 @@ int main(int argc, char* argv[]) {
       "-OpenbusTimeRenewing",
       "2"};
     bus->init(9, (char**) _args);
+    entityName << "TesteBarramento" << getenv("TEC_UNAME");
+    privateKeyFilename << "TesteBarramento" << getenv("TEC_UNAME") << ".key";
     rgs = bus->connect(
-     "TesteBarramento", 
-     "TesteBarramento.key", 
-     "AccessControlService.crt"); 
+      entityName.str().c_str(), 
+      privateKeyFilename.str().c_str(), 
+      "AccessControlService.crt"); 
     if (!rgs) {
       fail(TESTCASE, "Nao foi possivel obter o servico de registro.");
+      finish(TESTCASE);
     }
     bus->disconnect();
   } catch (LOGIN_FAILURE& e) {
