@@ -1,6 +1,7 @@
 #include <openbus.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
+#include <unistd.h>
 #include "../util/auxiliar.h"
 #include "../stubs/RGSTestS.hh"
 
@@ -69,7 +70,7 @@ int main(int argc, char* argv[]) {
   
     openbus::util::PropertyListHelper* propertyListHelper = 
       new openbus::util::PropertyListHelper();
-    offerId << getenv("TEC_UNAME") << TESTCASE;
+    offerId << getenv("TEC_UNAME") << TESTCASE << getpid();
     propertyListHelper->add("id", offerId.str().c_str());
   
     registry_service::ServiceOffer serviceOffer;
@@ -114,8 +115,9 @@ int main(int argc, char* argv[]) {
     
     registry_service::ServiceOfferList* serviceOfferList = 
       rgs->find(facetListHelper->getFacetList());
-    if (serviceOfferList->length() != 2) {
-      fail(TESTCASE, "Deveria existir duas ofertas.");
+    if (serviceOfferList->length() < 1) {
+      fail(TESTCASE, "Deveria existir pelo menos uma oferta.");
+      finish(TESTCASE);
     }
     
     bus->disconnect();

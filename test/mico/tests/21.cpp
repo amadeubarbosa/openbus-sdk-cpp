@@ -1,6 +1,7 @@
 #include <openbus.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
+#include <unistd.h>
 #include "../util/auxiliar.h"
 #include "../stubs/RGSTest.h"
 
@@ -67,7 +68,7 @@ int main(int argc, char* argv[]) {
       
     openbus::util::PropertyListHelper* propertyListHelper = 
       new openbus::util::PropertyListHelper();
-    offerId << getenv("TEC_UNAME") << TESTCASE;
+    offerId << getenv("TEC_UNAME") << TESTCASE << getpid();
     propertyListHelper->add("id", offerId.str().c_str());
       
     registry_service::ServiceOffer serviceOffer;
@@ -109,7 +110,10 @@ int main(int argc, char* argv[]) {
     openbus::util::FacetListHelper* facetListHelper = new openbus::util::FacetListHelper();
     facetListHelper->add("IRGSTest");
      
-    registry_service::ServiceOfferList_var serviceOfferList = rgs->find(facetListHelper->getFacetList());
+    registry_service::ServiceOfferList_var serviceOfferList = \
+    rgs->findByCriteria(
+      facetListHelper->getFacetList(),
+      propertyListHelper->getPropertyList());
     serviceOffer = serviceOfferList[(CORBA::ULong) 0];
     component = serviceOffer.member;
     CORBA::Object_var obj = component->getFacet("IDL:IRGSTest:1.0");
