@@ -98,6 +98,7 @@ namespace openbus {
         CORBA::SystemException,
         PortableInterceptor::ForwardRequest)
     {
+    #if 0
       Openbus::logger->log(INFO, "ClientInterceptor::receive_exception() BEGIN");
       Openbus::logger->indent();
       stringstream out;
@@ -188,6 +189,7 @@ namespace openbus {
       }
       Openbus::logger->dedent(INFO, 
         "ClientInterceptor::receive_exception() END");
+    #endif
     }
 
     void ClientInterceptor::receive_other( ClientRequestInfo_ptr ri ) 

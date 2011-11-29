@@ -398,7 +398,7 @@ namespace openbus {
 
   Openbus* Openbus::getInstance() {
     logger = Logger::getInstance();
-    mutex.trylock();
+    mutex.lock();
     if (!bus) {
       bus = new Openbus();
     }
@@ -621,9 +621,9 @@ namespace openbus {
         if (!iAccessControlService->loginByPassword(user, password, credential,
           lease))
         {
-          mutex.unlock();
           logger->log(ERROR, "Throwing LOGIN_FAILURE...");
           logger->dedent(INFO, "Openbus::connect() END");
+          mutex.unlock();
           throw LOGIN_FAILURE();
         } else {
           stringstream msg;
