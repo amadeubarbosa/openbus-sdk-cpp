@@ -32,7 +32,8 @@ int main(int argc, char* argv[]) {
     bus->connect(
       entityName.str().c_str(), 
       privateKeyFilename.str().c_str(), 
-      "AccessControlService.crt"); 
+      "AccessControlService.crt");
+    bus->disconnect();
   } catch (SECURITY_EXCEPTION& e) {
     fail(TESTCASE, "SECURITY_EXCEPTION");
   } catch (CORBA::Exception& e) {

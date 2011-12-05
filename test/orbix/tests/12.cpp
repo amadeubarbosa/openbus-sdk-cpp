@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
     if (iAccessControlService->isValid(*credential2)) {
       fail(TESTCASE, "Credencial NAO deveria ser valida.");      
     }
+    bus->disconnect();
   } catch (SECURITY_EXCEPTION& e) {
     fail(TESTCASE, "SECURITY_EXCEPTION");
   } catch (CORBA::Exception& e) {
