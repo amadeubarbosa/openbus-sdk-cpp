@@ -135,6 +135,9 @@ namespace openbus {
             timeRenewing = bus->timeRenewing;
             mutex.unlock();
           }
+        } else {
+          logger->log(WARNING, "[RenewLeaseThread] Referência ao barramento destruída.");
+          break;
         }
       } 
       if (tryExec_LeaseExpiredCallback) {

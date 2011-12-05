@@ -28,7 +28,8 @@ int main(int argc, char* argv[]) {
     bus->connect(
       "TesteBarramento", 
       "TesteBarramento.key", 
-      "AccessControlService.crt"); 
+      "AccessControlService.crt");
+    bus->disconnect();
   } catch (SECURITY_EXCEPTION& e) {
     fail(TESTCASE, "SECURITY_EXCEPTION");
   } catch (CORBA::Exception& e) {

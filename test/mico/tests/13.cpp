@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
       fail(TESTCASE, "CORBA::NO_PERMISSION");
     }
     bus->setThreadCredential(trueCredential);
+    delete bus;
   } catch (SECURITY_EXCEPTION& e) {
     fail(TESTCASE, "SECURITY_EXCEPTION");
   } catch (CORBA::Exception& e) {

@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
     if (iAccessControlService->logout(c)) {
       fail(TESTCASE, "Logout repetido.");            
     }
+    delete bus;
   } catch (LOGIN_FAILURE& e) {
     fail(TESTCASE, "LOGIN_FAILURE");
   } catch (CORBA::Exception& e) {
