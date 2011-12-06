@@ -58,13 +58,12 @@ namespace openbus {
       sigINT = false;
     }
     
-    void Openbus::RenewLeaseThread::sleep(unsigned short time) {
+    bool Openbus::RenewLeaseThread::sleep(unsigned short time) {
       unsigned short count = 0;
       for (;count < time; count++) {
         if (sigINT) {
           sigINT = false;
-          break;
-        } else {
+          return true;
         }
         #ifdef OPENBUS_ORBIX
           IT_CurrentThread::sleep(1000);
@@ -76,6 +75,7 @@ namespace openbus {
           #endif
         #endif
       }
+      return false;
     }
     
     void Openbus::RenewLeaseThread::stop() {
@@ -87,6 +87,7 @@ namespace openbus {
     #else
     void Openbus::RenewLeaseThread::_run(void*) {
     #endif
+      bool interrupted = false;
       unsigned int timeRenewing = 1;
       stringstream msg;
       bool tryExec_LeaseExpiredCallback = false;
@@ -97,13 +98,13 @@ namespace openbus {
         logger->log(INFO, msg.str());
         msg.str("");
       #if _WIN32
-        this->sleep(timeRenewing * 100);
+        interrupted = this->sleep(timeRenewing * 100);
       #else
-        this->sleep(timeRenewing);
+        interrupted = this->sleep(timeRenewing);
       #endif
 
         mutex.lock();
-        if (bus) {
+        if (bus && !interrupted) {
           timeRenewing = bus->timeRenewing;
           if (bus->connectionState != CONNECTED) {
             logger->log(INFO, "[RenewLeaseThread] Não há mais conexão com o barramento.");
@@ -342,7 +343,6 @@ namespace openbus {
         #endif
       #endif
       }
-      bus = 0;
       #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
         if (renewLeaseThread) {
           bool b;
@@ -373,6 +373,7 @@ namespace openbus {
       #if (!OPENBUS_ORBIX && MULTITHREAD)
         MICOMT::Thread::delete_key(threadKey);
       #endif
+      bus = 0;
     }
     mutex.unlock();
     logger->dedent(INFO, "Openbus::~Openbus() END");
