@@ -308,7 +308,7 @@ namespace openbus {
           void stop();
         private:
           bool sigINT;
-          void sleep(unsigned short time);
+          bool sleep(unsigned short time);
       };
       static RenewLeaseThread* renewLeaseThread;
     #else
