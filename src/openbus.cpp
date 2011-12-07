@@ -641,6 +641,7 @@ namespace openbus {
           setRegistryService();
           #ifdef OPENBUS_ORBIX
             if (!renewLeaseThread) {
+              Openbus::logger->log(INFO, "Criando uma RenewLeaseThread.");
               renewLeaseThread = new RenewLeaseThread();
               renewLeaseIT_Thread = IT_ThreadFactory::smf_start(
                 *renewLeaseThread, 
@@ -823,6 +824,7 @@ namespace openbus {
           setRegistryService();
           #ifdef OPENBUS_ORBIX
             if (!renewLeaseThread) {
+              Openbus::logger->log(INFO, "Criando uma RenewLeaseThread.");
               renewLeaseThread = new RenewLeaseThread();
               renewLeaseIT_Thread = IT_ThreadFactory::smf_start(
                 *renewLeaseThread, 
