@@ -87,13 +87,14 @@ namespace openbus {
     #else
     void Openbus::RenewLeaseThread::_run(void*) {
     #endif
+      logger->log(INFO, "Openbus::RenewLeaseThread::run() BEGIN");
       bool interrupted = false;
       unsigned int timeRenewing = 1;
       stringstream msg;
       bool tryExec_LeaseExpiredCallback = false;
       bus->setThreadCredential(bus->credential);
       while (true) {
-        logger->log(INFO, "Openbus::RenewLeaseThread::run() BEGIN");
+        logger->log(INFO, "Openbus::RenewLeaseThread::run() WHILE BEGIN");
         msg << "sleep [" << timeRenewing <<"]s ...";
         logger->log(INFO, msg.str());
         msg.str("");
@@ -354,6 +355,7 @@ namespace openbus {
           */
             mutex.unlock();
             renewLeaseThread->stop();
+            Openbus::logger->log(INFO, "Esperando RenewLeaseThread...");
             #ifdef OPENBUS_ORBIX
               renewLeaseIT_Thread.join();
             #else
@@ -896,6 +898,7 @@ namespace openbus {
           */
             mutex.unlock();
             renewLeaseThread->stop();
+            Openbus::logger->log(INFO, "Esperando RenewLeaseThread...");
             #ifdef OPENBUS_ORBIX
               renewLeaseIT_Thread.join();
             #else
