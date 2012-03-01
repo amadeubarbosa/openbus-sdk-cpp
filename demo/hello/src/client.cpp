@@ -1,13 +1,17 @@
 #include <openbus.h>
 #include <iostream>
+#include "stubs/hello.h"
 
 int main(int argc, char** argv) {
   try {
     std::auto_ptr <openbus::Connection> conn = std::auto_ptr <openbus::Connection>
       (openbus::connect("localhost", 2089));
     conn->loginByPassword("demo", "demo");
-    openbus::openbusidl_offer_registry::ServiceOfferDescSeq_var so = 
-    conn->offer_registry()->getServices();
+    openbus::openbusidl_offer_registry::ServiceOfferDescSeq_var offers =
+      conn->offer_registry()->getServices();
+    CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
+    Hello* hello = Hello::_narrow(o);
+    hello->sayHello();
     conn->close();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;

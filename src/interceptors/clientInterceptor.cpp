@@ -22,23 +22,22 @@ namespace openbus {
           openbusidl_credential::CredentialData credential;
           credential.bus = CORBA::string_dup(connection->busId());
           credential.login = CORBA::string_dup(connection->loginInfo()->id);
-          memset(credential.chain.signature, '\0', 256);
-          std::string busid(credential.bus);
+          
           openbusidl::HashValue profileDataHash;
           SHA256(
             ri->effective_profile()->profile_data.get_buffer(),
             ri->effective_profile()->profile_data.length(), 
             profileDataHash);
-          std::string sprofileDataHash((const char*) profileDataHash);
-          if (profile2busid.find(sprofileDataHash) == profile2busid.end()) {      
+          std::string sprofileDataHash((const char*) profileDataHash, 32);
+
+          if (profile2login.find(sprofileDataHash) == profile2login.end()) {
             credential.ticket = 0;
             memset(credential.hash, '\0', 32);
+            memset(credential.chain.signature, '\0', 256);
           } else {
-            CredentialSession* credSession = profile2busid[sprofileDataHash];
-            if (credSession->ticket > 0) {
-              ++credSession->ticket;
-              credential.ticket = credSession->ticket;
-            }
+            std::string login = profile2login[sprofileDataHash];
+            CredentialSession* credSession = login2credsession[login];
+            credential.ticket = ++credSession->ticket;
             CORBA::Long objectKeyLen;
             const CORBA::Octet* objectKeyOct = 
               ri->target()->_ior()->get_profile(0)->objectkey(objectKeyLen);
@@ -56,8 +55,15 @@ namespace openbus {
             memcpy((unsigned char*) (s+26), objectKey, strlen(objectKey));
             memcpy((unsigned char*) (s+26+strlen(objectKey)), operation, strlen(operation));
             SHA256(s, slen, credential.hash);
+            
+            const char* clogin = login.c_str();
+            if (strcmp(connection->busId(), clogin)) {
+              credential.chain = *connection->access_control()->signChainFor(clogin);
+            } else {
+              memset(credential.chain.signature, '\0', 256);              
+            }
           }
-      
+          
           CORBA::Any any;
           any <<= credential;
           CORBA::OctetSeq_var octets;
@@ -129,18 +135,22 @@ namespace openbus {
               //[doubt] trocar assert por exceção ?
               assert(0);
             secret[secretLen] = '\0';
+
             openbusidl::HashValue profileDataHash;
             SHA256(
               ri->effective_profile()->profile_data.get_buffer(),
               ri->effective_profile()->profile_data.length(), 
               profileDataHash);
-            std::string sprofileDataHash((const char*) profileDataHash);
-            if (profile2busid.find(sprofileDataHash) == profile2busid.end()) {
+            std::string sprofileDataHash((const char*) profileDataHash, 32);
+            std::string remoteid(credentialReset.login);
+            profile2login[sprofileDataHash] = remoteid;
+            
+            if (login2credsession.find(remoteid) == login2credsession.end()) {
               CredentialSession* credSession = new CredentialSession();
               credSession->remoteid  = CORBA::string_dup(credentialReset.login);
               credSession->secret = secret;
               credSession->ticket = 0;
-              profile2busid[sprofileDataHash] = credSession;
+              login2credsession[remoteid] = credSession;
             }
             throw PortableInterceptor::ForwardRequest(ri->target(), false);
           }

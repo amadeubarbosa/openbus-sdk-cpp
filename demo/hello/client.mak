@@ -32,4 +32,4 @@ endif
 
 USE_NODEPEND= Yes
 
-SRC= src/client.cpp 
+SRC= src/client.cpp stubs/hello.cc

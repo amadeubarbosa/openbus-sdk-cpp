@@ -37,9 +37,10 @@ namespace openbus {
         struct CredentialSession {
           char* remoteid;
           unsigned char* secret;
-          unsigned long ticket;
+          CORBA::ULong ticket;
         };
-        std::map<std::string, CredentialSession*> profile2busid;
+        std::map<std::string, std::string> profile2login;
+        std::map<std::string, CredentialSession*> login2credsession;
     };
   }
 }
