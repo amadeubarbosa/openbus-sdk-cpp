@@ -33,7 +33,7 @@ endif
 
 USE_NODEPEND= Yes
 
-SRC= src/server.cpp stubs/hello.cc stubs/facetS.cc stubs/facetC.cc
+SRC= src/server.cpp stubs/hello.cc
 
 IDLS= idl/hello.idl
 

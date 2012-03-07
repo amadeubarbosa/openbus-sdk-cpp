@@ -28,6 +28,17 @@ namespace openbus {
     ** CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
     */
     _orb = CORBA::ORB_init(argc, argv);
+    /* [obs]
+    ** É necessário ativar o POA para evitar uma deadlock distribuído, que pode por exemplo ser 
+    ** exercitado com uma chamada offer_registry::registerService(), em que  o  servidor  chama 
+    ** um getComponentId() ao servant que é responsável pelo serviço que está sendo registrado.
+    ** [doubt] 
+    ** A responsabilidade desta ativação deve ser do SDK ou do SCS?
+    */
+    CORBA::Object_var o = _orb->resolve_initial_references("RootPOA");
+    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+    poa_manager->activate();    
   }
   
   ORB::~ORB() { }

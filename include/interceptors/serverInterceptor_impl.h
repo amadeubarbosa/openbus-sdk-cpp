@@ -2,8 +2,10 @@
 #define TECGRAF_SERVERINTERCEPTOR_IMPL_H_
 
 #include <CORBA.h>
+#include <connection.h>
 
 namespace openbus {
+  class Connection;
   namespace interceptors {
     class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor {
       public:
@@ -25,10 +27,22 @@ namespace openbus {
         char* name() throw (CORBA::SystemException) 
           { return CORBA::string_dup("ServerInterceptor"); }
         void destroy() { }
+        void addConnection(Connection* connection);
+        void removeConnection(Connection* connection);
       private:
         PortableInterceptor::Current* piCurrent;
         PortableInterceptor::SlotId slotId;
         IOP::Codec* cdr_codec;
+        Connection* connection;
+        struct Session {
+          //[todo] tickets
+          unsigned char secret[16];
+          Session() {
+            for (short i=0;i<16;++i)
+              secret[i] = rand() % 255;
+          }
+        };
+        std::map<std::string, Session*> loginSession;
     };
   }
 }

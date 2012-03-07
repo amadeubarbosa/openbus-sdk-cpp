@@ -4,7 +4,7 @@ Category {
 }
 
 Entity {
-  id = "DemoCppHello",
+  id = "demo",
   category = "DemoCppHelloCategory",
   name = "Entidade gerada pelo script",
 }

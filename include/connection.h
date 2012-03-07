@@ -21,6 +21,7 @@ namespace openbus {
   
   namespace interceptors {
     class ClientInterceptor;
+    class ServerInterceptor;
     class ORBInitializer;
   }
   class RenewLogin;
@@ -182,6 +183,9 @@ namespace openbus {
       const openbusidl_offer_registry::OfferRegistry_var offer_registry() const 
         { return _offer_registry; }
 
+      const openbusidl_access_control::LoginRegistry_var login_registry() const 
+        { return _login_registry; }
+
       /**
       * Verifica o estado da conexão.
       *
@@ -211,6 +215,9 @@ namespace openbus {
       /** Referência para o interceptador cliente. */
       interceptors::ClientInterceptor* _clientInterceptor;
 
+      /** Referência para o interceptador servidor. */
+      interceptors::ServerInterceptor* _serverInterceptor;
+
       /** Referência para a thread reponsável pela renovação do login. */
       std::auto_ptr<RenewLogin> _renewLogin;
 
@@ -223,6 +230,9 @@ namespace openbus {
       /** Referência para o serviço de acesso do barramento.  */
       openbusidl_access_control::AccessControl_var _access_control;
     
+      /** Referência para o serviço de login.  */
+      openbusidl_access_control::LoginRegistry_var _login_registry;
+
       /** Referência para o serviço de ofertas.  */
       openbusidl_offer_registry::OfferRegistry_var _offer_registry;
 

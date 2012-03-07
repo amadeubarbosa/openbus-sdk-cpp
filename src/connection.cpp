@@ -20,6 +20,7 @@ namespace openbus {
     CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
     assert(!CORBA::is_nil(obj));
     _clientInterceptor = _orbInitializer->getClientInterceptor();
+    _serverInterceptor = _orbInitializer->getServerInterceptor();
     _clientInterceptor->allowRequestWithoutCredential = true;
     _iComponent = scs::core::IComponent::_narrow(obj);
     obj = _iComponent->getFacetByName(openbusidl_access_control::AccessControlFacet);
@@ -28,6 +29,9 @@ namespace openbus {
     obj = _iComponent->getFacetByName(openbusidl_offer_registry::OfferRegistryFacet);
     assert(!CORBA::is_nil(obj));
     _offer_registry = openbusidl_offer_registry::OfferRegistry::_narrow(obj);
+    obj = _iComponent->getFacetByName(openbusidl_access_control::LoginRegistryFacet);
+    assert(!CORBA::is_nil(obj));
+    _login_registry = openbusidl_access_control::LoginRegistry::_narrow(obj);
     _busId = _access_control->busid();
     _loginInfo.reset();
     buskeyOctetSeq = _access_control->buskey();
@@ -55,6 +59,7 @@ namespace openbus {
     // loginInfoSeq->length(0);
     // _callerChain->logins = *loginInfoSeq;
     _clientInterceptor->addConnection(this);
+    _serverInterceptor->addConnection(this);
   }
 
   Connection::~Connection() {
@@ -144,13 +149,13 @@ namespace openbus {
     this->_loginInfo = std::auto_ptr<openbusidl_access_control::LoginInfo> 
       (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
-  // #ifdef MULTITHREAD
-  //   _renewLogin.reset(new RenewLogin(this, validityTime));
-  //   _renewLogin->start();
-  // #else
-  //   _renewLogin.reset(new RenewLogin(_access_control));  
-  //   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
-  // #endif
+  #ifdef MULTITHREAD
+    _renewLogin.reset(new RenewLogin(this, validityTime));
+    _renewLogin->start();
+  #else
+    _renewLogin.reset(new RenewLogin(_access_control));  
+    _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
+  #endif
   }
 
   void Connection::loginByCertificate(
@@ -309,6 +314,7 @@ namespace openbus {
     if (loginInfo())
       logout();
     _clientInterceptor->removeConnection(this);
+    _serverInterceptor->removeConnection(this);
   }
 
   bool Connection::logout() {

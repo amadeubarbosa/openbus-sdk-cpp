@@ -9,6 +9,7 @@
 namespace openbus {
   namespace interceptors {
     class ClientInterceptor;
+    class ServerInterceptor;
     
     class ORBInitializer : public PortableInterceptor::ORBInitializer {
       public:
@@ -18,6 +19,8 @@ namespace openbus {
         void post_init(PortableInterceptor::ORBInitInfo* info) { }
         ClientInterceptor* getClientInterceptor() const 
           { return clientInterceptor.get(); }
+        ServerInterceptor* getServerInterceptor() const 
+          { return serverInterceptor.get(); }
         IOP::Codec* codec() const
           { return _codec; }
       private:
