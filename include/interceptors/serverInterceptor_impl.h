@@ -36,13 +36,15 @@ namespace openbus {
         Connection* connection;
         struct Session {
           //[todo] tickets
+          CORBA::ULong id;
           unsigned char secret[16];
           Session() {
             for (short i=0;i<16;++i)
               secret[i] = rand() % 255;
+            id = 0;
           }
         };
-        std::map<std::string, Session*> loginSession;
+        std::map<std::string, Session> loginSession;
     };
   }
 }

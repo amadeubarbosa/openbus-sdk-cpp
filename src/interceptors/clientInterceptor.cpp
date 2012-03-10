@@ -14,7 +14,7 @@ namespace openbus {
       throw (CORBA::Exception)
     {
       const char* operation = ri->operation();
-      std::cout << operation << std::endl;
+      std::cout << "send_request:" << operation << std::endl;
       if (!allowRequestWithoutCredential) {
         if (connection && connection->loginInfo()) {
           IOP::ServiceContext serviceContext;
@@ -32,11 +32,13 @@ namespace openbus {
 
           if (profile2login.find(sprofileDataHash) == profile2login.end()) {
             credential.ticket = 0;
+            credential.session = 0;
             memset(credential.hash, '\0', 32);
             memset(credential.chain.signature, '\0', 256);
           } else {
             std::string login = profile2login[sprofileDataHash];
             CredentialSession* credSession = login2credsession[login];
+            credential.session = credSession->id;
             credential.ticket = ++credSession->ticket;
             CORBA::Long objectKeyLen;
             const CORBA::Octet* objectKeyOct = 
@@ -44,7 +46,7 @@ namespace openbus {
             char* objectKey = new char[objectKeyLen+1];
             memcpy(objectKey, objectKeyOct, objectKeyLen);
             objectKey[objectKeyLen] = '\0';
-            int slen = 26 + strlen(objectKey) + strlen(operation);
+            int slen = 26 + strlen(operation);
             unsigned char* s = new unsigned char[slen];
             s[0] = 2;
             s[1] = 0;
@@ -52,8 +54,7 @@ namespace openbus {
             memcpy((unsigned char*) (s+18), (unsigned char*) &credential.ticket, 4);
             unsigned int rid = (unsigned int) ri->request_id();
             memcpy((unsigned char*) (s+22), &rid, 4);
-            memcpy((unsigned char*) (s+26), objectKey, strlen(objectKey));
-            memcpy((unsigned char*) (s+26+strlen(objectKey)), operation, strlen(operation));
+            memcpy((unsigned char*) (s+26), operation, strlen(operation));
             SHA256(s, slen, credential.hash);
             
             const char* clogin = login.c_str();
@@ -69,15 +70,10 @@ namespace openbus {
           CORBA::OctetSeq_var octets;
           octets = cdr_codec->encode_value(any);
           
-          unsigned char* data = new unsigned char[octets->length()+2];
-          data[0] = 2;
-          data[1] = 0;
-          memcpy(&data[2], octets->get_buffer(), octets->length());
-          
           IOP::ServiceContext::_context_data_seq seq(
-            octets->length()+2,
-            octets->length()+2,
-            data,
+            octets->length(),
+            octets->length(),
+            octets->get_buffer(),
             0);
       
           serviceContext.context_data = seq;
@@ -90,19 +86,19 @@ namespace openbus {
     void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo* ri)
       throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
     {
-      std::cout << "[exception]" << ri->received_exception_id() << std::endl;
+      std::cout << "receive_exception:" << ri->received_exception_id() << std::endl;
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
         if ((ex->completed() == CORBA::COMPLETED_NO) && 
             (ex->minor() == openbusidl_access_control::InvalidCredentialCode)) 
         {
-          std::cout << "got invalid credential exception" << std::endl;
+          std::cout << "creating credential session..." << std::endl;
           if (IOP::ServiceContext_var sctx = 
             ri->get_request_service_context(openbusidl_credential::CredentialContextId)) {
             CORBA::OctetSeq o(
-              sctx->context_data.length()-2, 
-              sctx->context_data.length()-2, 
-              sctx->context_data.get_buffer()+2);
+              sctx->context_data.length(), 
+              sctx->context_data.length(), 
+              sctx->context_data.get_buffer());
             //[doubt] pegar exceção FormatMismatch ?
             CORBA::Any_var any = 
               cdr_codec->decode_value(o, openbusidl_credential::_tc_CredentialReset);
@@ -147,6 +143,7 @@ namespace openbus {
             
             if (login2credsession.find(remoteid) == login2credsession.end()) {
               CredentialSession* credSession = new CredentialSession();
+              credSession->id = credentialReset.session;
               credSession->remoteid  = CORBA::string_dup(credentialReset.login);
               credSession->secret = secret;
               credSession->ticket = 0;

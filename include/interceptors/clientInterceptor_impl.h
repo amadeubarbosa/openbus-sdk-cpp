@@ -35,6 +35,7 @@ namespace openbus {
         IOP::Codec* cdr_codec;
         Connection* connection;
         struct CredentialSession {
+          CORBA::ULong id;
           char* remoteid;
           unsigned char* secret;
           CORBA::ULong ticket;

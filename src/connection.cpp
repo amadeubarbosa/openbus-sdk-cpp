@@ -136,16 +136,13 @@ namespace openbus {
       static_cast<CORBA::Octet*> (encodedPrvKey));
 
     openbusidl_access_control::ValidityTime validityTime;
-    char* id = _access_control->loginByPassword(
+    openbusidl_access_control::LoginInfo* _loginInfo = _access_control->loginByPassword(
       entity, 
       prvkeyOctetSeq,
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
 
-    openbusidl_access_control::LoginInfo* _loginInfo = new openbusidl_access_control::LoginInfo();
-    _loginInfo->id = id;
-    _loginInfo->entity = CORBA::string_dup(entity);
     this->_loginInfo = std::auto_ptr<openbusidl_access_control::LoginInfo> 
       (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
@@ -176,7 +173,7 @@ namespace openbus {
       throw AlreadyLogged();
     openbusidl::EncryptedBlock challenge;
     _clientInterceptor->allowRequestWithoutCredential = true;
-    openbusidl_access_control::LoginByCertificate_var loginByCertificate =
+    openbusidl_access_control::LoginProcess_var loginProcess =
       _access_control->startLoginByCertificate(entity, challenge);
     _clientInterceptor->allowRequestWithoutCredential = false;
 
@@ -266,14 +263,11 @@ namespace openbus {
 
     openbusidl_access_control::ValidityTime validityTime;
     _clientInterceptor->allowRequestWithoutCredential = true;
-    char* id = loginByCertificate->login(
+    openbusidl_access_control::LoginInfo* _loginInfo = loginProcess->login(
       prvkeyOctetSeq,
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
-    openbusidl_access_control::LoginInfo* _loginInfo = new openbusidl_access_control::LoginInfo();
-    _loginInfo->id = id;
-    _loginInfo->entity = CORBA::string_dup(entity);
     this->_loginInfo = std::auto_ptr<openbusidl_access_control::LoginInfo> 
       (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
