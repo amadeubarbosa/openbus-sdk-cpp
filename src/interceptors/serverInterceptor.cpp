@@ -14,9 +14,11 @@ namespace openbus {
     
     ServerInterceptor::~ServerInterceptor() { }
     
-    void ServerInterceptor::receive_request(PortableInterceptor::ServerRequestInfo* ri)
+    void ServerInterceptor::receive_request_service_contexts(
+      PortableInterceptor::ServerRequestInfo* ri)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
     {
+      std::cout << "receive_request_service_contexts: " << ri->operation() << std::endl;
       //[todo] legacy Openbus 1.5
       if (connection && connection->loginInfo()) {
         IOP::ServiceContext_var sc = ri->get_request_service_context(
@@ -48,22 +50,20 @@ namespace openbus {
           Session& session = loginSession[std::string(credential.login)];
           
           size_t slenOperation = strlen(ri->operation());
-          int slen = 26 + slenOperation;
+          int slen = 22 + slenOperation;
           unsigned char* s = new unsigned char[slen];
           s[0] = 2;
           s[1] = 0;
           memcpy((unsigned char*) (s+2), (unsigned char*) session.secret, 16);
           memcpy((unsigned char*) (s+18), (unsigned char*) &credential.ticket, 4);
-          unsigned int rid = (unsigned int) ri->request_id();
-          memcpy((unsigned char*) (s+22), &rid, 4);
-          memcpy((unsigned char*) (s+26), ri->operation(), slenOperation);
+          memcpy((unsigned char*) (s+22), ri->operation(), slenOperation);
           openbusidl::HashValue hash;
           SHA256(s, slen, hash);
           
           //validate ticket
           if (memcmp(hash, credential.hash, 32)) {
             //credential not valid, try to reset credetial session
-            std::cout << "credential not valid!" << std::endl;
+            std::cout << "credential not valid, try to reset credetial session" << std::endl;
             openbusidl::OctetSeq_var encodedCallerPubKey;
             openbusidl_access_control::LoginInfo* caller = 
               connection->login_registry()->getLoginInfo(credential.login, encodedCallerPubKey);
@@ -100,14 +100,8 @@ namespace openbus {
               assert(0);
               
             openbusidl_credential::CredentialReset credentialReset;
-            credentialReset.login = credential.login;
+            credentialReset.login = connection->loginInfo()->id;
             credentialReset.session = session.id;
-            // openbusidl::OctetSeq_var o = new openbusidl::OctetSeq(
-            //   encryptedLen,
-            //   encryptedLen,
-            //   static_cast<CORBA::Octet*> (encrypted),
-            //   0);
-            // credentialReset.challenge = static_cast<CORBA::Octet*> (encrypted);
             memcpy(credentialReset.challenge, encrypted, 256);
             
             CORBA::Any any;
@@ -141,37 +135,6 @@ namespace openbus {
       }
     }
 
-    void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo* ri)
-      throw (CORBA::SystemException) 
-    {
-      openbusidl_credential::CredentialReset credentialReset;
-      credentialReset.login = "";
-      credentialReset.session = 0;
-      // openbusidl::OctetSeq_var o = new openbusidl::OctetSeq(
-      //   encryptedLen,
-      //   encryptedLen,
-      //   static_cast<CORBA::Octet*> (encrypted),
-      //   0);
-      // credentialReset.challenge = static_cast<CORBA::Octet*> (encrypted);
-//      memcpy(credentialReset.challenge, encrypted, 256);
-      
-      CORBA::Any any;
-      any <<= credentialReset;
-      CORBA::OctetSeq_var octets;
-      octets = cdr_codec->encode_value(any);
-
-      IOP::ServiceContext serviceContext;
-      serviceContext.context_id = openbusidl_credential::CredentialContextId;
-      IOP::ServiceContext::_context_data_seq seq(
-        octets->length(),
-        octets->length(),
-        octets->get_buffer(),
-        0);
-
-      serviceContext.context_data = seq;
-      ri->add_reply_service_context(serviceContext, true);          
-    }
-    
     void ServerInterceptor::addConnection(Connection* connection) {
       this->connection = connection;
     }

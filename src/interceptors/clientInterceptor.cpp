@@ -46,15 +46,13 @@ namespace openbus {
             char* objectKey = new char[objectKeyLen+1];
             memcpy(objectKey, objectKeyOct, objectKeyLen);
             objectKey[objectKeyLen] = '\0';
-            int slen = 26 + strlen(operation);
+            int slen = 22 + strlen(operation);
             unsigned char* s = new unsigned char[slen];
             s[0] = 2;
             s[1] = 0;
             memcpy((unsigned char*) (s+2), (unsigned char*) credSession->secret, 16);
             memcpy((unsigned char*) (s+18), (unsigned char*) &credential.ticket, 4);
-            unsigned int rid = (unsigned int) ri->request_id();
-            memcpy((unsigned char*) (s+22), &rid, 4);
-            memcpy((unsigned char*) (s+26), operation, strlen(operation));
+            memcpy((unsigned char*) (s+22), operation, strlen(operation));
             SHA256(s, slen, credential.hash);
             
             const char* clogin = login.c_str();
@@ -92,7 +90,7 @@ namespace openbus {
         if ((ex->completed() == CORBA::COMPLETED_NO) && 
             (ex->minor() == openbusidl_access_control::InvalidCredentialCode)) 
         {
-          std::cout << "creating credential session..." << std::endl;
+          std::cout << "creating credential session." << std::endl;
           if (IOP::ServiceContext_var sctx = 
             ri->get_request_service_context(openbusidl_credential::CredentialContextId)) {
             CORBA::OctetSeq o(
