@@ -8,9 +8,14 @@ namespace openbus {
   namespace interceptors {
     ServerInterceptor::ServerInterceptor(
       PortableInterceptor::Current* piCurrent, 
-      PortableInterceptor::SlotId slotId, 
+      PortableInterceptor::SlotId slotId_callChain, 
+      PortableInterceptor::SlotId slotId_busId, 
       IOP::Codec* cdr_codec) 
-      : piCurrent(piCurrent) , slotId(slotId), cdr_codec(cdr_codec), connection(0) { }
+      : piCurrent(piCurrent), 
+        slotId_callChain(slotId_callChain), 
+        slotId_busId(slotId_busId), 
+        cdr_codec(cdr_codec), 
+        connection(0) { }
     
     ServerInterceptor::~ServerInterceptor() { }
     
@@ -34,11 +39,19 @@ namespace openbus {
           openbusidl_credential::_tc_CredentialData);
         openbusidl_credential::CredentialData credential;
         any >>= credential;
-        if (!credential.chain.encoded.length()) {
-          
+        
+        if (credential.chain.encoded.length()) {
+          CORBA::Any_var callChainAny = cdr_codec->decode_value(
+            credential.chain.encoded,
+            openbusidl_access_control::_tc_CallChain);
+          ri->set_slot(slotId_callChain, callChainAny);
+          CORBA::Any busIdAny;
+          busIdAny <<= credential.bus;
+          ri->set_slot(slotId_busId, busIdAny);
         } else {
           // cadeia nula
         }
+        
         //[todo] cache
         openbusidl::IdentifierSeq ids;
         ids.length(1);

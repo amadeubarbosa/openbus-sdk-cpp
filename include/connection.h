@@ -26,6 +26,12 @@ namespace openbus {
   }
   class RenewLogin;
 
+  struct Chain {
+    openbusidl_access_control::LoginInfoSeq callers;
+    char* target;
+    char* busId;
+  };
+
   class Connection {
     public:
       /** Exceptions */
@@ -58,7 +64,7 @@ namespace openbus {
           const char* name() const 
             { return "WrongPrivateKey"; }
       };
-
+      
       /**
       * Cria uma conexão para um barramento a partir de um endereço de rede IP e uma porta.
       * 
@@ -152,25 +158,24 @@ namespace openbus {
       * Encerra essa conexão, tornando-a inválida daqui em diante.
       */
       void close();
+      
+      Chain* getCallerChain();
 
-      bool isLoggedIn() const 
-        { return _loginInfo.get(); }
+      bool isLoggedIn() const { return _loginInfo.get(); }
 
       /**
       * Retorna o ORB associado a esta conexão.
       *
       * @return ORB associado a esta conexão.
       */
-      CORBA::ORB* orb() const 
-        { return _orb; }
+      CORBA::ORB* orb() const { return _orb; }
     
       /**
       * Retorna a identificação do barramento que está sendo referenciado.
       *
       * @return Identificação do barramento.
       */
-      const char* busId() const 
-        { return _busId; }
+      const char* busId() const { return _busId; }
 
       /**
       * Retorna a referência para o serviço de acesso do barramento.
@@ -191,11 +196,9 @@ namespace openbus {
       *
       * @return Retorna 'true' se há um login associado a conexão e 'false' caso contrário.
       */
-      openbusidl_access_control::LoginInfo* loginInfo() const 
-        { return _loginInfo.get(); }
+      openbusidl_access_control::LoginInfo* loginInfo() const { return _loginInfo.get(); }
           
-      EVP_PKEY* prvKey() const
-        { return _prvKey; }
+      EVP_PKEY* prvKey() const { return _prvKey; }
       // openbusidl_access_control::CallerChain* callerChain() const
       //   { return _callerChain.get(); }
   

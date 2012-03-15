@@ -7,40 +7,39 @@
 #include <CORBA.h>
 
 struct HelloImpl : virtual public POA_Hello {
+  openbus::Connection* _conn;
+  HelloImpl(openbus::Connection* c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
-    std::cout << "Hello" << std::endl;
+    const char* caller = _conn->getCallerChain()->callers[0].entity;
+    std::cout << "Hello from '" << caller << "'." << std::endl;
   };
 };
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> conn = std::auto_ptr <openbus::Connection> 
-      (openbus::connect("localhost", 2089));
-
+    std::auto_ptr <openbus::Connection> conn = 
+      std::auto_ptr <openbus::Connection> (openbus::connect("localhost", 2089));
+    
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
     componentId.major_version = '1';
     componentId.minor_version = '0';
     componentId.patch_version = '0';
-    componentId.platform_spec = "";
-    
+    componentId.platform_spec = "";    
     scs::core::ComponentContext* ctx = new scs::core::ComponentContext(conn->orb(), componentId);
     
-    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl);
+    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
     ctx->addFacet("hello", "IDL:Hello:1.0", helloServant);
     
-    openbus::openbusidl_offer_registry::ServicePropertySeq_var props =
-      new openbus::openbusidl_offer_registry::ServicePropertySeq(1);
-    props->length(1);
-    openbus::openbusidl_offer_registry::ServiceProperty_var property = 
-      new openbus::openbusidl_offer_registry::ServiceProperty();
-    property->name = CORBA::String_var("offer.domain");
-    property->value = "OpenBus Demos";
+    openbus::openbusidl_offer_registry::ServicePropertySeq props;
+    props.length(1);
+    openbus::openbusidl_offer_registry::ServiceProperty property;
+    property.name = "offer.domain";
+    property.value = "OpenBus Demos";
     props[0] = property;
-    
+
     conn->loginByPassword("demo", "demo");
     conn->offer_registry()->registerService(ctx->getIComponent(), props);
-
     conn->orb()->run();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;

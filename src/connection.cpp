@@ -332,11 +332,28 @@ namespace openbus {
     return false;
   }
 
+  Chain* Connection::getCallerChain() {
+    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    assert(!CORBA::is_nil(init_ref));
+    PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+    CORBA::Any* callChainAny = piCurrent->get_slot(_orbInitializer->slotId_callChain());
+    CORBA::Any* busIdAny = piCurrent->get_slot(_orbInitializer->slotId_busId());
+    const char* busId;
+    *busIdAny >>= busId;
+    openbusidl_access_control::CallChain callChain;
+    *callChainAny >>= callChain;
+    Chain* chain = new Chain();
+    chain->callers = callChain.callers;
+    chain->target = CORBA::string_dup(callChain.target);
+    chain->busId = CORBA::string_dup(busId);
+    return chain;
+  }
+  
 #ifdef MULTITHREAD
   RenewLogin::RenewLogin(
     Connection* connection, 
     openbusidl_access_control::ValidityTime validityTime) 
-    :  connection(connection), validityTime(validityTime), sigINT(false) { }
+    : connection(connection), validityTime(validityTime), sigINT(false) { }
 
   RenewLogin::~RenewLogin() { }
 
