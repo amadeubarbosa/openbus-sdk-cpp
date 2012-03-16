@@ -199,8 +199,7 @@ namespace openbus {
       openbusidl_access_control::LoginInfo* loginInfo() const { return _loginInfo.get(); }
           
       EVP_PKEY* prvKey() const { return _prvKey; }
-      // openbusidl_access_control::CallerChain* callerChain() const
-      //   { return _callerChain.get(); }
+      EVP_PKEY* busKey() const { return _busKey; }
   
     private:
       /** Endereço de rede onde o barramento está executando. */
@@ -243,14 +242,11 @@ namespace openbus {
       openbusidl::Identifier_var _busId;
       
       /** Chave pública do barramento. */
-      EVP_PKEY* _buskey;
+      EVP_PKEY* _busKey;
       openbusidl::OctetSeq_var buskeyOctetSeq;
       
       /** Chave privada associada a esta conexão. */
       EVP_PKEY* _prvKey;
-      
-      /** Cadeia de chamadas do barramento. */
-      // std::auto_ptr<openbusidl_access_control::CallerChain> _callerChain; 
   };
 }
 

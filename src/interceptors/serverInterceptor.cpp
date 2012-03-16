@@ -40,18 +40,6 @@ namespace openbus {
         openbusidl_credential::CredentialData credential;
         any >>= credential;
         
-        if (credential.chain.encoded.length()) {
-          CORBA::Any_var callChainAny = cdr_codec->decode_value(
-            credential.chain.encoded,
-            openbusidl_access_control::_tc_CallChain);
-          ri->set_slot(slotId_callChain, callChainAny);
-          CORBA::Any busIdAny;
-          busIdAny <<= credential.bus;
-          ri->set_slot(slotId_busId, busIdAny);
-        } else {
-          // cadeia nula
-        }
-        
         //[todo] cache
         openbusidl::IdentifierSeq ids;
         ids.length(1);
@@ -61,7 +49,7 @@ namespace openbus {
           //[todo] legacy Openbus 1.5
           //validate credential
           Session& session = loginSession[std::string(credential.login)];
-          
+
           size_t slenOperation = strlen(ri->operation());
           int slen = 22 + slenOperation;
           unsigned char* s = new unsigned char[slen];
@@ -72,20 +60,20 @@ namespace openbus {
           memcpy((unsigned char*) (s+22), ri->operation(), slenOperation);
           openbusidl::HashValue hash;
           SHA256(s, slen, hash);
-          
+
+          openbusidl::OctetSeq_var encodedCallerPubKey;
+          openbusidl_access_control::LoginInfo* caller = 
+            connection->login_registry()->getLoginInfo(credential.login, encodedCallerPubKey);
           //validate ticket
           if (memcmp(hash, credential.hash, 32)) {
             //credential not valid, try to reset credetial session
             std::cout << "credential not valid, try to reset credetial session" << std::endl;
-            openbusidl::OctetSeq_var encodedCallerPubKey;
-            openbusidl_access_control::LoginInfo* caller = 
-              connection->login_registry()->getLoginInfo(credential.login, encodedCallerPubKey);
             const unsigned char* buf = encodedCallerPubKey->get_buffer();
             EVP_PKEY* callerPubKey = d2i_PUBKEY(
               0, 
               &buf, 
               encodedCallerPubKey->length());
-              
+
             EVP_PKEY_CTX* ctx;
             unsigned char* encrypted;
             size_t encryptedLen;
@@ -111,12 +99,12 @@ namespace openbus {
             )
               //[doubt] trocar assert por exceção ?
               assert(0);
-              
+
             openbusidl_credential::CredentialReset credentialReset;
             credentialReset.login = connection->loginInfo()->id;
             credentialReset.session = session.id;
             memcpy(credentialReset.challenge, encrypted, 256);
-            
+
             CORBA::Any any;
             any <<= credentialReset;
             CORBA::OctetSeq_var octets;
@@ -138,14 +126,50 @@ namespace openbus {
               CORBA::COMPLETED_NO);            
           } else {
             std::cout << "credential is valid." << std::endl;
+            bool invalidChain = false;
+            if (credential.chain.encoded.length()) {
+              // [todo]: legacy
+              openbusidl::HashValue hash;
+              SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
+
+            	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(connection->busKey(), 0);
+              assert(ctx);
+              assert(EVP_PKEY_verify_init(ctx));
+            	if (EVP_PKEY_verify(ctx, credential.chain.signature, 256, hash, 32) != 1) {
+                invalidChain = true;
+            	} else {
+                CORBA::Any_var callChainAny = cdr_codec->decode_value(
+                  credential.chain.encoded,
+                  openbusidl_access_control::_tc_CallChain);
+                openbusidl_access_control::CallChain callChain;
+                callChainAny >>= callChain;
+                if (strcmp(callChain.target, connection->loginInfo()->id) ||
+                   (strcmp(callChain.callers[callChain.callers.length()-1].id, caller->id)))
+                {
+                  invalidChain = true;
+                } else {              
+                  ri->set_slot(slotId_callChain, callChainAny);
+                  CORBA::Any busIdAny;
+                  busIdAny <<= credential.bus;
+                  ri->set_slot(slotId_busId, busIdAny);
+                }
+              }
+            } else {
+              invalidChain = true;
+            }
+
+            if (invalidChain)
+              throw CORBA::NO_PERMISSION(
+                openbusidl_access_control::InvalidChainCode, 
+                CORBA::COMPLETED_NO);
           }
-          
+
         } else {
           throw CORBA::NO_PERMISSION(
             openbusidl_access_control::InvalidLoginCode, 
             CORBA::COMPLETED_NO);
         }
-      }
+      }        
     }
 
     void ServerInterceptor::addConnection(Connection* connection) {
