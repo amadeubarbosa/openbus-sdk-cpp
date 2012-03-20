@@ -17,6 +17,7 @@ namespace openbus {
       _codec = codec_factory->create_codec(cdr_encoding);
       clientInterceptor = std::auto_ptr<ClientInterceptor> (new ClientInterceptor(_codec.in()));
       info->add_client_request_interceptor(clientInterceptor.get());
+      _slotId_joinedCallChain = info->allocate_slot_id();
       _slotId_callChain = info->allocate_slot_id();
       _slotId_busId = info->allocate_slot_id();
       CORBA::Object_var init_ref = info->resolve_initial_references("PICurrent");
@@ -25,6 +26,7 @@ namespace openbus {
       serverInterceptor = std::auto_ptr<ServerInterceptor> (
         new ServerInterceptor(
           piCurrent.in(), 
+          _slotId_joinedCallChain,
           _slotId_callChain,
           _slotId_busId,
           _codec.in()));

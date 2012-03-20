@@ -8,12 +8,14 @@ namespace openbus {
   namespace interceptors {
     ServerInterceptor::ServerInterceptor(
       PortableInterceptor::Current* piCurrent, 
+      PortableInterceptor::SlotId slotId_joinedCallChain, 
       PortableInterceptor::SlotId slotId_callChain, 
       PortableInterceptor::SlotId slotId_busId, 
       IOP::Codec* cdr_codec) 
       : piCurrent(piCurrent), 
-        slotId_callChain(slotId_callChain), 
-        slotId_busId(slotId_busId), 
+        _slotId_joinedCallChain(slotId_joinedCallChain), 
+        _slotId_callChain(slotId_callChain), 
+        _slotId_busId(slotId_busId), 
         cdr_codec(cdr_codec), 
         connection(0) { }
     
@@ -147,11 +149,11 @@ namespace openbus {
                    (strcmp(callChain.callers[callChain.callers.length()-1].id, caller->id)))
                 {
                   invalidChain = true;
-                } else {              
-                  ri->set_slot(slotId_callChain, callChainAny);
+                } else {
+                  ri->set_slot(_slotId_callChain, callChainAny);
                   CORBA::Any busIdAny;
                   busIdAny <<= credential.bus;
-                  ri->set_slot(slotId_busId, busIdAny);
+                  ri->set_slot(_slotId_busId, busIdAny);
                 }
               }
             } else {

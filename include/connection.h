@@ -26,10 +26,9 @@ namespace openbus {
   }
   class RenewLogin;
 
-  struct Chain {
-    openbusidl_access_control::LoginInfoSeq callers;
-    char* target;
+  struct CallerChain {
     char* busId;
+    openbusidl_access_control::LoginInfoSeq callers;
   };
 
   class Connection {
@@ -144,7 +143,16 @@ namespace openbus {
          openbusidl_access_control::WrongEncoding,
          openbusidl::services::ServiceFailure,
          CORBA::Exception);
-
+     
+     std::pair <openbusidl_access_control::LoginProcess*, unsigned char*>
+       startSingleSignOn() 
+       throw (openbusidl::services::ServiceFailure);
+       
+     void loginBySingleSignOn(
+       openbusidl_access_control::LoginProcess* loginProcess, 
+       unsigned char* secret)
+       throw (openbusidl::services::ServiceFailure);
+       
       /**
       * Efetua logout no barramento.
       *  
@@ -159,7 +167,9 @@ namespace openbus {
       */
       void close();
       
-      Chain* getCallerChain();
+      void joinChain(CallerChain*);
+      
+      CallerChain* getCallerChain();
 
       bool isLoggedIn() const { return _loginInfo.get(); }
 

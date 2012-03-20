@@ -13,6 +13,7 @@ namespace openbus {
           PortableInterceptor::Current* piCurrent, 
           PortableInterceptor::SlotId slotId, 
           PortableInterceptor::SlotId slotId, 
+          PortableInterceptor::SlotId slotId, 
           IOP::Codec* cdr_codec);
         ~ServerInterceptor();
         void receive_request_service_contexts(PortableInterceptor::ServerRequestInfo*) 
@@ -32,8 +33,9 @@ namespace openbus {
         void removeConnection(Connection* connection);
       private:
         PortableInterceptor::Current* piCurrent;
-        PortableInterceptor::SlotId slotId_callChain;
-        PortableInterceptor::SlotId slotId_busId;
+        PortableInterceptor::SlotId _slotId_joinedCallChain;
+        PortableInterceptor::SlotId _slotId_callChain;
+        PortableInterceptor::SlotId _slotId_busId;
         IOP::Codec* cdr_codec;
         Connection* connection;
         struct Session {
