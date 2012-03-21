@@ -41,16 +41,20 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   endif
 endif
 
+ifeq "$(DBG)" "Yes"
+  MICO_DEBUG=-debug
+endif
+
 ifeq "$(MULTITHREAD)" "Yes"
-  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread
-  MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread
-  MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread
+  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+  MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+  MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   DEFINES+=MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
 else
-  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread
-  MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread
-  MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread
+  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
+  MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
+  MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
 endif
 
 OPENBUSINC=${OPENBUS_HOME}/include

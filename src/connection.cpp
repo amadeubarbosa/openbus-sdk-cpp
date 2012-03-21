@@ -309,10 +309,8 @@ namespace openbus {
     throw (openbusidl::services::ServiceFailure)
   {
     unsigned char* challenge = new unsigned char[256];
-    _clientInterceptor->allowRequestWithoutCredential = true;
     openbusidl_access_control::LoginProcess* loginProcess = 
       _access_control->startLoginBySingleSignOn(challenge);
-    _clientInterceptor->allowRequestWithoutCredential = false;
 
     EVP_PKEY_CTX* ctx;
     unsigned char* secret;
