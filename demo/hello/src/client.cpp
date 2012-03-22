@@ -4,8 +4,7 @@
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> conn = std::auto_ptr <openbus::Connection>
-      (openbus::connect("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
     conn->loginByPassword("demo", "demo");
     openbus::openbusidl_offer_registry::ServicePropertySeq props;
     props.length(3);

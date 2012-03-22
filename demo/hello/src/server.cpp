@@ -17,8 +17,7 @@ struct HelloImpl : virtual public POA_Hello {
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> conn = 
-      std::auto_ptr <openbus::Connection> (openbus::connect("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
     
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
