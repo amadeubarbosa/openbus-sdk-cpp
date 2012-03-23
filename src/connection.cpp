@@ -456,32 +456,35 @@ namespace openbus {
   }
   
   void Connection::joinChain(CallerChain* chain) {
-    // CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-    // assert(!CORBA::is_nil(init_ref));
-    // PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-    // openbusidl_access_control::CallChain callChain;
-    // callChain.callers = chain->callers
-    // 
-    // CORBA::Any callChainAny;
-    // callChainAny <<= callChain;
-    // piCurrent->set_slot(
-    //   _orbInitializer->_slotId_joinedCallChain(),
-    //   callChainAny);
+    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    assert(!CORBA::is_nil(init_ref));
+    PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+    CORBA::Any signedCallChainAny;
+    signedCallChainAny <<= *(chain->signedCallChain());
+    piCurrent->set_slot(
+      _orbInitializer->slotId_joinedCallChain(),
+      signedCallChainAny);
   }
 
   CallerChain* Connection::getCallerChain() {
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-    CORBA::Any* callChainAny = piCurrent->get_slot(_orbInitializer->slotId_callChain());
+    CORBA::Any* signedCallChainAny = piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
     CORBA::Any* busIdAny = piCurrent->get_slot(_orbInitializer->slotId_busId());
     const char* busId;
     *busIdAny >>= busId;
+    openbusidl_access_control::SignedCallChain signedCallChain;
+    *signedCallChainAny >>= signedCallChain;
+    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
+      signedCallChain.encoded,
+      openbusidl_access_control::_tc_CallChain);
     openbusidl_access_control::CallChain callChain;
     *callChainAny >>= callChain;
     CallerChain* callerChain = new CallerChain();
     callerChain->callers = callChain.callers;
     callerChain->busId = CORBA::string_dup(busId);
+    callerChain->signedCallChain(signedCallChain);
     return callerChain;
   }
   

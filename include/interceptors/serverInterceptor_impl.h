@@ -11,9 +11,9 @@ namespace openbus {
       public:
         ServerInterceptor(
           PortableInterceptor::Current* piCurrent, 
-          PortableInterceptor::SlotId slotId, 
-          PortableInterceptor::SlotId slotId, 
-          PortableInterceptor::SlotId slotId, 
+          PortableInterceptor::SlotId slotId_joinedCallChain,
+          PortableInterceptor::SlotId slotId_signedCallChain, 
+          PortableInterceptor::SlotId slotId_busId, 
           IOP::Codec* cdr_codec);
         ~ServerInterceptor();
         void receive_request_service_contexts(PortableInterceptor::ServerRequestInfo*) 
@@ -34,7 +34,7 @@ namespace openbus {
       private:
         PortableInterceptor::Current* piCurrent;
         PortableInterceptor::SlotId _slotId_joinedCallChain;
-        PortableInterceptor::SlotId _slotId_callChain;
+        PortableInterceptor::SlotId _slotId_signedCallChain;
         PortableInterceptor::SlotId _slotId_busId;
         IOP::Codec* cdr_codec;
         Connection* connection;

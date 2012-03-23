@@ -9,7 +9,9 @@ namespace openbus {
   namespace interceptors {
     class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor {
       public:
-        ClientInterceptor(IOP::Codec* cdr_codec);
+        ClientInterceptor(
+          PortableInterceptor::SlotId slotId_joinedCallChain,
+          IOP::Codec* cdr_codec);
         ~ClientInterceptor();
         void send_request(PortableInterceptor::ClientRequestInfo* ri)
           throw (CORBA::Exception);
@@ -34,6 +36,7 @@ namespace openbus {
       private:
         IOP::Codec* cdr_codec;
         Connection* connection;
+        PortableInterceptor::SlotId _slotId_joinedCallChain;
         struct CredentialSession {
           CORBA::ULong id;
           char* remoteid;

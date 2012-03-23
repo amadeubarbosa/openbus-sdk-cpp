@@ -22,8 +22,8 @@ namespace openbus {
         IOP::Codec* codec() const { return _codec; }
         PortableInterceptor::SlotId slotId_joinedCallChain() const 
           { return _slotId_joinedCallChain; }
-        PortableInterceptor::SlotId slotId_callChain() const 
-          { return _slotId_callChain; }
+        PortableInterceptor::SlotId slotId_signedCallChain() const 
+          { return _slotId_signedCallChain; }
         PortableInterceptor::SlotId slotId_busId() const 
           { return _slotId_busId; }
       private:
@@ -31,7 +31,7 @@ namespace openbus {
         std::auto_ptr<ServerInterceptor> serverInterceptor;
         IOP::Codec_var _codec;
         PortableInterceptor::SlotId _slotId_joinedCallChain;
-        PortableInterceptor::SlotId _slotId_callChain;
+        PortableInterceptor::SlotId _slotId_signedCallChain;
         PortableInterceptor::SlotId _slotId_busId;
     };
   }

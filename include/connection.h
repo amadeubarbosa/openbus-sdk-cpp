@@ -25,12 +25,8 @@ namespace openbus {
     class ORBInitializer;
   }
   class RenewLogin;
-
-  struct CallerChain {
-    char* busId;
-    openbusidl_access_control::LoginInfoSeq callers;
-  };
-
+  struct CallerChain;
+  
   class Connection {
     public:
       /** Exceptions */
@@ -167,7 +163,7 @@ namespace openbus {
       */
       void close();
       
-      void joinChain(CallerChain*);
+      void joinChain(CallerChain* chain);
       
       CallerChain* getCallerChain();
 
@@ -257,6 +253,19 @@ namespace openbus {
       
       /** Chave privada associada a esta conexão. */
       EVP_PKEY* _prvKey;
+  };
+  
+  struct CallerChain {
+      char* busId;
+      openbusidl_access_control::LoginInfoSeq callers;
+      friend void Connection::joinChain(CallerChain* chain);
+      friend CallerChain* Connection::getCallerChain();
+    private:
+      openbusidl_access_control::SignedCallChain _signedCallChain;
+      const openbusidl_access_control::SignedCallChain* signedCallChain() 
+        { return &_signedCallChain; }
+      void signedCallChain(openbusidl_access_control::SignedCallChain p) 
+        { _signedCallChain = p; }
   };
 }
 

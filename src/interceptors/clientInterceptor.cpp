@@ -5,8 +5,13 @@
 
 namespace openbus {
   namespace interceptors {    
-    ClientInterceptor::ClientInterceptor(IOP::Codec* cdr_codec) 
-      : allowRequestWithoutCredential(false), cdr_codec(cdr_codec), connection(0) { }
+    ClientInterceptor::ClientInterceptor(
+      PortableInterceptor::SlotId slotId_joinedCallChain,
+      IOP::Codec* cdr_codec) 
+      : _slotId_joinedCallChain(slotId_joinedCallChain),
+        allowRequestWithoutCredential(false), 
+        cdr_codec(cdr_codec), 
+        connection(0) { }
     
     ClientInterceptor::~ClientInterceptor() { }
     
@@ -57,7 +62,18 @@ namespace openbus {
             
             const char* clogin = login.c_str();
             if (strcmp(connection->busId(), clogin)) {
-              credential.chain = *connection->access_control()->signChainFor(clogin);
+              // credential.chain = *connection->access_control()->signChainFor(clogin);
+              CORBA::Object_var init_ref = connection->orb()->resolve_initial_references(
+                "PICurrent");
+              assert(!CORBA::is_nil(init_ref));
+              PortableInterceptor::Current_var piCurrent = 
+                PortableInterceptor::Current::_narrow(init_ref);
+              CORBA::Any_var signedCallChainAny = piCurrent->get_slot(_slotId_joinedCallChain);
+              openbusidl_access_control::SignedCallChain signedCallChain;
+              if (*signedCallChainAny >>= signedCallChain)
+                credential.chain = signedCallChain;
+              else 
+                credential.chain = *connection->access_control()->signChainFor(clogin);
             } else {
               memset(credential.chain.signature, '\0', 256);              
             }
