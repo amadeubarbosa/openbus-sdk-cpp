@@ -8,7 +8,7 @@
 
 void onInvalidLogin(openbus::Connection* conn, char* login) {
   std::cout << "login [" << login << "] terminated shutting the server down." << std::endl;
-  conn->close();
+//  conn->close();
 }
 
 struct HelloImpl : virtual public POA_Hello {
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     componentId.major_version = '1';
     componentId.minor_version = '0';
     componentId.patch_version = '0';
-    componentId.platform_spec = "";    
+    componentId.platform_spec = "";
     scs::core::ComponentContext* ctx = new scs::core::ComponentContext(conn->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));

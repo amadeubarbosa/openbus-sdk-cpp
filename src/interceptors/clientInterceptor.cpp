@@ -35,16 +35,12 @@ namespace openbus {
             profileDataHash);
           std::string sprofileDataHash((const char*) profileDataHash, 32);
 
-          if (profile2login.find(sprofileDataHash) == profile2login.end()) {
-            credential.ticket = 0;
-            credential.session = 0;
-            memset(credential.hash, '\0', 32);
-            memset(credential.chain.signature, '\0', 256);
-          } else {
+          if (profile2login.find(sprofileDataHash) != profile2login.end()) {
             std::string login = profile2login[sprofileDataHash];
             CredentialSession* credSession = login2credsession[login];
             credential.session = credSession->id;
-            credential.ticket = ++credSession->ticket;
+            credSession->ticket++;
+            credential.ticket = credSession->ticket;
             CORBA::Long objectKeyLen;
             const CORBA::Octet* objectKeyOct = 
               ri->target()->_ior()->get_profile(0)->objectkey(objectKeyLen);
@@ -77,6 +73,11 @@ namespace openbus {
             } else {
               memset(credential.chain.signature, '\0', 256);              
             }
+          } else {
+            credential.ticket = 0;
+            credential.session = 0;
+            memset(credential.hash, '\0', 32);
+            memset(credential.chain.signature, '\0', 256);
           }
           
           CORBA::Any any;

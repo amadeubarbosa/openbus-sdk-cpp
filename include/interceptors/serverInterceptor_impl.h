@@ -3,6 +3,9 @@
 
 #include <CORBA.h>
 #include <connection.h>
+extern "C" {
+  #include <util/tickets.h>
+}
 
 namespace openbus {
   class Connection;
@@ -38,17 +41,17 @@ namespace openbus {
         PortableInterceptor::SlotId _slotId_busId;
         IOP::Codec* cdr_codec;
         Connection* connection;
-        struct Session {
-          //[todo] tickets
+        struct CredentialSession {
           CORBA::ULong id;
+          tickets_History ticketsHistory;
           unsigned char secret[16];
-          Session() {
+          CredentialSession(CORBA::ULong id) : id(id) {
+            tickets_init(&ticketsHistory);
             for (short i=0;i<16;++i)
               secret[i] = rand() % 255;
-            id = 0;
           }
         };
-        std::map<std::string, Session> loginSession;
+        std::map<CORBA::ULong, CredentialSession*> sessionIdCredentialSession;
     };
   }
 }
