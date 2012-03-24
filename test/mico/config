@@ -1,5 +1,6 @@
 # Descomente a linha abaixo para ativar o modo debug.
-#DBG=YES
+DBG=YES
+#OPT=Yes
 
 # Descomente a linha abaixo para o uso em Valgrind.
 # p.s.: O modo debug(DBG) deve estar ativado.

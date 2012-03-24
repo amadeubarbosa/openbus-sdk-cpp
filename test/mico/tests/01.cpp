@@ -8,6 +8,7 @@ using namespace openbus;
 using namespace auxiliar;
 
 bool isInvalid = false;
+bool receiveNoPermission = false;
 
 void onInvalidLogin(openbus::Connection* conn, char* login) {
   std::cout << "login [" << login << "] terminated shutting the server down." << std::endl;
@@ -21,15 +22,20 @@ int main(int argc, char* argv[]) {
   try {
     openbus::Connection* conn (openbus::connect("localhost", 2089));
     conn->onInvalidLogin(&onInvalidLogin);
-    conn->loginByPassword("demo", "demo");
-    // conn->login_registry()->invalidateLogin(conn->loginInfo()->id);
-    sleep(60);
+    conn->loginByPassword("admin", "admin");
+    conn->login_registry()->invalidateLogin(conn->loginInfo()->id);
     openbus::idl_offerregistry::ServicePropertySeq props;
     props.length(0);
-    openbus::idl_offerregistry::ServiceOfferDescSeq_var offers =
-      conn->offer_registry()->findServices(props);
+    try {
+      openbus::idl_offerregistry::ServiceOfferDescSeq_var offers =
+        conn->offer_registry()->findServices(props);
+    } catch (CORBA::NO_PERMISSION& e) {
+      receiveNoPermission = true;
+    }
     if (!isInvalid) 
       fail(TESTCASE, "onInvalidLogin não foi chamado.");
+    if (!receiveNoPermission) 
+      fail(TESTCASE, "Exceção CORBA::NO_PERMISSION deveria ser lançada.");
   } catch (const CORBA::Exception& e) {
     fail(TESTCASE, "CORBA::Exception");
     return -1;
