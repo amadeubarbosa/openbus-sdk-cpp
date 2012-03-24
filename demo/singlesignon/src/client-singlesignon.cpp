@@ -6,10 +6,11 @@ int main(int argc, char** argv) {
   try {
     openbus::Connection* conn = openbus::connect("localhost", 2089);
     CORBA::Object_var o = conn->orb()->string_to_object(argv[1]);
-    openbus::openbusidl_access_control::LoginProcess_var loginProcess = openbus::openbusidl_access_control::LoginProcess::_narrow(o);
+    openbus::idl_accesscontrol::LoginProcess_var loginProcess = 
+      openbus::idl_accesscontrol::LoginProcess::_narrow(o);
     unsigned char* secret = (unsigned char*) argv[2];
     conn->loginBySingleSignOn(loginProcess, secret);
-    openbus::openbusidl_offer_registry::ServicePropertySeq props;
+    openbus::idl_offerregistry::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";
     props[0].value = "demo";
@@ -17,7 +18,7 @@ int main(int argc, char** argv) {
     props[1].value = "hello";
     props[2].name  = "offer.domain";
     props[2].value = "OpenBus Demos";
-    openbus::openbusidl_offer_registry::ServiceOfferDescSeq_var offers =
+    openbus::idl_offerregistry::ServiceOfferDescSeq_var offers =
       conn->offer_registry()->findServices(props);
     if (offers->length()) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");

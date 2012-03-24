@@ -1,0 +1,20 @@
+#!/bin/ksh
+
+tests="01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22"
+
+failFlag=0
+
+for test in $tests ; do
+  tests/bin/$TEC_UNAME/$test
+  if [ $? -ne 0 ] ; then
+    failFlag=1
+    echo "[FAILED]"
+  else
+    echo "[PASSED]"
+  fi
+done
+
+if [ $failFlag -ne 0 ] ; then
+  echo "[***WARNING***] There is at least one fail."
+  exit 1
+fi

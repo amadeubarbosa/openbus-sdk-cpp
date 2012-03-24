@@ -23,12 +23,12 @@ namespace openbus {
       if (!allowRequestWithoutCredential) {
         if (connection && connection->loginInfo()) {
           IOP::ServiceContext serviceContext;
-          serviceContext.context_id = openbusidl_credential::CredentialContextId;
-          openbusidl_credential::CredentialData credential;
+          serviceContext.context_id = idl_cr::CredentialContextId;
+          idl_cr::CredentialData credential;
           credential.bus = CORBA::string_dup(connection->busId());
           credential.login = CORBA::string_dup(connection->loginInfo()->id);
           
-          openbusidl::HashValue profileDataHash;
+          idl::HashValue profileDataHash;
           SHA256(
             ri->effective_profile()->profile_data.get_buffer(),
             ri->effective_profile()->profile_data.length(), 
@@ -69,7 +69,7 @@ namespace openbus {
               PortableInterceptor::Current_var piCurrent = 
                 PortableInterceptor::Current::_narrow(init_ref);
               CORBA::Any_var signedCallChainAny = piCurrent->get_slot(_slotId_joinedCallChain);
-              openbusidl_access_control::SignedCallChain signedCallChain;
+              idl_ac::SignedCallChain signedCallChain;
               if (*signedCallChainAny >>= signedCallChain)
                 credential.chain = signedCallChain;
               else 
@@ -93,7 +93,7 @@ namespace openbus {
           serviceContext.context_data = seq;
           ri->add_request_service_context(serviceContext, true);          
         } else
-          throw CORBA::NO_PERMISSION(openbusidl_access_control::NoLoginCode, CORBA::COMPLETED_NO);          
+          throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
       }
     }
 
@@ -103,67 +103,69 @@ namespace openbus {
       std::cout << "receive_exception:" << ri->received_exception_id() << std::endl;
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
-        if ((ex->completed() == CORBA::COMPLETED_NO) && 
-            (ex->minor() == openbusidl_access_control::InvalidCredentialCode)) 
-        {
-          std::cout << "creating credential session." << std::endl;
-          if (IOP::ServiceContext_var sctx = 
-            ri->get_request_service_context(openbusidl_credential::CredentialContextId)) {
-            CORBA::OctetSeq o(
-              sctx->context_data.length(), 
-              sctx->context_data.length(), 
-              sctx->context_data.get_buffer());
-            //[doubt] pegar exceção FormatMismatch ?
-            CORBA::Any_var any = 
-              cdr_codec->decode_value(o, openbusidl_credential::_tc_CredentialReset);
-            openbusidl_credential::CredentialReset credentialReset;
-            any >>= credentialReset;
+        if (ex->completed() == CORBA::COMPLETED_NO) {
+          if (ex->minor() == idl_ac::InvalidCredentialCode) {
+            std::cout << "creating credential session." << std::endl;
+            if (IOP::ServiceContext_var sctx = 
+              ri->get_request_service_context(idl_cr::CredentialContextId)) {
+              CORBA::OctetSeq o(
+                sctx->context_data.length(), 
+                sctx->context_data.length(), 
+                sctx->context_data.get_buffer());
+              //[doubt] pegar exceção FormatMismatch ?
+              CORBA::Any_var any = 
+                cdr_codec->decode_value(o, idl_cr::_tc_CredentialReset);
+              idl_cr::CredentialReset credentialReset;
+              any >>= credentialReset;
             
-            unsigned char* secret;
-            size_t secretLen;
-            EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(connection->prvKey(), 0);
-            if (!(ctx && 
-                (EVP_PKEY_decrypt_init(ctx) > 0) &&
-                (EVP_PKEY_decrypt(
-                  ctx,
-                  0,
-                  &secretLen,
-                  (unsigned char*) credentialReset.challenge,
-                  256) > 0))
-            )
-              //[doubt] trocar assert por exceção ?
-              assert(0);
+              unsigned char* secret;
+              size_t secretLen;
+              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(connection->prvKey(), 0);
+              if (!(ctx && 
+                  (EVP_PKEY_decrypt_init(ctx) > 0) &&
+                  (EVP_PKEY_decrypt(
+                    ctx,
+                    0,
+                    &secretLen,
+                    (unsigned char*) credentialReset.challenge,
+                    256) > 0))
+              )
+                //[doubt] trocar assert por exceção ?
+                assert(0);
       
-            assert(secret = (unsigned char*) OPENSSL_malloc(secretLen));
-            if (EVP_PKEY_decrypt(
-                  ctx,
-                  secret,
-                  &secretLen,
-                  credentialReset.challenge,
-                  256) <= 0
-            )
-              //[doubt] trocar assert por exceção ?
-              assert(0);
-            secret[secretLen] = '\0';
+              assert(secret = (unsigned char*) OPENSSL_malloc(secretLen));
+              if (EVP_PKEY_decrypt(
+                    ctx,
+                    secret,
+                    &secretLen,
+                    credentialReset.challenge,
+                    256) <= 0
+              )
+                //[doubt] trocar assert por exceção ?
+                assert(0);
+              secret[secretLen] = '\0';
 
-            openbusidl::HashValue profileDataHash;
-            SHA256(
-              ri->effective_profile()->profile_data.get_buffer(),
-              ri->effective_profile()->profile_data.length(), 
-              profileDataHash);
-            std::string sprofileDataHash((const char*) profileDataHash, 32);
-            std::string remoteid(credentialReset.login);
-            profile2login[sprofileDataHash] = remoteid;
+              idl::HashValue profileDataHash;
+              SHA256(
+                ri->effective_profile()->profile_data.get_buffer(),
+                ri->effective_profile()->profile_data.length(), 
+                profileDataHash);
+              std::string sprofileDataHash((const char*) profileDataHash, 32);
+              std::string remoteid(credentialReset.login);
+              profile2login[sprofileDataHash] = remoteid;
             
-            if (login2credsession.find(remoteid) == login2credsession.end()) {
-              CredentialSession* credSession = new CredentialSession();
-              credSession->id = credentialReset.session;
-              credSession->remoteid  = CORBA::string_dup(credentialReset.login);
-              credSession->secret = secret;
-              credSession->ticket = 0;
-              login2credsession[remoteid] = credSession;
+              if (login2credsession.find(remoteid) == login2credsession.end()) {
+                CredentialSession* credSession = new CredentialSession();
+                credSession->id = credentialReset.session;
+                credSession->remoteid  = CORBA::string_dup(credentialReset.login);
+                credSession->secret = secret;
+                credSession->ticket = 0;
+                login2credsession[remoteid] = credSession;
+              }
+              throw PortableInterceptor::ForwardRequest(ri->target(), false);
             }
-            throw PortableInterceptor::ForwardRequest(ri->target(), false);
+          } else if (ex->minor() == idl_ac::InvalidLoginCode) {
+            (connection->onInvalidLogin())(connection, connection->loginInfo()->id);
           }
         }
       }

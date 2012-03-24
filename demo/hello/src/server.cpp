@@ -6,6 +6,11 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
+void onInvalidLogin(openbus::Connection* conn, char* login) {
+  std::cout << "login [" << login << "] terminated shutting the server down." << std::endl;
+  conn->close();
+}
+
 struct HelloImpl : virtual public POA_Hello {
   openbus::Connection* _conn;
   HelloImpl(openbus::Connection* c) : _conn(c) { }
@@ -18,6 +23,7 @@ struct HelloImpl : virtual public POA_Hello {
 int main(int argc, char** argv) {
   try {
     std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
+    conn->onInvalidLogin(&onInvalidLogin);
     
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
@@ -30,9 +36,9 @@ int main(int argc, char** argv) {
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
     ctx->addFacet("hello", "IDL:Hello:1.0", helloServant);
     
-    openbus::openbusidl_offer_registry::ServicePropertySeq props;
+    openbus::idl_offerregistry::ServicePropertySeq props;
     props.length(1);
-    openbus::openbusidl_offer_registry::ServiceProperty property;
+    openbus::idl_offerregistry::ServiceProperty property;
     property.name = "offer.domain";
     property.value = "OpenBus Demos";
     props[0] = property;

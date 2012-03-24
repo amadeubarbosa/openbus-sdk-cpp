@@ -9,33 +9,25 @@ namespace openbus {
     public:
       RenewLogin(
         Connection* connection,
-        openbusidl_access_control::ValidityTime validityTime);
+        idl_ac::ValidityTime validityTime);
       ~RenewLogin();
       void _run(void*);
-      void stop()
-        { sigINT = true; }
+      void stop() { sigINT = true; }
     private:
       MICOMT::Mutex* mutex;
       Connection* connection;
-
-      /** Flag que determina se a thread de renovação deve continuar a sua execução. */
       bool sigINT;
-
-      /** Referência para o serviço de acesso do barramento.  */
-      openbusidl_access_control::AccessControl_var _access_control;
-
-      /** Tempo mínimo pelo qual o login permanecerá ativo sem necessidade de renovação. */
-      openbusidl_access_control::ValidityTime validityTime;
-
+      idl_ac::AccessControl_var _access_control;
+      idl_ac::ValidityTime validityTime;
       bool _sleep(unsigned int time);
   };
 #else
   class RenewLogin : public CORBA::DispatcherCallback {
     public:
-      RenewLogin(openbusidl_access_control::AccessControl* _access_control);
+      RenewLogin(idl_ac::AccessControl* _access_control);
       void callback(CORBA::Dispatcher* dispatcher, Event event);
     private:
-      openbusidl_access_control::AccessControl* _access_control;
+      idl_ac::AccessControl* _access_control;
   };
 #endif
 }

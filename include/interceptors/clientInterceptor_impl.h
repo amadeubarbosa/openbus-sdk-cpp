@@ -13,18 +13,18 @@ namespace openbus {
           PortableInterceptor::SlotId slotId_joinedCallChain,
           IOP::Codec* cdr_codec);
         ~ClientInterceptor();
-        void send_request(PortableInterceptor::ClientRequestInfo* ri)
-          throw (CORBA::Exception);
-        void send_poll(PortableInterceptor::ClientRequestInfo* ri) 
-          throw (CORBA::Exception) { }
-        void receive_reply(PortableInterceptor::ClientRequestInfo* ri)
-          throw (CORBA::Exception) { }
-        void receive_exception(PortableInterceptor::ClientRequestInfo* ri)
-          throw (CORBA::Exception, PortableInterceptor::ForwardRequest);
+        void send_request(PortableInterceptor::ClientRequestInfo* ri) throw (CORBA::Exception);
+        void send_poll(PortableInterceptor::ClientRequestInfo* ri) throw (CORBA::Exception) { }
+        void receive_reply(PortableInterceptor::ClientRequestInfo* ri) throw (CORBA::Exception) { }
+        void receive_exception(PortableInterceptor::ClientRequestInfo* ri) 
+          throw (
+            CORBA::Exception, 
+            PortableInterceptor::ForwardRequest);
         void receive_other(PortableInterceptor::ClientRequestInfo* ri) 
-          throw (CORBA::Exception, PortableInterceptor::ForwardRequest) { }
-        char* name() throw (CORBA::Exception) 
-          { return CORBA::string_dup("ClientInterceptor"); }
+          throw (
+            CORBA::Exception, 
+            PortableInterceptor::ForwardRequest) { }
+        char* name() throw (CORBA::Exception) { return CORBA::string_dup("ClientInterceptor"); }
         void destroy() { }
         void addConnection(Connection* connection);
         void removeConnection(Connection* connection);

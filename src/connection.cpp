@@ -13,25 +13,25 @@ namespace openbus {
     const unsigned int port,
     CORBA::ORB* orb,
     const interceptors::ORBInitializer* orbInitializer) throw(CORBA::Exception)
-    : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer) 
+    : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0) 
   {
     std::stringstream corbaloc;
-    corbaloc << "corbaloc::" << _host << ":" << _port << "/" << openbusidl::BusObjectKey;
+    corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
     CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
     assert(!CORBA::is_nil(obj));
     _clientInterceptor = _orbInitializer->getClientInterceptor();
     _serverInterceptor = _orbInitializer->getServerInterceptor();
     _clientInterceptor->allowRequestWithoutCredential = true;
     _iComponent = scs::core::IComponent::_narrow(obj);
-    obj = _iComponent->getFacetByName(openbusidl_access_control::AccessControlFacet);
+    obj = _iComponent->getFacetByName(idl_ac::AccessControlFacet);
     assert(!CORBA::is_nil(obj));
-    _access_control = openbusidl_access_control::AccessControl::_narrow(obj);
-    obj = _iComponent->getFacetByName(openbusidl_offer_registry::OfferRegistryFacet);
+    _access_control = idl_ac::AccessControl::_narrow(obj);
+    obj = _iComponent->getFacetByName(idl_or::OfferRegistryFacet);
     assert(!CORBA::is_nil(obj));
-    _offer_registry = openbusidl_offer_registry::OfferRegistry::_narrow(obj);
-    obj = _iComponent->getFacetByName(openbusidl_access_control::LoginRegistryFacet);
+    _offer_registry = idl_or::OfferRegistry::_narrow(obj);
+    obj = _iComponent->getFacetByName(idl_ac::LoginRegistryFacet);
     assert(!CORBA::is_nil(obj));
-    _login_registry = openbusidl_access_control::LoginRegistry::_narrow(obj);
+    _login_registry = idl_ac::LoginRegistry::_narrow(obj);
     _busId = _access_control->busid();
     _loginInfo.reset();
     buskeyOctetSeq = _access_control->buskey();
@@ -51,11 +51,11 @@ namespace openbus {
       assert(0);
     
     //[obs] auto_ptr evitando *memory leak* se o construtor lançar uma exceção.
-    // _callerChain = std::auto_ptr <openbusidl_access_control::CallerChain> 
-    //   (new openbusidl_access_control::CallerChain);
+    // _callerChain = std::auto_ptr <idl_ac::CallerChain> 
+    //   (new idl_ac::CallerChain);
     // _callerChain->busid = CORBA::string_dup(_busId);
-    // openbusidl_access_control::LoginInfoSeq* loginInfoSeq = 
-    //   new openbusidl_access_control::LoginInfoSeq(256);
+    // idl_ac::LoginInfoSeq* loginInfoSeq = 
+    //   new idl_ac::LoginInfoSeq(256);
     // loginInfoSeq->length(0);
     // _callerChain->logins = *loginInfoSeq;
     _clientInterceptor->addConnection(this);
@@ -71,17 +71,17 @@ namespace openbus {
   void Connection::loginByPassword(const char* entity, const char* password)
     throw (
       AlreadyLogged, 
-      openbusidl_access_control::AccessDenied, 
-      openbusidl_access_control::WrongEncoding,
-      openbusidl::services::ServiceFailure,
+      idl_ac::AccessDenied, 
+      idl_ac::WrongEncoding,
+      idl::services::ServiceFailure,
       CORBA::Exception)
   {
     if (loginInfo())
       throw AlreadyLogged();
     _clientInterceptor->allowRequestWithoutCredential = true;
-    openbusidl_access_control::LoginAuthenticationInfo_var loginAuthenticationInfo = 
-      new openbusidl_access_control::LoginAuthenticationInfo;
-    openbusidl::OctetSeq_var passwordOctetSeq = new openbusidl::OctetSeq(
+    idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
+      new idl_ac::LoginAuthenticationInfo;
+    idl::OctetSeq_var passwordOctetSeq = new idl::OctetSeq(
       static_cast<CORBA::ULong> (strlen(password)),
       static_cast<CORBA::ULong> (strlen(password)),
       (CORBA::Octet*) CORBA::string_dup(password));
@@ -124,26 +124,26 @@ namespace openbus {
       //[doubt] trocar assert por exceção ?
       assert(0);
 
-    openbusidl::EncryptedBlock encryptedBlock;
+    idl::EncryptedBlock encryptedBlock;
     memcpy(encryptedBlock, encrypted, 256);
 
     OPENSSL_free(encrypted);
     EVP_PKEY_CTX_free(ctx);
 
-    openbusidl::OctetSeq_var prvkeyOctetSeq = new openbusidl::OctetSeq(
+    idl::OctetSeq_var prvkeyOctetSeq = new idl::OctetSeq(
       len,
       len,
       static_cast<CORBA::Octet*> (encodedPrvKey));
 
-    openbusidl_access_control::ValidityTime validityTime;
-    openbusidl_access_control::LoginInfo* _loginInfo = _access_control->loginByPassword(
+    idl_ac::ValidityTime validityTime;
+    idl_ac::LoginInfo* _loginInfo = _access_control->loginByPassword(
       entity, 
       prvkeyOctetSeq,
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
 
-    this->_loginInfo = std::auto_ptr<openbusidl_access_control::LoginInfo> 
+    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> 
       (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
@@ -163,17 +163,17 @@ namespace openbus {
       CorruptedBusCertificate,
       WrongPrivateKey,
       AlreadyLogged, 
-      openbusidl_access_control::MissingCertificate, 
-      openbusidl_access_control::AccessDenied, 
-      openbusidl_access_control::WrongEncoding,
-      openbusidl::services::ServiceFailure,
+      idl_ac::MissingCertificate, 
+      idl_ac::AccessDenied, 
+      idl_ac::WrongEncoding,
+      idl::services::ServiceFailure,
       CORBA::Exception)
   {
     if (loginInfo())
       throw AlreadyLogged();
-    openbusidl::EncryptedBlock challenge;
+    idl::EncryptedBlock challenge;
     _clientInterceptor->allowRequestWithoutCredential = true;
-    openbusidl_access_control::LoginProcess_var loginProcess =
+    idl_ac::LoginProcess_var loginProcess =
       _access_control->startLoginByCertificate(entity, challenge);
     _clientInterceptor->allowRequestWithoutCredential = false;
 
@@ -203,9 +203,9 @@ namespace openbus {
       //[doubt] trocar assert por exceção ?
       assert(0);
     secret[secretLen] = '\0';
-    openbusidl_access_control::LoginAuthenticationInfo_var loginAuthenticationInfo = 
-      new openbusidl_access_control::LoginAuthenticationInfo;
-    openbusidl::OctetSeq_var secretOctetSeq = new openbusidl::OctetSeq(
+    idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
+      new idl_ac::LoginAuthenticationInfo;
+    idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
       static_cast<CORBA::ULong> (strlen((const char*) secret)),
       static_cast<CORBA::ULong> (strlen((const char*) secret)),
       (CORBA::Octet*) CORBA::string_dup((const char*) secret));
@@ -250,25 +250,25 @@ namespace openbus {
       //[doubt] trocar assert por exceção ?
       assert(0);
 
-    openbusidl::EncryptedBlock encryptedBlock;
+    idl::EncryptedBlock encryptedBlock;
     memcpy(encryptedBlock, encrypted, 256);
 
     OPENSSL_free(encrypted);
     EVP_PKEY_CTX_free(ctx);
 
-    openbusidl::OctetSeq_var prvkeyOctetSeq = new openbusidl::OctetSeq(
+    idl::OctetSeq_var prvkeyOctetSeq = new idl::OctetSeq(
       len,
       len,
       static_cast<CORBA::Octet*> (encodedPrvKey));
 
-    openbusidl_access_control::ValidityTime validityTime;
+    idl_ac::ValidityTime validityTime;
     _clientInterceptor->allowRequestWithoutCredential = true;
-    openbusidl_access_control::LoginInfo* _loginInfo = loginProcess->login(
+    idl_ac::LoginInfo* _loginInfo = loginProcess->login(
       prvkeyOctetSeq,
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
-    this->_loginInfo = std::auto_ptr<openbusidl_access_control::LoginInfo> 
+    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> 
       (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
@@ -288,10 +288,10 @@ namespace openbus {
       CorruptedBusCertificate,
       WrongPrivateKey,
       AlreadyLogged, 
-      openbusidl_access_control::MissingCertificate, 
-      openbusidl_access_control::AccessDenied, 
-      openbusidl_access_control::WrongEncoding,
-      openbusidl::services::ServiceFailure,
+      idl_ac::MissingCertificate, 
+      idl_ac::AccessDenied, 
+      idl_ac::WrongEncoding,
+      idl::services::ServiceFailure,
       CORBA::Exception)
   {
     FILE* privateKeyFile = fopen(privateKeyFilename, "r");
@@ -304,12 +304,12 @@ namespace openbus {
     loginByCertificate(entity, privateKey);
   }
 
-  std::pair <openbusidl_access_control::LoginProcess*, unsigned char*>
+  std::pair <idl_ac::LoginProcess*, unsigned char*>
     Connection::startSingleSignOn() 
-    throw (openbusidl::services::ServiceFailure)
+    throw (idl::services::ServiceFailure)
   {
     unsigned char* challenge = new unsigned char[256];
-    openbusidl_access_control::LoginProcess* loginProcess = 
+    idl_ac::LoginProcess* loginProcess = 
       _access_control->startLoginBySingleSignOn(challenge);
 
     EVP_PKEY_CTX* ctx;
@@ -344,16 +344,16 @@ namespace openbus {
   }
     
   void Connection::loginBySingleSignOn(
-    openbusidl_access_control::LoginProcess* loginProcess, 
+    idl_ac::LoginProcess* loginProcess, 
     unsigned char* secret)
-    throw (openbusidl::services::ServiceFailure)
+    throw (idl::services::ServiceFailure)
   {
     if (loginInfo())
       throw AlreadyLogged();
 
-    openbusidl_access_control::LoginAuthenticationInfo_var loginAuthenticationInfo = 
-      new openbusidl_access_control::LoginAuthenticationInfo;
-    openbusidl::OctetSeq_var secretOctetSeq = new openbusidl::OctetSeq(
+    idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
+      new idl_ac::LoginAuthenticationInfo;
+    idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
       static_cast<CORBA::ULong> (strlen((const char*) secret)),
       static_cast<CORBA::ULong> (strlen((const char*) secret)),
       (CORBA::Octet*) CORBA::string_dup((const char*) secret));
@@ -397,25 +397,25 @@ namespace openbus {
       //[doubt] trocar assert por exceção ?
       assert(0);
 
-    openbusidl::EncryptedBlock encryptedBlock;
+    idl::EncryptedBlock encryptedBlock;
     memcpy(encryptedBlock, encrypted, 256);
 
     OPENSSL_free(encrypted);
     EVP_PKEY_CTX_free(ctx);
 
-    openbusidl::OctetSeq_var prvkeyOctetSeq = new openbusidl::OctetSeq(
+    idl::OctetSeq_var prvkeyOctetSeq = new idl::OctetSeq(
       len,
       len,
       static_cast<CORBA::Octet*> (encodedPrvKey));
 
-    openbusidl_access_control::ValidityTime validityTime;
+    idl_ac::ValidityTime validityTime;
     _clientInterceptor->allowRequestWithoutCredential = true;
-    openbusidl_access_control::LoginInfo* _loginInfo = loginProcess->login(
+    idl_ac::LoginInfo* _loginInfo = loginProcess->login(
       prvkeyOctetSeq,
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
-    this->_loginInfo = std::auto_ptr<openbusidl_access_control::LoginInfo> 
+    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> 
       (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
@@ -474,12 +474,12 @@ namespace openbus {
     CORBA::Any* busIdAny = piCurrent->get_slot(_orbInitializer->slotId_busId());
     const char* busId;
     *busIdAny >>= busId;
-    openbusidl_access_control::SignedCallChain signedCallChain;
+    idl_ac::SignedCallChain signedCallChain;
     *signedCallChainAny >>= signedCallChain;
     CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
       signedCallChain.encoded,
-      openbusidl_access_control::_tc_CallChain);
-    openbusidl_access_control::CallChain callChain;
+      idl_ac::_tc_CallChain);
+    idl_ac::CallChain callChain;
     *callChainAny >>= callChain;
     CallerChain* callerChain = new CallerChain();
     callerChain->callers = callChain.callers;
@@ -491,7 +491,7 @@ namespace openbus {
 #ifdef MULTITHREAD
   RenewLogin::RenewLogin(
     Connection* connection, 
-    openbusidl_access_control::ValidityTime validityTime) 
+    idl_ac::ValidityTime validityTime) 
     : connection(connection), validityTime(validityTime), sigINT(false) { }
 
   RenewLogin::~RenewLogin() { }
@@ -518,7 +518,7 @@ namespace openbus {
     }
   }
 #else
-  RenewLogin::RenewLogin(openbusidl_access_control::AccessControl* _access_control) 
+  RenewLogin::RenewLogin(idl_ac::AccessControl* _access_control) 
     : _access_control(_access_control) { }
 
   void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {

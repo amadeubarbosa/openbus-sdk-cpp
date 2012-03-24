@@ -7,12 +7,12 @@ int main(int argc, char** argv) {
     std::auto_ptr <openbus::Connection> conn = std::auto_ptr <openbus::Connection>
       (openbus::connect("localhost", 2089));
     conn->loginByPassword("demo", "demo");
-    std::pair <openbus::openbusidl_access_control::LoginProcess*, unsigned char*> credential = 
+    std::pair <openbus::idl_accesscontrol::LoginProcess*, unsigned char*> credential = 
       conn->startSingleSignOn();
     std::cout << "[LoginProcess]: " << conn->orb()->object_to_string(credential.first) 
       << std::endl;
     std::cout << "[secret]: " << credential.second << std::endl;
-    openbus::openbusidl_offer_registry::ServicePropertySeq props;
+    openbus::idl_offerregistry::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";
     props[0].value = "demo";
@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     props[1].value = "hello";
     props[2].name  = "offer.domain";
     props[2].value = "OpenBus Demos";
-    openbus::openbusidl_offer_registry::ServiceOfferDescSeq_var offers =
+    openbus::idl_offerregistry::ServiceOfferDescSeq_var offers =
       conn->offer_registry()->findServices(props);
     if (offers->length()) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");

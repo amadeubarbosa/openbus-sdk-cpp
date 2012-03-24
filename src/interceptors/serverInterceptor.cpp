@@ -29,7 +29,7 @@ namespace openbus {
       //[todo] legacy Openbus 1.5
       if (connection && connection->loginInfo()) {
         IOP::ServiceContext_var sc = ri->get_request_service_context(
-          openbusidl_credential::CredentialContextId);
+          idl_cr::CredentialContextId);
         IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
         CORBA::OctetSeq contextData(
           cd.length(),
@@ -38,8 +38,8 @@ namespace openbus {
           0);    
         CORBA::Any_var any = cdr_codec->decode_value(
           contextData, 
-          openbusidl_credential::_tc_CredentialData);
-        openbusidl_credential::CredentialData credential;
+          idl_cr::_tc_CredentialData);
+        idl_cr::CredentialData credential;
         any >>= credential;
         
         // if (credential.chain.encoded.length()) {
@@ -54,7 +54,7 @@ namespace openbus {
         // }
         
         //[todo] cache
-        openbusidl::IdentifierSeq ids;
+        idl::IdentifierSeq ids;
         ids.length(1);
         ids[0] = credential.login;
         if (connection->login_registry()->getValidity(ids)) {
@@ -71,11 +71,11 @@ namespace openbus {
           memcpy((unsigned char*) (s+2), (unsigned char*) session.secret, 16);
           memcpy((unsigned char*) (s+18), (unsigned char*) &credential.ticket, 4);
           memcpy((unsigned char*) (s+22), ri->operation(), slenOperation);
-          openbusidl::HashValue hash;
+          idl::HashValue hash;
           SHA256(s, slen, hash);
           
-          openbusidl::OctetSeq_var encodedCallerPubKey;
-          openbusidl_access_control::LoginInfo* caller = 
+          idl::OctetSeq_var encodedCallerPubKey;
+          idl_ac::LoginInfo* caller = 
             connection->login_registry()->getLoginInfo(credential.login, encodedCallerPubKey);
           //validate ticket
           if (memcmp(hash, credential.hash, 32)) {
@@ -113,7 +113,7 @@ namespace openbus {
               //[doubt] trocar assert por exceção ?
               assert(0);
               
-            openbusidl_credential::CredentialReset credentialReset;
+            idl_cr::CredentialReset credentialReset;
             credentialReset.login = connection->loginInfo()->id;
             credentialReset.session = session.id;
             memcpy(credentialReset.challenge, encrypted, 256);
@@ -124,7 +124,7 @@ namespace openbus {
             octets = cdr_codec->encode_value(any);
 
             IOP::ServiceContext serviceContext;
-            serviceContext.context_id = openbusidl_credential::CredentialContextId;
+            serviceContext.context_id = idl_cr::CredentialContextId;
             IOP::ServiceContext::_context_data_seq seq(
               octets->length(),
               octets->length(),
@@ -135,14 +135,14 @@ namespace openbus {
             ri->add_reply_service_context(serviceContext, true);          
 
             throw CORBA::NO_PERMISSION(
-              openbusidl_access_control::InvalidCredentialCode, 
+              idl_ac::InvalidCredentialCode, 
               CORBA::COMPLETED_NO);            
           } else {
             std::cout << "credential is valid." << std::endl;
             bool invalidChain = false;
             if (credential.chain.encoded.length()) {
               // [todo]: legacy
-              openbusidl::HashValue hash;
+              idl::HashValue hash;
               SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
 
               EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(connection->busKey(), 0);
@@ -153,8 +153,8 @@ namespace openbus {
               } else {
                 CORBA::Any_var callChainAny = cdr_codec->decode_value(
                   credential.chain.encoded,
-                  openbusidl_access_control::_tc_CallChain);
-                openbusidl_access_control::CallChain callChain;
+                  idl_ac::_tc_CallChain);
+                idl_ac::CallChain callChain;
                 callChainAny >>= callChain;
                 if (strcmp(callChain.target, connection->loginInfo()->id) ||
                    (strcmp(callChain.callers[callChain.callers.length()-1].id, caller->id)))
@@ -175,13 +175,13 @@ namespace openbus {
 
             if (invalidChain)
               throw CORBA::NO_PERMISSION(
-                openbusidl_access_control::InvalidChainCode, 
+                idl_ac::InvalidChainCode, 
                 CORBA::COMPLETED_NO);
           }
           
         } else {
           throw CORBA::NO_PERMISSION(
-            openbusidl_access_control::InvalidLoginCode, 
+            idl_ac::InvalidLoginCode, 
             CORBA::COMPLETED_NO);
         }
       }
