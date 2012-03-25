@@ -13,7 +13,7 @@ bool receiveNoPermission = false;
 void onInvalidLogin(openbus::Connection* conn, char* login) {
   std::cout << "login [" << login << "] terminated shutting the server down." << std::endl;
   isInvalid = true;
-//  conn->close();
+  // conn->close();
 }
 
 int main(int argc, char* argv[]) {

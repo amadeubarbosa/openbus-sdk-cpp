@@ -1,4 +1,5 @@
 #include <interceptors/serverInterceptor_impl.h>
+#include <connection_impl.h>
 
 #include <iostream>
 #include <openssl/sha.h>
@@ -28,8 +29,7 @@ namespace openbus {
       std::cout << "receive_request_service_contexts: " << ri->operation() << std::endl;
       //[todo] legacy Openbus 1.5
       if (connection && connection->loginInfo()) {
-        IOP::ServiceContext_var sc = ri->get_request_service_context(
-          idl_cr::CredentialContextId);
+        IOP::ServiceContext_var sc = ri->get_request_service_context(idl_cr::CredentialContextId);
         IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
         CORBA::OctetSeq contextData(
           cd.length(),
@@ -42,12 +42,10 @@ namespace openbus {
         idl_cr::CredentialData credential;
         any >>= credential;
         
-        //[todo] cache
-        idl::IdentifierSeq ids;
-        ids.length(1);
-        ids[0] = credential.login;
         //[todo] legacy Openbus 1.5
-        if (connection->login_registry()->getValidity(ids)) {
+        //[todo] cache
+        Login* caller = connection->_loginCache->validateLogin(credential.login);
+        if (caller) {
           CredentialSession* session = 0;
           idl::HashValue hash;
           if (sessionIdCredentialSession.find(credential.session) != sessionIdCredentialSession.end()) {
@@ -63,9 +61,6 @@ namespace openbus {
             SHA256(s, slen, hash);
           }
           
-          idl::OctetSeq_var encodedCallerPubKey;
-          idl_ac::LoginInfo* caller = 
-            connection->login_registry()->getLoginInfo(credential.login, encodedCallerPubKey);
           if (session &&
               !memcmp(hash, credential.hash, 32) && 
               tickets_check(&session->ticketsHistory, credential.ticket)) 
@@ -89,7 +84,8 @@ namespace openbus {
                 idl_ac::CallChain callChain;
                 callChainAny >>= callChain;
                 if (strcmp(callChain.target, connection->loginInfo()->id) ||
-                   (strcmp(callChain.callers[callChain.callers.length()-1].id, caller->id)))
+                   (strcmp(callChain.callers[callChain.callers.length()-1].id, 
+                     caller->loginInfo->id)))
                 {
                   invalidChain = true;
                 } else {
@@ -116,11 +112,11 @@ namespace openbus {
             CredentialSession* credentialSession = new CredentialSession(newSessionId);
             sessionIdCredentialSession[newSessionId] = credentialSession;
 
-            const unsigned char* buf = encodedCallerPubKey->get_buffer();
+            const unsigned char* buf = caller->encodedCallerPubKey->get_buffer();
             EVP_PKEY* callerPubKey = d2i_PUBKEY(
               0, 
               &buf, 
-              encodedCallerPubKey->length());
+              caller->encodedCallerPubKey->length());
               
             EVP_PKEY_CTX* ctx;
             unsigned char* encrypted;

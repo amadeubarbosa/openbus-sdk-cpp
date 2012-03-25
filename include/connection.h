@@ -27,6 +27,7 @@ namespace openbus {
     class ServerInterceptor;
     class ORBInitializer;
   }
+  class LoginCache;
   class RenewLogin;
   struct CallerChain;
   
@@ -122,6 +123,8 @@ namespace openbus {
       idl_ac::LoginInfo* loginInfo() const { return _loginInfo.get(); }
       EVP_PKEY* prvKey() const { return _prvKey; }
       EVP_PKEY* busKey() const { return _busKey; }
+      //[todo] hide
+      LoginCache* _loginCache;
     private:
       std::string _host;
       unsigned int _port;

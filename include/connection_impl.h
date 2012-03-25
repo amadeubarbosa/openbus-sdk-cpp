@@ -4,6 +4,23 @@
 #include "connection.h"
 
 namespace openbus {
+  struct Login {
+    idl_ac::LoginInfo* loginInfo;
+    idl::OctetSeq_var encodedCallerPubKey;
+  };
+  
+  class LoginCache {
+    public:
+      LoginCache() { }
+      LoginCache(Connection* c) : _conn(c) { }
+      void connection(Connection* c) { _conn = c; }
+      Login* validateLogin(char* id);
+    private:
+      Connection* _conn;
+      std::map<std::string, Login*> _id_Login;
+      std::map<std::string, unsigned long> _validity;
+  };
+  
 #ifdef MULTITHREAD
   class RenewLogin : public MICOMT::Thread {
     public:

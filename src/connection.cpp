@@ -60,6 +60,7 @@ namespace openbus {
     // _callerChain->logins = *loginInfoSeq;
     _clientInterceptor->addConnection(this);
     _serverInterceptor->addConnection(this);
+    _loginCache = new LoginCache(this);
   }
 
   Connection::~Connection() {
@@ -486,6 +487,24 @@ namespace openbus {
     callerChain->busId = CORBA::string_dup(busId);
     callerChain->signedCallChain(signedCallChain);
     return callerChain;
+  }
+  
+  Login* LoginCache::validateLogin(char* id) {
+    std::string sid(id);
+    Login* login;
+    if (_id_Login.find(sid) == _id_Login.end()) {
+      login = new Login;
+      login->loginInfo = _conn->login_registry()->getLoginInfo(id, login->encodedCallerPubKey);
+      _id_Login[sid] = login;
+    } else 
+      login = _id_Login[sid];
+      
+    idl::IdentifierSeq ids;
+    ids.length(1);
+    ids[0] = CORBA::string_dup(id);
+    if (_conn->login_registry()->getValidity(ids))
+      return login;
+    return 0;
   }
   
 #ifdef MULTITHREAD
