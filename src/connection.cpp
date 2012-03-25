@@ -57,7 +57,7 @@ namespace openbus {
   }
 
   Connection::~Connection() {
-    if (loginInfo())
+    if (login())
       //[OBS] logout trata uma exceção qualquer.
       logout();
     // delete _loginCache;
@@ -71,7 +71,7 @@ namespace openbus {
       idl::services::ServiceFailure,
       CORBA::Exception)
   {
-    if (loginInfo())
+    if (login())
       throw AlreadyLogged();
     _clientInterceptor->allowRequestWithoutCredential = true;
     idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
@@ -164,7 +164,7 @@ namespace openbus {
       idl::services::ServiceFailure,
       CORBA::Exception)
   {
-    if (loginInfo())
+    if (login())
       throw AlreadyLogged();
     idl::EncryptedBlock challenge;
     _clientInterceptor->allowRequestWithoutCredential = true;
@@ -343,7 +343,7 @@ namespace openbus {
     unsigned char* secret)
     throw (idl::services::ServiceFailure)
   {
-    if (loginInfo())
+    if (login())
       throw AlreadyLogged();
 
     idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
@@ -423,14 +423,14 @@ namespace openbus {
   }
 
   void Connection::close() {
-    if (loginInfo())
+    if (login())
       logout();
     _clientInterceptor->removeConnection(this);
     _serverInterceptor->removeConnection(this);
   }
 
   bool Connection::logout() {
-    if (loginInfo()) {
+    if (login()) {
       try {
         _access_control->logout();
       #ifdef MULTITHREAD

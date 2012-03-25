@@ -23,12 +23,12 @@ int main(int argc, char* argv[]) {
     openbus::Connection* conn (openbus::connect("localhost", 2089));
     conn->onInvalidLoginCallback(&InvalidLoginCallback);
     conn->loginByPassword("admin", "admin");
-    conn->login_registry()->invalidateLogin(conn->loginInfo()->id);
+    conn->login_registry()->invalidateLogin(conn->login()->id);
     openbus::idl_offerregistry::ServicePropertySeq props;
     props.length(0);
     try {
       openbus::idl_offerregistry::ServiceOfferDescSeq_var offers =
-        conn->offer_registry()->findServices(props);
+        conn->offers()->findServices(props);
     } catch (CORBA::NO_PERMISSION& e) {
       receiveNoPermission = true;
     }

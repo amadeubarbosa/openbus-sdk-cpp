@@ -21,12 +21,12 @@ namespace openbus {
       const char* operation = ri->operation();
       std::cout << "send_request:" << operation << std::endl;
       if (!allowRequestWithoutCredential) {
-        if (connection && connection->loginInfo()) {
+        if (connection && connection->login()) {
           IOP::ServiceContext serviceContext;
           serviceContext.context_id = idl_cr::CredentialContextId;
           idl_cr::CredentialData credential;
           credential.bus = CORBA::string_dup(connection->busid());
-          credential.login = CORBA::string_dup(connection->loginInfo()->id);
+          credential.login = CORBA::string_dup(connection->login()->id);
           
           idl::HashValue profileDataHash;
           SHA256(
@@ -166,7 +166,7 @@ namespace openbus {
               throw PortableInterceptor::ForwardRequest(ri->target(), false);
             }
           } else if (ex->minor() == idl_ac::InvalidLoginCode) {
-            (connection->onInvalidLogin())(connection, connection->loginInfo()->id);
+            (connection->onInvalidLogin())(connection, connection->login()->id);
           }
         }
       }

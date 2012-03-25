@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     props[2].name  = "offer.domain";
     props[2].value = "OpenBus Demos";
     openbus::idl_offerregistry::ServiceOfferDescSeq_var offers =
-      conn->offer_registry()->findServices(props);
+      conn->offers()->findServices(props);
     if (offers->length()) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
       Hello* hello = Hello::_narrow(o);

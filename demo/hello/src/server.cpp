@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     props[0] = property;
 
     conn->loginByPassword("demo", "demo");
-    conn->offer_registry()->registerService(ctx->getIComponent(), props);
+    conn->offers()->registerService(ctx->getIComponent(), props);
     conn->orb()->run();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;

@@ -33,9 +33,11 @@ namespace openbus {
   
   class Connection {
     public:
+      //[todo] renomear
       typedef void (*onInvalidLogin_ptr) (Connection*, char* login);
       
       /** Exceptions */
+      //[todo] revisar exceptions
       struct Exception {
         virtual const char* name() const { return "Exception"; }
       };
@@ -103,27 +105,32 @@ namespace openbus {
         unsigned char* secret)
         throw (idl::services::ServiceFailure);
         
+      //[todo] renomear
       void onInvalidLogin(onInvalidLogin_ptr p) { _onInvalidLogin = p; }
       onInvalidLogin_ptr onInvalidLogin() { return _onInvalidLogin; }      
       bool logout();
       CallerChain* getCallerChain();
       void joinChain(CallerChain* chain);
-      //[todo]
+      //[todo] implementar
       void exitChain() {}
-      //[todo]
+      //[todo] implementar
       CallerChain* getJoineChain() { return 0; }
       void close();
 
-      const char* busid() const { return _busid; }
-      bool isLoggedIn() const { return _loginInfo.get(); }
+      //[doubt] readonly?
       CORBA::ORB* orb() const { return _orb; }
-      const idl_ac::AccessControl_var access_control() const { return _access_control; }
-      const idl_or::OfferRegistry_var offer_registry() const { return _offer_registry; }
+      const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
+      const char* busid() const { return _busid; }
+      //[todo] readonly
+      idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
+
+      //[todo] esconder (tests/01.cpp)
       const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
-      idl_ac::LoginInfo* loginInfo() const { return _loginInfo.get(); }
+    private:
+      const idl_ac::AccessControl_var access_control() const { return _access_control; }
       EVP_PKEY* prvKey() const { return _prvKey; }
       EVP_PKEY* busKey() const { return _busKey; }
-    private:
+
       std::string _host;
       unsigned int _port;
       CORBA::ORB* _orb;
@@ -143,6 +150,7 @@ namespace openbus {
       onInvalidLogin_ptr _onInvalidLogin;
       std::auto_ptr<LoginCache> _loginCache;
       friend class openbus::interceptors::ServerInterceptor;      
+      friend class openbus::interceptors::ClientInterceptor;      
   };
   
   struct CallerChain {

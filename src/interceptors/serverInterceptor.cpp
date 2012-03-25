@@ -28,7 +28,7 @@ namespace openbus {
     {
       std::cout << "receive_request_service_contexts: " << ri->operation() << std::endl;
       //[todo] legacy Openbus 1.5
-      if (connection && connection->loginInfo()) {
+      if (connection && connection->login()) {
         IOP::ServiceContext_var sc = ri->get_request_service_context(idl_cr::CredentialContextId);
         IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
         CORBA::OctetSeq contextData(
@@ -82,7 +82,7 @@ namespace openbus {
                   idl_ac::_tc_CallChain);
                 idl_ac::CallChain callChain;
                 callChainAny >>= callChain;
-                if (strcmp(callChain.target, connection->loginInfo()->id) ||
+                if (strcmp(callChain.target, connection->login()->id) ||
                    (strcmp(callChain.callers[callChain.callers.length()-1].id, 
                      caller->loginInfo->id)))
                 {
@@ -138,7 +138,7 @@ namespace openbus {
               assert(0);
               
             idl_cr::CredentialReset credentialReset;
-            credentialReset.login = connection->loginInfo()->id;
+            credentialReset.login = connection->login()->id;
             credentialReset.session = credentialSession->id;
             memcpy(credentialReset.challenge, encrypted, 256);
             
