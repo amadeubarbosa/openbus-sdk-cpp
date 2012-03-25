@@ -495,6 +495,11 @@ namespace openbus {
     if (_id_Login.find(sid) == _id_Login.end()) {
       login = new Login;
       login->loginInfo = _conn->login_registry()->getLoginInfo(id, login->encodedCallerPubKey);
+      const unsigned char* buf = login->encodedCallerPubKey->get_buffer();
+      login->key = d2i_PUBKEY(
+        0, 
+        &buf, 
+        login->encodedCallerPubKey->length());
       _id_Login[sid] = login;
     } else 
       login = _id_Login[sid];

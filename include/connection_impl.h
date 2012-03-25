@@ -7,6 +7,7 @@ namespace openbus {
   struct Login {
     idl_ac::LoginInfo* loginInfo;
     idl::OctetSeq_var encodedCallerPubKey;
+    EVP_PKEY* key;
   };
   
   class LoginCache {

@@ -112,16 +112,10 @@ namespace openbus {
             CredentialSession* credentialSession = new CredentialSession(newSessionId);
             sessionIdCredentialSession[newSessionId] = credentialSession;
 
-            const unsigned char* buf = caller->encodedCallerPubKey->get_buffer();
-            EVP_PKEY* callerPubKey = d2i_PUBKEY(
-              0, 
-              &buf, 
-              caller->encodedCallerPubKey->length());
-              
             EVP_PKEY_CTX* ctx;
             unsigned char* encrypted;
             size_t encryptedLen;
-            if (!((ctx = EVP_PKEY_CTX_new(callerPubKey, 0)) &&
+            if (!((ctx = EVP_PKEY_CTX_new(caller->key, 0)) &&
                 (EVP_PKEY_encrypt_init(ctx) > 0) &&
                 (EVP_PKEY_encrypt(
                   ctx, 
