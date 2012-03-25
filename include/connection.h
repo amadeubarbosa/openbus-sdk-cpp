@@ -123,8 +123,6 @@ namespace openbus {
       idl_ac::LoginInfo* loginInfo() const { return _loginInfo.get(); }
       EVP_PKEY* prvKey() const { return _prvKey; }
       EVP_PKEY* busKey() const { return _busKey; }
-      //[todo] hide
-      LoginCache* _loginCache;
     private:
       std::string _host;
       unsigned int _port;
@@ -143,6 +141,8 @@ namespace openbus {
       idl::OctetSeq_var buskeyOctetSeq;
       EVP_PKEY* _prvKey;
       onInvalidLogin_ptr _onInvalidLogin;
+      std::auto_ptr<LoginCache> _loginCache;
+      friend class openbus::interceptors::ServerInterceptor;      
   };
   
   struct CallerChain {

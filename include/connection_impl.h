@@ -2,24 +2,32 @@
 #define TECGRAF_CONNECTION_IMPL_H_
 
 #include "connection.h"
+#include "util/lru_cache.h"
+
+#define LOGINCACHE_LRU_SIZE 128
 
 namespace openbus {
   struct Login {
     idl_ac::LoginInfo* loginInfo;
     idl::OctetSeq_var encodedCallerPubKey;
     EVP_PKEY* key;
+    int indexSeq;
+    long time2live;
   };
   
+  typedef LRUCache<std::string, Login*> LoginLRUCache;
+
   class LoginCache {
     public:
-      LoginCache() { }
-      LoginCache(Connection* c) : _conn(c) { }
-      void connection(Connection* c) { _conn = c; }
+      LoginCache(Connection* c) : _conn(c) {
+        _id_Login = new LoginLRUCache(LOGINCACHE_LRU_SIZE);
+      }
       Login* validateLogin(char* id);
+      void connection(Connection* c) { _conn = c; }
     private:
       Connection* _conn;
-      std::map<std::string, Login*> _id_Login;
-      std::map<std::string, unsigned long> _validity;
+      LoginLRUCache* _id_Login;
+      time_t _timeUpdated;
   };
   
 #ifdef MULTITHREAD

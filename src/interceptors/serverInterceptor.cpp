@@ -43,7 +43,6 @@ namespace openbus {
         any >>= credential;
         
         //[todo] legacy Openbus 1.5
-        //[todo] cache
         Login* caller = connection->_loginCache->validateLogin(credential.login);
         if (caller) {
           CredentialSession* session = 0;

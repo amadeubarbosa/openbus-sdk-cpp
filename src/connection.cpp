@@ -3,6 +3,7 @@
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
+#include <ctime>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/sha.h>
@@ -50,23 +51,16 @@ namespace openbus {
       //[doubt] trocar assert por exceção ?
       assert(0);
     
-    //[obs] auto_ptr evitando *memory leak* se o construtor lançar uma exceção.
-    // _callerChain = std::auto_ptr <idl_ac::CallerChain> 
-    //   (new idl_ac::CallerChain);
-    // _callerChain->busid = CORBA::string_dup(_busId);
-    // idl_ac::LoginInfoSeq* loginInfoSeq = 
-    //   new idl_ac::LoginInfoSeq(256);
-    // loginInfoSeq->length(0);
-    // _callerChain->logins = *loginInfoSeq;
     _clientInterceptor->addConnection(this);
     _serverInterceptor->addConnection(this);
-    _loginCache = new LoginCache(this);
+    _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
   }
 
   Connection::~Connection() {
     if (loginInfo())
       //[OBS] logout trata uma exceção qualquer.
       logout();
+    // delete _loginCache;
   }
 
   void Connection::loginByPassword(const char* entity, const char* password)
@@ -491,24 +485,47 @@ namespace openbus {
   
   Login* LoginCache::validateLogin(char* id) {
     std::string sid(id);
-    Login* login;
-    if (_id_Login.find(sid) == _id_Login.end()) {
+
+    /* coleta de informações pertinentes ao login id. (getLoginInfo) */
+    Login* login = _id_Login->fetch(sid);
+    if (!login) {
       login = new Login;
-      login->loginInfo = _conn->login_registry()->getLoginInfo(id, login->encodedCallerPubKey);
+      login->time2live = -1;
+      try {
+        login->loginInfo = _conn->login_registry()->getLoginInfo(id, login->encodedCallerPubKey);
+      } catch (idl_ac::InvalidLogins& e) { return 0; }
       const unsigned char* buf = login->encodedCallerPubKey->get_buffer();
-      login->key = d2i_PUBKEY(
-        0, 
-        &buf, 
-        login->encodedCallerPubKey->length());
-      _id_Login[sid] = login;
-    } else 
-      login = _id_Login[sid];
-      
-    idl::IdentifierSeq ids;
-    ids.length(1);
-    ids[0] = CORBA::string_dup(id);
-    if (_conn->login_registry()->getValidity(ids))
+      login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
+      _id_Login->insert(sid, login);
+    }
+
+    /* validação do login. (getValidity) */
+    if (!login->time2live) return 0;
+    if (login->time2live > (time(0) - _timeUpdated))
       return login;
+    else {
+      /*
+      * Substituir a implementação da LRU para permitir que o cache avise ao SDK o  elemento 
+      * que está sendo substituído, permitindo assim que eu possa manter uma IdentifierSeq e
+      * ValidityTimeSeq.
+      * Esforço atual: O(3n) !?
+      */
+      _timeUpdated = time(0);
+      idl::IdentifierSeq ids(LOGINCACHE_LRU_SIZE);
+      ids.length(_id_Login->size());
+      std::vector<std::string> keys = _id_Login->get_all_keys();
+      std::vector<std::string>::iterator it;
+      int i = 0;
+      for (it=keys.begin(); it<keys.end(); ++i, ++it)
+        ids[i] = CORBA::string_dup((*it).c_str());
+      idl_ac::ValidityTimeSeq_var validity = _conn->login_registry()->getValidity(ids);
+      for (unsigned int i=0; i<validity->length(); ++i) {
+        Login* l = _id_Login->fetch(std::string(ids[i]));
+        l->time2live = validity[i];
+      }
+      if (login->time2live > 0)
+        return login;
+    }
     return 0;
   }
   
