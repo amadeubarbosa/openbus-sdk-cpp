@@ -36,29 +36,24 @@ namespace openbus {
       typedef void (*onInvalidLogin_ptr) (Connection*, char* login);
       
       /** Exceptions */
-      class Exception {
-        public:
-          virtual const char* name() const { return "Exception"; }
+      struct Exception {
+        virtual const char* name() const { return "Exception"; }
       };
         
-      class AlreadyLogged : public Exception {
-        public:
-          const char* name() const { return "AlreadyLogged"; }
+      struct AlreadyLogged : public Exception {
+        const char* name() const { return "AlreadyLogged"; }
       };
 
-      class CorruptedPrivateKey : public Exception {
-        public:
-          const char* name() const { return "CorruptedPrivateKey"; }
+      struct CorruptedPrivateKey : public Exception {
+        const char* name() const { return "CorruptedPrivateKey"; }
       };
 
-      class CorruptedBusCertificate : public Exception {
-        public:
-          const char* name() const { return "CorruptedBusCertificate"; }
+      struct CorruptedBusCertificate : public Exception {
+        const char* name() const { return "CorruptedBusCertificate"; }
       };
 
-      class WrongPrivateKey : public Exception {
-        public:
-          const char* name() const { return "WrongPrivateKey"; }
+      struct WrongPrivateKey : public Exception {
+        const char* name() const { return "WrongPrivateKey"; }
       };
       
       Connection(
@@ -100,23 +95,28 @@ namespace openbus {
           idl::services::ServiceFailure,
           CORBA::Exception);
       
-      std::pair <idl_ac::LoginProcess*, unsigned char*>
-        startSingleSignOn() 
+      std::pair <idl_ac::LoginProcess*, unsigned char*> startSingleSignOn() 
         throw (idl::services::ServiceFailure);
         
       void loginBySingleSignOn(
         idl_ac::LoginProcess* loginProcess, 
         unsigned char* secret)
         throw (idl::services::ServiceFailure);
+        
       void onInvalidLogin(onInvalidLogin_ptr p) { _onInvalidLogin = p; }
-      onInvalidLogin_ptr onInvalidLogin() { return _onInvalidLogin; }        
+      onInvalidLogin_ptr onInvalidLogin() { return _onInvalidLogin; }      
       bool logout();
-      void close();
-      void joinChain(CallerChain* chain);
       CallerChain* getCallerChain();
+      void joinChain(CallerChain* chain);
+      //[todo]
+      void exitChain() {}
+      //[todo]
+      CallerChain* getJoineChain() { return 0; }
+      void close();
+
+      const char* busid() const { return _busid; }
       bool isLoggedIn() const { return _loginInfo.get(); }
       CORBA::ORB* orb() const { return _orb; }
-      const char* busId() const { return _busId; }
       const idl_ac::AccessControl_var access_control() const { return _access_control; }
       const idl_or::OfferRegistry_var offer_registry() const { return _offer_registry; }
       const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
@@ -136,7 +136,7 @@ namespace openbus {
       idl_ac::AccessControl_var _access_control;
       idl_ac::LoginRegistry_var _login_registry;
       idl_or::OfferRegistry_var _offer_registry;
-      idl::Identifier_var _busId;
+      idl::Identifier_var _busid;
       EVP_PKEY* _busKey;
       idl::OctetSeq_var buskeyOctetSeq;
       EVP_PKEY* _prvKey;
@@ -146,11 +146,11 @@ namespace openbus {
   };
   
   struct CallerChain {
-      char* busId;
+      char* busid;
       idl_ac::LoginInfoSeq callers;
+    private:
       friend void Connection::joinChain(CallerChain* chain);
       friend CallerChain* Connection::getCallerChain();
-    private:
       idl_ac::SignedCallChain _signedCallChain;
       const idl_ac::SignedCallChain* signedCallChain() { return &_signedCallChain; }
       void signedCallChain(idl_ac::SignedCallChain p) { _signedCallChain = p; }

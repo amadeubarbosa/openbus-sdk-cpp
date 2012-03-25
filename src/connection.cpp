@@ -14,7 +14,7 @@ namespace openbus {
     const unsigned int port,
     CORBA::ORB* orb,
     const interceptors::ORBInitializer* orbInitializer) throw(CORBA::Exception)
-    : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0) 
+    : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0)
   {
     std::stringstream corbaloc;
     corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
@@ -33,7 +33,7 @@ namespace openbus {
     obj = _iComponent->getFacetByName(idl_ac::LoginRegistryFacet);
     assert(!CORBA::is_nil(obj));
     _login_registry = idl_ac::LoginRegistry::_narrow(obj);
-    _busId = _access_control->busid();
+    _busid = _access_control->busid();
     _loginInfo.reset();
     buskeyOctetSeq = _access_control->buskey();
     _clientInterceptor->allowRequestWithoutCredential = false;
@@ -466,9 +466,9 @@ namespace openbus {
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
     CORBA::Any* signedCallChainAny = piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
-    CORBA::Any* busIdAny = piCurrent->get_slot(_orbInitializer->slotId_busId());
-    const char* busId;
-    *busIdAny >>= busId;
+    CORBA::Any* busidAny = piCurrent->get_slot(_orbInitializer->slotId_busid());
+    const char* busid;
+    *busidAny >>= busid;
     idl_ac::SignedCallChain signedCallChain;
     *signedCallChainAny >>= signedCallChain;
     CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
@@ -478,7 +478,7 @@ namespace openbus {
     *callChainAny >>= callChain;
     CallerChain* callerChain = new CallerChain();
     callerChain->callers = callChain.callers;
-    callerChain->busId = CORBA::string_dup(busId);
+    callerChain->busid = CORBA::string_dup(busid);
     callerChain->signedCallChain(signedCallChain);
     return callerChain;
   }

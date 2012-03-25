@@ -24,15 +24,15 @@ namespace openbus {
           { return _slotId_joinedCallChain; }
         PortableInterceptor::SlotId slotId_signedCallChain() const 
           { return _slotId_signedCallChain; }
-        PortableInterceptor::SlotId slotId_busId() const 
-          { return _slotId_busId; }
+        PortableInterceptor::SlotId slotId_busid() const 
+          { return _slotId_busid; }
       private:
         std::auto_ptr<ClientInterceptor> clientInterceptor; 
         std::auto_ptr<ServerInterceptor> serverInterceptor;
         IOP::Codec_var _codec;
         PortableInterceptor::SlotId _slotId_joinedCallChain;
         PortableInterceptor::SlotId _slotId_signedCallChain;
-        PortableInterceptor::SlotId _slotId_busId;
+        PortableInterceptor::SlotId _slotId_busid;
     };
   }
 }

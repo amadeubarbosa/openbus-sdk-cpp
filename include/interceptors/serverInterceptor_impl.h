@@ -16,7 +16,7 @@ namespace openbus {
           PortableInterceptor::Current* piCurrent, 
           PortableInterceptor::SlotId slotId_joinedCallChain,
           PortableInterceptor::SlotId slotId_signedCallChain, 
-          PortableInterceptor::SlotId slotId_busId, 
+          PortableInterceptor::SlotId slotId_busid, 
           IOP::Codec* cdr_codec);
         ~ServerInterceptor();
         void receive_request_service_contexts(PortableInterceptor::ServerRequestInfo*) 
@@ -38,7 +38,7 @@ namespace openbus {
         PortableInterceptor::Current* piCurrent;
         PortableInterceptor::SlotId _slotId_joinedCallChain;
         PortableInterceptor::SlotId _slotId_signedCallChain;
-        PortableInterceptor::SlotId _slotId_busId;
+        PortableInterceptor::SlotId _slotId_busid;
         IOP::Codec* cdr_codec;
         Connection* connection;
         struct CredentialSession {

@@ -25,7 +25,7 @@ namespace openbus {
           IOP::ServiceContext serviceContext;
           serviceContext.context_id = idl_cr::CredentialContextId;
           idl_cr::CredentialData credential;
-          credential.bus = CORBA::string_dup(connection->busId());
+          credential.bus = CORBA::string_dup(connection->busid());
           credential.login = CORBA::string_dup(connection->loginInfo()->id);
           
           idl::HashValue profileDataHash;
@@ -57,7 +57,7 @@ namespace openbus {
             SHA256(s, slen, credential.hash);
             
             const char* clogin = login.c_str();
-            if (strcmp(connection->busId(), clogin)) {
+            if (strcmp(connection->busid(), clogin)) {
               // credential.chain = *connection->access_control()->signChainFor(clogin);
               CORBA::Object_var init_ref = connection->orb()->resolve_initial_references(
                 "PICurrent");
