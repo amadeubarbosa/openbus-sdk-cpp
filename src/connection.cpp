@@ -14,8 +14,8 @@ namespace openbus {
     const unsigned int port,
     CORBA::ORB* orb,
     const interceptors::ORBInitializer* orbInitializer) 
-  throw(CORBA::Exception)
-  : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0)
+    throw(CORBA::Exception)
+    : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0)
   {
     std::stringstream corbaloc;
     corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
@@ -149,19 +149,17 @@ namespace openbus {
   #endif
   }
 
-  void Connection::loginByCertificate(
-    const char* entity, 
-    EVP_PKEY* privateKey)
-  throw (
-    CorruptedPrivateKey, 
-    CorruptedBusCertificate,
-    WrongPrivateKey,
-    AlreadyLogged, 
-    idl_ac::MissingCertificate, 
-    idl_ac::AccessDenied, 
-    idl_ac::WrongEncoding,
-    idl::services::ServiceFailure,
-    CORBA::Exception)
+  void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
+    throw (
+      CorruptedPrivateKey, 
+      CorruptedBusCertificate,
+      WrongPrivateKey,
+      AlreadyLogged, 
+      idl_ac::MissingCertificate, 
+      idl_ac::AccessDenied, 
+      idl_ac::WrongEncoding,
+      idl::services::ServiceFailure,
+      CORBA::Exception)
   {
     if (login()) throw AlreadyLogged();
     idl::EncryptedBlock challenge;
@@ -273,19 +271,17 @@ namespace openbus {
   #endif
   }
 
-  void Connection::loginByCertificate(
-    const char* entity, 
-    const char* privateKeyFilename)
-  throw (
-    CorruptedPrivateKey, 
-    CorruptedBusCertificate,
-    WrongPrivateKey,
-    AlreadyLogged, 
-    idl_ac::MissingCertificate, 
-    idl_ac::AccessDenied, 
-    idl_ac::WrongEncoding,
-    idl::services::ServiceFailure,
-    CORBA::Exception)
+  void Connection::loginByCertificate(const char* entity, const char* privateKeyFilename)
+    throw (
+      CorruptedPrivateKey, 
+      CorruptedBusCertificate,
+      WrongPrivateKey,
+      AlreadyLogged, 
+      idl_ac::MissingCertificate, 
+      idl_ac::AccessDenied, 
+      idl_ac::WrongEncoding,
+      idl::services::ServiceFailure,
+      CORBA::Exception)
   {
     FILE* privateKeyFile = fopen(privateKeyFilename, "r");
     if (!privateKeyFile) throw CorruptedPrivateKey();
@@ -295,9 +291,8 @@ namespace openbus {
     loginByCertificate(entity, privateKey);
   }
 
-  std::pair <idl_ac::LoginProcess*, unsigned char*>
-    Connection::startSingleSignOn() 
-  throw (idl::services::ServiceFailure)
+  std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn() 
+    throw (idl::services::ServiceFailure)
   {
     unsigned char* challenge = new unsigned char[256];
     idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);

@@ -17,7 +17,7 @@ namespace openbus {
     ClientInterceptor::~ClientInterceptor() { }
     
     void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* ri)
-    throw (CORBA::Exception)
+      throw (CORBA::Exception)
     {
       const char* operation = ri->operation();
       std::cout << "send_request:" << operation << std::endl;
@@ -100,7 +100,7 @@ namespace openbus {
     }
 
     void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo* ri)
-    throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
+      throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
     {
       std::cout << "receive_exception:" << ri->received_exception_id() << std::endl;
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {

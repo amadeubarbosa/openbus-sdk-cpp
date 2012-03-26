@@ -24,7 +24,7 @@ namespace openbus {
     
     void ServerInterceptor::receive_request_service_contexts(
       PortableInterceptor::ServerRequestInfo* ri)
-    throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
+      throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
     {
       std::cout << "receive_request_service_contexts: " << ri->operation() << std::endl;
       //[todo] legacy Openbus 1.5

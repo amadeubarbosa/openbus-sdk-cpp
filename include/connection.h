@@ -6,6 +6,7 @@
 #include <string>
 #include <CORBA.h>
 #include <openssl/evp.h>
+
 #include "interceptors/orbInitializer_impl.h"
 #include "stubs/scs.h"
 #include "stubs/core.h"
@@ -65,44 +66,42 @@ namespace openbus {
     ~Connection();
     
     void loginByPassword(const char* entity, const char* password)
-    throw (
-      AlreadyLogged, 
-      idl_ac::AccessDenied, 
-      idl_ac::WrongEncoding,
-      idl::services::ServiceFailure,
-      CORBA::Exception);
+      throw (
+        AlreadyLogged, 
+        idl_ac::AccessDenied, 
+        idl_ac::WrongEncoding,
+        idl::services::ServiceFailure,
+        CORBA::Exception);
 
     void loginByCertificate(const char* entity, EVP_PKEY* privateKey)
-    throw (
-      CorruptedPrivateKey, 
-      CorruptedBusCertificate,
-      WrongPrivateKey,
-      AlreadyLogged, 
-      idl_ac::MissingCertificate, 
-      idl_ac::AccessDenied, 
-      idl_ac::WrongEncoding,
-      idl::services::ServiceFailure,
-      CORBA::Exception);
+      throw (
+        CorruptedPrivateKey, 
+        CorruptedBusCertificate,
+        WrongPrivateKey,
+        AlreadyLogged, 
+        idl_ac::MissingCertificate, 
+        idl_ac::AccessDenied, 
+        idl_ac::WrongEncoding,
+        idl::services::ServiceFailure,
+        CORBA::Exception);
 
     void loginByCertificate(const char* entity, const char* privateKeyFilename)
-    throw (
-      CorruptedPrivateKey, 
-      CorruptedBusCertificate,
-      WrongPrivateKey,
-      AlreadyLogged, 
-      idl_ac::MissingCertificate, 
-      idl_ac::AccessDenied, 
-      idl_ac::WrongEncoding,
-      idl::services::ServiceFailure,
-      CORBA::Exception);
+      throw (
+        CorruptedPrivateKey, 
+        CorruptedBusCertificate,
+        WrongPrivateKey,
+        AlreadyLogged, 
+        idl_ac::MissingCertificate, 
+        idl_ac::AccessDenied, 
+        idl_ac::WrongEncoding,
+        idl::services::ServiceFailure,
+        CORBA::Exception);
     
     std::pair <idl_ac::LoginProcess*, unsigned char*> startSingleSignOn() 
-    throw (idl::services::ServiceFailure);
+      throw (idl::services::ServiceFailure);
       
-    void loginBySingleSignOn(
-      idl_ac::LoginProcess* loginProcess, 
-      unsigned char* secret)
-    throw (idl::services::ServiceFailure);
+    void loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigned char* secret)
+      throw (idl::services::ServiceFailure);
       
     void onInvalidLoginCallback(InvalidLoginCallback_ptr p) { _onInvalidLogin = p; }
     InvalidLoginCallback_ptr onInvalidLoginCallback() { return _onInvalidLogin; }      
