@@ -25,11 +25,10 @@ int main(int argc, char* argv[]) {
     conn->onInvalidLoginCallback(&InvalidLoginCallback);
     conn->loginByPassword("admin", "admin");
     conn->login_registry()->invalidateLogin(conn->login()->id);
-    openbus::idl_offerregistry::ServicePropertySeq props;
+    openbus::idl_or::ServicePropertySeq props;
     props.length(0);
     try {
-      openbus::idl_offerregistry::ServiceOfferDescSeq_var offers =
-        conn->offers()->findServices(props);
+      openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     } catch (CORBA::NO_PERMISSION& e) {
       receiveNoPermission = true;
     }
@@ -42,7 +41,6 @@ int main(int argc, char* argv[]) {
     return -1;
   } catch (const openbus::Connection::Exception& e) {
     fail(TESTCASE, "Connection::Exception");
-    // std::cout << "[error (Connection::Exception)] " << e.name() << std::endl;
     return -1;
   } catch (...) {
     fail(TESTCASE, "Exceção desconhecida");
