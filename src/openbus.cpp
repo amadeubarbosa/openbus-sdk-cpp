@@ -2,7 +2,7 @@
 #include <memory>
 
 namespace openbus {
-  std::auto_ptr <ORB> singleORB;
+  ORB* singleORB;
 
   /* [obs]
   ** Eu não consegui usar um auto_ptr para segurar a referência ao orbInitializer porque 
@@ -38,7 +38,9 @@ namespace openbus {
     CORBA::Object_var o = _orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();    
+    poa_manager->activate();
+    
+    _multiplexer = new multiplexed::ConnectionMultiplexer;
   }
   
   ORB::~ORB() { }
@@ -52,9 +54,9 @@ namespace openbus {
   {
     if (!orb)
       //[doubt] posso inicializar com 0, 0 ?
-      singleORB = std::auto_ptr <ORB> (createORB(0, 0));
+      singleORB = createORB(0, 0);
     else
-      singleORB = std::auto_ptr <ORB> (orb);
-    return new Connection(host, port, singleORB->orb(), orbInitializer);
+      singleORB = orb;
+    return new Connection(host, port, singleORB, orbInitializer);
   }
 }

@@ -7,12 +7,25 @@
 #include <CORBA.h>
 #include <openssl/evp.h>
 
+#include "openbus.h"
 #include "interceptors/orbInitializer_impl.h"
 #include "stubs/scs.h"
 #include "stubs/core.h"
 #include "stubs/credential.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
+
+namespace openbus {
+  class ORB;
+  class LoginCache;
+  class RenewLogin;
+  struct CallerChain;  
+  namespace interceptors {
+    class ClientInterceptor;
+    class ServerInterceptor;
+    class ORBInitializer;
+  }
+}
 
 namespace openbus {  
   namespace idl = tecgraf::openbus::core::v2_00;
@@ -22,15 +35,6 @@ namespace openbus {
   namespace idl_offerregistry = idl_or;
   namespace idl_cr = tecgraf::openbus::core::v2_00::credential;
   namespace idl_credential = idl_cr;
-  
-  namespace interceptors {
-    class ClientInterceptor;
-    class ServerInterceptor;
-    class ORBInitializer;
-  }
-  class LoginCache;
-  class RenewLogin;
-  struct CallerChain;
   
   class Connection {
   public:
@@ -61,7 +65,7 @@ namespace openbus {
     Connection(
       const std::string host,
       const unsigned int port,
-      CORBA::ORB* orb,
+      ORB* orb,
       const interceptors::ORBInitializer* orbInitializer) throw(CORBA::Exception);
     ~Connection();
     
@@ -112,8 +116,7 @@ namespace openbus {
     CallerChain* getJoineChain();
     void close();
 
-    //[doubt] readonly?
-    CORBA::ORB* orb() const { return _orb; }
+    CORBA::ORB* orb() const;
     const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
     const char* busid() const { return _busid; }
     const idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
@@ -127,7 +130,7 @@ namespace openbus {
 
     std::string _host;
     unsigned int _port;
-    CORBA::ORB* _orb;
+    ORB* _orb;
     const interceptors::ORBInitializer* _orbInitializer;
     interceptors::ClientInterceptor* _clientInterceptor;
     interceptors::ServerInterceptor* _serverInterceptor;

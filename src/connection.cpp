@@ -12,14 +12,14 @@ namespace openbus {
   Connection::Connection(
     const std::string host,
     const unsigned int port,
-    CORBA::ORB* orb,
+    ORB* orb,
     const interceptors::ORBInitializer* orbInitializer) 
     throw(CORBA::Exception)
     : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0)
   {
     std::stringstream corbaloc;
     corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
-    CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
+    CORBA::Object_var obj = _orb->orb()->string_to_object(corbaloc.str().c_str());
     assert(!CORBA::is_nil(obj));
     _clientInterceptor = _orbInitializer->getClientInterceptor();
     _serverInterceptor = _orbInitializer->getServerInterceptor();
@@ -145,7 +145,7 @@ namespace openbus {
     _renewLogin->start();
   #else
     _renewLogin.reset(new RenewLogin(_access_control));  
-    _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
+    _orb->orb()->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   }
 
@@ -267,7 +267,7 @@ namespace openbus {
     _renewLogin->start();
   #else
     _renewLogin.reset(new RenewLogin(_access_control));  
-    _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
+    _orb->orb()->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   }
 
@@ -405,7 +405,7 @@ namespace openbus {
     _renewLogin->start();
   #else
     _renewLogin.reset(new RenewLogin(_access_control));  
-    _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
+    _orb->orb()->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif    
   }
 
@@ -424,7 +424,7 @@ namespace openbus {
         _renewLogin->wait();
         _renewLogin.reset();
       #else
-        _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
+        _orb->orb()->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
         _renewLogin.reset();
       #endif
         _loginInfo.reset();
@@ -437,7 +437,7 @@ namespace openbus {
   }
   
   void Connection::joinChain(CallerChain* chain) {
-    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    CORBA::Object_var init_ref = _orb->orb()->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
     CORBA::Any signedCallChainAny;
@@ -448,7 +448,7 @@ namespace openbus {
   }
 
   void Connection::exitChain() {
-    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    CORBA::Object_var init_ref = _orb->orb()->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
     CORBA::Any any;
@@ -458,7 +458,7 @@ namespace openbus {
   }
 
   CallerChain* Connection::getJoineChain() {
-    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    CORBA::Object_var init_ref = _orb->orb()->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
     CORBA::Any_var signedCallChainAny = piCurrent->get_slot(
@@ -480,7 +480,7 @@ namespace openbus {
   }
 
   CallerChain* Connection::getCallerChain() {
-    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    CORBA::Object_var init_ref = _orb->orb()->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
     CORBA::Any* signedCallChainAny = piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
@@ -545,6 +545,8 @@ namespace openbus {
     }
     return 0;
   }
+  
+  CORBA::ORB* Connection::orb() const { return _orb->orb(); }
   
 #ifdef MULTITHREAD
   RenewLogin::RenewLogin(

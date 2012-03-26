@@ -1,8 +1,12 @@
-#ifndef  _TECGRAF_MULTIPLEXER_H_
+#ifndef _TECGRAF_MULTIPLEXER_H_
 #define _TECGRAF_MULTIPLEXER_H_
 
 #include "connection.h"
 #include "interceptors/clientInterceptor_impl.h"
+
+namespace openbus {
+  class Connection;
+}
 
 namespace openbus {
   namespace multiplexed {
