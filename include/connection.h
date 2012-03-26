@@ -33,8 +33,7 @@ namespace openbus {
   
   class Connection {
   public:
-    //[todo] renomear
-    typedef void (*onInvalidLogin_ptr) (Connection*, char* login);
+    typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const char* login);
     
     /** Exceptions */
     //[todo] revisar exceptions
@@ -105,9 +104,8 @@ namespace openbus {
       unsigned char* secret)
     throw (idl::services::ServiceFailure);
       
-    //[todo] renomear
-    void onInvalidLogin(onInvalidLogin_ptr p) { _onInvalidLogin = p; }
-    onInvalidLogin_ptr onInvalidLogin() { return _onInvalidLogin; }      
+    void onInvalidLoginCallback(InvalidLoginCallback_ptr p) { _onInvalidLogin = p; }
+    InvalidLoginCallback_ptr onInvalidLoginCallback() { return _onInvalidLogin; }      
     bool logout();
     CallerChain* getCallerChain();
     void joinChain(CallerChain* chain);
@@ -119,8 +117,7 @@ namespace openbus {
     CORBA::ORB* orb() const { return _orb; }
     const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
     const char* busid() const { return _busid; }
-    //[todo] readonly
-    idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
+    const idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
 
     //[todo] esconder (tests/01.cpp)
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
@@ -145,7 +142,7 @@ namespace openbus {
     EVP_PKEY* _busKey;
     idl::OctetSeq_var buskeyOctetSeq;
     EVP_PKEY* _prvKey;
-    onInvalidLogin_ptr _onInvalidLogin;
+    InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;

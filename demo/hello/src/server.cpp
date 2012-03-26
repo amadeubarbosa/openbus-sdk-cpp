@@ -6,9 +6,10 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
-void onInvalidLogin(openbus::Connection* conn, char* login) {
+bool onInvalidLogin(const openbus::Connection* conn, const char* login) {
   std::cout << "login [" << login << "] terminated shutting the server down." << std::endl;
 //  conn->close();
+  return false;
 }
 
 struct HelloImpl : virtual public POA_Hello {
@@ -23,7 +24,7 @@ struct HelloImpl : virtual public POA_Hello {
 int main(int argc, char** argv) {
   try {
     std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
-    conn->onInvalidLogin(&onInvalidLogin);
+    conn->onInvalidLoginCallback(&onInvalidLogin);
     
     scs::core::ComponentId componentId;
     componentId.name = "Hello";

@@ -131,14 +131,14 @@ namespace openbus {
       static_cast<CORBA::Octet*> (encodedPrvKey));
 
     idl_ac::ValidityTime validityTime;
-    idl_ac::LoginInfo* _loginInfo = _access_control->loginByPassword(
+    idl_ac::LoginInfo* loginInfo = _access_control->loginByPassword(
       entity, 
       prvkeyOctetSeq,
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
 
-    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> (_loginInfo);
+    _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
     _renewLogin.reset(new RenewLogin(this, validityTime));
@@ -257,12 +257,12 @@ namespace openbus {
 
     idl_ac::ValidityTime validityTime;
     _clientInterceptor->allowRequestWithoutCredential = true;
-    idl_ac::LoginInfo* _loginInfo = loginProcess->login(
+    idl_ac::LoginInfo* loginInfo = loginProcess->login(
       prvkeyOctetSeq,
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
-    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> (_loginInfo);
+    _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
     _renewLogin.reset(new RenewLogin(this, validityTime));
@@ -398,12 +398,12 @@ namespace openbus {
 
     idl_ac::ValidityTime validityTime;
     _clientInterceptor->allowRequestWithoutCredential = true;
-    idl_ac::LoginInfo* _loginInfo = loginProcess->login(
+    idl_ac::LoginInfo* loginInfo = loginProcess->login(
       prvkeyOctetSeq,
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
-    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> (_loginInfo);
+    _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
     _renewLogin.reset(new RenewLogin(this, validityTime));
@@ -463,11 +463,6 @@ namespace openbus {
   }
 
   CallerChain* Connection::getJoineChain() {
-    /* acho que eu não posso criar uma CallerChain por causa do atributo signedCallChain 
-    * mas ao mesmo eu sei que preciso consultar o piCurrent para obter a CallerChain...
-    * como eu vou recurar a signedCallChain de posse do busid e callers?
-    * parece que uma solução razoável é guardar no piCurrent uma estrutura mais ampla ou 
-    * averiguar se é possível utilizar dois slots, um com SignedCallChain e outro com...*/
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
