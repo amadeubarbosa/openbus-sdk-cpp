@@ -8,25 +8,26 @@ namespace openbus {
     ClientInterceptor::ClientInterceptor(
       PortableInterceptor::SlotId slotId_joinedCallChain,
       IOP::Codec* cdr_codec) 
-      : _slotId_joinedCallChain(slotId_joinedCallChain),
-        allowRequestWithoutCredential(false), 
-        cdr_codec(cdr_codec), 
-        connection(0) { }
+      : allowRequestWithoutCredential(false),
+        _cdrCodec(cdr_codec), 
+        _conn(0),
+        _slotId_joinedCallChain(slotId_joinedCallChain) 
+    { }
     
     ClientInterceptor::~ClientInterceptor() { }
     
     void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* ri)
-      throw (CORBA::Exception)
+    throw (CORBA::Exception)
     {
       const char* operation = ri->operation();
       std::cout << "send_request:" << operation << std::endl;
       if (!allowRequestWithoutCredential) {
-        if (connection && connection->login()) {
+        if (_conn && _conn->login()) {
           IOP::ServiceContext serviceContext;
           serviceContext.context_id = idl_cr::CredentialContextId;
           idl_cr::CredentialData credential;
-          credential.bus = CORBA::string_dup(connection->busid());
-          credential.login = CORBA::string_dup(connection->login()->id);
+          credential.bus = CORBA::string_dup(_conn->busid());
+          credential.login = CORBA::string_dup(_conn->login()->id);
           
           idl::HashValue profileDataHash;
           SHA256(
@@ -35,9 +36,9 @@ namespace openbus {
             profileDataHash);
           std::string sprofileDataHash((const char*) profileDataHash, 32);
 
-          if (profile2login.find(sprofileDataHash) != profile2login.end()) {
-            std::string login = profile2login[sprofileDataHash];
-            CredentialSession* credSession = login2credsession[login];
+          if (_profile2login.find(sprofileDataHash) != _profile2login.end()) {
+            std::string login = _profile2login[sprofileDataHash];
+            CredentialSession* credSession = _login2credsession[login];
             credential.session = credSession->id;
             credSession->ticket++;
             credential.ticket = credSession->ticket;
@@ -57,9 +58,9 @@ namespace openbus {
             SHA256(s, slen, credential.hash);
             
             const char* clogin = login.c_str();
-            if (strcmp(connection->busid(), clogin)) {
-              // credential.chain = *connection->access_control()->signChainFor(clogin);
-              CORBA::Object_var init_ref = connection->orb()->resolve_initial_references(
+            if (strcmp(_conn->busid(), clogin)) {
+              // credential.chain = *_conn->access_control()->signChainFor(clogin);
+              CORBA::Object_var init_ref = _conn->orb()->resolve_initial_references(
                 "PICurrent");
               assert(!CORBA::is_nil(init_ref));
               PortableInterceptor::Current_var piCurrent = 
@@ -69,7 +70,7 @@ namespace openbus {
               if (*signedCallChainAny >>= signedCallChain)
                 credential.chain = signedCallChain;
               else 
-                credential.chain = *connection->access_control()->signChainFor(clogin);
+                credential.chain = *_conn->access_control()->signChainFor(clogin);
             } else {
               memset(credential.chain.signature, '\0', 256);              
             }
@@ -83,7 +84,7 @@ namespace openbus {
           CORBA::Any any;
           any <<= credential;
           CORBA::OctetSeq_var octets;
-          octets = cdr_codec->encode_value(any);
+          octets = _cdrCodec->encode_value(any);
           
           IOP::ServiceContext::_context_data_seq seq(
             octets->length(),
@@ -99,7 +100,7 @@ namespace openbus {
     }
 
     void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo* ri)
-      throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
+    throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
     {
       std::cout << "receive_exception:" << ri->received_exception_id() << std::endl;
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
@@ -115,13 +116,13 @@ namespace openbus {
                 sctx->context_data.get_buffer());
               //[doubt] pegar exceção FormatMismatch ?
               CORBA::Any_var any = 
-                cdr_codec->decode_value(o, idl_cr::_tc_CredentialReset);
+                _cdrCodec->decode_value(o, idl_cr::_tc_CredentialReset);
               idl_cr::CredentialReset credentialReset;
               any >>= credentialReset;
             
               unsigned char* secret;
               size_t secretLen;
-              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(connection->prvKey(), 0);
+              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(_conn->prvKey(), 0);
               if (!(ctx && 
                   (EVP_PKEY_decrypt_init(ctx) > 0) &&
                   (EVP_PKEY_decrypt(
@@ -153,31 +154,23 @@ namespace openbus {
                 profileDataHash);
               std::string sprofileDataHash((const char*) profileDataHash, 32);
               std::string remoteid(credentialReset.login);
-              profile2login[sprofileDataHash] = remoteid;
+              _profile2login[sprofileDataHash] = remoteid;
             
-              if (login2credsession.find(remoteid) == login2credsession.end()) {
+              if (_login2credsession.find(remoteid) == _login2credsession.end()) {
                 CredentialSession* credSession = new CredentialSession();
                 credSession->id = credentialReset.session;
                 credSession->remoteid  = CORBA::string_dup(credentialReset.login);
                 credSession->secret = secret;
                 credSession->ticket = 0;
-                login2credsession[remoteid] = credSession;
+                _login2credsession[remoteid] = credSession;
               }
               throw PortableInterceptor::ForwardRequest(ri->target(), false);
             }
           } else if (ex->minor() == idl_ac::InvalidLoginCode) {
-            (connection->onInvalidLogin())(connection, connection->login()->id);
+            (_conn->onInvalidLogin())(_conn, _conn->login()->id);
           }
         }
       }
     }
-    
-    void ClientInterceptor::addConnection(Connection* connection) {
-      this->connection = connection;
-    }
-    
-    void ClientInterceptor::removeConnection(Connection* connection) {
-      this->connection = 0;
-    }  
   }
 }

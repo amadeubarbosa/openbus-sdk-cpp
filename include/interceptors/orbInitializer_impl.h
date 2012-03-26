@@ -10,29 +10,25 @@ namespace openbus {
   namespace interceptors {
     class ClientInterceptor;
     class ServerInterceptor;
-    
     class ORBInitializer : public PortableInterceptor::ORBInitializer {
-      public:
-        ORBInitializer();
-        ~ORBInitializer();
-        void pre_init(PortableInterceptor::ORBInitInfo* info);
-        void post_init(PortableInterceptor::ORBInitInfo* info) { }
-        ClientInterceptor* getClientInterceptor() const { return clientInterceptor.get(); }
-        ServerInterceptor* getServerInterceptor() const { return serverInterceptor.get(); }
-        IOP::Codec* codec() const { return _codec; }
-        PortableInterceptor::SlotId slotId_joinedCallChain() const 
-          { return _slotId_joinedCallChain; }
-        PortableInterceptor::SlotId slotId_signedCallChain() const 
-          { return _slotId_signedCallChain; }
-        PortableInterceptor::SlotId slotId_busid() const 
-          { return _slotId_busid; }
-      private:
-        std::auto_ptr<ClientInterceptor> clientInterceptor; 
-        std::auto_ptr<ServerInterceptor> serverInterceptor;
-        IOP::Codec_var _codec;
-        PortableInterceptor::SlotId _slotId_joinedCallChain;
-        PortableInterceptor::SlotId _slotId_signedCallChain;
-        PortableInterceptor::SlotId _slotId_busid;
+    public:
+      ORBInitializer();
+      ~ORBInitializer();
+      void pre_init(PortableInterceptor::ORBInitInfo*);
+      void post_init(PortableInterceptor::ORBInitInfo*) { }
+      ClientInterceptor* getClientInterceptor() const { return clientInterceptor.get(); }
+      ServerInterceptor* getServerInterceptor() const { return serverInterceptor.get(); }
+      IOP::Codec* codec() const { return _codec; }
+      PortableInterceptor::SlotId slotId_joinedCallChain() const { return _slotId_joinedCallChain; }
+      PortableInterceptor::SlotId slotId_signedCallChain() const { return _slotId_signedCallChain; }
+      PortableInterceptor::SlotId slotId_busid() const { return _slotId_busid; }
+    private:
+      std::auto_ptr<ClientInterceptor> clientInterceptor; 
+      std::auto_ptr<ServerInterceptor> serverInterceptor;
+      IOP::Codec_var _codec;
+      PortableInterceptor::SlotId _slotId_joinedCallChain;
+      PortableInterceptor::SlotId _slotId_signedCallChain;
+      PortableInterceptor::SlotId _slotId_busid;
     };
   }
 }

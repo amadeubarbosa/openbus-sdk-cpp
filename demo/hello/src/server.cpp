@@ -36,9 +36,9 @@ int main(int argc, char** argv) {
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
     ctx->addFacet("hello", "IDL:Hello:1.0", helloServant);
     
-    openbus::idl_offerregistry::ServicePropertySeq props;
+    openbus::idl_or::ServicePropertySeq props;
     props.length(1);
-    openbus::idl_offerregistry::ServiceProperty property;
+    openbus::idl_or::ServiceProperty property;
     property.name = "offer.domain";
     property.value = "OpenBus Demos";
     props[0] = property;

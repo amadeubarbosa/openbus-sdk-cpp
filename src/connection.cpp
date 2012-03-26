@@ -13,8 +13,9 @@ namespace openbus {
     const std::string host,
     const unsigned int port,
     CORBA::ORB* orb,
-    const interceptors::ORBInitializer* orbInitializer) throw(CORBA::Exception)
-    : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0)
+    const interceptors::ORBInitializer* orbInitializer) 
+  throw(CORBA::Exception)
+  : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0)
   {
     std::stringstream corbaloc;
     corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
@@ -51,8 +52,8 @@ namespace openbus {
       //[doubt] trocar assert por exceção ?
       assert(0);
     
-    _clientInterceptor->addConnection(this);
-    _serverInterceptor->addConnection(this);
+    _clientInterceptor->setConnection(this);
+    _serverInterceptor->setConnection(this);
     _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
   }
 
@@ -60,7 +61,6 @@ namespace openbus {
     if (login())
       //[OBS] logout trata uma exceção qualquer.
       logout();
-    // delete _loginCache;
   }
 
   void Connection::loginByPassword(const char* entity, const char* password)
@@ -138,8 +138,7 @@ namespace openbus {
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
 
-    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> 
-      (_loginInfo);
+    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
     _renewLogin.reset(new RenewLogin(this, validityTime));
@@ -153,23 +152,23 @@ namespace openbus {
   void Connection::loginByCertificate(
     const char* entity, 
     EVP_PKEY* privateKey)
-    throw (
-      CorruptedPrivateKey, 
-      CorruptedBusCertificate,
-      WrongPrivateKey,
-      AlreadyLogged, 
-      idl_ac::MissingCertificate, 
-      idl_ac::AccessDenied, 
-      idl_ac::WrongEncoding,
-      idl::services::ServiceFailure,
-      CORBA::Exception)
+  throw (
+    CorruptedPrivateKey, 
+    CorruptedBusCertificate,
+    WrongPrivateKey,
+    AlreadyLogged, 
+    idl_ac::MissingCertificate, 
+    idl_ac::AccessDenied, 
+    idl_ac::WrongEncoding,
+    idl::services::ServiceFailure,
+    CORBA::Exception)
   {
-    if (login())
-      throw AlreadyLogged();
+    if (login()) throw AlreadyLogged();
     idl::EncryptedBlock challenge;
     _clientInterceptor->allowRequestWithoutCredential = true;
-    idl_ac::LoginProcess_var loginProcess =
-      _access_control->startLoginByCertificate(entity, challenge);
+    idl_ac::LoginProcess_var loginProcess = _access_control->startLoginByCertificate(
+      entity, 
+      challenge);
     _clientInterceptor->allowRequestWithoutCredential = false;
 
     EVP_PKEY_CTX* ctx;
@@ -189,11 +188,11 @@ namespace openbus {
 
     assert(secret = (unsigned char*) OPENSSL_malloc(secretLen));
     if (EVP_PKEY_decrypt(
-          ctx,
-          secret,
-          &secretLen,
-          challenge,
-          256) <= 0
+      ctx,
+      secret,
+      &secretLen,
+      challenge,
+      256) <= 0
     )
       //[doubt] trocar assert por exceção ?
       assert(0);
@@ -236,11 +235,11 @@ namespace openbus {
 
     assert(encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen));
     if (EVP_PKEY_encrypt(
-          ctx, 
-          encrypted, 
-          &encryptedLen,
-          encodedLoginAuthenticationInfo->get_buffer(),
-          encodedLoginAuthenticationInfo->length()) <= 0
+      ctx, 
+      encrypted, 
+      &encryptedLen,
+      encodedLoginAuthenticationInfo->get_buffer(),
+      encodedLoginAuthenticationInfo->length()) <= 0
     )
       //[doubt] trocar assert por exceção ?
       assert(0);
@@ -263,8 +262,7 @@ namespace openbus {
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
-    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> 
-      (_loginInfo);
+    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
     _renewLogin.reset(new RenewLogin(this, validityTime));
@@ -278,57 +276,54 @@ namespace openbus {
   void Connection::loginByCertificate(
     const char* entity, 
     const char* privateKeyFilename)
-    throw (
-      CorruptedPrivateKey, 
-      CorruptedBusCertificate,
-      WrongPrivateKey,
-      AlreadyLogged, 
-      idl_ac::MissingCertificate, 
-      idl_ac::AccessDenied, 
-      idl_ac::WrongEncoding,
-      idl::services::ServiceFailure,
-      CORBA::Exception)
+  throw (
+    CorruptedPrivateKey, 
+    CorruptedBusCertificate,
+    WrongPrivateKey,
+    AlreadyLogged, 
+    idl_ac::MissingCertificate, 
+    idl_ac::AccessDenied, 
+    idl_ac::WrongEncoding,
+    idl::services::ServiceFailure,
+    CORBA::Exception)
   {
     FILE* privateKeyFile = fopen(privateKeyFilename, "r");
-    if (!privateKeyFile)
-      throw CorruptedPrivateKey();
+    if (!privateKeyFile) throw CorruptedPrivateKey();
     EVP_PKEY* privateKey = PEM_read_PrivateKey(privateKeyFile, 0, 0, 0);
     fclose(privateKeyFile);
-    if (!privateKey)
-      throw CorruptedPrivateKey();
+    if (!privateKey) throw CorruptedPrivateKey();
     loginByCertificate(entity, privateKey);
   }
 
   std::pair <idl_ac::LoginProcess*, unsigned char*>
     Connection::startSingleSignOn() 
-    throw (idl::services::ServiceFailure)
+  throw (idl::services::ServiceFailure)
   {
     unsigned char* challenge = new unsigned char[256];
-    idl_ac::LoginProcess* loginProcess = 
-      _access_control->startLoginBySingleSignOn(challenge);
+    idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
 
     EVP_PKEY_CTX* ctx;
     unsigned char* secret;
     size_t secretLen;
     if (!((ctx = EVP_PKEY_CTX_new(_prvKey, 0)) &&
-        (EVP_PKEY_decrypt_init(ctx) > 0) &&
-        (EVP_PKEY_decrypt(
-          ctx,
-          0,
-          &secretLen,
-          challenge,
-          256) > 0))
+      (EVP_PKEY_decrypt_init(ctx) > 0) &&
+      (EVP_PKEY_decrypt(
+        ctx,
+        0,
+        &secretLen,
+        challenge,
+        256) > 0))
     )
       //[doubt] trocar assert por exceção ?
       assert(0);
 
     assert(secret = (unsigned char*) OPENSSL_malloc(secretLen));
     if (EVP_PKEY_decrypt(
-          ctx,
-          secret,
-          &secretLen,
-          challenge,
-          256) <= 0
+      ctx,
+      secret,
+      &secretLen,
+      challenge,
+      256) <= 0
     )
       //[doubt] trocar assert por exceção ?
       assert(0);
@@ -341,11 +336,9 @@ namespace openbus {
   void Connection::loginBySingleSignOn(
     idl_ac::LoginProcess* loginProcess, 
     unsigned char* secret)
-    throw (idl::services::ServiceFailure)
+  throw (idl::services::ServiceFailure)
   {
-    if (login())
-      throw AlreadyLogged();
-
+    if (login()) throw AlreadyLogged();
     idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
       new idl_ac::LoginAuthenticationInfo;
     idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
@@ -370,24 +363,24 @@ namespace openbus {
     unsigned char* encrypted;
     size_t encryptedLen;
     if (!((ctx = EVP_PKEY_CTX_new(_busKey, 0)) &&
-        (EVP_PKEY_encrypt_init(ctx) > 0) &&
-        (EVP_PKEY_encrypt(
-          ctx, 
-          0, 
-          &encryptedLen,
-          encodedLoginAuthenticationInfo->get_buffer(),
-          encodedLoginAuthenticationInfo->length()) > 0))
+      (EVP_PKEY_encrypt_init(ctx) > 0) &&
+      (EVP_PKEY_encrypt(
+        ctx, 
+        0, 
+        &encryptedLen,
+        encodedLoginAuthenticationInfo->get_buffer(),
+        encodedLoginAuthenticationInfo->length()) > 0))
     )
       //[doubt] trocar assert por exceção ?
       assert(0);
 
     assert(encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen));
     if (EVP_PKEY_encrypt(
-          ctx, 
-          encrypted, 
-          &encryptedLen,
-          encodedLoginAuthenticationInfo->get_buffer(),
-          encodedLoginAuthenticationInfo->length()) <= 0
+      ctx, 
+      encrypted, 
+      &encryptedLen,
+      encodedLoginAuthenticationInfo->get_buffer(),
+      encodedLoginAuthenticationInfo->length()) <= 0
     )
       //[doubt] trocar assert por exceção ?
       assert(0);
@@ -410,8 +403,7 @@ namespace openbus {
       encryptedBlock,
       validityTime);
     _clientInterceptor->allowRequestWithoutCredential = false;
-    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> 
-      (_loginInfo);
+    this->_loginInfo = std::auto_ptr<idl_ac::LoginInfo> (_loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef MULTITHREAD
     _renewLogin.reset(new RenewLogin(this, validityTime));
@@ -423,10 +415,9 @@ namespace openbus {
   }
 
   void Connection::close() {
-    if (login())
-      logout();
-    _clientInterceptor->removeConnection(this);
-    _serverInterceptor->removeConnection(this);
+    if (login()) logout();
+    _clientInterceptor->setConnection(0);
+    _serverInterceptor->setConnection(0);
   }
 
   bool Connection::logout() {
@@ -501,7 +492,7 @@ namespace openbus {
 
     /* validação do login. (getValidity) */
     if (!login->time2live) return 0;
-    if (login->time2live > (time(0) - _timeUpdated))
+    if (login->time2live > (time(0) - _timeUpdated)) 
       return login;
     else {
       /*
@@ -523,8 +514,7 @@ namespace openbus {
         Login* l = _id_Login->fetch(std::string(ids[i]));
         l->time2live = validity[i];
       }
-      if (login->time2live > 0)
-        return login;
+      if (login->time2live > 0) return login;
     }
     return 0;
   }
@@ -533,7 +523,8 @@ namespace openbus {
   RenewLogin::RenewLogin(
     Connection* connection, 
     idl_ac::ValidityTime validityTime) 
-    : connection(connection), validityTime(validityTime), sigINT(false) { }
+    : connection(connection), validityTime(validityTime), sigINT(false) 
+  { }
 
   RenewLogin::~RenewLogin() { }
 
@@ -552,15 +543,15 @@ namespace openbus {
     while (true) {
       if (_sleep(validityTime)) 
         break;
-      else {
+      else 
         //[doubt] try-catch
         validityTime = _access_control->renew();
-      }
     }
   }
 #else
   RenewLogin::RenewLogin(idl_ac::AccessControl* _access_control) 
-    : _access_control(_access_control) { }
+    : _access_control(_access_control) 
+  { }
 
   void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
     dispatcher->tm_event(this, _access_control->renew()*1000);

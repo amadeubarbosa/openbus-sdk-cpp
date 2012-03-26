@@ -6,7 +6,7 @@ int main(int argc, char** argv) {
   try {
     std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
     conn->loginByPassword("demo", "demo");
-    openbus::idl_offerregistry::ServicePropertySeq props;
+    openbus::idl_or::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";
     props[0].value = "demo";
@@ -14,8 +14,7 @@ int main(int argc, char** argv) {
     props[1].value = "hello";
     props[2].name  = "offer.domain";
     props[2].value = "OpenBus Demos";
-    openbus::idl_offerregistry::ServiceOfferDescSeq_var offers =
-      conn->offers()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     if (offers->length()) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
       Hello* hello = Hello::_narrow(o);
