@@ -166,9 +166,8 @@ namespace openbus {
               }
               throw PortableInterceptor::ForwardRequest(ri->target(), false);
             }
-          } else if (ex->minor() == idl_ac::InvalidLoginCode) {
+          } else if (ex->minor() == idl_ac::InvalidLoginCode)
             (_conn->onInvalidLogin())(_conn, _conn->login()->id);
-          }
         }
       }
     }

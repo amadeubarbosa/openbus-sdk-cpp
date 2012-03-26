@@ -452,6 +452,43 @@ namespace openbus {
       signedCallChainAny);
   }
 
+  void Connection::exitChain() {
+    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    assert(!CORBA::is_nil(init_ref));
+    PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+    CORBA::Any any;
+    piCurrent->set_slot(
+      _orbInitializer->slotId_joinedCallChain(),
+      any);    
+  }
+
+  CallerChain* Connection::getJoineChain() {
+    /* acho que eu não posso criar uma CallerChain por causa do atributo signedCallChain 
+    * mas ao mesmo eu sei que preciso consultar o piCurrent para obter a CallerChain...
+    * como eu vou recurar a signedCallChain de posse do busid e callers?
+    * parece que uma solução razoável é guardar no piCurrent uma estrutura mais ampla ou 
+    * averiguar se é possível utilizar dois slots, um com SignedCallChain e outro com...*/
+    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    assert(!CORBA::is_nil(init_ref));
+    PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+    CORBA::Any_var signedCallChainAny = piCurrent->get_slot(
+      _orbInitializer->slotId_joinedCallChain());
+    idl_ac::SignedCallChain signedCallChain;
+    if (*signedCallChainAny >>= signedCallChain) {
+      CallerChain* c = new CallerChain();
+      CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
+        signedCallChain.encoded,
+        idl_ac::_tc_CallChain);
+      idl_ac::CallChain callChain;
+      callChainAny >>= callChain;
+      c->signedCallChain(signedCallChain);
+      c->busid = callChain.target;
+      c->callers = callChain.callers;
+      return c;
+    } else
+      return 0;
+  }
+
   CallerChain* Connection::getCallerChain() {
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));

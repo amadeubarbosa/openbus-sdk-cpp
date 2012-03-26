@@ -111,10 +111,8 @@ namespace openbus {
     bool logout();
     CallerChain* getCallerChain();
     void joinChain(CallerChain* chain);
-    //[todo] implementar
-    void exitChain() {}
-    //[todo] implementar
-    CallerChain* getJoineChain() { return 0; }
+    void exitChain();
+    CallerChain* getJoineChain();
     void close();
 
     //[doubt] readonly?
@@ -157,11 +155,10 @@ namespace openbus {
     char* busid;
     idl_ac::LoginInfoSeq callers;
   private:
-    friend void Connection::joinChain(CallerChain* chain);
-    friend CallerChain* Connection::getCallerChain();
     idl_ac::SignedCallChain _signedCallChain;
-    const idl_ac::SignedCallChain* signedCallChain() { return &_signedCallChain; }
+    const idl_ac::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
     void signedCallChain(idl_ac::SignedCallChain p) { _signedCallChain = p; }
+    friend class Connection;
   };
 }
 
