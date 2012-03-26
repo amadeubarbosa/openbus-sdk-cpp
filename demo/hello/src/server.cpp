@@ -13,12 +13,13 @@ bool onInvalidLogin(const openbus::Connection* conn, const char* login) {
 }
 
 struct HelloImpl : virtual public POA_Hello {
-  openbus::Connection* _conn;
   HelloImpl(openbus::Connection* c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
     const char* caller = _conn->getCallerChain()->callers[0].entity;
     std::cout << "Hello from '" << caller << "'." << std::endl;
-  };
+  }
+  private:
+    openbus::Connection* _conn;
 };
 
 int main(int argc, char** argv) {

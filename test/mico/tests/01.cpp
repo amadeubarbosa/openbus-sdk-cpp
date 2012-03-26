@@ -10,10 +10,11 @@ using namespace auxiliar;
 bool isInvalid = false;
 bool receiveNoPermission = false;
 
-void InvalidLoginCallback(openbus::Connection* conn, char* login) {
+bool InvalidLoginCallback(const openbus::Connection* conn, const char* login) {
   std::cout << "login [" << login << "] terminated shutting the server down." << std::endl;
   isInvalid = true;
   // conn->close();
+  return false;
 }
 
 int main(int argc, char* argv[]) {
