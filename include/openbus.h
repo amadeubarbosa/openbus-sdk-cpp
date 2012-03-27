@@ -27,11 +27,21 @@ namespace openbus {
     multiplexed::ConnectionMultiplexer* _multiplexer;
     friend ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
   };
+  struct AlreadyConnected { };
+}
 
+namespace openbus {
   ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
-
   Connection* connect(const std::string host, const unsigned int port, ORB* orb = 0)
-    throw(CORBA::Exception);
+    throw(CORBA::Exception, AlreadyConnected);
+}
+
+namespace openbus {
+  namespace multiplexed {
+    ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
+    Connection* connect(const std::string host, const unsigned int port, ORB* orb = 0)
+      throw(CORBA::Exception);    
+  }
 }
 
 #endif

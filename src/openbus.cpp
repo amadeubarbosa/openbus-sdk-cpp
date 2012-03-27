@@ -50,13 +50,36 @@ namespace openbus {
   }
   
   Connection* connect(const std::string host, const unsigned int port, ORB* orb) 
-    throw(CORBA::Exception) 
+    throw(CORBA::Exception, AlreadyConnected) 
   {
-    if (!orb)
-      //[doubt] posso inicializar com 0, 0 ?
-      singleORB = createORB(0, 0);
+    if (!singleORB) {
+      if (!orb)
+        //[doubt] posso inicializar com 0, 0 ?
+        singleORB = createORB(0, 0);
+      else
+        singleORB = orb;
+    }
+    multiplexed::Connections connections = singleORB->getConnectionMultiplexer()->getConnections();
+    if (!(connections.size()))
+      return new Connection(host, port, singleORB, orbInitializer);
     else
-      singleORB = orb;
-    return new Connection(host, port, singleORB, orbInitializer);
+      throw AlreadyConnected();
+  }
+  
+  namespace multiplexed {
+    ORB* createORB(int argc, char** argv) throw(CORBA::Exception) {
+      return openbus::createORB(argc, argv);
+    }
+
+    Connection* connect(const std::string host, const unsigned int port, ORB* orb) 
+      throw(CORBA::Exception) 
+    {
+      if (!orb)
+        //[doubt] posso inicializar com 0, 0 ?
+        singleORB = createORB(0, 0);
+      else
+        singleORB = orb;
+      return new Connection(host, port, singleORB, orbInitializer);
+    }
   }
 }

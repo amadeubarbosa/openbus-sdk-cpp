@@ -28,7 +28,7 @@ namespace openbus {
       Connections _connections;
       BusidConnection _busidConnection;
       Connection* _outConnection;
-      friend class Connection;
+      friend class openbus::Connection;
     };
   }
 }

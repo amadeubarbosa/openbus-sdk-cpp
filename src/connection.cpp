@@ -45,15 +45,16 @@ namespace openbus {
     _prvKey = 0;
     EVP_PKEY_CTX* ctx;
     if (!((ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0)) &&
-        (EVP_PKEY_keygen_init(ctx) > 0) &&
-        (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 2048) > 0) &&
-        (EVP_PKEY_keygen(ctx, &_prvKey) > 0))
+      (EVP_PKEY_keygen_init(ctx) > 0) &&
+      (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 2048) > 0) &&
+      (EVP_PKEY_keygen(ctx, &_prvKey) > 0))
     )
       //[doubt] trocar assert por exceção ?
       assert(0);
     
     _clientInterceptor->setConnection(this);
     _serverInterceptor->setConnection(this);
+    _orb->getConnectionMultiplexer()->addConnection(this);
     _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
   }
 
@@ -413,6 +414,7 @@ namespace openbus {
     if (login()) logout();
     _clientInterceptor->setConnection(0);
     _serverInterceptor->setConnection(0);
+    _orb->getConnectionMultiplexer()->removeConnection(this);
   }
 
   bool Connection::logout() {
