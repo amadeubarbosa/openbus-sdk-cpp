@@ -30,8 +30,8 @@ namespace openbus {
       void setConnection(Connection* c) { _conn = c; }
       void setConnectionMultiplexer(multiplexed::ConnectionMultiplexer* m) { _multiplexer = m; }
 
-      /** Flag que indica ao interceptador cliente se este deve verificar a existência de uma  
-      *   credencial anexada a chamada remota em execução
+      /* Flag que indica ao interceptador cliente se este deve verificar a existencia de uma  
+      ** credencial anexada a chamada remota em execucao
       */
       bool allowRequestWithoutCredential;
     private:

@@ -14,11 +14,11 @@ namespace openbus {
       return _outConnection;
     }
 
-    void ConnectionMultiplexer::setIncommingConnection(const char* busid, Connection* c) {
+    void ConnectionMultiplexer::setIncomingConnection(const char* busid, Connection* c) {
       _busidConnection[std::string(busid)] = c;
     }
 
-    Connection* ConnectionMultiplexer::getIncommingConnection(const char* busid) {
+    Connection* ConnectionMultiplexer::getIncomingConnection(const char* busid) {
       BusidConnection::iterator it = _busidConnection.find(std::string(busid));
       if (it != _busidConnection.end())
         return it->second;

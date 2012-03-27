@@ -25,8 +25,8 @@ namespace openbus {
       Connections getConnections();
       void setCurrentConnection(Connection*);
       Connection* getCurrentConnection();
-      void setIncommingConnection(const char* busid, Connection*);
-      Connection* getIncommingConnection(const char* busid);
+      void setIncomingConnection(const char* busid, Connection*);
+      Connection* getIncomingConnection(const char* busid);
     private:
       void addConnection(Connection*);
       void removeConnection(Connection*);

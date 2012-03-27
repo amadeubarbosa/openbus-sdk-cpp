@@ -8,10 +8,8 @@ namespace openbus {
     ClientInterceptor::ClientInterceptor(
       PortableInterceptor::SlotId slotId_joinedCallChain,
       IOP::Codec* cdr_codec) 
-      : allowRequestWithoutCredential(false),
-        _cdrCodec(cdr_codec), 
-        _conn(0),
-        _slotId_joinedCallChain(slotId_joinedCallChain) 
+      : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _conn(0), _multiplexer(0),
+      _slotId_joinedCallChain(slotId_joinedCallChain) 
     { }
     
     ClientInterceptor::~ClientInterceptor() { }
@@ -21,13 +19,21 @@ namespace openbus {
     {
       const char* operation = ri->operation();
       std::cout << "send_request:" << operation << std::endl;
+
+      Connection* conn;
+      if (_multiplexer) {
+        conn = _multiplexer->getCurrentConnection();
+        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+      } else 
+        conn = _conn;
+
       if (!allowRequestWithoutCredential) {
-        if (_conn && _conn->login()) {
+        if (conn && conn->login()) {
           IOP::ServiceContext serviceContext;
           serviceContext.context_id = idl_cr::CredentialContextId;
           idl_cr::CredentialData credential;
-          credential.bus = CORBA::string_dup(_conn->busid());
-          credential.login = CORBA::string_dup(_conn->login()->id);
+          credential.bus = CORBA::string_dup(conn->busid());
+          credential.login = CORBA::string_dup(conn->login()->id);
           
           idl::HashValue profileDataHash;
           SHA256(
@@ -58,9 +64,9 @@ namespace openbus {
             SHA256(s, slen, credential.hash);
             
             const char* clogin = login.c_str();
-            if (strcmp(_conn->busid(), clogin)) {
-              // credential.chain = *_conn->access_control()->signChainFor(clogin);
-              CORBA::Object_var init_ref = _conn->orb()->resolve_initial_references(
+            if (strcmp(conn->busid(), clogin)) {
+              // credential.chain = *conn->access_control()->signChainFor(clogin);
+              CORBA::Object_var init_ref = conn->orb()->resolve_initial_references(
                 "PICurrent");
               assert(!CORBA::is_nil(init_ref));
               PortableInterceptor::Current_var piCurrent = 
@@ -70,7 +76,7 @@ namespace openbus {
               if (*signedCallChainAny >>= signedCallChain)
                 credential.chain = signedCallChain;
               else 
-                credential.chain = *_conn->access_control()->signChainFor(clogin);
+                credential.chain = *conn->access_control()->signChainFor(clogin);
             } else {
               memset(credential.chain.signature, '\0', 256);              
             }
@@ -103,6 +109,14 @@ namespace openbus {
       throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
     {
       std::cout << "receive_exception:" << ri->received_exception_id() << std::endl;
+
+      Connection* conn;
+      if (_multiplexer) {
+        conn = _multiplexer->getCurrentConnection();
+        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+      } else 
+        conn = _conn;
+
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
         if (ex->completed() == CORBA::COMPLETED_NO) {
@@ -122,7 +136,7 @@ namespace openbus {
             
               unsigned char* secret;
               size_t secretLen;
-              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(_conn->prvKey(), 0);
+              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->prvKey(), 0);
               if (!(ctx && 
                   (EVP_PKEY_decrypt_init(ctx) > 0) &&
                   (EVP_PKEY_decrypt(
@@ -168,7 +182,7 @@ namespace openbus {
             }
           } else if (ex->minor() == idl_ac::InvalidLoginCode)
             //[todo] tratar valor de retorno
-            (_conn->onInvalidLoginCallback())(_conn, _conn->login()->id);
+            (conn->onInvalidLoginCallback())(conn, conn->login()->id);
         }
       }
     }

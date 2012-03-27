@@ -21,7 +21,6 @@ namespace openbus {
   }
 }
 
-
 namespace openbus {
   CORBA::ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
   Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb = 0)

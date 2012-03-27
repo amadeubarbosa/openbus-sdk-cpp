@@ -13,12 +13,10 @@ namespace openbus {
       PortableInterceptor::SlotId slotId_signedCallChain, 
       PortableInterceptor::SlotId slotId_busid, 
       IOP::Codec* cdr_codec) 
-      : _piCurrent(piCurrent), 
-        _slotId_joinedCallChain(slotId_joinedCallChain), 
-        _slotId_signedCallChain(slotId_signedCallChain), 
-        _slotId_busid(slotId_busid), 
-        _cdrCodec(cdr_codec), 
-        _conn(0) { }
+      : _piCurrent(piCurrent),  _slotId_joinedCallChain(slotId_joinedCallChain), 
+        _slotId_signedCallChain(slotId_signedCallChain), _slotId_busid(slotId_busid), 
+        _cdrCodec(cdr_codec), _conn(0), _multiplexer(0) 
+    { }
     
     ServerInterceptor::~ServerInterceptor() { }
     
@@ -27,23 +25,34 @@ namespace openbus {
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
     {
       std::cout << "receive_request_service_contexts: " << ri->operation() << std::endl;
+      
+      /* [doubt] o que eu devo fazer se eu não conseguir extrair a credencial neste ponto em
+      ** que não tenho conexão?
+      */
+      IOP::ServiceContext_var sc = ri->get_request_service_context(idl_cr::CredentialContextId);
+      IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
+      CORBA::OctetSeq contextData(
+        cd.length(),
+        cd.length(),
+        cd.get_buffer(),
+        0);    
+      CORBA::Any_var any = _cdrCodec->decode_value(
+        contextData, 
+        idl_cr::_tc_CredentialData);
+      idl_cr::CredentialData credential;
+      any >>= credential;
+
+      Connection* conn;
+      if (_multiplexer) {
+        conn = _multiplexer->getIncomingConnection(credential.bus);
+        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+      } else 
+        conn = _conn;
+
       //[todo] legacy Openbus 1.5
-      if (_conn && _conn->login()) {
-        IOP::ServiceContext_var sc = ri->get_request_service_context(idl_cr::CredentialContextId);
-        IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
-        CORBA::OctetSeq contextData(
-          cd.length(),
-          cd.length(),
-          cd.get_buffer(),
-          0);    
-        CORBA::Any_var any = _cdrCodec->decode_value(
-          contextData, 
-          idl_cr::_tc_CredentialData);
-        idl_cr::CredentialData credential;
-        any >>= credential;
-        
+      if (conn && conn->login()) {
         //[todo] legacy Openbus 1.5
-        Login* caller = _conn->_loginCache->validateLogin(credential.login);
+        Login* caller = conn->_loginCache->validateLogin(credential.login);
         if (caller) {
           CredentialSession* session = 0;
           idl::HashValue hash;
@@ -73,7 +82,7 @@ namespace openbus {
               idl::HashValue hash;
               SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
 
-              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(_conn->busKey(), 0);
+              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->busKey(), 0);
               assert(ctx);
               assert(EVP_PKEY_verify_init(ctx));
               if (EVP_PKEY_verify(ctx, credential.chain.signature, 256, hash, 32) != 1) {
@@ -84,7 +93,7 @@ namespace openbus {
                   idl_ac::_tc_CallChain);
                 idl_ac::CallChain callChain;
                 callChainAny >>= callChain;
-                if (strcmp(callChain.target, _conn->login()->id) ||
+                if (strcmp(callChain.target, conn->login()->id) ||
                    (strcmp(callChain.callers[callChain.callers.length()-1].id, 
                      caller->loginInfo->id)))
                 {
@@ -140,7 +149,7 @@ namespace openbus {
               assert(0);
               
             idl_cr::CredentialReset credentialReset;
-            credentialReset.login = _conn->login()->id;
+            credentialReset.login = conn->login()->id;
             credentialReset.session = credentialSession->id;
             memcpy(credentialReset.challenge, encrypted, 256);
             
