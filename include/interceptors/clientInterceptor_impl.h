@@ -3,9 +3,16 @@
 
 #include <CORBA.h>
 #include <connection.h>
+#include <multiplexer.h>
 
 namespace openbus {
   class Connection;
+  namespace multiplexed {
+    class ConnectionMultiplexer;
+  }
+}
+
+namespace openbus {
   namespace interceptors {
     class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor {
     public:
@@ -21,6 +28,7 @@ namespace openbus {
       char* name() throw (CORBA::Exception) { return CORBA::string_dup("ClientInterceptor"); }
       void destroy() { }
       void setConnection(Connection* c) { _conn = c; }
+      void setConnectionMultiplexer(multiplexed::ConnectionMultiplexer* m) { _multiplexer = m; }
 
       /** Flag que indica ao interceptador cliente se este deve verificar a existência de uma  
       *   credencial anexada a chamada remota em execução
@@ -29,6 +37,7 @@ namespace openbus {
     private:
       IOP::Codec* _cdrCodec;
       Connection* _conn;
+      multiplexed::ConnectionMultiplexer* _multiplexer;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
       struct CredentialSession {
         CORBA::ULong id;

@@ -15,8 +15,8 @@
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
 
+/* forward declarations */
 namespace openbus {
-  class ORB;
   class LoginCache;
   class RenewLogin;
   struct CallerChain;  
@@ -40,8 +40,8 @@ namespace openbus {
   public:
     typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const char* login);
     
-    /** Exceptions */
-    //[todo] revisar exceptions
+    /** exceptions */
+    //[todo] revisar
     struct Exception {
       virtual const char* name() const { return "Exception"; }
     };
@@ -65,7 +65,7 @@ namespace openbus {
     Connection(
       const std::string host,
       const unsigned int port,
-      ORB* orb,
+      CORBA::ORB* orb,
       const interceptors::ORBInitializer* orbInitializer) throw(CORBA::Exception);
     ~Connection();
     
@@ -116,7 +116,7 @@ namespace openbus {
     CallerChain* getJoineChain();
     void close();
 
-    CORBA::ORB* orb() const;
+    CORBA::ORB* orb() const { return _orb; }
     const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
     const char* busid() const { return _busid; }
     const idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
@@ -130,7 +130,7 @@ namespace openbus {
 
     std::string _host;
     unsigned int _port;
-    ORB* _orb;
+    CORBA::ORB* _orb;
     const interceptors::ORBInitializer* _orbInitializer;
     interceptors::ClientInterceptor* _clientInterceptor;
     interceptors::ServerInterceptor* _serverInterceptor;
@@ -146,8 +146,12 @@ namespace openbus {
     EVP_PKEY* _prvKey;
     InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;
+    bool _isClosed;
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;
+    friend Connection* openbus::connect(const std::string host, const unsigned int port, 
+      CORBA::ORB* orb)
+      throw(CORBA::Exception, openbus::AlreadyConnected, openbus::InvalidORB);
   };
   
   struct CallerChain {

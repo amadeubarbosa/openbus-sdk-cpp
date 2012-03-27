@@ -7,19 +7,29 @@
 using namespace auxiliar;
 
 bool isAlreadyConnected = false;
+bool isInvalidORB = false;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();
   begin(TESTCASE);
   try {
-    openbus::Connection* conn1 (openbus::connect("localhost", 2089));
+    openbus::Connection* c = openbus::connect("localhost", 2089);
     try {
-      openbus::Connection* conn2 (openbus::connect("localhost", 2089));
+      c = openbus::connect("localhost", 2089);
     } catch(openbus::AlreadyConnected& e) {
       isAlreadyConnected = true;
     }
     if (!isAlreadyConnected) 
       fail(TESTCASE, "Aceitou mais de uma conexao no modo nao multiplexado.");
+    try {
+      isAlreadyConnected = false;
+      c->close();
+      openbus::connect("localhost", 2089);
+    } catch(openbus::AlreadyConnected& e) {
+      isAlreadyConnected = true;
+    }
+    if (isAlreadyConnected) 
+      fail(TESTCASE, "Nao permitiu uma nova conexao apos o encerramento da existente.");      
   } catch (const CORBA::Exception& e) {
     fail(TESTCASE, "CORBA::Exception");
     return -1;

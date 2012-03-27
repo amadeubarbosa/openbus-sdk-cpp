@@ -1,8 +1,10 @@
-#include "openbus.h"
+#include <openbus.h>
 #include <memory>
 
 namespace openbus {
-  ORB* singleORB;
+  char* nullArgv[] = {(char*) " "};
+  CORBA::ORB* singleORB;
+  Connection* singleConnection;
 
   /* [obs]
   ** Eu não consegui usar um auto_ptr para segurar a referência ao orbInitializer porque 
@@ -13,12 +15,12 @@ namespace openbus {
   */
   /** Inicializador do ORB. */
   interceptors::ORBInitializer* orbInitializer;
+  std::set<CORBA::ORB*> ORBSet;
   
-  ORB::ORB(int argc, char** argv) {
+  CORBA::ORB* createORB(int argc, char** argv) throw(CORBA::Exception) {
     /* [doubt] se eu receber uma exceção após a construção do orbInitializer, quem 
     ** vai liberar a memória do orbInitializer ? O destrutor não pode fazer 
-    ** isso... P.S.: Acho que não posso liberar o orbInitializer, pelo menos 
-    ** no Mico.
+    ** isso... P.S.: Acho que não posso liberar o orbInitializer no Mico.
     */
     if (!orbInitializer) {
       orbInitializer = new interceptors::ORBInitializer();
@@ -27,7 +29,9 @@ namespace openbus {
     /* [doubt] Mico 2.3.13 só permite a criação de apenas *um* ORB.
     ** CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
     */
-    _orb = CORBA::ORB_init(argc, argv);
+    CORBA::ORB* orb = CORBA::ORB_init(argc, argv);
+    orb->register_initial_reference(CONNECTION_MULTIPLEXER_ID, 
+      new multiplexed::ConnectionMultiplexer);
     /* [obs]
     ** É necessário ativar o POA para evitar uma deadlock distribuído, que pode por exemplo ser 
     ** exercitado com uma chamada offer_registry::registerService(), em que  o  servidor  chama 
@@ -35,51 +39,88 @@ namespace openbus {
     ** [doubt] 
     ** A responsabilidade desta ativação deve ser do SDK ou do SCS?
     */
-    CORBA::Object_var o = _orb->resolve_initial_references("RootPOA");
+    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    
-    _multiplexer = new multiplexed::ConnectionMultiplexer;
+    ORBSet.insert(orb);
+    return orb;
   }
   
-  ORB::~ORB() { }
-  
-  ORB* createORB(int argc, char** argv) throw(CORBA::Exception) {
-    return new ORB(argc, argv);
-  }
-  
-  Connection* connect(const std::string host, const unsigned int port, ORB* orb) 
-    throw(CORBA::Exception, AlreadyConnected) 
+  Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb) 
+    throw(CORBA::Exception, AlreadyConnected, InvalidORB) 
   {
     if (!singleORB) {
       if (!orb)
-        //[doubt] posso inicializar com 0, 0 ?
-        singleORB = createORB(0, 0);
-      else
+        singleORB = createORB(1, nullArgv);
+      else {
+        if (ORBSet.find(orb) == ORBSet.end()) throw InvalidORB();
+        if (!multiplexed::getConnectionMultiplexer(orb)) throw InvalidORB();
         singleORB = orb;
+      }
     }
-    multiplexed::Connections connections = singleORB->getConnectionMultiplexer()->getConnections();
-    if (!(connections.size()))
-      return new Connection(host, port, singleORB, orbInitializer);
-    else
+    if (singleConnection && !singleConnection->_isClosed)
       throw AlreadyConnected();
+    else {
+      singleConnection = new Connection(host, port, singleORB, orbInitializer);
+      return singleConnection;
+    }
   }
   
   namespace multiplexed {
-    ORB* createORB(int argc, char** argv) throw(CORBA::Exception) {
-      return openbus::createORB(argc, argv);
+    CORBA::ORB* createORB(int argc, char** argv) throw(CORBA::Exception) {
+      /* [doubt] se eu receber uma exceção após a construção do orbInitializer, quem 
+      ** vai liberar a memória do orbInitializer ? O destrutor não pode fazer 
+      ** isso... P.S.: Acho que não posso liberar o orbInitializer, pelo menos 
+      ** no Mico.
+      */
+      if (!orbInitializer) {
+        orbInitializer = new interceptors::ORBInitializer();
+        PortableInterceptor::register_orb_initializer(orbInitializer);
+      }
+      /* [doubt] Mico 2.3.13 só permite a criação de apenas *um* ORB.
+      ** CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
+      */
+      CORBA::ORB* orb = CORBA::ORB_init(argc, argv);
+      multiplexed::ConnectionMultiplexer* multiplexer = new multiplexed::ConnectionMultiplexer;
+      orb->register_initial_reference(CONNECTION_MULTIPLEXER_ID, multiplexer);
+      /* [obs]
+      ** É necessário ativar o POA para evitar uma deadlock distribuído, que pode por exemplo ser 
+      ** exercitado com uma chamada offer_registry::registerService(), em que  o  servidor  chama 
+      ** um getComponentId() ao servant que é responsável pelo serviço que está sendo registrado.
+      ** [doubt] 
+      ** A responsabilidade desta ativação deve ser do SDK ou do SCS?
+      */
+      CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+      PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+      PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+      poa_manager->activate();
+      orbInitializer->getClientInterceptor()->setConnectionMultiplexer(multiplexer);
+      orbInitializer->getServerInterceptor()->setConnectionMultiplexer(multiplexer);
+      ORBSet.insert(orb);
+      return orb;
     }
 
-    Connection* connect(const std::string host, const unsigned int port, ORB* orb) 
-      throw(CORBA::Exception) 
+    Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb) 
+      throw(CORBA::Exception, InvalidORB)
     {
       if (!orb)
-        //[doubt] posso inicializar com 0, 0 ?
-        singleORB = createORB(0, 0);
-      else
+        singleORB = createORB(1, nullArgv);
+      else {
+        if (ORBSet.find(orb) == ORBSet.end()) throw InvalidORB();
         singleORB = orb;
-      return new Connection(host, port, singleORB, orbInitializer);
+      }
+      Connection* c = new Connection(host, port, singleORB, orbInitializer);
+      ConnectionMultiplexer* multiplexer = getConnectionMultiplexer(orb);
+      multiplexed::Connections connections = multiplexer->getConnections();
+      if (!(connections.size()))
+        multiplexer->setCurrentConnection(c);
+      return c;
+    }
+    
+    multiplexed::ConnectionMultiplexer* getConnectionMultiplexer(CORBA::ORB* orb) {
+      CORBA::Object* o = orb->resolve_initial_references(CONNECTION_MULTIPLEXER_ID);
+      return  dynamic_cast<multiplexed::ConnectionMultiplexer*> (o);
     }
   }
 }

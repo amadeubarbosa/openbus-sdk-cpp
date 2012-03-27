@@ -1,9 +1,14 @@
 #ifndef _TECGRAF_MULTIPLEXER_H_
 #define _TECGRAF_MULTIPLEXER_H_
 
+#include <CORBA.h>
+
 #include "connection.h"
 #include "interceptors/clientInterceptor_impl.h"
 
+#define CONNECTION_MULTIPLEXER_ID "ConnectionMultiplexer"
+
+/* forward declarations */
 namespace openbus {
   class Connection;
 }
@@ -13,7 +18,7 @@ namespace openbus {
     typedef std::list<Connection*> Connections;
     typedef std::map<std::string, Connection*> BusidConnection;
 
-    class ConnectionMultiplexer {
+    class ConnectionMultiplexer : public CORBA::LocalObject {
     public:
       ConnectionMultiplexer() {}
       ~ConnectionMultiplexer() {}

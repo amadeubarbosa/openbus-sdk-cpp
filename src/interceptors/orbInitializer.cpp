@@ -10,14 +10,10 @@ namespace openbus {
     
     void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo* info) {
       IOP::CodecFactory_var codec_factory = info->codec_factory();
-      IOP::Encoding cdr_encoding = {
-        IOP::ENCODING_CDR_ENCAPS, 
-        1, 
-        2};
+      IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
       _codec = codec_factory->create_codec(cdr_encoding);
-      clientInterceptor = std::auto_ptr<ClientInterceptor> (new ClientInterceptor(
-        _slotId_joinedCallChain,
-        _codec.in()));
+      clientInterceptor = std::auto_ptr<ClientInterceptor> 
+        (new ClientInterceptor(_slotId_joinedCallChain, _codec.in()));
       info->add_client_request_interceptor(clientInterceptor.get());
       _slotId_joinedCallChain = info->allocate_slot_id();
       _slotId_signedCallChain = info->allocate_slot_id();

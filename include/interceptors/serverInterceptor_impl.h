@@ -3,12 +3,19 @@
 
 #include <CORBA.h>
 #include <connection.h>
+#include <multiplexer.h>
 extern "C" {
   #include <util/tickets.h>
 }
 
 namespace openbus {
   class Connection;
+  namespace multiplexed {
+    class ConnectionMultiplexer;
+  }
+}
+
+namespace openbus {
   namespace interceptors {
     class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor {
     public:
@@ -33,6 +40,7 @@ namespace openbus {
         { return CORBA::string_dup("ServerInterceptor"); }
       void destroy() { }
       void setConnection(Connection* c) { _conn = c; }
+      void setConnectionMultiplexer(multiplexed::ConnectionMultiplexer* m) { _multiplexer = m; }
     private:
       PortableInterceptor::Current* _piCurrent;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
@@ -40,6 +48,7 @@ namespace openbus {
       PortableInterceptor::SlotId _slotId_busid;
       IOP::Codec* _cdrCodec;
       Connection* _conn;
+      multiplexed::ConnectionMultiplexer* _multiplexer;
       struct CredentialSession {
         CORBA::ULong id;
         tickets_History ticketsHistory;

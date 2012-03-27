@@ -4,9 +4,16 @@
 #include <CORBA.h>
 #include <string>
 
+namespace openbus {
+  /* exceptions */
+  struct AlreadyConnected { };
+  struct InvalidORB { };
+}
+
 #include "connection.h"
 #include "multiplexer.h"
 
+/* forward declarations */
 namespace openbus {
   class Connection;
   namespace multiplexed {
@@ -14,33 +21,19 @@ namespace openbus {
   }
 }
 
-namespace openbus {
-  class ORB {
-  public:
-    ~ORB();
-    CORBA::ORB* orb() const { return _orb; }
-    //[doubt] readonly?
-    multiplexed::ConnectionMultiplexer* getConnectionMultiplexer() { return _multiplexer; }
-  private:
-    CORBA::ORB_var _orb;
-    ORB(int argc, char** argv);
-    multiplexed::ConnectionMultiplexer* _multiplexer;
-    friend ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
-  };
-  struct AlreadyConnected { };
-}
 
 namespace openbus {
-  ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
-  Connection* connect(const std::string host, const unsigned int port, ORB* orb = 0)
-    throw(CORBA::Exception, AlreadyConnected);
+  CORBA::ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
+  Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb = 0)
+    throw(CORBA::Exception, AlreadyConnected, InvalidORB);
 }
 
 namespace openbus {
   namespace multiplexed {
-    ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
-    Connection* connect(const std::string host, const unsigned int port, ORB* orb = 0)
-      throw(CORBA::Exception);    
+    CORBA::ORB* createORB(int argc, char** argv) throw(CORBA::Exception);
+    Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb = 0)
+      throw(CORBA::Exception, InvalidORB);
+    multiplexed::ConnectionMultiplexer* getConnectionMultiplexer(CORBA::ORB* orb);
   }
 }
 
