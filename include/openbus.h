@@ -4,8 +4,8 @@
 #include <CORBA.h>
 #include <string>
 
+/* exceptions */
 namespace openbus {
-  /* exceptions */
   struct AlreadyConnected { };
   struct InvalidORB { };
 }

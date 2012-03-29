@@ -5,6 +5,7 @@
 #include <connection.h>
 #include <multiplexer.h>
 
+/* forward declarations */
 namespace openbus {
   class Connection;
   namespace multiplexed {

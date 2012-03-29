@@ -37,9 +37,6 @@ namespace openbus {
           idl::HashValue profileDataHash;
           ::IOP::TaggedProfile::_profile_data_seq profile = ri->effective_profile()->profile_data;
           SHA256(profile.get_buffer(), profile.length(), profileDataHash);
-          // CORBA::Object* o = ri->target();
-          // std::string ior(conn->orb()->object_to_string(o));
-          // SHA256((const unsigned char*) ior.c_str(), ior.size(), profileDataHash);
           std::string sprofileDataHash((const char*) profileDataHash, 32);
 
           if (_profileSecretSession.find(sprofileDataHash) != _profileSecretSession.end()) {
@@ -51,9 +48,9 @@ namespace openbus {
             unsigned char* s = new unsigned char[slen];
             s[0] = 2;
             s[1] = 0;
-            memcpy((unsigned char*) (s+2), (unsigned char*) session->secret, 16);
-            memcpy((unsigned char*) (s+18), (unsigned char*) &credential.ticket, 4);
-            memcpy((unsigned char*) (s+22), operation, strlen(operation));
+            memcpy(s+2, session->secret, 16);
+            memcpy(s+18, &credential.ticket, 4);
+            memcpy(s+22, operation, strlen(operation));
             SHA256(s, slen, credential.hash);
             
             if (strcmp(conn->busid(), session->remoteid)) {
@@ -77,14 +74,9 @@ namespace openbus {
           
           CORBA::Any any;
           any <<= credential;
-          CORBA::OctetSeq_var octets;
-          octets = _cdrCodec->encode_value(any);
-          IOP::ServiceContext::_context_data_seq seq(
-            octets->length(),
-            octets->length(),
-            octets->get_buffer(),
-            0);
-          serviceContext.context_data = seq;
+          CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
+          IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), o->get_buffer(), 0);
+          serviceContext.context_data = s;
           ri->add_request_service_context(serviceContext, true);          
         } else
           throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
@@ -128,7 +120,7 @@ namespace openbus {
                     ctx,
                     0,
                     &secretLen,
-                    (unsigned char*) credentialReset.challenge,
+                    credentialReset.challenge,
                     256) > 0))
               )
                 //[doubt] trocar assert por exceção ?
@@ -149,9 +141,6 @@ namespace openbus {
               idl::HashValue profileDataHash;
               IOP::TaggedProfile::_profile_data_seq profile = ri->effective_profile()->profile_data;
               SHA256(profile.get_buffer(), profile.length(), profileDataHash);
-              // CORBA::Object* _o = ri->target();
-              // std::string ior(conn->orb()->object_to_string(_o));
-              // SHA256((const unsigned char*) ior.c_str(), ior.size(), profileDataHash);
               std::string sprofileDataHash((const char*) profileDataHash, 32);
               SecretSession* session = new SecretSession();
               session->id = credentialReset.session;

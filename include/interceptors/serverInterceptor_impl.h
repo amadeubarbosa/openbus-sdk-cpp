@@ -8,8 +8,6 @@ extern "C" {
   #include <util/tickets.h>
 }
 
-#define SECRET_SIZE 16
-
 /* forward declarations */
 namespace openbus {
   class Connection;
@@ -17,6 +15,8 @@ namespace openbus {
     class ConnectionMultiplexer;
   }
 }
+
+#define SECRET_SIZE 16
 
 namespace openbus {
   namespace interceptors {

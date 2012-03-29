@@ -65,9 +65,9 @@ namespace openbus {
             unsigned char* s = new unsigned char[slen];
             s[0] = 2;
             s[1] = 0;
-            memcpy((unsigned char*) (s+2), (unsigned char*) session->secret, SECRET_SIZE);
-            memcpy((unsigned char*) (s+18), (unsigned char*) &credential.ticket, 4);
-            memcpy((unsigned char*) (s+22), ri->operation(), slenOperation);
+            memcpy(s+2, session->secret, SECRET_SIZE);
+            memcpy(s+18, &credential.ticket, 4);
+            memcpy(s+22, ri->operation(), slenOperation);
             SHA256(s, slen, hash);
           }
           
@@ -152,18 +152,12 @@ namespace openbus {
             
             CORBA::Any any;
             any <<= credentialReset;
-            CORBA::OctetSeq_var octets;
-            octets = _cdrCodec->encode_value(any);
+            CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
 
             IOP::ServiceContext serviceContext;
             serviceContext.context_id = idl_cr::CredentialContextId;
-            IOP::ServiceContext::_context_data_seq seq(
-              octets->length(),
-              octets->length(),
-              octets->get_buffer(),
-              0);
-
-            serviceContext.context_data = seq;
+            IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), o->get_buffer(), 0);
+            serviceContext.context_data = s;
             ri->add_reply_service_context(serviceContext, true);          
 
             throw CORBA::NO_PERMISSION(
