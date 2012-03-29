@@ -15,7 +15,6 @@ namespace openbus {
   CORBA::ORB* singleORB;
   Connection* singleConnection;
 
-  
   CORBA::ORB* createORB(int argc, char** argv) throw(CORBA::Exception) {
     if (!singleORB) {
       /* [doubt] se eu receber uma exceção após a construção do orbInitializer, quem 
@@ -30,8 +29,6 @@ namespace openbus {
       ** CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
       */
       CORBA::ORB* orb = CORBA::ORB_init(argc, argv);
-      orb->register_initial_reference(CONNECTION_MULTIPLEXER_ID, 
-        new multiplexed::ConnectionMultiplexer);
       /* [obs]
       ** É necessário ativar o POA para evitar uma deadlock distribuído, que pode por exemplo ser 
       ** exercitado com uma chamada offer_registry::registerService(), em que  o  servidor  chama 
@@ -57,16 +54,14 @@ namespace openbus {
         singleORB = createORB(1, nullArgv);
       else {
         if (ORBSet.find(orb) == ORBSet.end()) throw InvalidORB();
-        if (!multiplexed::getConnectionMultiplexer(orb)) throw InvalidORB();
+        if (multiplexed::getConnectionMultiplexer(orb)) throw InvalidORB();
         singleORB = orb;
       }
     }
     if (singleConnection && !singleConnection->_isClosed)
       throw AlreadyConnected();
-    else {
-      singleConnection = new Connection(host, port, singleORB, orbInitializer);
-      return singleConnection;
-    }
+    else
+      return new Connection(host, port, singleORB, orbInitializer);
   }
   
   namespace multiplexed {
@@ -111,23 +106,22 @@ namespace openbus {
     {
       if (!singleORB) {
         if (!orb)
-          singleORB = createORB(1, nullArgv);
+          singleORB = openbus::multiplexed::createORB(1, nullArgv);
         else {
           if (ORBSet.find(orb) == ORBSet.end()) throw InvalidORB();
           singleORB = orb;
         }
       }
-      Connection* c = new Connection(host, port, singleORB, orbInitializer);
-      ConnectionMultiplexer* multiplexer = getConnectionMultiplexer(singleORB);
-      // [doubt] eu devo fazer isso?
-      multiplexed::Connections connections = multiplexer->getConnections();
-      if (!(connections.size()))
-        multiplexer->setCurrentConnection(c);
-      return c;
+      return new Connection(host, port, singleORB, orbInitializer);
     }
     
     multiplexed::ConnectionMultiplexer* getConnectionMultiplexer(CORBA::ORB* orb) {
-      CORBA::Object* o = orb->resolve_initial_references(CONNECTION_MULTIPLEXER_ID);
+      CORBA::Object* o;
+      try {
+        o = orb->resolve_initial_references(CONNECTION_MULTIPLEXER_ID);
+      } catch(CORBA::Exception& e) {
+        return 0;
+      }
       return  dynamic_cast<multiplexed::ConnectionMultiplexer*> (o);
     }
   }

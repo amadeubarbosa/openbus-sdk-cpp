@@ -2,10 +2,8 @@
 
 namespace openbus {
   namespace multiplexed {
-    Connections ConnectionMultiplexer::getConnections() {
-      return _connections;
-    }
-
+    ConnectionMultiplexer::ConnectionMultiplexer() : _outConnection(0) { }
+    
     void ConnectionMultiplexer::setCurrentConnection(Connection* c) {
       _outConnection = c;
     }

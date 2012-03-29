@@ -20,9 +20,9 @@ namespace openbus {
 
     class ConnectionMultiplexer : public CORBA::LocalObject {
     public:
-      ConnectionMultiplexer() {}
+      ConnectionMultiplexer();
       ~ConnectionMultiplexer() {}
-      Connections getConnections();
+      Connections getConnections() { return _connections; }
       void setCurrentConnection(Connection*);
       Connection* getCurrentConnection();
       void setIncomingConnection(const char* busid, Connection*);

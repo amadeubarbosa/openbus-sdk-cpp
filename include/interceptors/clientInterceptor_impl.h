@@ -39,14 +39,13 @@ namespace openbus {
       Connection* _conn;
       multiplexed::ConnectionMultiplexer* _multiplexer;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
-      struct CredentialSession {
+      struct SecretSession {
         CORBA::ULong id;
         char* remoteid;
         unsigned char* secret;
         CORBA::ULong ticket;
       };
-      std::map<std::string, std::string> _profile2login;
-      std::map<std::string, CredentialSession*> _login2credsession;
+      std::map<std::string, SecretSession*> _profileSecretSession;
     };
   }
 }

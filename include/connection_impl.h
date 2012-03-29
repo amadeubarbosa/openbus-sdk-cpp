@@ -34,26 +34,35 @@ namespace openbus {
   class RenewLogin : public MICOMT::Thread {
   public:
     RenewLogin(
-      Connection* connection,
+      Connection*, 
+      multiplexed::ConnectionMultiplexer*, 
       idl_ac::ValidityTime validityTime);
     ~RenewLogin();
     void _run(void*);
     void stop() { sigINT = true; }
   private:
     MICOMT::Mutex* mutex;
-    Connection* connection;
+    Connection* _conn;
+    multiplexed::ConnectionMultiplexer* _multiplexer;
     bool sigINT;
     idl_ac::AccessControl_var _access_control;
     idl_ac::ValidityTime validityTime;
     bool _sleep(unsigned int time);
+    idl_ac::ValidityTime renew();
   };
 #else
   class RenewLogin : public CORBA::DispatcherCallback {
   public:
-    RenewLogin(idl_ac::AccessControl* _access_control);
+    RenewLogin(
+      Connection*, 
+      multiplexed::ConnectionMultiplexer*, 
+      idl_ac::AccessControl* _access_control);
     void callback(CORBA::Dispatcher* dispatcher, Event event);
   private:
+    Connection* _conn;
+    multiplexed::ConnectionMultiplexer* _multiplexer;
     idl_ac::AccessControl* _access_control;
+    idl_ac::ValidityTime renew();
   };
 #endif
 }

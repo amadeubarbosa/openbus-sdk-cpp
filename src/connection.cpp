@@ -55,15 +55,12 @@ namespace openbus {
     
     _clientInterceptor->setConnection(this);
     _serverInterceptor->setConnection(this);
-    multiplexed::getConnectionMultiplexer(_orb)->addConnection(this);
+    multiplexed::ConnectionMultiplexer* m = multiplexed::getConnectionMultiplexer(_orb);
+    if (m) multiplexed::getConnectionMultiplexer(_orb)->addConnection(this);
     _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
   }
 
-  Connection::~Connection() {
-    if (login())
-      //[OBS] logout trata uma exceção qualquer.
-      logout();
-  }
+  Connection::~Connection() { close(); }
 
   void Connection::loginByPassword(const char* entity, const char* password)
     throw (
@@ -146,7 +143,8 @@ namespace openbus {
     _renewLogin.reset(new RenewLogin(this, validityTime));
     _renewLogin->start();
   #else
-    _renewLogin.reset(new RenewLogin(_access_control));  
+    _renewLogin.reset(
+      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), _access_control));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   }
@@ -268,7 +266,8 @@ namespace openbus {
     _renewLogin.reset(new RenewLogin(this, validityTime));
     _renewLogin->start();
   #else
-    _renewLogin.reset(new RenewLogin(_access_control));  
+    _renewLogin.reset(
+      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), _access_control));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   }
@@ -406,7 +405,8 @@ namespace openbus {
     _renewLogin.reset(new RenewLogin(this, validityTime));
     _renewLogin->start();
   #else
-    _renewLogin.reset(new RenewLogin(_access_control));  
+    _renewLogin.reset(
+      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), _access_control));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif    
   }
@@ -415,7 +415,8 @@ namespace openbus {
     if (login()) logout();
     _clientInterceptor->setConnection(0);
     _serverInterceptor->setConnection(0);
-    multiplexed::getConnectionMultiplexer(_orb)->removeConnection(this);
+    multiplexed::ConnectionMultiplexer* m = multiplexed::getConnectionMultiplexer(_orb);
+    if (m) multiplexed::getConnectionMultiplexer(_orb)->removeConnection(this);
     _isClosed = true;
   }
 
@@ -551,13 +552,26 @@ namespace openbus {
   }
   
 #ifdef MULTITHREAD
-  RenewLogin::RenewLogin(
-    Connection* connection, 
-    idl_ac::ValidityTime validityTime) 
-    : connection(connection), validityTime(validityTime), sigINT(false) 
+  RenewLogin(
+    Connection* c, 
+    multiplexed::ConnectionMultiplexer* m, 
+    idl_ac::ValidityTime t);
+    : _conn(c), _multiplexer(m), validityTime(t), sigINT(false) 
   { }
 
   RenewLogin::~RenewLogin() { }
+
+  idl_ac::ValidityTime RenewLogin::renew() {
+    idl_ac::ValidityTime time;
+    if (_multiplexer) {
+      Connection* c = _multiplexer->getCurrentConnection();
+      _multiplexer->setCurrentConnection(_conn);
+      time = _access_control->renew();
+      _multiplexer->setCurrentConnection(c);
+    } else
+      time = _access_control->renew();
+    return time;
+  }
 
   bool RenewLogin::_sleep(unsigned int time) {
     for(unsigned int x=0; x<time; ++x) {
@@ -576,16 +590,31 @@ namespace openbus {
         break;
       else 
         //[doubt] try-catch
-        validityTime = _access_control->renew();
+        validityTime = renew();
     }
   }
 #else
-  RenewLogin::RenewLogin(idl_ac::AccessControl* _access_control) 
-    : _access_control(_access_control) 
+  RenewLogin::RenewLogin(
+    Connection* c, 
+    multiplexed::ConnectionMultiplexer* m,
+    idl_ac::AccessControl* a) 
+    : _conn(c), _multiplexer(m), _access_control(a)
   { }
 
   void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
-    dispatcher->tm_event(this, _access_control->renew()*1000);
+    dispatcher->tm_event(this, renew()*1000);
+  }
+  
+  idl_ac::ValidityTime RenewLogin::renew() {
+    idl_ac::ValidityTime time;
+    if (_multiplexer) {
+      Connection* c = _multiplexer->getCurrentConnection();
+      _multiplexer->setCurrentConnection(_conn);
+      time = _access_control->renew();
+      _multiplexer->setCurrentConnection(c);
+    } else
+      time = _access_control->renew();
+    return time;
   }
 #endif
 }

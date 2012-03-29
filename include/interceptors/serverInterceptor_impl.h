@@ -8,6 +8,9 @@ extern "C" {
   #include <util/tickets.h>
 }
 
+#define SECRET_SIZE 16
+
+/* forward declarations */
 namespace openbus {
   class Connection;
   namespace multiplexed {
@@ -49,17 +52,17 @@ namespace openbus {
       IOP::Codec* _cdrCodec;
       Connection* _conn;
       multiplexed::ConnectionMultiplexer* _multiplexer;
-      struct CredentialSession {
+      struct SecretSession {
         CORBA::ULong id;
         tickets_History ticketsHistory;
-        unsigned char secret[16];
-        CredentialSession(CORBA::ULong id) : id(id) {
+        unsigned char secret[SECRET_SIZE];
+        SecretSession(CORBA::ULong id) : id(id) {
           tickets_init(&ticketsHistory);
-          for (short i=0;i<16;++i)
+          for (short i=0;i<SECRET_SIZE;++i)
             secret[i] = rand() % 255;
         }
       };
-      std::map<CORBA::ULong, CredentialSession*> _sessionIdCredentialSession;
+      std::map<CORBA::ULong, SecretSession*> _idSecretSession;
     };
   }
 }

@@ -45,7 +45,7 @@ namespace openbus {
       Connection* conn;
       if (_multiplexer) {
         conn = _multiplexer->getIncomingConnection(credential.bus);
-        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
       } else 
         conn = _conn;
 
@@ -54,25 +54,23 @@ namespace openbus {
         //[todo] legacy Openbus 1.5
         Login* caller = conn->_loginCache->validateLogin(credential.login);
         if (caller) {
-          CredentialSession* session = 0;
+          SecretSession* session = 0;
           idl::HashValue hash;
-          if (_sessionIdCredentialSession.find(credential.session) != 
-            _sessionIdCredentialSession.end()) 
+          if (_idSecretSession.find(credential.session) != _idSecretSession.end()) 
           {
-            session = _sessionIdCredentialSession[credential.session];
+            session = _idSecretSession[credential.session];
             size_t slenOperation = strlen(ri->operation());
             int slen = 22 + slenOperation;
             unsigned char* s = new unsigned char[slen];
             s[0] = 2;
             s[1] = 0;
-            memcpy((unsigned char*) (s+2), (unsigned char*) session->secret, 16);
+            memcpy((unsigned char*) (s+2), (unsigned char*) session->secret, SECRET_SIZE);
             memcpy((unsigned char*) (s+18), (unsigned char*) &credential.ticket, 4);
             memcpy((unsigned char*) (s+22), ri->operation(), slenOperation);
             SHA256(s, slen, hash);
           }
           
-          if (session &&
-              !memcmp(hash, credential.hash, 32) && 
+          if (session && !memcmp(hash, credential.hash, 32) && 
               tickets_check(&session->ticketsHistory, credential.ticket)) 
           {
             std::cout << "credential is valid." << std::endl;
@@ -107,20 +105,18 @@ namespace openbus {
                   ri->set_slot(_slotId_busid, busidAny);
                 }
               }
-            } else {
+            } else
               invalidChain = true;
-            }
-
-            if (invalidChain)
+           if (invalidChain)
               throw CORBA::NO_PERMISSION(
                 idl_ac::InvalidChainCode, 
                 CORBA::COMPLETED_NO);
           } else {
             //credential not valid, try to reset credetial session
             std::cout << "credential not valid, try to reset credetial session" << std::endl;
-            CORBA::ULong newSessionId = _sessionIdCredentialSession.size() + 1;
-            CredentialSession* credentialSession = new CredentialSession(newSessionId);
-            _sessionIdCredentialSession[newSessionId] = credentialSession;
+            CORBA::ULong newSessionId = _idSecretSession.size() + 1;
+            SecretSession* secretSession = new SecretSession(newSessionId);
+            _idSecretSession[newSessionId] = secretSession;
 
             EVP_PKEY_CTX* ctx;
             unsigned char* encrypted;
@@ -131,8 +127,8 @@ namespace openbus {
                   ctx, 
                   0, 
                   &encryptedLen,
-                  credentialSession->secret,
-                  16) > 0))
+                  secretSession->secret,
+                  SECRET_SIZE) > 0))
             )
               //[doubt] trocar assert por exceção ?
               assert(0);
@@ -142,15 +138,15 @@ namespace openbus {
                   ctx, 
                   encrypted, 
                   &encryptedLen,
-                  credentialSession->secret,
-                  16) <= 0
+                  secretSession->secret,
+                  SECRET_SIZE) <= 0
             )
               //[doubt] trocar assert por exceção ?
               assert(0);
               
             idl_cr::CredentialReset credentialReset;
             credentialReset.login = conn->login()->id;
-            credentialReset.session = credentialSession->id;
+            credentialReset.session = secretSession->id;
             memcpy(credentialReset.challenge, encrypted, 256);
             
             CORBA::Any any;
@@ -173,12 +169,10 @@ namespace openbus {
               idl_ac::InvalidCredentialCode, 
               CORBA::COMPLETED_NO);            
           }
-          
-        } else {
+        } else
           throw CORBA::NO_PERMISSION(
             idl_ac::InvalidLoginCode, 
             CORBA::COMPLETED_NO);
-        }
       }
     }
   }
