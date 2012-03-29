@@ -16,7 +16,6 @@ struct CertifierImpl : virtual public POA_Certifier {
     try {
       Client* c = Client::_narrow(o);
       openbus::CallerChain* chain = _conn->getCallerChain();
-      // _conn->joinChain();
       c->sign(passportNumber);
     } catch(CORBA::Exception& e) {
       return false;

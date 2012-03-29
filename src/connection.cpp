@@ -450,9 +450,7 @@ namespace openbus {
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
     CORBA::Any signedCallChainAny;
     signedCallChainAny <<= *(chain->signedCallChain());
-    piCurrent->set_slot(
-      _orbInitializer->slotId_joinedCallChain(),
-      signedCallChainAny);
+    piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), signedCallChainAny);
   }
 
   void Connection::exitChain() {
@@ -460,12 +458,10 @@ namespace openbus {
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
     CORBA::Any any;
-    piCurrent->set_slot(
-      _orbInitializer->slotId_joinedCallChain(),
-      any);    
+    piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), any);    
   }
 
-  CallerChain* Connection::getJoineChain() {
+  CallerChain* Connection::getJoinedChain() {
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);

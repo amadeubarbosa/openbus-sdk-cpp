@@ -113,7 +113,7 @@ namespace openbus {
     CallerChain* getCallerChain();
     void joinChain(CallerChain* chain);
     void exitChain();
-    CallerChain* getJoineChain();
+    CallerChain* getJoinedChain();
     void close();
 
     CORBA::ORB* orb() const { return _orb; }
@@ -157,9 +157,9 @@ namespace openbus {
   struct CallerChain {
     char* busid;
     idl_ac::LoginInfoSeq callers;
+    const idl_ac::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
   private:
     idl_ac::SignedCallChain _signedCallChain;
-    const idl_ac::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
     void signedCallChain(idl_ac::SignedCallChain p) { _signedCallChain = p; }
     friend class Connection;
   };

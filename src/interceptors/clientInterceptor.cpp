@@ -53,18 +53,19 @@ namespace openbus {
             memcpy(s+22, operation, strlen(operation));
             SHA256(s, slen, credential.hash);
             
+            CallerChain* callerChain = conn->getJoinedChain();
             if (strcmp(conn->busid(), session->remoteid)) {
               CORBA::Object_var picRef = conn->orb()->resolve_initial_references("PICurrent");
               assert(!CORBA::is_nil(picRef));
               PortableInterceptor::Current_var p = PortableInterceptor::Current::_narrow(picRef);
               CORBA::Any_var signedCallChainAny = p->get_slot(_slotId_joinedCallChain);
-              idl_ac::SignedCallChain signedCallChain;
-              if (*signedCallChainAny >>= signedCallChain)
-                credential.chain = signedCallChain;
-              else 
-                credential.chain = *conn->access_control()->signChainFor(session->remoteid);
-            } else
-              memset(credential.chain.signature, '\0', 256);              
+              credential.chain = *conn->access_control()->signChainFor(session->remoteid);
+            } else {
+              if (callerChain)
+                credential.chain = *callerChain->signedCallChain();
+              else
+                memset(credential.chain.signature, '\0', 256);
+            }
           } else {
             credential.ticket = 0;
             credential.session = 0;

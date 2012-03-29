@@ -44,13 +44,13 @@ int main(int argc, char** argv) {
       Certifier* c = Certifier::_narrow(o);
       CORBA::Long passportNumber = 103045;
       if (c->stamp(clientServant->_this(), passportNumber)) {
-        conn->joinChain(certification);
         props.length(1);
         props[0].name  = "openbus.component.facet";
         props[0].value = "airport";
         openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
         CORBA::Object_var o = offers[0].service_ref->getFacetByName("airport");
         Airport* a = Airport::_narrow(o);
+        conn->joinChain(certification);
         a->fly(passportNumber, "iberia");
       }
     } else
