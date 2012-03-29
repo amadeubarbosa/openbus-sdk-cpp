@@ -1,0 +1,11 @@
+interface Certifier {
+  boolean stamp(in Object client, in long passportNumber);
+};
+
+interface Airport {
+  boolean fly(in long passportNumber, in string airlineCompany);
+};
+
+interface Client {
+  void sign(in long passportNumber);
+};
