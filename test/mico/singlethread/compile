@@ -1,0 +1,9 @@
+#!/bin/ksh
+
+tests="01 02 03 04 05"
+
+cd tests
+$TECMAKE_HOME/tecmake MF=01 genstubs $@
+for test in $tests ; do
+  $TECMAKE_HOME/tecmake MF=$test $@
+done

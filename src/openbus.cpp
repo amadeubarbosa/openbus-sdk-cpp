@@ -60,8 +60,10 @@ namespace openbus {
     }
     if (singleConnection && !singleConnection->_isClosed)
       throw AlreadyConnected();
-    else
-      return new Connection(host, port, singleORB, orbInitializer);
+    else {
+      singleConnection = new Connection(host, port, singleORB, orbInitializer);
+      return singleConnection;
+    }
   }
   
   namespace multiplexed {

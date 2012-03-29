@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-tests="01 02 03"
+tests="01 02 03 04 05"
 
 failFlag=0
 

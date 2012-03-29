@@ -1,9 +1,0 @@
-#!/bin/ksh
-
-tests="01 02 03"
-
-cd tests
-$TECMAKE_HOME/tecmake MULTITHREAD=Yes MF=01 genstubs $@
-for test in $tests ; do
-  $TECMAKE_HOME/tecmake MULTITHREAD=Yes MF=$test $@
-done
