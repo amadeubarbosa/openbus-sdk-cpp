@@ -23,24 +23,24 @@ int main(int argc, char** argv) {
       std::cout << "nenhuma oferta encontrada." << std::endl;
     connBusA->close();
 
-    // std::auto_ptr <openbus::Connection> connBusB (openbus::connect("localhost", 3089));
-    // connBusB->loginByPassword("demo", "demo");
-    // openbus::idl_or::ServicePropertySeq propsB;
-    // propsB.length(3);
-    // propsB[0].name  = "openbus.offer.entity";
-    // propsB[0].value = "demo";
-    // propsB[1].name  = "openbus.component.facet";
-    // propsB[1].value = "hello";
-    // propsB[2].name  = "offer.domain";
-    // propsB[2].value = "OpenBus Demos";
-    // openbus::idl_or::ServiceOfferDescSeq_var offersB = connBusB->offers()->findServices(propsB);
-    // if (offersB->length()) {
-    //   CORBA::Object_var o = offersB[0].service_ref->getFacetByName("hello");
-    //   Hello* hello = Hello::_narrow(o);
-    //   hello->sayHello();
-    // } else
-    //   std::cout << "nenhuma oferta encontrada." << std::endl;
-    // connBusB->close();
+    std::auto_ptr <openbus::Connection> connBusB (openbus::connect("localhost", 3089));
+    connBusB->loginByPassword("demo", "demo");
+    openbus::idl_or::ServicePropertySeq propsB;
+    propsB.length(3);
+    propsB[0].name  = "openbus.offer.entity";
+    propsB[0].value = "demo";
+    propsB[1].name  = "openbus.component.facet";
+    propsB[1].value = "hello";
+    propsB[2].name  = "offer.domain";
+    propsB[2].value = "OpenBus Demos";
+    openbus::idl_or::ServiceOfferDescSeq_var offersB = connBusB->offers()->findServices(propsB);
+    if (offersB->length()) {
+      CORBA::Object_var o = offersB[0].service_ref->getFacetByName("hello");
+      Hello* hello = Hello::_narrow(o);
+      hello->sayHello();
+    } else
+      std::cout << "nenhuma oferta encontrada." << std::endl;
+    connBusB->close();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;

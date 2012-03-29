@@ -44,6 +44,7 @@ namespace openbus {
       void destroy() { }
       void setConnection(Connection* c) { _conn = c; }
       void setConnectionMultiplexer(multiplexed::ConnectionMultiplexer* m) { _multiplexer = m; }
+      void resetCaches() { _idSecretSession.clear(); }
     private:
       PortableInterceptor::Current* _piCurrent;
       PortableInterceptor::SlotId _slotId_joinedCallChain;

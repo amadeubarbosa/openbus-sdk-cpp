@@ -46,6 +46,7 @@ namespace openbus {
       if (_multiplexer) {
         conn = _multiplexer->getIncomingConnection(credential.bus);
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+        _multiplexer->setCurrentConnection(conn);
       } else 
         conn = _conn;
 

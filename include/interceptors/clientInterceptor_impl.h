@@ -29,6 +29,7 @@ namespace openbus {
       void destroy() { }
       void setConnection(Connection* c) { _conn = c; }
       void setConnectionMultiplexer(multiplexed::ConnectionMultiplexer* m) { _multiplexer = m; }
+      void resetCaches() { _profileSecretSession.clear(); }
 
       /* Flag que indica ao interceptador cliente se este deve verificar a existencia de uma  
       ** credencial anexada a chamada remota em execucao

@@ -55,7 +55,6 @@ int main(int argc, char** argv) {
     connBusA->offers()->registerService(ctx->getIComponent(), props);
     multiplexer->setCurrentConnection(connBusB.get());
     connBusB->offers()->registerService(ctx->getIComponent(), props);
-    multiplexer->setCurrentConnection(connBusA.get());
 
     connBusA->orb()->run();
   } catch (const CORBA::Exception& e) {

@@ -412,7 +412,7 @@ namespace openbus {
   }
 
   void Connection::close() {
-    if (login()) logout();
+    logout();
     _clientInterceptor->setConnection(0);
     _serverInterceptor->setConnection(0);
     multiplexed::ConnectionMultiplexer* m = multiplexed::getConnectionMultiplexer(_orb);
@@ -421,24 +421,27 @@ namespace openbus {
   }
 
   bool Connection::logout() {
+    bool sucess = false;
     if (login()) {
+    #ifdef MULTITHREAD
+      _renewLogin->stop();
+      _renewLogin->wait();
+      _renewLogin.reset();
+    #else
+      _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
+      _renewLogin.reset();
+    #endif
+      _loginInfo.reset();
       try {
         _access_control->logout();
-      #ifdef MULTITHREAD
-        _renewLogin->stop();
-        _renewLogin->wait();
-        _renewLogin.reset();
-      #else
-        _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
-        _renewLogin.reset();
-      #endif
-        _loginInfo.reset();
-        return true;
+        sucess = true;
       } catch(...) {
-        return false;
+        sucess = false;
       }
-    }
-    return false;
+    } else sucess = false;
+    _clientInterceptor->resetCaches();
+    _serverInterceptor->resetCaches();
+    return sucess;
   }
   
   void Connection::joinChain(CallerChain* chain) {

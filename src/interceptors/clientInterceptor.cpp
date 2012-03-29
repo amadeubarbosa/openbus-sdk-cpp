@@ -37,6 +37,9 @@ namespace openbus {
           idl::HashValue profileDataHash;
           ::IOP::TaggedProfile::_profile_data_seq profile = ri->effective_profile()->profile_data;
           SHA256(profile.get_buffer(), profile.length(), profileDataHash);
+          // CORBA::Object* o = ri->target();
+          // std::string ior(conn->orb()->object_to_string(o));
+          // SHA256((const unsigned char*) ior.c_str(), ior.size(), profileDataHash);
           std::string sprofileDataHash((const char*) profileDataHash, 32);
 
           if (_profileSecretSession.find(sprofileDataHash) != _profileSecretSession.end()) {
@@ -44,12 +47,6 @@ namespace openbus {
             credential.session = session->id;
             session->ticket++;
             credential.ticket = session->ticket;
-            CORBA::Long objectKeyLen;
-            const CORBA::Octet* objectKeyOct = 
-              ri->target()->_ior()->get_profile(0)->objectkey(objectKeyLen);
-            char* objectKey = new char[objectKeyLen+1];
-            memcpy(objectKey, objectKeyOct, objectKeyLen);
-            objectKey[objectKeyLen] = '\0';
             int slen = 22 + strlen(operation);
             unsigned char* s = new unsigned char[slen];
             s[0] = 2;
@@ -60,11 +57,10 @@ namespace openbus {
             SHA256(s, slen, credential.hash);
             
             if (strcmp(conn->busid(), session->remoteid)) {
-              CORBA::Object_var init_ref = conn->orb()->resolve_initial_references("PICurrent");
-              assert(!CORBA::is_nil(init_ref));
-              PortableInterceptor::Current_var piCurrent = 
-                PortableInterceptor::Current::_narrow(init_ref);
-              CORBA::Any_var signedCallChainAny = piCurrent->get_slot(_slotId_joinedCallChain);
+              CORBA::Object_var picRef = conn->orb()->resolve_initial_references("PICurrent");
+              assert(!CORBA::is_nil(picRef));
+              PortableInterceptor::Current_var p = PortableInterceptor::Current::_narrow(picRef);
+              CORBA::Any_var signedCallChainAny = p->get_slot(_slotId_joinedCallChain);
               idl_ac::SignedCallChain signedCallChain;
               if (*signedCallChainAny >>= signedCallChain)
                 credential.chain = signedCallChain;
@@ -153,16 +149,16 @@ namespace openbus {
               idl::HashValue profileDataHash;
               IOP::TaggedProfile::_profile_data_seq profile = ri->effective_profile()->profile_data;
               SHA256(profile.get_buffer(), profile.length(), profileDataHash);
+              // CORBA::Object* _o = ri->target();
+              // std::string ior(conn->orb()->object_to_string(_o));
+              // SHA256((const unsigned char*) ior.c_str(), ior.size(), profileDataHash);
               std::string sprofileDataHash((const char*) profileDataHash, 32);
-              std::string remoteid(credentialReset.login);
-              if (_profileSecretSession.find(sprofileDataHash) == _profileSecretSession.end()) {
-                SecretSession* session = new SecretSession();
-                session->id = credentialReset.session;
-                session->remoteid  = CORBA::string_dup(credentialReset.login);
-                session->secret = secret;
-                session->ticket = 0;
-                _profileSecretSession[sprofileDataHash] = session;
-              }
+              SecretSession* session = new SecretSession();
+              session->id = credentialReset.session;
+              session->remoteid  = CORBA::string_dup(credentialReset.login);
+              session->secret = secret;
+              session->ticket = 0;
+              _profileSecretSession[sprofileDataHash] = session;
               throw PortableInterceptor::ForwardRequest(ri->target(), false);
             }
           } else if (ex->minor() == idl_ac::InvalidLoginCode) {
