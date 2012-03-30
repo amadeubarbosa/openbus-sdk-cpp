@@ -158,6 +158,7 @@ namespace openbus {
     char* busid;
     idl_ac::LoginInfoSeq callers;
     const idl_ac::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
+    CallerChain() : busid(0) { callers.length(0); }
   private:
     idl_ac::SignedCallChain _signedCallChain;
     void signedCallChain(idl_ac::SignedCallChain p) { _signedCallChain = p; }

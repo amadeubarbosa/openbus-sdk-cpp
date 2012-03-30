@@ -64,24 +64,23 @@ OBJROOT=obj
 TARGETROOT=lib
 
 INCLUDES=. \
-          stubs \
-          include \
-          ${MICO_INC} \
-          ${OPENBUSINC}/openssl-0.9.9
-
+         legacy/stubs \
+         stubs \
+         include \
+         ${MICO_INC} \
+         ${OPENBUSINC}/openssl-0.9.9
+ 
 LDIR=${MICO_LIB} ${OPENBUSLIB}
 
 ifeq "$(MULTITHREAD)" "Yes"
   LIBS=mico${MICOVERSION} 
-  #LIBS=mico${MICOVERSION} scsmicoMT crypto dl logger
 else
   LIBS=mico${MICOVERSION} crypto dl
-  #LIBS=mico${MICOVERSION} scsmicoST crypto dl logger
 endif
 
 USE_NODEPEND=Yes
 
-SRC=stc/openbus.cpp \
+SRC=src/openbus.cpp \
     src/multiplexer.cpp \
     src/connection.cpp \
     src/interceptors/orbInitializer.cpp \
@@ -92,23 +91,26 @@ SRC=stc/openbus.cpp \
     stubs/scs.cc \
     stubs/credential.cc \
     stubs/access_control.cc \
-    stubs/offer_registry.cc
+    stubs/offer_registry.cc \
+    legacy/stubs/credential_v1_05.cc 
 
 STUBS=stubs/core.h stubs/core.cc \
-       stubs/scs.h stubs/scs.cc \
-       stubs/credential.h stubs/credential.cc \
-       stubs/access_control.h stubs/access_control.cc \
-       stubs/offer_registry.h stubs/offer_registry.cc
+      stubs/scs.h stubs/scs.cc \
+      stubs/credential.h stubs/credential.cc \
+      stubs/access_control.h stubs/access_control.cc \
+      stubs/offer_registry.h stubs/offer_registry.cc \
+      legacy/stubs/credential_v1_05.h legacy/stubs/credential_v1_05.cc
 
 IDLS=${OPENBUS_HOME}/idl/v2_00/core.idl \
-${OPENBUS_HOME}/idl/v2_00/scs.idl \
-${OPENBUS_HOME}/idl/v2_00/credential.idl \
-${OPENBUS_HOME}/idl/v2_00/access_control.idl \
-${OPENBUS_HOME}/idl/v2_00/offer_registry.idl
-
+     ${OPENBUS_HOME}/idl/v2_00/scs.idl \
+     ${OPENBUS_HOME}/idl/v2_00/credential.idl \
+     ${OPENBUS_HOME}/idl/v2_00/access_control.idl \
+     ${OPENBUS_HOME}/idl/v2_00/offer_registry.idl \
+     legacy/idl/credential_v1_05.idl
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
+	mkdir -p legacy/stubs
 	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode \
 	  ${OPENBUS_HOME}/idl/v2_00/access_control.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode \
@@ -119,5 +121,6 @@ $(STUBS): $(IDLS)
 	  ${OPENBUS_HOME}/idl/v2_00/core.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths \
 	  ${OPENBUS_HOME}/idl/v2_00/scs.idl
+	cd legacy/stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ../idl/credential_v1_05.idl
 
 genstubs: $(STUBS)

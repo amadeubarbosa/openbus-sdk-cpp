@@ -26,6 +26,7 @@ namespace openbus {
           piCurrent.in(), 
           _slotId_joinedCallChain,
           _slotId_signedCallChain,
+          _slotId_legacyCallChain,
           _slotId_busid,
           _codec.in()));
       info->add_server_request_interceptor(serverInterceptor.get());

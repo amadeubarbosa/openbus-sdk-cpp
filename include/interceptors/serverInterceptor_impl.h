@@ -26,6 +26,7 @@ namespace openbus {
         PortableInterceptor::Current* piCurrent, 
         PortableInterceptor::SlotId slotId_joinedCallChain,
         PortableInterceptor::SlotId slotId_signedCallChain, 
+        PortableInterceptor::SlotId slotId_legacyCallChain,
         PortableInterceptor::SlotId slotId_busid, 
         IOP::Codec* cdr_codec);
       ~ServerInterceptor();
@@ -49,6 +50,7 @@ namespace openbus {
       PortableInterceptor::Current* _piCurrent;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
       PortableInterceptor::SlotId _slotId_signedCallChain;
+      PortableInterceptor::SlotId _slotId_legacyCallChain;
       PortableInterceptor::SlotId _slotId_busid;
       IOP::Codec* _cdrCodec;
       Connection* _conn;

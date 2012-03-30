@@ -1,4 +1,5 @@
 #include <interceptors/clientInterceptor_impl.h>
+#include <legacy/stubs/credential_v1_05.h>
 
 #include <openssl/sha.h>
 #include <sstream>
@@ -28,6 +29,7 @@ namespace openbus {
           conn = _conn;
 
         if (conn && conn->login()) {
+          CallerChain* callerChain = 0;
           IOP::ServiceContext serviceContext;
           serviceContext.context_id = idl_cr::CredentialContextId;
           idl_cr::CredentialData credential;
@@ -53,7 +55,7 @@ namespace openbus {
             memcpy(s+22, operation, strlen(operation));
             SHA256(s, slen, credential.hash);
             
-            CallerChain* callerChain = conn->getJoinedChain();
+            callerChain = conn->getJoinedChain();
             if (strcmp(conn->busid(), session->remoteid)) {
               CORBA::Object_var picRef = conn->orb()->resolve_initial_references("PICurrent");
               assert(!CORBA::is_nil(picRef));
@@ -72,13 +74,28 @@ namespace openbus {
             memset(credential.hash, '\0', 32);
             memset(credential.chain.signature, '\0', 256);
           }
-          
           CORBA::Any any;
           any <<= credential;
           CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
           IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), o->get_buffer(), 0);
           serviceContext.context_data = s;
-          ri->add_request_service_context(serviceContext, true);          
+          ri->add_request_service_context(serviceContext, true);
+          
+          IOP::ServiceContext legacyContext;
+          legacyContext.context_id = 1234;
+          legacy::v1_05::Credential legacyCredential;
+          legacyCredential.identifier = conn->login()->id;
+          legacyCredential.owner = conn->login()->entity;
+          if (callerChain && (callerChain->callers.length() > 1))
+            legacyCredential.delegate = CORBA::string_dup(callerChain->callers[0].entity);
+          else
+            legacyCredential.delegate = "";
+          CORBA::Any lany;
+          lany <<= legacyCredential;
+          o = _cdrCodec->encode_value(lany);
+          IOP::ServiceContext::_context_data_seq ls(o->length(), o->length(), o->get_buffer(), 0);
+          legacyContext.context_data = ls;
+          ri->add_request_service_context(legacyContext, true);
         } else
           throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
       }
