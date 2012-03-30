@@ -190,6 +190,9 @@ namespace openbus {
             loginInfo.entity = legacyCredential.owner;
             legacyChain.callers[0] = loginInfo;            
           }
+          CORBA::Any legacyChainAny;
+          legacyChainAny <<= legacyChain;
+          ri->set_slot(_slotId_legacyCallChain, legacyChainAny);
         } else {
           // [doubt] erro?
         }

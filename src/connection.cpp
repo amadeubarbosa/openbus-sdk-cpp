@@ -490,18 +490,26 @@ namespace openbus {
     CORBA::Any* signedCallChainAny = piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
     CORBA::Any* busidAny = piCurrent->get_slot(_orbInitializer->slotId_busid());
     const char* busid;
-    *busidAny >>= busid;
-    idl_ac::SignedCallChain signedCallChain;
-    *signedCallChainAny >>= signedCallChain;
-    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
-      signedCallChain.encoded,
-      idl_ac::_tc_CallChain);
+    CallerChain* callerChain = 0;
     idl_ac::CallChain callChain;
-    *callChainAny >>= callChain;
-    CallerChain* callerChain = new CallerChain();
-    callerChain->callers = callChain.callers;
-    callerChain->busid = CORBA::string_dup(busid);
-    callerChain->signedCallChain(signedCallChain);
+    if (*busidAny >>= busid) {
+      idl_ac::SignedCallChain signedCallChain;
+      *signedCallChainAny >>= signedCallChain;
+      CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
+        signedCallChain.encoded,
+        idl_ac::_tc_CallChain);
+      *callChainAny >>= callChain;
+      callerChain = new CallerChain();
+      callerChain->callers = callChain.callers;
+      callerChain->busid = CORBA::string_dup(busid);
+      callerChain->signedCallChain(signedCallChain);
+    } else {
+      CORBA::Any* legacyChainAny = piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
+      *legacyChainAny >>= callChain;
+      callerChain = new CallerChain();
+      callerChain->callers = callChain.callers;
+      callerChain->busid = 0;
+    }
     return callerChain;
   }
   
