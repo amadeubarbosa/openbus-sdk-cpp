@@ -22,11 +22,11 @@ LIBS+= mico${MICOVERSION} dl crypto ssl
 
 ifeq "$(MULTITHREAD)" "Yes"
   SLIB= ${OPENBUSLIB}/libopenbus-micomultithread.a \
-        ${OPENBUSLIB}/libscsmico-micomultithread.a \
+        ${OPENBUSLIB}/libscs-micomultithread.a \
         ${OPENBUSLIB}/liblogger.a
 else
   SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread.a \
-        ${OPENBUSLIB}/libscsmico-micosinglethread.a \
+        ${OPENBUSLIB}/libscs-micosinglethread.a \
         ${OPENBUSLIB}/liblogger.a
 endif
 
