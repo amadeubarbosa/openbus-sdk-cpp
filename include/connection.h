@@ -149,6 +149,7 @@ namespace openbus {
     bool _isClosed;
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;
+    friend class RenewLogin;
     friend Connection* openbus::connect(const std::string host, const unsigned int port, 
       CORBA::ORB* orb)
       throw(CORBA::Exception, openbus::AlreadyConnected, openbus::InvalidORB);

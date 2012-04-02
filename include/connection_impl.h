@@ -39,13 +39,13 @@ namespace openbus {
       idl_ac::ValidityTime validityTime);
     ~RenewLogin();
     void _run(void*);
-    void stop() { sigINT = true; }
+    void stop() { _sigINT = true; }
   private:
     MICOMT::Mutex* mutex;
     Connection* _conn;
     multiplexed::ConnectionMultiplexer* _multiplexer;
-    idl_ac::ValidityTime validityTime;
-    bool sigINT;
+    idl_ac::ValidityTime _validityTime;
+    bool _sigINT;
     idl_ac::AccessControl_var _access_control;
     bool _sleep(unsigned int time);
     idl_ac::ValidityTime renew();
@@ -55,13 +55,14 @@ namespace openbus {
   public:
     RenewLogin(
       Connection*, 
-      multiplexed::ConnectionMultiplexer*, 
-      idl_ac::AccessControl* _access_control);
+      multiplexed::ConnectionMultiplexer*,
+      idl_ac::ValidityTime validityTime);
     void callback(CORBA::Dispatcher* dispatcher, Event event);
   private:
     Connection* _conn;
     multiplexed::ConnectionMultiplexer* _multiplexer;
     idl_ac::AccessControl* _access_control;
+    idl_ac::ValidityTime _validityTime;
     idl_ac::ValidityTime renew();
   };
 #endif

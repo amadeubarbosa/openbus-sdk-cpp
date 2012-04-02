@@ -145,7 +145,7 @@ namespace openbus {
     _renewLogin->start();
   #else
     _renewLogin.reset(
-      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), _access_control));  
+      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   }
@@ -269,7 +269,7 @@ namespace openbus {
     _renewLogin->start();
   #else
     _renewLogin.reset(
-      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), _access_control));  
+      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   }
@@ -409,7 +409,7 @@ namespace openbus {
     _renewLogin->start();
   #else
     _renewLogin.reset(
-      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), _access_control));  
+      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif    
   }
@@ -566,7 +566,7 @@ namespace openbus {
     Connection* c, 
     multiplexed::ConnectionMultiplexer* m, 
     idl_ac::ValidityTime t)
-    : _conn(c), _multiplexer(m), validityTime(t), sigINT(false) 
+    : _conn(c), _multiplexer(m), _validityTime(t), _sigINT(false) 
   { }
 
   RenewLogin::~RenewLogin() { }
@@ -576,17 +576,19 @@ namespace openbus {
     if (_multiplexer) {
       Connection* c = _multiplexer->getCurrentConnection();
       _multiplexer->setCurrentConnection(_conn);
-      time = _access_control->renew();
+        //[doubt] try-catch
+      time = _conn->access_control()->renew();
       _multiplexer->setCurrentConnection(c);
     } else
-      time = _access_control->renew();
+        //[doubt] try-catch
+      time = _conn->access_control()->renew();
     return time;
   }
 
   bool RenewLogin::_sleep(unsigned int time) {
     for(unsigned int x=0; x<time; ++x) {
-      if (sigINT) {
-        sigINT = false;
+      if (_sigINT) {
+        _sigINT = false;
         return true;
       }
       sleep(1);
@@ -596,35 +598,35 @@ namespace openbus {
 
   void RenewLogin::_run(void*) {
     while (true) {
-      if (_sleep(validityTime)) 
+      if (_sleep(_validityTime)) 
         break;
       else 
-        //[doubt] try-catch
-        validityTime = renew();
+        _validityTime = renew();
     }
   }
 #else
   RenewLogin::RenewLogin(
     Connection* c, 
-    multiplexed::ConnectionMultiplexer* m,
-    idl_ac::AccessControl* a) 
-    : _conn(c), _multiplexer(m), _access_control(a)
+    multiplexed::ConnectionMultiplexer* m, 
+    idl_ac::ValidityTime t)
+    : _conn(c), _multiplexer(m), _validityTime(t)
   { }
 
   void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
-    dispatcher->tm_event(this, renew()*1000);
+    _validityTime = renew();
+    dispatcher->tm_event(this, _validityTime*1000);
   }
   
   idl_ac::ValidityTime RenewLogin::renew() {
-    idl_ac::ValidityTime time;
+    idl_ac::ValidityTime t;
     if (_multiplexer) {
       Connection* c = _multiplexer->getCurrentConnection();
       _multiplexer->setCurrentConnection(_conn);
-      time = _access_control->renew();
+      t = _conn->access_control()->renew();
       _multiplexer->setCurrentConnection(c);
     } else
-      time = _access_control->renew();
-    return time;
+      t = _conn->access_control()->renew();
+    return t;
   }
 #endif
 }

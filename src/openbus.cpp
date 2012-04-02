@@ -12,6 +12,7 @@ namespace openbus {
   interceptors::ORBInitializer* orbInitializer;
   std::set<CORBA::ORB*> ORBSet;
   char* nullArgv[] = {(char*) " "};
+  char* multithreadArgv[] = {(char*) " ", (char*) "-ORBClientReactive"};
   CORBA::ORB* singleORB;
   Connection* singleConnection;
 
@@ -51,7 +52,11 @@ namespace openbus {
   {
     if (!singleORB) {
       if (!orb)
+      #ifdef OPENBUS_SDK_MULTITHREAD
+        singleORB = createORB(2, multithreadArgv);
+      #else
         singleORB = createORB(1, nullArgv);
+      #endif
       else {
         if (ORBSet.find(orb) == ORBSet.end()) throw InvalidORB();
         if (multiplexed::getConnectionMultiplexer(orb)) throw InvalidORB();
@@ -108,7 +113,11 @@ namespace openbus {
     {
       if (!singleORB) {
         if (!orb)
+        #ifdef OPENBUS_SDK_MULTITHREAD
+          singleORB = openbus::multiplexed::createORB(2, multithreadArgv);
+        #else
           singleORB = openbus::multiplexed::createORB(1, nullArgv);
+        #endif
         else {
           if (ORBSet.find(orb) == ORBSet.end()) throw InvalidORB();
           singleORB = orb;
