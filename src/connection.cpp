@@ -139,8 +139,9 @@ namespace openbus {
 
     _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
-  #ifdef MULTITHREAD
-    _renewLogin.reset(new RenewLogin(this, validityTime));
+  #ifdef OPENBUS_SDK_MULTITHREAD
+    _renewLogin.reset(new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), 
+      validityTime));
     _renewLogin->start();
   #else
     _renewLogin.reset(
@@ -262,8 +263,9 @@ namespace openbus {
     _clientInterceptor->allowRequestWithoutCredential = false;
     _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
-  #ifdef MULTITHREAD
-    _renewLogin.reset(new RenewLogin(this, validityTime));
+  #ifdef OPENBUS_SDK_MULTITHREAD
+    _renewLogin.reset(new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), 
+      validityTime));
     _renewLogin->start();
   #else
     _renewLogin.reset(
@@ -401,8 +403,9 @@ namespace openbus {
     _clientInterceptor->allowRequestWithoutCredential = false;
     _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
-  #ifdef MULTITHREAD
-    _renewLogin.reset(new RenewLogin(this, validityTime));
+  #ifdef OPENBUS_SDK_MULTITHREAD
+    _renewLogin.reset(new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), 
+      validityTime));
     _renewLogin->start();
   #else
     _renewLogin.reset(
@@ -423,7 +426,7 @@ namespace openbus {
   bool Connection::logout() {
     bool sucess = false;
     if (login()) {
-    #ifdef MULTITHREAD
+    #ifdef OPENBUS_SDK_MULTITHREAD
       _renewLogin->stop();
       _renewLogin->wait();
       _renewLogin.reset();
@@ -558,11 +561,11 @@ namespace openbus {
     return 0;
   }
   
-#ifdef MULTITHREAD
-  RenewLogin(
+#ifdef OPENBUS_SDK_MULTITHREAD
+  RenewLogin::RenewLogin(
     Connection* c, 
     multiplexed::ConnectionMultiplexer* m, 
-    idl_ac::ValidityTime t);
+    idl_ac::ValidityTime t)
     : _conn(c), _multiplexer(m), validityTime(t), sigINT(false) 
   { }
 

@@ -21,7 +21,7 @@ LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
-ifeq "$(MULTITHREAD)" "Yes"
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   SLIB= ${OPENBUSLIB}/libopenbus-micomultithread.a \
         ${OPENBUSLIB}/libscs-micomultithread.a \
         ${OPENBUSLIB}/liblogger.a

@@ -20,15 +20,9 @@ LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
-ifeq "$(MULTITHREAD)" "Yes"
-  SLIB= ${OPENBUSLIB}/libopenbus-micomultithread.a \
-        ${OPENBUSLIB}/libscs-micomultithread.a \
-        ${OPENBUSLIB}/liblogger.a
-else
-  SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread.a \
-        ${OPENBUSLIB}/libscs-micosinglethread.a \
-        ${OPENBUSLIB}/liblogger.a
-endif
+SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread.a \
+      ${OPENBUSLIB}/libscs-micosinglethread.a \
+      ${OPENBUSLIB}/liblogger.a
 
 USE_NODEPEND= Yes
 

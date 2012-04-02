@@ -1,4 +1,4 @@
-ifeq "$(MULTITHREAD)" "Yes"
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   PROJNAME=openbus-micomultithread
 else
   PROJNAME=openbus-micosinglethread
@@ -34,7 +34,7 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   LIBS=nsl socket
   NO_LOCAL_LD=Yes
 
-  ifeq "$(MULTITHREAD)" "Yes"
+  ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
     CPPFLAGS+=-mt
     LFLAGS+=-mt
     STDLFLAGS=-mt -m64 -xar -o
@@ -45,11 +45,11 @@ ifeq "$(DBG)" "Yes"
   MICO_DEBUG=-debug
 endif
 
-ifeq "$(MULTITHREAD)" "Yes"
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread${MICO_DEBUG}
-  DEFINES+=MULTITHREAD
+  DEFINES+=OPENBUS_SDK_MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
 else
   MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
@@ -72,7 +72,7 @@ INCLUDES=. \
  
 LDIR=${MICO_LIB} ${OPENBUSLIB}
 
-ifeq "$(MULTITHREAD)" "Yes"
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   LIBS=mico${MICOVERSION} 
 else
   LIBS=mico${MICOVERSION} crypto dl

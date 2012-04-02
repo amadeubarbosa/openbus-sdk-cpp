@@ -30,7 +30,7 @@ namespace openbus {
     time_t _timeUpdated;
   };
   
-#ifdef MULTITHREAD
+#ifdef OPENBUS_SDK_MULTITHREAD
   class RenewLogin : public MICOMT::Thread {
   public:
     RenewLogin(
@@ -44,9 +44,9 @@ namespace openbus {
     MICOMT::Mutex* mutex;
     Connection* _conn;
     multiplexed::ConnectionMultiplexer* _multiplexer;
+    idl_ac::ValidityTime validityTime;
     bool sigINT;
     idl_ac::AccessControl_var _access_control;
-    idl_ac::ValidityTime validityTime;
     bool _sleep(unsigned int time);
     idl_ac::ValidityTime renew();
   };
