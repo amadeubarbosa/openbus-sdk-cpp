@@ -1,7 +1,7 @@
 ifeq "$(MULTITHREAD)" "Yes"
-  PROJNAME=openbus_mt
+  PROJNAME=openbus-micomultithread
 else
-  PROJNAME=openbus_st
+  PROJNAME=openbus-micosinglethread
 endif
 LIBNAME=${PROJNAME}
 

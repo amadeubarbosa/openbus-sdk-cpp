@@ -22,12 +22,12 @@ LDIR= ${OPENBUSLIB} ${MICO_LIB}
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
 ifeq "$(MULTITHREAD)" "Yes"
-  SLIB= ${OPENBUSLIB}/libopenbus_mt.a \
-        ${OPENBUSLIB}/libscsmicoMT.a \
+  SLIB= ${OPENBUSLIB}/libopenbus-micomultithread.a \
+        ${OPENBUSLIB}/libscs-micomultithread.a \
         ${OPENBUSLIB}/liblogger.a
 else
-  SLIB= ${OPENBUSLIB}/libopenbus_st.a \
-        ${OPENBUSLIB}/libscsmicoST.a \
+  SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread.a \
+        ${OPENBUSLIB}/libscs-micosinglethread.a \
         ${OPENBUSLIB}/liblogger.a
 endif
 
