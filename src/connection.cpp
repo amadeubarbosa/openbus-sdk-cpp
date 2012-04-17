@@ -70,6 +70,7 @@ namespace openbus {
       idl::services::ServiceFailure,
       CORBA::Exception)
   {
+    Mutex m(&_mutex);
     if (login())
       throw AlreadyLogged();
     _clientInterceptor->allowRequestWithoutCredential = true;
@@ -162,6 +163,7 @@ namespace openbus {
       idl::services::ServiceFailure,
       CORBA::Exception)
   {
+    Mutex m(&_mutex);
     if (login()) throw AlreadyLogged();
     idl::EncryptedBlock challenge;
     _clientInterceptor->allowRequestWithoutCredential = true;
@@ -297,6 +299,7 @@ namespace openbus {
   std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn() 
     throw (idl::services::ServiceFailure)
   {
+    Mutex m(&_mutex);
     unsigned char* challenge = new unsigned char[256];
     idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
 
@@ -336,6 +339,7 @@ namespace openbus {
     unsigned char* secret)
   throw (idl::services::ServiceFailure)
   {
+    Mutex m(&_mutex);
     if (login()) throw AlreadyLogged();
     idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
       new idl_ac::LoginAuthenticationInfo;
@@ -448,6 +452,7 @@ namespace openbus {
   }
   
   void Connection::joinChain(CallerChain* chain) {
+    // [doubt] concorrência?
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -457,6 +462,7 @@ namespace openbus {
   }
 
   void Connection::exitChain() {
+    // [doubt] concorrência?
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -465,6 +471,7 @@ namespace openbus {
   }
 
   CallerChain* Connection::getJoinedChain() {
+    // [doubt] concorrência?
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -487,6 +494,7 @@ namespace openbus {
   }
 
   CallerChain* Connection::getCallerChain() {
+    // [doubt] concorrência?
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -515,7 +523,7 @@ namespace openbus {
     }
     return callerChain;
   }
-  
+
   Login* LoginCache::validateLogin(char* id) {
     std::string sid(id);
 
@@ -560,7 +568,7 @@ namespace openbus {
     }
     return 0;
   }
-  
+
 #ifdef OPENBUS_SDK_MULTITHREAD
   RenewLogin::RenewLogin(
     Connection* c, 
@@ -572,6 +580,7 @@ namespace openbus {
   RenewLogin::~RenewLogin() { }
 
   idl_ac::ValidityTime RenewLogin::renew() {
+    Mutex m(&(_conn->_mutex));
     idl_ac::ValidityTime time;
     if (_multiplexer) {
       Connection* c = _multiplexer->getCurrentConnection();
@@ -616,7 +625,7 @@ namespace openbus {
     _validityTime = renew();
     dispatcher->tm_event(this, _validityTime*1000);
   }
-  
+
   idl_ac::ValidityTime RenewLogin::renew() {
     idl_ac::ValidityTime t;
     if (_multiplexer) {

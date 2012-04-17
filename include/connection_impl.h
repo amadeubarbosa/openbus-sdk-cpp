@@ -46,7 +46,6 @@ namespace openbus {
     multiplexed::ConnectionMultiplexer* _multiplexer;
     idl_ac::ValidityTime _validityTime;
     bool _sigINT;
-    idl_ac::AccessControl_var _access_control;
     bool _sleep(unsigned int time);
     idl_ac::ValidityTime renew();
   };
@@ -61,7 +60,6 @@ namespace openbus {
   private:
     Connection* _conn;
     multiplexed::ConnectionMultiplexer* _multiplexer;
-    idl_ac::AccessControl* _access_control;
     idl_ac::ValidityTime _validityTime;
     idl_ac::ValidityTime renew();
   };

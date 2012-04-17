@@ -9,6 +9,7 @@
 
 #include "openbus.h"
 #include "interceptors/orbInitializer_impl.h"
+#include "util/mutex.h"
 #include "stubs/scs.h"
 #include "stubs/core.h"
 #include "stubs/credential.h"
@@ -24,6 +25,10 @@ namespace openbus {
     class ClientInterceptor;
     class ServerInterceptor;
     class ORBInitializer;
+  }
+  namespace multiplexed {
+    Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb)
+      throw(CORBA::Exception, InvalidORB);
   }
 }
 
@@ -62,11 +67,10 @@ namespace openbus {
       const char* name() const { return "WrongPrivateKey"; }
     };
     
-    Connection(
-      const std::string host,
-      const unsigned int port,
-      CORBA::ORB* orb,
-      const interceptors::ORBInitializer* orbInitializer) throw(CORBA::Exception);
+    struct InvalidRemoteCode : public Exception {
+      const char* name() const { return "InvalidRemoteCode"; }
+    };
+
     ~Connection();
     
     void loginByPassword(const char* entity, const char* password)
@@ -124,6 +128,12 @@ namespace openbus {
     //[todo] esconder (tests/01.cpp)
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
   private:
+    Connection(
+      const std::string host,
+      const unsigned int port,
+      CORBA::ORB* orb,
+      const interceptors::ORBInitializer* orbInitializer) throw(CORBA::Exception);
+
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
     EVP_PKEY* prvKey() const { return _prvKey; }
     EVP_PKEY* busKey() const { return _busKey; }
@@ -147,12 +157,20 @@ namespace openbus {
     InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;
     bool _isClosed;
+  #ifdef OPENBUS_SDK_MULTITHREAD
+    MICOMT::Mutex _mutex;
+  #else
+    void* _mutex;
+  #endif
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;
     friend class RenewLogin;
     friend Connection* openbus::connect(const std::string host, const unsigned int port, 
       CORBA::ORB* orb)
       throw(CORBA::Exception, openbus::AlreadyConnected, openbus::InvalidORB);
+    friend Connection* openbus::multiplexed::connect(const std::string host, const unsigned int port, 
+      CORBA::ORB* orb)
+      throw(CORBA::Exception, InvalidORB);
   };
   
   struct CallerChain {

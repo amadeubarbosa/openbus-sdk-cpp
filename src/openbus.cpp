@@ -1,5 +1,7 @@
-#include <openbus.h>
 #include <memory>
+
+#include <openbus.h>
+#include <util/mutex.h>
 
 namespace openbus {
   /* [obs]
@@ -12,11 +14,17 @@ namespace openbus {
   interceptors::ORBInitializer* orbInitializer;
   std::set<CORBA::ORB*> ORBSet;
   char* nullArgv[] = {(char*) " "};
-  char* multithreadArgv[] = {(char*) " ", (char*) "-ORBClientReactive"};
+  char* multithreadArgv[] = {(char*) " "};
   CORBA::ORB* singleORB;
   Connection* singleConnection;
+#ifdef OPENBUS_SDK_MULTITHREAD
+  MICOMT::Mutex _mutex;
+#else
+  void* _mutex;
+#endif
 
   CORBA::ORB* createORB(int argc, char** argv) throw(CORBA::Exception) {
+    Mutex m(&_mutex);
     if (!singleORB) {
       /* [doubt] se eu receber uma exceção após a construção do orbInitializer, quem 
       ** vai liberar a memória do orbInitializer ? O destrutor não pode fazer 
@@ -50,14 +58,17 @@ namespace openbus {
   Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb) 
     throw(CORBA::Exception, AlreadyConnected, InvalidORB) 
   {
+    Mutex m(&_mutex);
     if (!singleORB) {
-      if (!orb)
+      if (!orb) {
       #ifdef OPENBUS_SDK_MULTITHREAD
+        m.unlock();
         singleORB = createORB(2, multithreadArgv);
+        m.lock();
       #else
         singleORB = createORB(1, nullArgv);
       #endif
-      else {
+      } else {
         if (ORBSet.find(orb) == ORBSet.end()) throw InvalidORB();
         if (multiplexed::getConnectionMultiplexer(orb)) throw InvalidORB();
         singleORB = orb;
@@ -65,14 +76,14 @@ namespace openbus {
     }
     if (singleConnection && !singleConnection->_isClosed)
       throw AlreadyConnected();
-    else {
+    else
       singleConnection = new Connection(host, port, singleORB, orbInitializer);
-      return singleConnection;
-    }
+    return singleConnection;
   }
   
   namespace multiplexed {
     CORBA::ORB* createORB(int argc, char** argv) throw(CORBA::Exception) {
+      Mutex m(&_mutex);
       if (!singleORB) {
         /* [doubt] se eu receber uma exceção após a construção do orbInitializer, quem 
         ** vai liberar a memória do orbInitializer ? O destrutor não pode fazer 
@@ -111,14 +122,17 @@ namespace openbus {
     Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb) 
       throw(CORBA::Exception, InvalidORB)
     {
+      Mutex m(&_mutex);
       if (!singleORB) {
-        if (!orb)
+        if (!orb) {
         #ifdef OPENBUS_SDK_MULTITHREAD
+          m.unlock();
           singleORB = openbus::multiplexed::createORB(2, multithreadArgv);
+          m.lock();
         #else
           singleORB = openbus::multiplexed::createORB(1, nullArgv);
         #endif
-        else {
+        } else {
           if (ORBSet.find(orb) == ORBSet.end()) throw InvalidORB();
           singleORB = orb;
         }

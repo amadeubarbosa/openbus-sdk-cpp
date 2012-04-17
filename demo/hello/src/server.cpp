@@ -22,11 +22,22 @@ struct HelloImpl : virtual public POA_Hello {
     openbus::Connection* _conn;
 };
 
+class RunThread : public MICOMT::Thread {
+  public:
+    RunThread(openbus::Connection* c) : _conn(c) {}
+    void _run(void*) {
+      _conn->orb()->run();
+    }
+  private:
+    openbus::Connection* _conn;
+};
+
 int main(int argc, char** argv) {
   try {
     std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
     conn->onInvalidLoginCallback(&onInvalidLogin);
-    
+    RunThread* runThread = new RunThread(conn.get());
+    runThread->start();
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
     componentId.major_version = '1';

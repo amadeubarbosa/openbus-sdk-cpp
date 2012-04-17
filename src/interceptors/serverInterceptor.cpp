@@ -44,11 +44,19 @@ namespace openbus {
           conn = _multiplexer->getIncomingConnection(credential.bus);
           if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
           _multiplexer->setCurrentConnection(conn);
-        } else 
+        } else
           conn = _conn;
 
-        if (conn && conn->login()) {
-          Login* caller = conn->_loginCache->validateLogin(credential.login);
+        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+        if (conn->login()) {
+          Login* caller;
+          try {
+            caller = conn->_loginCache->validateLogin(credential.login);
+          } catch(...) {
+            throw CORBA::NO_PERMISSION(
+              idl_ac::UnverifiedLoginCode, 
+              CORBA::COMPLETED_NO);
+          }
           if (caller) {
             SecretSession* session = 0;
             idl::HashValue hash;
@@ -65,7 +73,7 @@ namespace openbus {
               memcpy(s+22, ri->operation(), slenOperation);
               SHA256(s, slen, hash);
             }
-          
+
             if (session && !memcmp(hash, credential.hash, 32) && 
                 tickets_check(&session->ticketsHistory, credential.ticket)) 
             {
@@ -194,7 +202,9 @@ namespace openbus {
           legacyChainAny <<= legacyChain;
           ri->set_slot(_slotId_legacyCallChain, legacyChainAny);
         } else {
-          // [doubt] erro?
+          throw CORBA::NO_PERMISSION(
+            idl_ac::NoLoginCode, 
+            CORBA::COMPLETED_NO);
         }
       }
     }
