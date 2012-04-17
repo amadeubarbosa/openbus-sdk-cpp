@@ -3,6 +3,7 @@ LIBNAME= ${PROJNAME}
 
 DEFINES=SCS_ORBIX
 DEFINES+=OPENBUS_ORBIX
+DEFINES+=LOGGER_MULTITHREAD
 
 # Descomente a linha abaixo para ativar o modo debug.
 #DBG=YES

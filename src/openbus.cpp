@@ -217,19 +217,16 @@ namespace openbus {
 
   void Openbus::commandLineParse() {
     timeRenewingFixe = false;
-    for (short idx = 1; idx < _argc; idx++) {
+    for (short int idx = 1; idx < _argc; idx++) {
       if (!strcmp(_argv[idx], "-OpenbusHost")) {
-        idx++;
-        hostBus = _argv[idx];
+        hostBus = _argv[++idx];
       } else if (!strcmp(_argv[idx], "-OpenbusPort")) {
-        idx++;
-        portBus = atoi(_argv[idx]);
+        portBus = (unsigned short int) strtoul(_argv[++idx], 0, 10);
       } else if (!strcmp(_argv[idx], "-OpenbusTimeRenewing")) {
-        timeRenewing = (unsigned int) atoi(_argv[++idx]);
+        timeRenewing = (unsigned int) strtoul(_argv[++idx], 0, 10);
         timeRenewingFixe = true;
       } else if (!strcmp(_argv[idx], "-OpenbusDebug")) {
-        idx++;
-        char *debugLevelStr = _argv[idx];
+        char* debugLevelStr = _argv[++idx];
         if (!strcmp(debugLevelStr, "ALL")) {
           debugLevel = ALL;
         } else if (!strcmp(debugLevelStr, "ERROR")) {
@@ -240,11 +237,9 @@ namespace openbus {
           debugLevel = WARNING;
         }
       } else if (!strcmp(_argv[idx], "-OpenbusDebugFile")) {
-        idx++;
-        debugFile = _argv[idx];
+        debugFile = _argv[++idx];
       } else if (!strcmp(_argv[idx], "-OpenbusValidationPolicy")) {
-        idx++;
-        char* credentialValidationPolicyStr = _argv[idx];
+        char* credentialValidationPolicyStr = _argv[++idx];
         if (!strcmp(credentialValidationPolicyStr, "NONE")) {
           credentialValidationPolicy = interceptors::NONE;
         } else if (!strcmp(credentialValidationPolicyStr, "ALWAYS")) { 
@@ -254,11 +249,9 @@ namespace openbus {
         }
       } else if (!strcmp(_argv[idx], "-OpenbusFTConfigFilename")) {
         faultToleranceEnable = true;
-        idx++;
-        FTConfigFilename = _argv[idx];
+        FTConfigFilename = _argv[++idx];
       } else if (!strcmp(_argv[idx], "-OpenbusValidationTime")) {
-          ini->getServerInterceptor()->setValidationTime(
-            (unsigned long) atoi(_argv[++idx]));
+          ini->getServerInterceptor()->setValidationTime(strtoul(_argv[++idx], 0, 10));
       } 
     }
   }
@@ -379,6 +372,7 @@ namespace openbus {
     }
     mutex.unlock();
     logger->dedent(INFO, "Openbus::~Openbus() END");
+    delete logger;
   }
 
   void Openbus::terminationHandlerCallback(long signalType) {
@@ -403,7 +397,7 @@ namespace openbus {
   }
 
   Openbus* Openbus::getInstance() {
-    logger = Logger::getInstance();
+    logger = new Logger();
     mutex.lock();
     if (!bus) {
       bus = new Openbus();
