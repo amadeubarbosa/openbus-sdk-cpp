@@ -137,7 +137,8 @@ namespace openbus {
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
     EVP_PKEY* prvKey() const { return _prvKey; }
     EVP_PKEY* busKey() const { return _busKey; }
-
+    bool _logout(bool local);
+    
     std::string _host;
     unsigned int _port;
     CORBA::ORB* _orb;
@@ -176,11 +177,11 @@ namespace openbus {
   struct CallerChain {
     char* busid;
     idl_ac::LoginInfoSeq callers;
-    const idl_ac::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
+    const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
     CallerChain() : busid(0) { callers.length(0); }
   private:
-    idl_ac::SignedCallChain _signedCallChain;
-    void signedCallChain(idl_ac::SignedCallChain p) { _signedCallChain = p; }
+    idl_cr::SignedCallChain _signedCallChain;
+    void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
     friend class Connection;
   };
 }

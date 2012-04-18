@@ -427,28 +427,34 @@ namespace openbus {
     _isClosed = true;
   }
 
-  bool Connection::logout() {
+  bool Connection::_logout(bool local) {
     bool sucess = false;
     if (login()) {
-    #ifdef OPENBUS_SDK_MULTITHREAD
+      #ifdef OPENBUS_SDK_MULTITHREAD
       _renewLogin->stop();
       _renewLogin->wait();
       _renewLogin.reset();
-    #else
+      #else
       _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
       _renewLogin.reset();
-    #endif
+      #endif
       _loginInfo.reset();
-      try {
-        _access_control->logout();
-        sucess = true;
-      } catch(...) {
-        sucess = false;
+      if (!local) {
+        try {
+          _access_control->logout();
+          sucess = true;
+        } catch(...) {
+          sucess = false;
+        }
       }
     } else sucess = false;
     _clientInterceptor->resetCaches();
     _serverInterceptor->resetCaches();
-    return sucess;
+    return sucess;    
+  }
+
+  bool Connection::logout() {
+    return _logout(false);
   }
   
   void Connection::joinChain(CallerChain* chain) {
@@ -477,7 +483,7 @@ namespace openbus {
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
     CORBA::Any_var signedCallChainAny = piCurrent->get_slot(
       _orbInitializer->slotId_joinedCallChain());
-    idl_ac::SignedCallChain signedCallChain;
+    idl_cr::SignedCallChain signedCallChain;
     if (*signedCallChainAny >>= signedCallChain) {
       CallerChain* c = new CallerChain();
       CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
@@ -504,7 +510,7 @@ namespace openbus {
     CallerChain* callerChain = 0;
     idl_ac::CallChain callChain;
     if (*busidAny >>= busid) {
-      idl_ac::SignedCallChain signedCallChain;
+      idl_cr::SignedCallChain signedCallChain;
       *signedCallChainAny >>= signedCallChain;
       CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
         signedCallChain.encoded,

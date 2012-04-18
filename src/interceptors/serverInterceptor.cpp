@@ -203,7 +203,7 @@ namespace openbus {
           ri->set_slot(_slotId_legacyCallChain, legacyChainAny);
         } else {
           throw CORBA::NO_PERMISSION(
-            idl_ac::NoLoginCode, 
+            idl_ac::NoCredentialCode, 
             CORBA::COMPLETED_NO);
         }
       }

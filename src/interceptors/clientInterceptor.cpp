@@ -40,7 +40,7 @@ namespace openbus {
           ::IOP::TaggedProfile::_profile_data_seq profile = ri->effective_profile()->profile_data;
           SHA256(profile.get_buffer(), profile.length(), profileDataHash);
           std::string sprofileDataHash((const char*) profileDataHash, 32);
-
+        
           if (_profileSecretSession.find(sprofileDataHash) != _profileSecretSession.end()) {
             SecretSession* session = _profileSecretSession[sprofileDataHash];
             credential.session = session->id;
@@ -168,10 +168,15 @@ namespace openbus {
               _profileSecretSession[sprofileDataHash] = session;
               throw PortableInterceptor::ForwardRequest(ri->target(), false);
             }
+          } else if (ex->minor() == idl_ac::NoCredentialCode) {
+            throw CORBA::NO_PERMISSION(
+              idl_ac::InvalidRemoteCode,
+              CORBA::COMPLETED_NO);
           } else if (ex->minor() == idl_ac::InvalidLoginCode) {
             //[todo] tratar valor de retorno
             if (conn && conn->onInvalidLoginCallback())
               (conn->onInvalidLoginCallback())(conn, conn->login()->id);
+            conn->_logout(true);
           }
         }
       }
