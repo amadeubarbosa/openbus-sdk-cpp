@@ -10,12 +10,13 @@
 
 namespace openbus {
   Connection::Connection(
-    const std::string host,
-    const unsigned int port,
+    const std::string h,
+    const unsigned int p,
     CORBA::ORB* orb,
-    const interceptors::ORBInitializer* orbInitializer) 
+    const interceptors::ORBInitializer* ini,
+    ConnectionManager* m) 
     throw(CORBA::Exception)
-    : _host(host), _port(port), _orb(orb), _orbInitializer(orbInitializer), _onInvalidLogin(0),
+    : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _onInvalidLogin(0), _manager(m),
     _isClosed(false)
   {
     std::stringstream corbaloc;
@@ -55,8 +56,6 @@ namespace openbus {
     
     _clientInterceptor->setConnection(this);
     _serverInterceptor->setConnection(this);
-    multiplexed::ConnectionMultiplexer* m = multiplexed::getConnectionMultiplexer(_orb);
-    if (m) multiplexed::getConnectionMultiplexer(_orb)->addConnection(this);
     _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
   }
 
@@ -70,7 +69,9 @@ namespace openbus {
       idl::services::ServiceFailure,
       CORBA::Exception)
   {
+    #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
+    #endif
     if (login())
       throw AlreadyLogged();
     _clientInterceptor->allowRequestWithoutCredential = true;
@@ -140,15 +141,14 @@ namespace openbus {
 
     _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
-  #ifdef OPENBUS_SDK_MULTITHREAD
-    _renewLogin.reset(new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), 
-      validityTime));
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
     _renewLogin->start();
-  #else
+    #else
     _renewLogin.reset(
-      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), validityTime));  
+      new RenewLogin(this, _manager, validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
-  #endif
+    #endif
   }
 
   void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
@@ -163,7 +163,9 @@ namespace openbus {
       idl::services::ServiceFailure,
       CORBA::Exception)
   {
+    #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
+    #endif
     if (login()) throw AlreadyLogged();
     idl::EncryptedBlock challenge;
     _clientInterceptor->allowRequestWithoutCredential = true;
@@ -266,12 +268,11 @@ namespace openbus {
     _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef OPENBUS_SDK_MULTITHREAD
-    _renewLogin.reset(new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), 
-      validityTime));
+    _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
     _renewLogin->start();
   #else
     _renewLogin.reset(
-      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), validityTime));  
+      new RenewLogin(this, _manager, validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   }
@@ -299,7 +300,9 @@ namespace openbus {
   std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn() 
     throw (idl::services::ServiceFailure)
   {
+    #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
+    #endif
     unsigned char* challenge = new unsigned char[256];
     idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
 
@@ -339,7 +342,9 @@ namespace openbus {
     unsigned char* secret)
   throw (idl::services::ServiceFailure)
   {
+    #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
+    #endif
     if (login()) throw AlreadyLogged();
     idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
       new idl_ac::LoginAuthenticationInfo;
@@ -407,23 +412,20 @@ namespace openbus {
     _clientInterceptor->allowRequestWithoutCredential = false;
     _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
     _clientInterceptor->allowRequestWithoutCredential = false;
-  #ifdef OPENBUS_SDK_MULTITHREAD
-    _renewLogin.reset(new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), 
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    _renewLogin.reset(new RenewLogin(this, _manager, 
       validityTime));
     _renewLogin->start();
-  #else
-    _renewLogin.reset(
-      new RenewLogin(this, multiplexed::getConnectionMultiplexer(_orb), validityTime));  
+    #else
+    _renewLogin.reset(new RenewLogin(this, _manager, validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
-  #endif    
+    #endif    
   }
 
   void Connection::close() {
     logout();
     _clientInterceptor->setConnection(0);
     _serverInterceptor->setConnection(0);
-    multiplexed::ConnectionMultiplexer* m = multiplexed::getConnectionMultiplexer(_orb);
-    if (m) multiplexed::getConnectionMultiplexer(_orb)->removeConnection(this);
     _isClosed = true;
   }
 
@@ -453,9 +455,7 @@ namespace openbus {
     return sucess;    
   }
 
-  bool Connection::logout() {
-    return _logout(false);
-  }
+  bool Connection::logout() { return _logout(false); }
   
   void Connection::joinChain(CallerChain* chain) {
     // [doubt] concorrência?
@@ -495,8 +495,7 @@ namespace openbus {
       c->busid = callChain.target;
       c->callers = callChain.callers;
       return c;
-    } else
-      return 0;
+    } else return 0;
   }
 
   CallerChain* Connection::getCallerChain() {
@@ -548,8 +547,7 @@ namespace openbus {
 
     /* validação do login. (getValidity) */
     if (!login->time2live) return 0;
-    if (login->time2live > (time(0) - _timeUpdated)) 
-      return login;
+    if (login->time2live > (time(0) - _timeUpdated)) return login;
     else {
       /*
       * Substituir a implementação da LRU para permitir que o cache avise ao SDK o  elemento 
@@ -575,25 +573,27 @@ namespace openbus {
     return 0;
   }
 
-#ifdef OPENBUS_SDK_MULTITHREAD
+  #ifdef OPENBUS_SDK_MULTITHREAD
   RenewLogin::RenewLogin(
     Connection* c, 
-    multiplexed::ConnectionMultiplexer* m, 
+    ConnectionManager* m, 
     idl_ac::ValidityTime t)
-    : _conn(c), _multiplexer(m), _validityTime(t), _sigINT(false) 
+    : _conn(c), _manager(m), _validityTime(t), _sigINT(false) 
   { }
 
   RenewLogin::~RenewLogin() { }
 
   idl_ac::ValidityTime RenewLogin::renew() {
+    #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&(_conn->_mutex));
+    #endif
     idl_ac::ValidityTime time;
-    if (_multiplexer) {
-      Connection* c = _multiplexer->getCurrentConnection();
-      _multiplexer->setCurrentConnection(_conn);
+    if (_manager) {
+      Connection* c = _manager->getDefaultConnection();
+      _manager->setDefaultConnection(_conn);
         //[doubt] try-catch
       time = _conn->access_control()->renew();
-      _multiplexer->setCurrentConnection(c);
+      _manager->setDefaultConnection(c);
     } else
         //[doubt] try-catch
       time = _conn->access_control()->renew();
@@ -613,18 +613,16 @@ namespace openbus {
 
   void RenewLogin::_run(void*) {
     while (true) {
-      if (_sleep(_validityTime)) 
-        break;
-      else 
-        _validityTime = renew();
+      if (_sleep(_validityTime)) break;
+      else _validityTime = renew();
     }
   }
-#else
+  #else
   RenewLogin::RenewLogin(
     Connection* c, 
-    multiplexed::ConnectionMultiplexer* m, 
+    ConnectionManager* m, 
     idl_ac::ValidityTime t)
-    : _conn(c), _multiplexer(m), _validityTime(t)
+    : _conn(c), _manager(m), _validityTime(t)
   { }
 
   void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
@@ -634,14 +632,13 @@ namespace openbus {
 
   idl_ac::ValidityTime RenewLogin::renew() {
     idl_ac::ValidityTime t;
-    if (_multiplexer) {
-      Connection* c = _multiplexer->getCurrentConnection();
-      _multiplexer->setCurrentConnection(_conn);
+    if (_manager) {
+      Connection* c = _manager->getDefaultConnection();
+      _manager->setDefaultConnection(_conn);
       t = _conn->access_control()->renew();
-      _multiplexer->setCurrentConnection(c);
-    } else
-      t = _conn->access_control()->renew();
+      _manager->setDefaultConnection(c);
+    } else t = _conn->access_control()->renew();
     return t;
   }
-#endif
+  #endif
 }

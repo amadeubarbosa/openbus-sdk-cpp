@@ -81,7 +81,7 @@ endif
 USE_NODEPEND=Yes
 
 SRC=src/openbus.cpp \
-    src/multiplexer.cpp \
+    src/manager.cpp \
     src/connection.cpp \
     src/interceptors/orbInitializer.cpp \
     src/interceptors/clientInterceptor.cpp \

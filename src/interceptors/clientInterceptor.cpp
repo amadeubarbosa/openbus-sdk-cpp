@@ -9,7 +9,7 @@ namespace openbus {
     ClientInterceptor::ClientInterceptor(
       PortableInterceptor::SlotId slotId_joinedCallChain,
       IOP::Codec* cdr_codec) 
-      : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _conn(0), _multiplexer(0),
+      : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _conn(0), _manager(0),
       _slotId_joinedCallChain(slotId_joinedCallChain) 
     { }
     
@@ -22,11 +22,10 @@ namespace openbus {
       std::cout << "send_request:" << operation << std::endl;
       if (!allowRequestWithoutCredential) {
         Connection* conn;
-        if (_multiplexer) {
-          conn = _multiplexer->getCurrentConnection();
+        if (_manager) {
+          conn = _manager->getDefaultConnection();
           if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-        } else 
-          conn = _conn;
+        } else conn = _conn;
 
         if (conn && conn->login()) {
           CallerChain* callerChain = 0;
@@ -63,10 +62,8 @@ namespace openbus {
               CORBA::Any_var signedCallChainAny = p->get_slot(_slotId_joinedCallChain);
               credential.chain = *conn->access_control()->signChainFor(session->remoteid);
             } else {
-              if (callerChain)
-                credential.chain = *callerChain->signedCallChain();
-              else
-                memset(credential.chain.signature, '\0', 256);
+              if (callerChain) credential.chain = *callerChain->signedCallChain();
+              else memset(credential.chain.signature, '\0', 256);
             }
           } else {
             credential.ticket = 0;
@@ -88,16 +85,14 @@ namespace openbus {
           legacyCredential.owner = conn->login()->entity;
           if (callerChain && (callerChain->callers.length() > 1))
             legacyCredential.delegate = CORBA::string_dup(callerChain->callers[0].entity);
-          else
-            legacyCredential.delegate = "";
+          else legacyCredential.delegate = "";
           CORBA::Any lany;
           lany <<= legacyCredential;
           o = _cdrCodec->encode_value(lany);
           IOP::ServiceContext::_context_data_seq ls(o->length(), o->length(), o->get_buffer(), 0);
           legacyContext.context_data = ls;
           ri->add_request_service_context(legacyContext, true);
-        } else
-          throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
+        } else throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
       }
     }
 
@@ -107,11 +102,10 @@ namespace openbus {
       std::cout << "receive_exception:" << ri->received_exception_id() << std::endl;
 
       Connection* conn;
-      if (_multiplexer) {
-        conn = _multiplexer->getCurrentConnection();
+      if (_manager) {
+        conn = _manager->getDefaultConnection();
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-      } else 
-        conn = _conn;
+      } else conn = _conn;
 
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
@@ -169,9 +163,7 @@ namespace openbus {
               throw PortableInterceptor::ForwardRequest(ri->target(), false);
             }
           } else if (ex->minor() == idl_ac::NoCredentialCode) {
-            throw CORBA::NO_PERMISSION(
-              idl_ac::InvalidRemoteCode,
-              CORBA::COMPLETED_NO);
+            throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
           } else if (ex->minor() == idl_ac::InvalidLoginCode) {
             //[todo] tratar valor de retorno
             if (conn && conn->onInvalidLoginCallback())

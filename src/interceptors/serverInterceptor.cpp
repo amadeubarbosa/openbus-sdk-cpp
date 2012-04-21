@@ -19,7 +19,7 @@ namespace openbus {
         _slotId_signedCallChain(slotId_signedCallChain),
         _slotId_legacyCallChain(slotId_legacyCallChain), _slotId_busid(slotId_busid), 
         _cdrCodec(cdr_codec), 
-        _conn(0), _multiplexer(0) 
+        _conn(0), _manager(0) 
     { }
     
     ServerInterceptor::~ServerInterceptor() { }
@@ -40,12 +40,13 @@ namespace openbus {
       idl_cr::CredentialData credential;
       if (any >>= credential) {
         Connection* conn;
-        if (_multiplexer) {
-          conn = _multiplexer->getIncomingConnection(credential.bus);
-          if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
-          _multiplexer->setCurrentConnection(conn);
-        } else
-          conn = _conn;
+        if (_manager) {
+          conn = _manager->getBusDispatcher(credential.bus);
+          if (!conn) 
+            conn = _manager->getDefaultConnection();
+          // [doubt] devo me preocupar com esta exeção neste momento?
+          //throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+        } else conn = _conn;
 
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
         if (conn->login()) {
@@ -53,9 +54,7 @@ namespace openbus {
           try {
             caller = conn->_loginCache->validateLogin(credential.login);
           } catch(...) {
-            throw CORBA::NO_PERMISSION(
-              idl_ac::UnverifiedLoginCode, 
-              CORBA::COMPLETED_NO);
+            throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
           }
           if (caller) {
             SecretSession* session = 0;
@@ -96,7 +95,7 @@ namespace openbus {
                   callChainAny >>= callChain;
                   if (strcmp(callChain.target, conn->login()->id) ||
                      (strcmp(callChain.callers[callChain.callers.length()-1].id, 
-                       caller->loginInfo->id)))
+                     caller->loginInfo->id)))
                   {
                     invalidChain = true;
                   } else {
@@ -108,12 +107,9 @@ namespace openbus {
                     ri->set_slot(_slotId_busid, busidAny);
                   }
                 }
-              } else
-                invalidChain = true;
-             if (invalidChain)
-                throw CORBA::NO_PERMISSION(
-                  idl_ac::InvalidChainCode, 
-                  CORBA::COMPLETED_NO);
+              } else invalidChain = true;
+             if (invalidChain) 
+               throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
             } else {
               //credential not valid, try to reset credetial session
               std::cout << "credential not valid, try to reset credetial session" << std::endl;
@@ -162,14 +158,9 @@ namespace openbus {
               serviceContext.context_data = s;
               ri->add_reply_service_context(serviceContext, true);          
 
-              throw CORBA::NO_PERMISSION(
-                idl_ac::InvalidCredentialCode, 
-                CORBA::COMPLETED_NO);            
+              throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, CORBA::COMPLETED_NO);            
             }
-          } else
-            throw CORBA::NO_PERMISSION(
-              idl_ac::InvalidLoginCode, 
-              CORBA::COMPLETED_NO);
+          } else throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
         }
       } else {
         IOP::ServiceContext_var sc = ri->get_request_service_context(1234);
@@ -201,11 +192,7 @@ namespace openbus {
           CORBA::Any legacyChainAny;
           legacyChainAny <<= legacyChain;
           ri->set_slot(_slotId_legacyCallChain, legacyChainAny);
-        } else {
-          throw CORBA::NO_PERMISSION(
-            idl_ac::NoCredentialCode, 
-            CORBA::COMPLETED_NO);
-        }
+        } else throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, CORBA::COMPLETED_NO);
       }
     }
   }

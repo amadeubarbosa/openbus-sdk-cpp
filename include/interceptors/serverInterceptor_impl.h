@@ -3,7 +3,7 @@
 
 #include <CORBA.h>
 #include <connection.h>
-#include <multiplexer.h>
+#include <manager.h>
 extern "C" {
   #include <util/tickets.h>
 }
@@ -11,9 +11,7 @@ extern "C" {
 /* forward declarations */
 namespace openbus {
   class Connection;
-  namespace multiplexed {
-    class ConnectionMultiplexer;
-  }
+  class ConnectionManager;
 }
 
 #define SECRET_SIZE 16
@@ -44,7 +42,7 @@ namespace openbus {
         { return CORBA::string_dup("ServerInterceptor"); }
       void destroy() { }
       void setConnection(Connection* c) { _conn = c; }
-      void setConnectionMultiplexer(multiplexed::ConnectionMultiplexer* m) { _multiplexer = m; }
+      void setConnectionManager(ConnectionManager* m) { _manager = m; }
       void resetCaches() { _idSecretSession.clear(); }
     private:
       PortableInterceptor::Current* _piCurrent;
@@ -54,7 +52,7 @@ namespace openbus {
       PortableInterceptor::SlotId _slotId_busid;
       IOP::Codec* _cdrCodec;
       Connection* _conn;
-      multiplexed::ConnectionMultiplexer* _multiplexer;
+      ConnectionManager* _manager;
       struct SecretSession {
         CORBA::ULong id;
         tickets_History ticketsHistory;

@@ -7,14 +7,15 @@
 #include <CORBA.h>
 #include <openssl/evp.h>
 
-#include "openbus.h"
 #include "interceptors/orbInitializer_impl.h"
-#include "util/mutex.h"
 #include "stubs/scs.h"
 #include "stubs/core.h"
 #include "stubs/credential.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
+#ifdef OPENBUS_SDK_MULTITHREAD
+#include <util/mutex.h>
+#endif
 
 /* forward declarations */
 namespace openbus {
@@ -26,10 +27,7 @@ namespace openbus {
     class ServerInterceptor;
     class ORBInitializer;
   }
-  namespace multiplexed {
-    Connection* connect(const std::string host, const unsigned int port, CORBA::ORB* orb)
-      throw(CORBA::Exception, InvalidORB);
-  }
+  class ConnectionManager;
 }
 
 namespace openbus {  
@@ -131,8 +129,9 @@ namespace openbus {
     Connection(
       const std::string host,
       const unsigned int port,
-      CORBA::ORB* orb,
-      const interceptors::ORBInitializer* orbInitializer) throw(CORBA::Exception);
+      CORBA::ORB*,
+      const interceptors::ORBInitializer*,
+      ConnectionManager*) throw(CORBA::Exception);
 
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
     EVP_PKEY* prvKey() const { return _prvKey; }
@@ -157,21 +156,15 @@ namespace openbus {
     EVP_PKEY* _prvKey;
     InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;
+    ConnectionManager* _manager;
     bool _isClosed;
-  #ifdef OPENBUS_SDK_MULTITHREAD
+    #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Mutex _mutex;
-  #else
-    void* _mutex;
-  #endif
+    #endif
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;
     friend class RenewLogin;
-    friend Connection* openbus::connect(const std::string host, const unsigned int port, 
-      CORBA::ORB* orb)
-      throw(CORBA::Exception, openbus::AlreadyConnected, openbus::InvalidORB);
-    friend Connection* openbus::multiplexed::connect(const std::string host, const unsigned int port, 
-      CORBA::ORB* orb)
-      throw(CORBA::Exception, InvalidORB);
+    friend class ConnectionManager;
   };
   
   struct CallerChain {

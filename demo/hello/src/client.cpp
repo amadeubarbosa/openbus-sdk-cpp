@@ -4,7 +4,11 @@
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> conn = std::auto_ptr <openbus::Connection> 
+      (manager->createConnection("localhost", 2089));
+    manager->setDefaultConnection(conn.get());
     conn->loginByPassword("demo", "demo");
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);

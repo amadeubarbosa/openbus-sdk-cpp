@@ -3,14 +3,12 @@
 
 #include <CORBA.h>
 #include <connection.h>
-#include <multiplexer.h>
+#include "../manager.h"
 
 /* forward declarations */
 namespace openbus {
   class Connection;
-  namespace multiplexed {
-    class ConnectionMultiplexer;
-  }
+  class ConnectionManager;
 }
 
 namespace openbus {
@@ -29,7 +27,7 @@ namespace openbus {
       char* name() throw (CORBA::Exception) { return CORBA::string_dup("ClientInterceptor"); }
       void destroy() { }
       void setConnection(Connection* c) { _conn = c; }
-      void setConnectionMultiplexer(multiplexed::ConnectionMultiplexer* m) { _multiplexer = m; }
+      void setConnectionManager(ConnectionManager* m) { _manager = m; }
       void resetCaches() { _profileSecretSession.clear(); }
 
       /* Flag que indica ao interceptador cliente se este deve verificar a existencia de uma  
@@ -39,7 +37,7 @@ namespace openbus {
     private:
       IOP::Codec* _cdrCodec;
       Connection* _conn;
-      multiplexed::ConnectionMultiplexer* _multiplexer;
+      ConnectionManager* _manager;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
       struct SecretSession {
         CORBA::ULong id;

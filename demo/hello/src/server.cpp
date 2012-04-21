@@ -22,22 +22,28 @@ struct HelloImpl : virtual public POA_Hello {
     openbus::Connection* _conn;
 };
 
+#ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
-  public:
-    RunThread(openbus::Connection* c) : _conn(c) {}
-    void _run(void*) {
-      _conn->orb()->run();
-    }
-  private:
-    openbus::Connection* _conn;
+public:
+  RunThread(openbus::Connection* c) : _conn(c) {}
+  void _run(void*) { _conn->orb()->run(); }
+private:
+  openbus::Connection* _conn;
 };
+#endif
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> conn = std::auto_ptr <openbus::Connection> 
+      (manager->createConnection("localhost", 2089));
+    manager->setDefaultConnection(conn.get());
     conn->onInvalidLoginCallback(&onInvalidLogin);
+    #ifdef OPENBUS_SDK_MULTITHREAD
     RunThread* runThread = new RunThread(conn.get());
     runThread->start();
+    #endif
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
     componentId.major_version = '1';
