@@ -41,7 +41,7 @@ namespace openbus {
   
   class Connection {
   public:
-    typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const char* login);
+    typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const idl_ac::LoginInfo* login);
     
     /** exceptions */
     //[todo] revisar

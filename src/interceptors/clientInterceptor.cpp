@@ -167,7 +167,7 @@ namespace openbus {
           } else if (ex->minor() == idl_ac::InvalidLoginCode) {
             //[todo] tratar valor de retorno
             if (conn && conn->onInvalidLoginCallback())
-              (conn->onInvalidLoginCallback())(conn, conn->login()->id);
+              (conn->onInvalidLoginCallback())(conn, conn->login());
             conn->_logout(true);
           }
         }
