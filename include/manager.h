@@ -6,7 +6,7 @@
 #include "connection.h"
 #include "interceptors/orbInitializer_impl.h"
 
-#define CONNECTION_MANAGER_ID "ConnectionManager"
+#define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
 
 /* forward declarations */
 namespace openbus {
@@ -34,8 +34,10 @@ namespace openbus {
     void setupBusDispatcher(Connection*);
     Connection* getBusDispatcher(const char* busid);
     Connection* removeBusDispatcher(const char* busid);
-    CORBA::ORB* orb;
+    CORBA::ORB* orb() const { return _orb; }
   private:
+    void orb(CORBA::ORB* o) { _orb = o; }
+    CORBA::ORB* _orb;
     interceptors::ORBInitializer* _orbInitializer;
     BusidConnection _busidConnection;
     Connection* _defaultConnection;

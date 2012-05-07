@@ -5,7 +5,7 @@ namespace openbus {
   ConnectionManager::~ConnectionManager() { }
   
   Connection* ConnectionManager::createConnection(const char* host, short port) {
-    return new Connection(host, port, orb, _orbInitializer, this);
+    return new Connection(host, port, _orb, _orbInitializer, this);
   }
   
   void ConnectionManager::setupBusDispatcher(Connection* c) {

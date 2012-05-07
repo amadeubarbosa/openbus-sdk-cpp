@@ -25,10 +25,10 @@ struct HelloImpl : virtual public POA_Hello {
 #ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
 public:
-  RunThread(openbus::Connection* c) : _conn(c) {}
-  void _run(void*) { _conn->orb()->run(); }
+  RunThread(openbus::ConnectionManager* m) : _manager(m) {}
+  void _run(void*) { _manager->orb()->run(); }
 private:
-  openbus::Connection* _conn;
+  openbus::ConnectionManager* _manager;
 };
 #endif
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     manager->setDefaultConnection(conn.get());
     conn->onInvalidLoginCallback(&onInvalidLogin);
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread* runThread = new RunThread(conn.get());
+    RunThread* runThread = new RunThread(manager);
     runThread->start();
     #endif
     scs::core::ComponentId componentId;
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(conn->orb(), componentId);
+    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
     ctx->addFacet("hello", "IDL:Hello:1.0", helloServant);
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 
     conn->loginByPassword("demo", "demo");
     conn->offers()->registerService(ctx->getIComponent(), props);
-    conn->orb()->run();
+    manager->orb()->run();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;

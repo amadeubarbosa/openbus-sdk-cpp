@@ -37,7 +37,7 @@ namespace openbus {
       */
       CORBA::ORB* orb = CORBA::ORB_init(argc, argv);
       ConnectionManager* manager = new ConnectionManager;
-      manager->orb = orb;
+      manager->orb(orb);
       manager->_orbInitializer = orbInitializer;
       orb->register_initial_reference(CONNECTION_MANAGER_ID, manager);
       /* [obs]

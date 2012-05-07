@@ -118,7 +118,6 @@ namespace openbus {
     CallerChain* getJoinedChain();
     void close();
 
-    CORBA::ORB* orb() const { return _orb; }
     const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
     const char* busid() const { return _busid; }
     const idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
@@ -133,6 +132,7 @@ namespace openbus {
       const interceptors::ORBInitializer*,
       ConnectionManager*) throw(CORBA::Exception);
 
+    CORBA::ORB* orb() const { return _orb; }
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
     EVP_PKEY* prvKey() const { return _prvKey; }
     EVP_PKEY* busKey() const { return _busKey; }
