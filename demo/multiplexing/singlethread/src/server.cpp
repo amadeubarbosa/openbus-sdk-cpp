@@ -12,17 +12,18 @@ struct HelloImpl : virtual public POA_Hello {
     openbus::CallerChain* chain = _conn->getCallerChain();
     if (chain) 
       std::cout << "Hello from " << chain->callers[0].entity << "@" << chain->busid << std::endl;
-    else 
-      std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
+    else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
   }
-  private:
-    openbus::Connection* _conn;
+private:
+  openbus::Connection* _conn;
 };
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> connBusA (openbus::multiplexed::connect("localhost", 2089));
-    std::auto_ptr <openbus::Connection> connBusB (openbus::multiplexed::connect("localhost", 3089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> connBusA (openbus::createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> connBusB (openbus::createConnection("localhost", 3089));
 
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
@@ -46,17 +47,15 @@ int main(int argc, char** argv) {
     connBusA->loginByPassword("demo", "demo");
     connBusB->loginByPassword("demo", "demo");
 
-    openbus::multiplexed::ConnectionMultiplexer* multiplexer = 
-      openbus::multiplexed::getConnectionMultiplexer(connBusB->orb());
-    multiplexer->setCurrentConnection(connBusA.get());
-    multiplexer->setIncomingConnection(connBusB->busid(), connBusB.get());
-    multiplexer->setIncomingConnection(connBusA->busid(), connBusA.get());
+    manager->setDefaultConnection(connBusA.get());
+    manager->setupBusDispatcher(connBusB.get());
+    manager->setupBusDispatcher(connBusA.get());
 
     connBusA->offers()->registerService(ctx->getIComponent(), props);
-    multiplexer->setCurrentConnection(connBusB.get());
+    manager->setDefaultConnection(connBusB.get());
     connBusB->offers()->registerService(ctx->getIComponent(), props);
 
-    connBusA->orb()->run();
+    manager->orb()->run();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;

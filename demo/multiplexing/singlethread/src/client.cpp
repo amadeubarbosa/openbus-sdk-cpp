@@ -4,7 +4,9 @@
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> connBusA (openbus::connect("localhost", 2089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
     connBusA->loginByPassword("demo", "demo");
     openbus::idl_or::ServicePropertySeq propsA;
     propsA.length(3);
@@ -19,11 +21,10 @@ int main(int argc, char** argv) {
       CORBA::Object_var o = offersA[0].service_ref->getFacetByName("hello");
       Hello* hello = Hello::_narrow(o);
       hello->sayHello();
-    } else
-      std::cout << "nenhuma oferta encontrada." << std::endl;
+    } else std::cout << "nenhuma oferta encontrada." << std::endl;
     connBusA->close();
 
-    std::auto_ptr <openbus::Connection> connBusB (openbus::connect("localhost", 3089));
+    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3089));
     connBusB->loginByPassword("demo", "demo");
     openbus::idl_or::ServicePropertySeq propsB;
     propsB.length(3);
@@ -38,8 +39,7 @@ int main(int argc, char** argv) {
       CORBA::Object_var o = offersB[0].service_ref->getFacetByName("hello");
       Hello* hello = Hello::_narrow(o);
       hello->sayHello();
-    } else
-      std::cout << "nenhuma oferta encontrada." << std::endl;
+    } else std::cout << "nenhuma oferta encontrada." << std::endl;
     connBusB->close();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
