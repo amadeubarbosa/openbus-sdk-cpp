@@ -4,12 +4,14 @@
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> conn = std::auto_ptr <openbus::Connection>
-      (openbus::connect("localhost", 2089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    manager->setDefaultConnection(conn.get());
     conn->loginByPassword("demo", "demo");
     std::pair <openbus::idl_ac::LoginProcess*, unsigned char*> credential = 
       conn->startSingleSignOn();
-    std::cout << "[LoginProcess]: " << conn->orb()->object_to_string(credential.first) 
+    std::cout << "[LoginProcess]: " << manager->orb()->object_to_string(credential.first) 
       << std::endl;
     std::cout << "[secret]: " << credential.second << std::endl;
     openbus::idl_or::ServicePropertySeq props;
@@ -25,10 +27,9 @@ int main(int argc, char** argv) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
       Hello* hello = Hello::_narrow(o);
       hello->sayHello();
-    } else
-      std::cout << "nenhuma oferta encontrada." << std::endl;
+    } else std::cout << "nenhuma oferta encontrada." << std::endl;
     std::cout << "orb.run()" << std::endl;
-    conn->orb()->run();
+    manager->orb()->run();
     conn->close();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;

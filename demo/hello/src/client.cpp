@@ -6,8 +6,7 @@ int main(int argc, char** argv) {
   try {
     CORBA::ORB* orb = openbus::initORB(argc, argv);
     openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
-    std::auto_ptr <openbus::Connection> conn = std::auto_ptr <openbus::Connection> 
-      (manager->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     manager->setDefaultConnection(conn.get());
     conn->loginByPassword("demo", "demo");
     openbus::idl_or::ServicePropertySeq props;
@@ -23,8 +22,7 @@ int main(int argc, char** argv) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
       Hello* hello = Hello::_narrow(o);
       hello->sayHello();
-    } else
-      std::cout << "nenhuma oferta encontrada." << std::endl;
+    } else std::cout << "nenhuma oferta encontrada." << std::endl;
     conn->close();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;

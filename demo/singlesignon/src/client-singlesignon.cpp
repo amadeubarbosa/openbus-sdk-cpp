@@ -4,10 +4,12 @@
 
 int main(int argc, char** argv) {
   try {
-    openbus::Connection* conn = openbus::connect("localhost", 2089);
-    CORBA::Object_var o = conn->orb()->string_to_object(argv[1]);
-    openbus::idl_ac::LoginProcess_var loginProcess = 
-      openbus::idl_ac::LoginProcess::_narrow(o);
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    manager->setDefaultConnection(conn.get());
+    CORBA::Object_var o = manager->orb()->string_to_object(argv[1]);
+    openbus::idl_ac::LoginProcess_var loginProcess = openbus::idl_ac::LoginProcess::_narrow(o);
     unsigned char* secret = (unsigned char*) argv[2];
     conn->loginBySingleSignOn(loginProcess, secret);
     openbus::idl_or::ServicePropertySeq props;
@@ -23,8 +25,7 @@ int main(int argc, char** argv) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
       Hello* hello = Hello::_narrow(o);
       hello->sayHello();
-    } else
-      std::cout << "nenhuma oferta encontrada." << std::endl;
+    } else std::cout << "nenhuma oferta encontrada." << std::endl;
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
