@@ -29,7 +29,10 @@ struct CertifierImpl : virtual public POA_Certifier {
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    manager->setDefaultConnection(conn.get());
     
     scs::core::ComponentId componentId;
     componentId.name = "Certifier";
@@ -37,7 +40,7 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(conn->orb(), componentId);
+    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> certifierServant(new CertifierImpl(conn.get()));
     ctx->addFacet("certifier", "IDL:Certifier:1.0", certifierServant);
@@ -51,7 +54,7 @@ int main(int argc, char** argv) {
 
     conn->loginByPassword("goGo", "goGo");
     conn->offers()->registerService(ctx->getIComponent(), props);
-    conn->orb()->run();
+    manager->orb()->run();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;

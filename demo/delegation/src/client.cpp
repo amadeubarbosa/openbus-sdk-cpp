@@ -19,7 +19,10 @@ struct ClientImpl : virtual public POA_Client {
 
 int main(int argc, char** argv) {
   try {
-    std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    manager->setDefaultConnection(conn.get());
     conn->loginByPassword("client", "client");
     scs::core::ComponentId componentId;
     componentId.name = "Client";
@@ -27,7 +30,7 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(conn->orb(), componentId);
+    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
     PortableServer::ServantBase* clientServant(new ClientImpl(conn.get()));
     ctx->addFacet("client", "IDL:Client:1.0", clientServant);    
     openbus::idl_or::ServicePropertySeq props;
