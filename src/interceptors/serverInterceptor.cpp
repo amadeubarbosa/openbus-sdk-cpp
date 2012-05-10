@@ -42,8 +42,8 @@ namespace openbus {
         Connection* conn;
         if (_manager) {
           conn = _manager->getBusDispatcher(credential.bus);
-          if (!conn) 
-            conn = _manager->getDefaultConnection();
+          if (conn) _manager->_requestIdConnection[ri->request_id()] = conn;
+          else conn = _manager->getDefaultConnection();
           // [doubt] devo me preocupar com esta exeção neste momento?
           //throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
         } else conn = _conn;
@@ -53,7 +53,7 @@ namespace openbus {
           Login* caller;
           try {
             caller = conn->_loginCache->validateLogin(credential.login);
-          } catch(...) {
+          } catch(CORBA::SystemException &e) {
             throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
           }
           if (caller) {
@@ -161,7 +161,7 @@ namespace openbus {
               throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, CORBA::COMPLETED_NO);            
             }
           } else throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
-        }
+        } else throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
       } else {
         IOP::ServiceContext_var sc = ri->get_request_service_context(1234);
         IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
@@ -194,6 +194,8 @@ namespace openbus {
           ri->set_slot(_slotId_legacyCallChain, legacyChainAny);
         } else throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, CORBA::COMPLETED_NO);
       }
+      //[todo] verificar se preciso me preocupar quando lanço exceções.
+      _manager->_requestIdConnection[ri->request_id()] = 0;
     }
   }
 }

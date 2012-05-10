@@ -22,8 +22,8 @@ int main(int argc, char** argv) {
   try {
     CORBA::ORB* orb = openbus::initORB(argc, argv);
     openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
-    std::auto_ptr <openbus::Connection> connBusA (openbus::createConnection("localhost", 2089));
-    std::auto_ptr <openbus::Connection> connBusB (openbus::createConnection("localhost", 3089));
+    std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3089));
 
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
@@ -31,8 +31,7 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(
-      connBusA->orb(), componentId);
+    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
     ctx->addFacet("hello", "IDL:Hello:1.0", helloServant);

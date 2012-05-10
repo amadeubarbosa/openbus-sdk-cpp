@@ -6,23 +6,26 @@
 
 using namespace auxiliar;
 
-bool alreadyConnected = false;
+bool alreadyLogged = false;
 bool accessDenied = false;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();
   begin(TESTCASE);
   try {
-    openbus::Connection* conn (openbus::connect("localhost", 2089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    manager->setDefaultConnection(conn.get());
     conn->loginByPassword("admin", "admin");
     conn->logout();
     conn->loginByPassword("admin", "admin");
     try {
       conn->loginByPassword("admin", "admin");
     } catch (const openbus::Connection::AlreadyLogged& e) {
-      alreadyConnected = true;
+      alreadyLogged = true;
     }
-    if (!alreadyConnected) fail(TESTCASE, "Ja estou conectado.");
+    if (!alreadyLogged) fail(TESTCASE, "Ja estou logado.");
     try {
       conn->loginByPassword("admin", "wrong");
     } catch (const openbus::Connection::AlreadyLogged& e) {

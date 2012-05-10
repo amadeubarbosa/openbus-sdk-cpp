@@ -23,7 +23,11 @@ namespace openbus {
       if (!allowRequestWithoutCredential) {
         Connection* conn;
         if (_manager) {
-          conn = _manager->getDefaultConnection();
+          if (_manager->_requestIdConnection.find(ri->request_id()) != 
+          _manager->_requestIdConnection.end()) 
+            conn = _manager->_requestIdConnection[ri->request_id()];
+          else
+            conn = _manager->getDefaultConnection();
           if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
         } else conn = _conn;
 

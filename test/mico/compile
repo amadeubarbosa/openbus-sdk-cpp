@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-tests="01 02 03 04 05"
+tests="01 02 03"
 
 cd tests
 $TECMAKE_HOME/tecmake MF=01 genstubs $@

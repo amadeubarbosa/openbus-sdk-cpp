@@ -10,8 +10,9 @@ using namespace auxiliar;
 bool isInvalid = false;
 bool receiveNoPermission = false;
 
-bool InvalidLoginCallback(const openbus::Connection* conn, const char* login) {
-  std::cout << "login [" << login << "] terminated shutting the server down." << std::endl;
+bool InvalidLoginCallback(const openbus::Connection* conn, const openbus::idl_ac::LoginInfo* login) 
+{
+  std::cout << "login [" << login->id << "] terminated shutting the server down." << std::endl;
   isInvalid = true;
   // conn->close();
   return false;
@@ -21,7 +22,10 @@ int main(int argc, char* argv[]) {
   loadConfigFile();
   begin(TESTCASE);
   try {
-    openbus::Connection* conn (openbus::connect("localhost", 2089));
+    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    manager->setDefaultConnection(conn.get());
     conn->onInvalidLoginCallback(&InvalidLoginCallback);
     conn->loginByPassword("admin", "admin");
     conn->login_registry()->invalidateLogin(conn->login()->id);

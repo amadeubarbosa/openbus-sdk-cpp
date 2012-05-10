@@ -24,7 +24,6 @@ namespace openbus {
       //[doubt] posso fazer isso?
       _busidConnection.erase(it);
       return it->second;
-    } 
-    else return 0;    
+    } else return 0;    
   }
 }

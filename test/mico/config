@@ -1,7 +1,4 @@
 
-# Descomente a linha abaixo para ativar o modo multithread.
-OPENBUS_SDK_MULTITHREAD=Yes
-
 # Descomente a linha abaixo para ativar o modo debug.
 DBG=YES
 #OPT=Yes
