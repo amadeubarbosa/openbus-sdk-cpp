@@ -18,7 +18,6 @@ namespace openbus {
 
 namespace openbus {
   typedef std::map<std::string, Connection*> BusidConnection;
-  typedef std::map<CORBA::ULong, Connection*> RequestIdConnection;
   
   class ConnectionManager : public CORBA::LocalObject {
   public:
@@ -37,7 +36,7 @@ namespace openbus {
     Connection* removeBusDispatcher(const char* busid);
     CORBA::ORB* orb() const { return _orb; }
     //[todo] esconder
-    RequestIdConnection _requestIdConnection;
+    Connection* _userDefaultConnection;
   private:
     void orb(CORBA::ORB* o) { _orb = o; }
     CORBA::ORB* _orb;

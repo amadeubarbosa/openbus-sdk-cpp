@@ -24,6 +24,27 @@ namespace openbus {
     
     ServerInterceptor::~ServerInterceptor() { }
     
+    void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo*)
+      throw (CORBA::SystemException) 
+    {
+      if (_manager)
+        if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+    }
+    
+    void ServerInterceptor::send_exception(PortableInterceptor::ServerRequestInfo*)
+      throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
+    {
+      if (_manager)
+        if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+    }
+    
+    void ServerInterceptor::send_other(PortableInterceptor::ServerRequestInfo*)
+      throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
+    { 
+      if (_manager)
+        if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+    }
+    
     void ServerInterceptor::receive_request_service_contexts(
       PortableInterceptor::ServerRequestInfo* ri)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
@@ -42,8 +63,10 @@ namespace openbus {
         Connection* conn;
         if (_manager) {
           conn = _manager->getBusDispatcher(credential.bus);
-          if (conn) _manager->_requestIdConnection[ri->request_id()] = conn;
-          else conn = _manager->getDefaultConnection();
+          if (conn) {
+            _manager->_userDefaultConnection = _manager->getDefaultConnection();
+            _manager->setDefaultConnection(conn);
+          } else conn = _manager->getDefaultConnection();
           // [doubt] devo me preocupar com esta exeção neste momento?
           //throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
         } else conn = _conn;
@@ -194,8 +217,6 @@ namespace openbus {
           ri->set_slot(_slotId_legacyCallChain, legacyChainAny);
         } else throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, CORBA::COMPLETED_NO);
       }
-      //[todo] verificar se preciso me preocupar quando lanço exceções.
-      _manager->_requestIdConnection[ri->request_id()] = 0;
     }
   }
 }

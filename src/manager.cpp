@@ -1,7 +1,7 @@
 #include <manager.h>
 
 namespace openbus {
-  ConnectionManager::ConnectionManager() : _defaultConnection(0) { }
+  ConnectionManager::ConnectionManager() : _defaultConnection(0), _userDefaultConnection(0) { }
   ConnectionManager::~ConnectionManager() { }
   
   Connection* ConnectionManager::createConnection(const char* host, short port) {
