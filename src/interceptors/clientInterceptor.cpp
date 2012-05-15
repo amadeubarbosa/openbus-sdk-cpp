@@ -9,7 +9,7 @@ namespace openbus {
     ClientInterceptor::ClientInterceptor(
       PortableInterceptor::SlotId slotId_joinedCallChain,
       IOP::Codec* cdr_codec) 
-      : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _conn(0), _manager(0),
+      : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _manager(0),
       _slotId_joinedCallChain(slotId_joinedCallChain) 
     { }
     
@@ -33,8 +33,8 @@ namespace openbus {
           #else
           conn = _manager->getDefaultConnection();
           #endif
-          if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-        } else conn = _conn;
+        }
+        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
         if (conn && conn->login()) {
           CallerChain* callerChain = 0;
@@ -121,8 +121,8 @@ namespace openbus {
         #else
         conn = _manager->getDefaultConnection();
         #endif
-        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-      } else conn = _conn;
+      }
+      if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());

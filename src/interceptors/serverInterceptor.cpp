@@ -19,7 +19,7 @@ namespace openbus {
         _slotId_signedCallChain(slotId_signedCallChain),
         _slotId_legacyCallChain(slotId_legacyCallChain), _slotId_busid(slotId_busid), 
         _cdrCodec(cdr_codec), 
-        _conn(0), _manager(0) 
+        _manager(0) 
     { }
     
     ServerInterceptor::~ServerInterceptor() { }
@@ -83,11 +83,9 @@ namespace openbus {
             _manager->setDefaultConnection(conn);
             #endif
           } else conn = _manager->getDefaultConnection();
-          // [doubt] devo me preocupar com esta exceção neste momento?
-          //throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
-        } else conn = _conn;
-
+        }
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+        
         if (conn->login()) {
           Login* caller;
           try {

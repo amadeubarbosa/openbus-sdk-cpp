@@ -26,7 +26,6 @@ namespace openbus {
         throw (CORBA::Exception, PortableInterceptor::ForwardRequest) { }
       char* name() throw (CORBA::Exception) { return CORBA::string_dup("ClientInterceptor"); }
       void destroy() { }
-      void setConnection(Connection* c) { _conn = c; }
       void setConnectionManager(ConnectionManager* m) { _manager = m; }
       void resetCaches() { _profileSecretSession.clear(); }
 
@@ -36,7 +35,6 @@ namespace openbus {
       bool allowRequestWithoutCredential;
     private:
       IOP::Codec* _cdrCodec;
-      Connection* _conn;
       ConnectionManager* _manager;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
       struct SecretSession {

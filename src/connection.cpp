@@ -54,8 +54,6 @@ namespace openbus {
       //[doubt] trocar assert por exceção ?
       assert(0);
     
-    _clientInterceptor->setConnection(this);
-    _serverInterceptor->setConnection(this);
     _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
   }
 
@@ -424,8 +422,6 @@ namespace openbus {
 
   void Connection::close() {
     logout();
-    _clientInterceptor->setConnection(0);
-    _serverInterceptor->setConnection(0);
     _isClosed = true;
   }
 

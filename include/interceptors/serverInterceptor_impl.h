@@ -41,7 +41,6 @@ namespace openbus {
       char* name() throw (CORBA::SystemException)
         { return CORBA::string_dup("ServerInterceptor"); }
       void destroy() { }
-      void setConnection(Connection* c) { _conn = c; }
       void setConnectionManager(ConnectionManager* m) { _manager = m; }
       void resetCaches() { _idSecretSession.clear(); }
     private:
@@ -51,7 +50,6 @@ namespace openbus {
       PortableInterceptor::SlotId _slotId_legacyCallChain;
       PortableInterceptor::SlotId _slotId_busid;
       IOP::Codec* _cdrCodec;
-      Connection* _conn;
       ConnectionManager* _manager;
       struct SecretSession {
         CORBA::ULong id;
