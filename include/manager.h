@@ -12,6 +12,8 @@
 namespace openbus {
   class Connection;
   namespace interceptors {
+	class ClientInterceptor;
+	class ServerInterceptor;
     class ORBInitializer;
   }
 }
@@ -26,25 +28,29 @@ namespace openbus {
     Connection* createConnection(const char* host, short port);
     void setDefaultConnection(Connection* c) { _defaultConnection = c; }
     Connection* getDefaultConnection() { return _defaultConnection; }
-    // [todo] 
-    #ifdef OPENBUS_SDK_MULTITHREAD
-    void setThreadRequester(Connection*) { }
-    Connection* getThreadRequester() { return 0; }
-    #endif
     void setupBusDispatcher(Connection*);
     Connection* getBusDispatcher(const char* busid);
     Connection* removeBusDispatcher(const char* busid);
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    void setThreadRequester(Connection*);
+    Connection* getThreadRequester();
+    #endif
     CORBA::ORB* orb() const { return _orb; }
-    //[todo] esconder
-    Connection* _userDefaultConnection;
   private:
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    MICOMT::Thread::ThreadKey _threadConnectionKey;
+    MICOMT::Thread::ThreadKey _threadConnectionDispatcherKey;
+    #endif
     void orb(CORBA::ORB* o) { _orb = o; }
     CORBA::ORB* _orb;
     interceptors::ORBInitializer* _orbInitializer;
     BusidConnection _busidConnection;
     Connection* _defaultConnection;
+    Connection* _userDefaultConnection;
     friend class openbus::Connection;
     friend CORBA::ORB* openbus::initORB(int argc, char** argv) throw(CORBA::Exception);
+    friend class openbus::interceptors::ClientInterceptor;
+    friend class openbus::interceptors::ServerInterceptor;
   };
 }
 

@@ -23,7 +23,16 @@ namespace openbus {
       if (!allowRequestWithoutCredential) {
         Connection* conn;
         if (_manager) {
+          #ifdef OPENBUS_SDK_MULTITHREAD
+          conn = (Connection*) 
+            MICOMT::Thread::get_specific(_manager->_threadConnectionDispatcherKey);
+          if (!conn) {
+            conn = _manager->getThreadRequester();
+            if (!conn) conn = _manager->getDefaultConnection();
+          }
+          #else
           conn = _manager->getDefaultConnection();
+          #endif
           if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
         } else conn = _conn;
 
@@ -100,10 +109,18 @@ namespace openbus {
       throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
     {
       std::cout << "receive_exception:" << ri->received_exception_id() << std::endl;
-
       Connection* conn;
       if (_manager) {
+        #ifdef OPENBUS_SDK_MULTITHREAD
+        conn = (Connection*) 
+          MICOMT::Thread::get_specific(_manager->_threadConnectionDispatcherKey);
+        if (!conn) {
+          conn = _manager->getThreadRequester();
+          if (!conn) conn = _manager->getDefaultConnection();
+        }
+        #else
         conn = _manager->getDefaultConnection();
+        #endif
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
       } else conn = _conn;
 

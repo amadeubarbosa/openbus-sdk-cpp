@@ -27,22 +27,34 @@ namespace openbus {
     void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo*)
       throw (CORBA::SystemException) 
     {
+      #ifdef OPENBUS_SDK_MULTITHREAD
+      MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
+      #else
       if (_manager)
         if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+      #endif
     }
     
     void ServerInterceptor::send_exception(PortableInterceptor::ServerRequestInfo*)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
     {
+      #ifdef OPENBUS_SDK_MULTITHREAD
+      MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
+      #else
       if (_manager)
         if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+      #endif
     }
     
     void ServerInterceptor::send_other(PortableInterceptor::ServerRequestInfo*)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
     { 
+      #ifdef OPENBUS_SDK_MULTITHREAD
+      MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
+      #else
       if (_manager)
         if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+      #endif
     }
     
     void ServerInterceptor::receive_request_service_contexts(
@@ -64,10 +76,14 @@ namespace openbus {
         if (_manager) {
           conn = _manager->getBusDispatcher(credential.bus);
           if (conn) {
+            #ifdef OPENBUS_SDK_MULTITHREAD
+            MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, conn);
+            #else
             _manager->_userDefaultConnection = _manager->getDefaultConnection();
             _manager->setDefaultConnection(conn);
+            #endif
           } else conn = _manager->getDefaultConnection();
-          // [doubt] devo me preocupar com esta exeção neste momento?
+          // [doubt] devo me preocupar com esta exceção neste momento?
           //throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
         } else conn = _conn;
 
