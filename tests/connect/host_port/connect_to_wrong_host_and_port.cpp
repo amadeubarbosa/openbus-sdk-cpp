@@ -6,8 +6,9 @@ int main(int argc, char* argv[])
 {
   try
   {
-    std::auto_ptr<openbus::Connection> conn(openbus::connect("localhost", 9999 /* Nenhum barramento nesta porta */
-                                                             , openbus::createORB(argc, argv)));
+    openbus::ConnectionManager* manager = openbus::getConnectionManager
+      (openbus::initORB(argc, argv));
+    std::auto_ptr<openbus::Connection> conn(manager->createConnection("localhost", 9999 /* Nenhum barramento nesta porta */));
     std::abort();
   }
   catch(CORBA::COMM_FAILURE const&)

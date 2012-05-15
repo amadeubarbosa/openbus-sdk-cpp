@@ -24,7 +24,9 @@ struct hello_impl : public POA_Hello
 
 int main(int argc, char** argv)
 {
-  std::auto_ptr <openbus::Connection> conn (openbus::connect("localhost", 2089));
+  openbus::ConnectionManager* manager = openbus::getConnectionManager
+    (openbus::initORB(argc, argv));
+  std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
   conn->loginByPassword("demo", "demo");
   
   scs::core::ComponentId componentId;
@@ -33,7 +35,7 @@ int main(int argc, char** argv)
   componentId.minor_version = '0';
   componentId.patch_version = '0';
   componentId.platform_spec = "";    
-  scs::core::ComponentContext ctx(conn->orb(), componentId);
+  scs::core::ComponentContext ctx(manager->orb(), componentId);
 
   bool servant_called = false;
   hello_impl hello_servant (*conn, servant_called);

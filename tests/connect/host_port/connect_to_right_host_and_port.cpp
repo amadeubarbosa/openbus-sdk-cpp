@@ -3,6 +3,7 @@
 
 int main(int argc, char* argv[])
 {
-  std::auto_ptr<openbus::Connection> conn(openbus::connect("localhost", 2089
-                                                           , openbus::createORB(argc, argv)));
+  openbus::ConnectionManager* manager = openbus::getConnectionManager
+    (openbus::initORB(argc, argv));
+  std::auto_ptr<openbus::Connection> conn(manager->createConnection("localhost", 2089));
 }
