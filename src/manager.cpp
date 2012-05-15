@@ -1,14 +1,18 @@
 #include <manager.h>
 
 namespace openbus {
-  ConnectionManager::ConnectionManager() : _defaultConnection(0), _userDefaultConnection(0) { 
+  ConnectionManager::ConnectionManager() : _defaultConnection(0), _userDefaultConnection(0) {
+    #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Thread::create_key(_threadConnectionKey);
     MICOMT::Thread::create_key(_threadConnectionDispatcherKey);
+    #endif
   }
   
   ConnectionManager::~ConnectionManager() { 
+    #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Thread::delete_key(_threadConnectionKey);
     MICOMT::Thread::delete_key(_threadConnectionDispatcherKey);
+    #endif
   }
   
   Connection* ConnectionManager::createConnection(const char* host, short port) {
