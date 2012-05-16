@@ -24,9 +24,12 @@ namespace openbus {
     
     ServerInterceptor::~ServerInterceptor() { }
     
-    void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo*)
+    void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException) 
     {
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] send_reply: " 
+      << r->operation() << std::endl;
+      
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
@@ -35,9 +38,12 @@ namespace openbus {
       #endif
     }
     
-    void ServerInterceptor::send_exception(PortableInterceptor::ServerRequestInfo*)
+    void ServerInterceptor::send_exception(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
     {
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] send_exception: " 
+      << r->operation() << std::endl;
+      
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
@@ -46,9 +52,12 @@ namespace openbus {
       #endif
     }
     
-    void ServerInterceptor::send_other(PortableInterceptor::ServerRequestInfo*)
+    void ServerInterceptor::send_other(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
     { 
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] send_other: " 
+      << r->operation() << std::endl;
+      
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
@@ -61,7 +70,8 @@ namespace openbus {
       PortableInterceptor::ServerRequestInfo* ri)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
     {
-      std::cout << "receive_request_service_contexts: " << ri->operation() << std::endl;
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] receive_request_service_contexts: " 
+      << ri->operation() << std::endl;
       
       /* [doubt] o que eu devo fazer se eu não conseguir extrair a credencial neste ponto em
       ** que não tenho conexão?
@@ -149,7 +159,9 @@ namespace openbus {
                throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
             } else {
               //credential not valid, try to reset credetial session
-              std::cout << "credential not valid, try to reset credetial session" << std::endl;
+              std::cout << "[thread: " << MICOMT::Thread::self() 
+                << "] receive_request_service_contexts: credential not valid, try to reset credetial session" 
+                << std::endl;
               CORBA::ULong newSessionId = _idSecretSession.size() + 1;
               SecretSession* secretSession = new SecretSession(newSessionId);
               _idSecretSession[newSessionId] = secretSession;

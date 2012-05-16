@@ -19,7 +19,8 @@ namespace openbus {
       throw (CORBA::Exception)
     {
       const char* operation = ri->operation();
-      std::cout << "send_request:" << operation << std::endl;
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] send_request: " 
+        << operation << std::endl;
       if (!allowRequestWithoutCredential) {
         Connection* conn;
         if (_manager) {
@@ -108,7 +109,8 @@ namespace openbus {
     void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo* ri)
       throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
     {
-      std::cout << "receive_exception:" << ri->received_exception_id() << std::endl;
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] receive_exception: " << 
+        ri->received_exception_id() << std::endl;
       Connection* conn;
       if (_manager) {
         #ifdef OPENBUS_SDK_MULTITHREAD
@@ -128,7 +130,8 @@ namespace openbus {
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
         if (ex->completed() == CORBA::COMPLETED_NO) {
           if (ex->minor() == idl_ac::InvalidCredentialCode) {
-            std::cout << "creating credential session." << std::endl;
+            std::cout << "[thread: " << MICOMT::Thread::self() << 
+              "] receive_exception: creating credential session." << std::endl;
             IOP::ServiceContext_var sctx;
             if (sctx = ri->get_request_service_context(idl_cr::CredentialContextId)) {
               CORBA::OctetSeq o(

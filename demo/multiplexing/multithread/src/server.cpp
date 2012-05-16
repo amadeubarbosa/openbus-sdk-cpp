@@ -32,14 +32,18 @@ class RegisterThread : public MICOMT::Thread {
 public:
   RegisterThread(openbus::ConnectionManager* m, openbus::Connection* c) : _manager(m), _conn(c) {}
   void _run(void*) {
-    openbus::idl_or::ServicePropertySeq props;
-    props.length(1);
-    openbus::idl_or::ServiceProperty property;
-    property.name = "offer.domain";
-    property.value = "OpenBus Demos";
-    props[0] = property;
-    _manager->setThreadRequester(_conn);
-    _conn->offers()->registerService(ctx->getIComponent(), props);
+    try {
+      openbus::idl_or::ServicePropertySeq props;
+      props.length(1);
+      openbus::idl_or::ServiceProperty property;
+      property.name = "offer.domain";
+      property.value = "OpenBus Demos";
+      props[0] = property;
+      _manager->setThreadRequester(_conn);
+      _conn->offers()->registerService(ctx->getIComponent(), props);
+    } catch (const CORBA::Exception& e) {
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e << std::endl;
+    }
   }
 private:
   openbus::ConnectionManager* _manager;
