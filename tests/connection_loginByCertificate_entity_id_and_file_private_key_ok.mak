@@ -1,0 +1,6 @@
+PROJNAME= SDKTest
+APPNAME= connection_loginByCertificate_entity_id_and_file_private_key_ok
+
+include config.mak
+
+SRC= connection/loginByCertificate/entity_id_and_file_private_key_ok.cpp

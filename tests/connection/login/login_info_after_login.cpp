@@ -4,8 +4,9 @@
 
 int main(int argc, char* argv[])
 {
-  std::auto_ptr<openbus::Connection> conn(openbus::connect("localhost", 2089
-                                                           , openbus::createORB(argc, argv)));
+  openbus::ConnectionManager* manager = openbus::getConnectionManager
+    (openbus::initORB(argc, argv));
+  std::auto_ptr<openbus::Connection> conn(manager->createConnection("localhost", 2089));
   conn->loginByPassword("demo", "demo");
 
   tecgraf::openbus::core::v2_00::services::access_control::LoginInfo const* login = conn->login();
