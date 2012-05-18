@@ -25,12 +25,12 @@ namespace openbus {
   public:
     ConnectionManager();
     ~ConnectionManager();
-    Connection* createConnection(const char* host, short port);
+    std::auto_ptr<Connection> createConnection(const char* host, short port); 
     void setDefaultConnection(Connection* c) { _defaultConnection = c; }
-    Connection* getDefaultConnection() { return _defaultConnection; }
-    void setupBusDispatcher(Connection*);
+    Connection* getDefaultConnection() const { return _defaultConnection; }
+    void setBusDispatcher(Connection*);
     Connection* getBusDispatcher(const char* busid);
-    Connection* removeBusDispatcher(const char* busid);
+    Connection* clearBusDispatcher(const char* busid);
     #ifdef OPENBUS_SDK_MULTITHREAD
     void setThreadRequester(Connection*);
     Connection* getThreadRequester();

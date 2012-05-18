@@ -19,8 +19,8 @@ struct HelloImpl : virtual public POA_Hello {
     const char* caller = _conn->getCallerChain()->callers[0].entity;
     std::cout << "Hello from '" << caller << "'." << std::endl;
   }
-  private:
-    openbus::Connection* _conn;
+private:
+  openbus::Connection* _conn;
 };
 
 #ifdef OPENBUS_SDK_MULTITHREAD

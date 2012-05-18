@@ -15,11 +15,11 @@ namespace openbus {
     #endif
   }
   
-  Connection* ConnectionManager::createConnection(const char* host, short port) {
-    return new Connection(host, port, _orb, _orbInitializer, this);
+  std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) {
+    return std::auto_ptr<Connection> (new Connection(host, port, _orb, _orbInitializer, this));
   }
   
-  void ConnectionManager::setupBusDispatcher(Connection* c) {
+  void ConnectionManager::setBusDispatcher(Connection* c) {
     _busidConnection[std::string(c->busid())] = c;
   }
 
@@ -29,7 +29,7 @@ namespace openbus {
     else return 0;
   }
 
-  Connection* ConnectionManager::removeBusDispatcher(const char* busid) {
+  Connection* ConnectionManager::clearBusDispatcher(const char* busid) {
     BusidConnection::iterator it = _busidConnection.find(std::string(busid));
     if (it != _busidConnection.end()) {
       //[doubt] posso fazer isso?
