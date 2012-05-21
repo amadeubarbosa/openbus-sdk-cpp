@@ -38,7 +38,7 @@ namespace openbus {
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
       if (_manager)
-        if (Connection* c = _manager->_receiveRequestInterceptorConnection) 
+        if (_manager->_receiveRequestInterceptorConnection) 
           _manager->_receiveRequestInterceptorConnection = 0;
       #endif
     }
@@ -57,7 +57,7 @@ namespace openbus {
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
       if (_manager)
-        if (Connection* c = _manager->_receiveRequestInterceptorConnection) 
+        if (_manager->_receiveRequestInterceptorConnection) 
           _manager->_receiveRequestInterceptorConnection = 0;
       #endif
     }
@@ -76,7 +76,7 @@ namespace openbus {
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
       if (_manager)
-        if (Connection* c = _manager->_receiveRequestInterceptorConnection) 
+        if (_manager->_receiveRequestInterceptorConnection) 
           _manager->_receiveRequestInterceptorConnection = 0;
       #endif
     }
