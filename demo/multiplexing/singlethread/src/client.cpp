@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     } else std::cout << "nenhuma oferta encontrada." << std::endl;
     connBusA->close();
     
-    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3089));
+    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
     manager->setDefaultConnection(connBusB.get());
     connBusB->loginByPassword("demo", "demo");
     openbus::idl_or::ServicePropertySeq propsB;

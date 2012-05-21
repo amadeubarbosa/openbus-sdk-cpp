@@ -27,56 +27,76 @@ namespace openbus {
     void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException) 
     {
+      const char* operation = r->operation();
+      #ifdef OPENBUS_SDK_MULTITHREAD
       std::cout << "[thread: " << MICOMT::Thread::self() << "] send_reply: " 
-      << r->operation() << std::endl;
-      
+        << operation << std::endl;
+      #else
+      std::cout << "send_reply: " << operation << std::endl;
+      #endif
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
       if (_manager)
-        if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+        if (Connection* c = _manager->_receiveRequestInterceptorConnection) 
+          _manager->_receiveRequestInterceptorConnection = 0;
       #endif
     }
     
     void ServerInterceptor::send_exception(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
     {
+      const char* operation = r->operation();
+      #ifdef OPENBUS_SDK_MULTITHREAD
       std::cout << "[thread: " << MICOMT::Thread::self() << "] send_exception: " 
-      << r->operation() << std::endl;
-      
+        << operation << std::endl;
+      #else
+      std::cout << "send_exception: " << operation << std::endl;
+      #endif
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
       if (_manager)
-        if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+        if (Connection* c = _manager->_receiveRequestInterceptorConnection) 
+          _manager->_receiveRequestInterceptorConnection = 0;
       #endif
     }
     
     void ServerInterceptor::send_other(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
     { 
+      const char* operation = r->operation();
+      #ifdef OPENBUS_SDK_MULTITHREAD
       std::cout << "[thread: " << MICOMT::Thread::self() << "] send_other: " 
-      << r->operation() << std::endl;
-      
+        << operation << std::endl;
+      #else
+      std::cout << "send_other: " << operation << std::endl;
+      #endif
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
       #else
       if (_manager)
-        if (Connection* c = _manager->_userDefaultConnection) _manager->setDefaultConnection(c);
+        if (Connection* c = _manager->_receiveRequestInterceptorConnection) 
+          _manager->_receiveRequestInterceptorConnection = 0;
       #endif
     }
     
     void ServerInterceptor::receive_request_service_contexts(
-      PortableInterceptor::ServerRequestInfo* ri)
+      PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
     {
+      const char* operation = r->operation();
+      #ifdef OPENBUS_SDK_MULTITHREAD
       std::cout << "[thread: " << MICOMT::Thread::self() << "] receive_request_service_contexts: " 
-      << ri->operation() << std::endl;
+        << operation << std::endl;
+      #else
+      std::cout << "receive_request_service_contexts: " << operation << std::endl;
+      #endif
       
       /* [doubt] o que eu devo fazer se eu não conseguir extrair a credencial neste ponto em
       ** que não tenho conexão?
       */
-      IOP::ServiceContext_var sc = ri->get_request_service_context(idl_cr::CredentialContextId);
+      IOP::ServiceContext_var sc = r->get_request_service_context(idl_cr::CredentialContextId);
       IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
       CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
       CORBA::Any_var any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
@@ -89,8 +109,7 @@ namespace openbus {
             #ifdef OPENBUS_SDK_MULTITHREAD
             MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, conn);
             #else
-            _manager->_userDefaultConnection = _manager->getDefaultConnection();
-            _manager->setDefaultConnection(conn);
+            _manager->_receiveRequestInterceptorConnection = conn;
             #endif
           } else conn = _manager->getDefaultConnection();
         }
@@ -109,14 +128,14 @@ namespace openbus {
             if (_idSecretSession.find(credential.session) != _idSecretSession.end()) 
             {
               session = _idSecretSession[credential.session];
-              size_t slenOperation = strlen(ri->operation());
+              size_t slenOperation = strlen(r->operation());
               int slen = 22 + slenOperation;
               unsigned char* s = new unsigned char[slen];
               s[0] = 2;
               s[1] = 0;
               memcpy(s+2, session->secret, SECRET_SIZE);
               memcpy(s+18, &credential.ticket, 4);
-              memcpy(s+22, ri->operation(), slenOperation);
+              memcpy(s+22, r->operation(), slenOperation);
               SHA256(s, slen, hash);
             }
 
@@ -148,10 +167,10 @@ namespace openbus {
                   } else {
                     CORBA::Any signedCallChainAny;
                     signedCallChainAny <<= credential.chain;
-                    ri->set_slot(_slotId_signedCallChain, signedCallChainAny);
+                    r->set_slot(_slotId_signedCallChain, signedCallChainAny);
                     CORBA::Any busidAny;
                     busidAny <<= credential.bus;
-                    ri->set_slot(_slotId_busid, busidAny);
+                    r->set_slot(_slotId_busid, busidAny);
                   }
                 }
               } else invalidChain = true;
@@ -159,9 +178,16 @@ namespace openbus {
                throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
             } else {
               //credential not valid, try to reset credetial session
+              #ifdef OPENBUS_SDK_MULTITHREAD
               std::cout << "[thread: " << MICOMT::Thread::self() 
-                << "] receive_request_service_contexts: credential not valid, try to reset credetial session" 
+                << "] receive_request_service_contexts: credential not valid, \
+                try to reset credetial session" 
                 << std::endl;
+              #else
+              std::cout << "receive_request_service_contexts: credential not valid, \
+                try to reset credetial session" 
+                << std::endl;
+              #endif
               CORBA::ULong newSessionId = _idSecretSession.size() + 1;
               SecretSession* secretSession = new SecretSession(newSessionId);
               _idSecretSession[newSessionId] = secretSession;
@@ -205,14 +231,14 @@ namespace openbus {
               serviceContext.context_id = idl_cr::CredentialContextId;
               IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), o->get_buffer(), 0);
               serviceContext.context_data = s;
-              ri->add_reply_service_context(serviceContext, true);          
+              r->add_reply_service_context(serviceContext, true);          
 
               throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, CORBA::COMPLETED_NO);            
             }
           } else throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
         } else throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
       } else {
-        IOP::ServiceContext_var sc = ri->get_request_service_context(1234);
+        IOP::ServiceContext_var sc = r->get_request_service_context(1234);
         IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
         CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
         CORBA::Any_var lany = _cdrCodec->decode_value(
@@ -240,7 +266,7 @@ namespace openbus {
           }
           CORBA::Any legacyChainAny;
           legacyChainAny <<= legacyChain;
-          ri->set_slot(_slotId_legacyCallChain, legacyChainAny);
+          r->set_slot(_slotId_legacyCallChain, legacyChainAny);
         } else throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, CORBA::COMPLETED_NO);
       }
     }

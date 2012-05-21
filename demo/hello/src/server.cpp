@@ -64,7 +64,11 @@ int main(int argc, char** argv) {
 
     conn->loginByPassword("demo", "demo");
     conn->offers()->registerService(ctx->getIComponent(), props);
+    #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
+    #else
+    manager->orb()->run();
+    #endif
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;

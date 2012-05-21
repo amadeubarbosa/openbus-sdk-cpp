@@ -438,10 +438,15 @@ namespace openbus {
       #endif
       _loginInfo.reset();
       if (!local) {
+        Connection* c;
         try {
+          c = _manager->getThreadRequester();
+          _manager->setThreadRequester(this);
           _access_control->logout();
+          _manager->setThreadRequester(c);
           sucess = true;
         } catch(...) {
+          _manager->setThreadRequester(c);
           sucess = false;
         }
       }
@@ -557,8 +562,7 @@ namespace openbus {
       std::vector<std::string> keys = _id_Login->get_all_keys();
       std::vector<std::string>::iterator it;
       int i = 0;
-      for (it=keys.begin(); it<keys.end(); ++i, ++it)
-        ids[i] = CORBA::string_dup((*it).c_str());
+      for (it=keys.begin(); it<keys.end(); ++i, ++it) ids[i] = CORBA::string_dup((*it).c_str());
       idl_ac::ValidityTimeSeq_var validity = _conn->login_registry()->getValidity(ids);
       for (unsigned int i=0; i<validity->length(); ++i) {
         Login* l = _id_Login->fetch(std::string(ids[i]));
@@ -574,8 +578,7 @@ namespace openbus {
     Connection* c, 
     ConnectionManager* m, 
     idl_ac::ValidityTime t)
-    : _conn(c), _manager(m), _validityTime(t), _sigINT(false) 
-  { }
+    : _conn(c), _manager(m), _validityTime(t), _sigINT(false) { }
 
   RenewLogin::~RenewLogin() { }
 
@@ -584,15 +587,25 @@ namespace openbus {
     Mutex m(&(_conn->_mutex));
     #endif
     idl_ac::ValidityTime time;
+    Connection* c;
     if (_manager) {
-      Connection* c = _manager->getDefaultConnection();
-      _manager->setDefaultConnection(_conn);
-        //[doubt] try-catch
-      time = _conn->access_control()->renew();
-      _manager->setDefaultConnection(c);
+      c = _manager->getThreadRequester();
+      _manager->setThreadRequester(_conn);
+      try {
+        time = _conn->access_control()->renew();
+        _manager->setThreadRequester(c);
+      } catch (...) {
+        _manager->setThreadRequester(c);
+        throw;
+      }
     } else
-        //[doubt] try-catch
-      time = _conn->access_control()->renew();
+      try {
+        time = _conn->access_control()->renew();
+        _manager->setThreadRequester(c);
+      } catch (...) {
+        _manager->setThreadRequester(c);
+        throw;
+      }
     return time;
   }
 
@@ -618,8 +631,7 @@ namespace openbus {
     Connection* c, 
     ConnectionManager* m, 
     idl_ac::ValidityTime t)
-    : _conn(c), _manager(m), _validityTime(t)
-  { }
+    : _conn(c), _manager(m), _validityTime(t) { }
 
   void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
     _validityTime = renew();
@@ -629,10 +641,15 @@ namespace openbus {
   idl_ac::ValidityTime RenewLogin::renew() {
     idl_ac::ValidityTime t;
     if (_manager) {
-      Connection* c = _manager->getDefaultConnection();
-      _manager->setDefaultConnection(_conn);
-      t = _conn->access_control()->renew();
-      _manager->setDefaultConnection(c);
+      Connection* c = _manager->getThreadRequester();
+      _manager->setThreadRequester(_conn);
+      try {
+        t = _conn->access_control()->renew();
+        _manager->setThreadRequester(c);
+      } catch (...) {
+        _manager->setThreadRequester(c);
+        throw;
+      }
     } else t = _conn->access_control()->renew();
     return t;
   }

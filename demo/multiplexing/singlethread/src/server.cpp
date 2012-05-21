@@ -23,7 +23,8 @@ int main(int argc, char** argv) {
     CORBA::ORB* orb = openbus::initORB(argc, argv);
     openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
     std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
-    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3089));
+    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
+    manager->setDefaultConnection(connBusA.get());
 
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
@@ -46,12 +47,11 @@ int main(int argc, char** argv) {
     connBusA->loginByPassword("demo", "demo");
     connBusB->loginByPassword("demo", "demo");
 
-    manager->setDefaultConnection(connBusA.get());
-    manager->setupBusDispatcher(connBusB.get());
-    manager->setupBusDispatcher(connBusA.get());
+    manager->setBusDispatcher(connBusB.get());
+    manager->setBusDispatcher(connBusA.get());
 
     connBusA->offers()->registerService(ctx->getIComponent(), props);
-    manager->setDefaultConnection(connBusB.get());
+    manager->setThreadRequester(connBusB.get());
     connBusB->offers()->registerService(ctx->getIComponent(), props);
 
     manager->orb()->run();

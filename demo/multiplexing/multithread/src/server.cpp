@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     CORBA::ORB* orb = openbus::initORB(argc, argv);
     openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
     std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
-    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3089));
+    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
     manager->setDefaultConnection(connBusA.get());
 
     RunThread* runThread = new RunThread(manager);

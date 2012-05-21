@@ -31,22 +31,22 @@ namespace openbus {
     void setBusDispatcher(Connection*);
     Connection* getBusDispatcher(const char* busid);
     Connection* clearBusDispatcher(const char* busid);
-    #ifdef OPENBUS_SDK_MULTITHREAD
     void setThreadRequester(Connection*);
     Connection* getThreadRequester();
-    #endif
     CORBA::ORB* orb() const { return _orb; }
   private:
     #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Thread::ThreadKey _threadConnectionKey;
     MICOMT::Thread::ThreadKey _threadConnectionDispatcherKey;
+    #else
+    Connection* _threadConnection;
+    Connection* _receiveRequestInterceptorConnection;
     #endif
     void orb(CORBA::ORB* o) { _orb = o; }
     CORBA::ORB* _orb;
     interceptors::ORBInitializer* _orbInitializer;
     BusidConnection _busidConnection;
     Connection* _defaultConnection;
-    Connection* _userDefaultConnection;
     friend class openbus::Connection;
     friend CORBA::ORB* openbus::initORB(int argc, char** argv) throw(CORBA::Exception);
     friend class openbus::interceptors::ClientInterceptor;
