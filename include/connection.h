@@ -116,7 +116,6 @@ namespace openbus {
     void joinChain(CallerChain* chain);
     void exitChain();
     CallerChain* getJoinedChain();
-    void close();
     const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
     const char* busid() const { return _busid; }
     const idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
@@ -152,7 +151,6 @@ namespace openbus {
     InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;
     ConnectionManager* _manager;
-    bool _isClosed;
     #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Mutex _mutex;
     #endif

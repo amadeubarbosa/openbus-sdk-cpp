@@ -16,8 +16,7 @@ namespace openbus {
     const interceptors::ORBInitializer* ini,
     ConnectionManager* m) 
     throw(CORBA::Exception)
-    : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _onInvalidLogin(0), _manager(m),
-    _isClosed(false)
+    : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _onInvalidLogin(0), _manager(m)
   {
     std::stringstream corbaloc;
     corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
@@ -57,7 +56,7 @@ namespace openbus {
     _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
   }
 
-  Connection::~Connection() { close(); }
+  Connection::~Connection() { logout(); }
 
   void Connection::loginByPassword(const char* entity, const char* password)
     throw (
@@ -418,11 +417,6 @@ namespace openbus {
     _renewLogin.reset(new RenewLogin(this, _manager, validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
     #endif    
-  }
-
-  void Connection::close() {
-    logout();
-    _isClosed = true;
   }
 
   bool Connection::_logout(bool local) {

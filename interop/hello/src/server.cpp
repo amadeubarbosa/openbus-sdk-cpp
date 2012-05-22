@@ -9,7 +9,6 @@
 bool onInvalidLogin(const openbus::Connection* conn, const openbus::idl_ac::LoginInfo* login) {
   std::cout << "login [" << login->id << "," << login->entity << 
     "] terminated shutting the server down." << std::endl;
-//  conn->close();
   return false;
 }
 

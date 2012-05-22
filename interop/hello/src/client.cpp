@@ -23,7 +23,6 @@ int main(int argc, char** argv) {
       Hello* hello = Hello::_narrow(o);
       hello->sayHello();
     } else std::cout << "nenhuma oferta encontrada." << std::endl;
-    conn->close();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
