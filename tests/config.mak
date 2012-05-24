@@ -40,6 +40,13 @@ else
   MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
 endif
 
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+LIBS+= boost_thread
+LDIR+= ${OPENBUS_HOME}/lib/boost
+else
+DEFINES+=LOGGER_DISABLE_THREADS
+endif
+
 OPENBUSINC= ${OPENBUS_HOME}/include
 OPENBUSLIB= ${OPENBUS_HOME}/lib
 
@@ -75,7 +82,7 @@ INCLUDES=. .. \
 	${OPENBUSINC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs \
-  ${OPENBUSINC}/scs
+  ${OPENBUSINC}/scs ${OPENBUSINC} ${OPENBUSINC}/boost
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
