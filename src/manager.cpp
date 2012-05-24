@@ -25,21 +25,22 @@ namespace openbus {
   std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) {
     int p = port;
     log_scope function_scope(log.general_logger(), debug_level
-                             , "openbus::ConnectionManager::createConnection para %s:%d", host, p);
+                             , "openbus::ConnectionManager::createConnection");
+    function_scope.vlog("createConnection para host %s:%d", host, p);
     return std::auto_ptr<Connection> (new Connection(host, port, _orb, _orbInitializer, this));
   }
   
   void ConnectionManager::setBusDispatcher(Connection* c) {
     log_scope function_scope(log.general_logger(), info_level
-                             , "openbus::ConnectionManager::setBusDispatcher "
-                             " para o barramento %s", c->busid());
+                             , "openbus::ConnectionManager::setBusDispatcher");
+    function_scope.vlog("setBusDispatcher para o barramento %s", c->busid());
     _busidConnection[std::string(c->busid())] = c;
   }
 
   Connection* ConnectionManager::getBusDispatcher(const char* busid) {
     log_scope function_scope(log.general_logger(), info_level
-                             , "openbus::ConnectionManager::getBusDispatcher "
-                             " do barramento %s", busid);
+                             , "openbus::ConnectionManager::getBusDispatcher");
+    function_scope.vlog("getBusDispatcher do barramento %s", busid);
     BusidConnection::iterator it = _busidConnection.find(std::string(busid));
     if (it != _busidConnection.end()) return it->second;
     else return 0;
@@ -48,9 +49,9 @@ namespace openbus {
   Connection* ConnectionManager::clearBusDispatcher(const char* busid) {
     BusidConnection::iterator it = _busidConnection.find(std::string(busid));
     if (it != _busidConnection.end()) {
-      //[doubt] posso fazer isso?
+      Connection* c = it->second;
       _busidConnection.erase(it);
-      return it->second;
+      return c;
     } else return 0;    
   }
   
