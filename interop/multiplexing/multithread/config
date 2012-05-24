@@ -1,13 +1,9 @@
 DEFINES=OPENBUS_SDK_MULTITHREAD
 DEFINES+=SCS_THREADING_ENABLED
 
-# Descomente a primeira linha abaixo e comente a segunda para ativar o modo debug.
-DBG=Yes
-#OPT=Yes
-
 # Descomente a linha abaixo para o uso em Valgrind.
 # p.s.: O modo debug(DBG) deve estar ativado.
-CPPFLAGS= -fno-inline
+#CPPFLAGS= -fno-inline
 
 ifeq "$(TEC_UNAME)" "SunOS510_64"
   USE_CC=Yes
@@ -30,6 +26,18 @@ ifeq "$(DBG)" "Yes"
   MICO_DEBUG=-debug
 endif
 
-MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
-MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
-MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+  MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+  MICO_LDIR=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+  OPENBUS_LIB=libopenbus-micomultithread${MICO_DEBUG}.a
+  SCS_LIB=libscs-micomultithread${MICO_DEBUG}.a
+  DEFINES+=OPENBUS_SDK_MULTITHREAD
+  DEFINES+=SCS_THREADING_ENABLED
+else
+  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
+  MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
+  MICO_LDIR=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
+  OPENBUS_LIB=libopenbus-micosinglethread${MICO_DEBUG}.a
+  SCS_LIB=libscs-micosinglethread${MICO_DEBUG}.a
+endif

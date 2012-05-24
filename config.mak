@@ -1,13 +1,17 @@
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
-  PROJNAME=openbus-micomultithread
+  ifeq "$(DBG)" "Yes"
+    PROJNAME=openbus-micomultithread-debug
+  else
+    PROJNAME=openbus-micomultithread
+  endif
 else
-  PROJNAME=openbus-micosinglethread
+  ifeq "$(DBG)" "Yes"
+    PROJNAME=openbus-micosinglethread-debug
+  else
+    PROJNAME=openbus-micosinglethread
+  endif
 endif
 LIBNAME=${PROJNAME}
-
-# Descomente a primeira linha abaixo e comente a segunda para ativar o modo debug.
-DBG=Yes
-#OPT=Yes
 
 # Descomente a linha abaixo para o uso em Valgrind.
 # p.s.: O modo debug(DBG) deve estar ativado.
@@ -57,15 +61,14 @@ else
   MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
 endif
 
+OPENBUS_INC=${OPENBUS_HOME}/include
+OPENBUS_LDIR=${OPENBUS_HOME}/lib
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
-LIBS+= boost_thread
-LDIR+= ${OPENBUS_HOME}/lib/boost
+  LIBS+= boost_thread
+  LDIR+= ${OPENBUS_HOME}/lib/boost
 else
-DEFINES+=LOGGER_DISABLE_THREADS
+  DEFINES+=LOGGER_DISABLE_THREADS
 endif
-
-OPENBUSINC=${OPENBUS_HOME}/include
-OPENBUSLIB=${OPENBUS_HOME}/lib
 
 OBJROOT=obj
 TARGETROOT=lib
@@ -75,9 +78,9 @@ INCLUDES=. \
          stubs \
          include \
          ${MICO_INC} \
-         ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC} ${OPENBUSINC}/boost
+         ${OPENBUS_INC}/openssl-0.9.9 ${OPENBUSINC} ${OPENBUSINC}/boost
  
-LDIR+=${MICO_LIB} ${OPENBUSLIB}
+LDIR=${MICO_LIB} ${OPENBUS_LDIR}
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   LIBS+=mico${MICOVERSION}

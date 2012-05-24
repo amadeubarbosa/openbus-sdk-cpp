@@ -3,8 +3,8 @@ APPNAME=${PROJNAME}
 
 include config
 
-OPENBUSINC= ${OPENBUS_HOME}/include
-OPENBUSLIB= ${OPENBUS_HOME}/lib
+OPENBUS_INC= ${OPENBUS_HOME}/include
+OPENBUS_LDIR= ${OPENBUS_HOME}/lib
 
 TARGETROOT=bin
 OBJROOT=obj
@@ -12,17 +12,16 @@ OBJROOT=obj
 INCLUDES= . \
   stubs \
   ${MICO_INC} \
-  ${OPENBUSINC}/openbus/cpp \
-  ${OPENBUSINC}/openbus/cpp/stubs \
-  ${OPENBUSINC}
+  ${OPENBUS_INC}/openbus/cpp \
+  ${OPENBUS_INC}/openbus/cpp/stubs \
+  ${OPENBUS_INC}
 
-LDIR= ${OPENBUSLIB} ${MICO_LIB}
+LDIR= ${OPENBUS_LDIR} ${MICO_LDIR}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
-SLIB= ${OPENBUSLIB}/libopenbus-micomultithread.a \
-      ${OPENBUSLIB}/libscs-micomultithread.a \
-      ${OPENBUSLIB}/liblogger.a
+SLIB= ${OPENBUS_LDIR}/$(OPENBUS_LIB) \
+      ${OPENBUS_LDIR}/$(SCS_LIB)
 
 USE_NODEPEND= Yes
 
