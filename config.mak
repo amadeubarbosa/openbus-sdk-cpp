@@ -57,6 +57,13 @@ else
   MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
 endif
 
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+LIBS+= boost_thread
+LDIR+= ${OPENBUS_HOME}/lib/boost
+else
+DEFINES+=LOGGER_DISABLE_THREADS
+endif
+
 OPENBUSINC=${OPENBUS_HOME}/include
 OPENBUSLIB=${OPENBUS_HOME}/lib
 
@@ -68,15 +75,17 @@ INCLUDES=. \
          stubs \
          include \
          ${MICO_INC} \
-         ${OPENBUSINC}/openssl-0.9.9
+         ${OPENBUSINC}/openssl-0.9.9 ${OPENBUSINC} ${OPENBUSINC}/boost
  
-LDIR=${MICO_LIB} ${OPENBUSLIB}
+LDIR+=${MICO_LIB} ${OPENBUSLIB}
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
-  LIBS=mico${MICOVERSION} 
+  LIBS+=mico${MICOVERSION}
 else
-  LIBS=mico${MICOVERSION} crypto dl
+  LIBS+=mico${MICOVERSION} crypto dl
 endif
+
+LIBS+= logger
 
 USE_NODEPEND=Yes
 

@@ -3,6 +3,7 @@
 
 #include <CORBA.h>
 #include <string>
+#include <log.h>
 
 /* exceptions */
 namespace openbus {
