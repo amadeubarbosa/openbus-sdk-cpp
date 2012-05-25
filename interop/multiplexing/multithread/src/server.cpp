@@ -39,7 +39,7 @@ public:
       property.name = "offer.domain";
       property.value = "OpenBus Demos";
       props[0] = property;
-      _manager->setThreadRequester(_conn);
+      _manager->setRequester(_conn);
       _conn->offers()->registerService(ctx->getIComponent(), props);
     } catch (const CORBA::Exception& e) {
       std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e << std::endl;

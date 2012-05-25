@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     manager->setDispatcher(connBusA.get());
 
     connBusA->offers()->registerService(ctx->getIComponent(), props);
-    manager->setThreadRequester(connBusB.get());
+    manager->setRequester(connBusB.get());
     connBusB->offers()->registerService(ctx->getIComponent(), props);
 
     manager->orb()->run();

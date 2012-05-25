@@ -32,12 +32,12 @@ namespace openbus {
           conn = (Connection*) 
             MICOMT::Thread::get_specific(_manager->_threadConnectionDispatcherKey);
           if (!conn) {
-            conn = _manager->getThreadRequester();
+            conn = _manager->getRequester();
             if (!conn) conn = _manager->getDefaultConnection();
           }
           #else
           if(!(conn = _manager->_receiveRequestInterceptorConnection)) {
-            if (!(conn = _manager->getThreadRequester()))
+            if (!(conn = _manager->getRequester()))
               conn = _manager->getDefaultConnection();
           }
           #endif
@@ -129,12 +129,12 @@ namespace openbus {
         conn = (Connection*) 
           MICOMT::Thread::get_specific(_manager->_threadConnectionDispatcherKey);
         if (!conn) {
-          conn = _manager->getThreadRequester();
+          conn = _manager->getRequester();
           if (!conn) conn = _manager->getDefaultConnection();
         }
         #else
         if(!(conn = _manager->_receiveRequestInterceptorConnection)) {
-          if (!(conn = _manager->getThreadRequester()))
+          if (!(conn = _manager->getRequester()))
             conn = _manager->getDefaultConnection();
         }
         #endif

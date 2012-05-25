@@ -434,13 +434,13 @@ namespace openbus {
       if (!local) {
         Connection* c;
         try {
-          c = _manager->getThreadRequester();
-          _manager->setThreadRequester(this);
+          c = _manager->getRequester();
+          _manager->setRequester(this);
           _access_control->logout();
-          _manager->setThreadRequester(c);
+          _manager->setRequester(c);
           sucess = true;
         } catch(...) {
-          _manager->setThreadRequester(c);
+          _manager->setRequester(c);
           sucess = false;
         }
       }
@@ -583,21 +583,21 @@ namespace openbus {
     idl_ac::ValidityTime time;
     Connection* c;
     if (_manager) {
-      c = _manager->getThreadRequester();
-      _manager->setThreadRequester(_conn);
+      c = _manager->getRequester();
+      _manager->setRequester(_conn);
       try {
         time = _conn->access_control()->renew();
-        _manager->setThreadRequester(c);
+        _manager->setRequester(c);
       } catch (...) {
-        _manager->setThreadRequester(c);
+        _manager->setRequester(c);
         throw;
       }
     } else
       try {
         time = _conn->access_control()->renew();
-        _manager->setThreadRequester(c);
+        _manager->setRequester(c);
       } catch (...) {
-        _manager->setThreadRequester(c);
+        _manager->setRequester(c);
         throw;
       }
     return time;
@@ -635,13 +635,13 @@ namespace openbus {
   idl_ac::ValidityTime RenewLogin::renew() {
     idl_ac::ValidityTime t;
     if (_manager) {
-      Connection* c = _manager->getThreadRequester();
-      _manager->setThreadRequester(_conn);
+      Connection* c = _manager->getRequester();
+      _manager->setRequester(_conn);
       try {
         t = _conn->access_control()->renew();
-        _manager->setThreadRequester(c);
+        _manager->setRequester(c);
       } catch (...) {
-        _manager->setThreadRequester(c);
+        _manager->setRequester(c);
         throw;
       }
     } else t = _conn->access_control()->renew();
