@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
       propsA[1].name  = "openbus.component.facet";
       propsA[1].value = "hello";
       propsA[2].name  = "offer.domain";
-      propsA[2].value = "OpenBus Demos";
+      propsA[2].value = "Interoperability Tests";
       openbus::idl_or::ServiceOfferDescSeq_var offersA = connBusA->offers()->findServices(propsA);
       if (offersA->length()) {
         CORBA::Object_var o = offersA[0].service_ref->getFacetByName("hello");
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
       propsB[1].name  = "openbus.component.facet";
       propsB[1].value = "hello";
       propsB[2].name  = "offer.domain";
-      propsB[2].value = "OpenBus Demos";
+      propsB[2].value = "Interoperability Tests";
       openbus::idl_or::ServiceOfferDescSeq_var offersB = connBusB->offers()->findServices(propsB);
       if (offersB->length()) {
         CORBA::Object_var o = offersB[0].service_ref->getFacetByName("hello");

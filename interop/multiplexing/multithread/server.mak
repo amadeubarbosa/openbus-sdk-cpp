@@ -13,6 +13,7 @@ INCLUDES= . \
   stubs \
   ${MICO_INC} \
   ${OPENBUS_INC} \
+  ${OPENBUS_INC}/scs \
   ${OPENBUS_INC}/openbus/cpp \
   ${OPENBUS_INC}/openbus/cpp/stubs \
   ${OPENBUS_INC}/boost

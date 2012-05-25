@@ -34,7 +34,6 @@ private:
 
 int main(int argc, char** argv) {
   try {
-    openbus::log.set_level(openbus::debug_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
     openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
@@ -59,7 +58,7 @@ int main(int argc, char** argv) {
     props.length(1);
     openbus::idl_or::ServiceProperty property;
     property.name = "offer.domain";
-    property.value = "OpenBus Demos";
+    property.value = "Interoperability Tests";
     props[0] = property;
 
     conn->loginByPassword("demo", "demo");

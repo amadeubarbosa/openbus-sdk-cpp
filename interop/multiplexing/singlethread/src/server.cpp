@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     props.length(1);
     openbus::idl_or::ServiceProperty property;
     property.name = "offer.domain";
-    property.value = "OpenBus Demos";
+    property.value = "Interoperability Tests";
     props[0] = property;
 
     connBusA->loginByPassword("demo", "demo");

@@ -37,7 +37,7 @@ public:
       props.length(1);
       openbus::idl_or::ServiceProperty property;
       property.name = "offer.domain";
-      property.value = "OpenBus Demos";
+      property.value = "Interoperability Tests";
       props[0] = property;
       _manager->setRequester(_conn);
       _conn->offers()->registerService(ctx->getIComponent(), props);

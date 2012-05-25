@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     props[1].name  = "openbus.component.facet";
     props[1].value = "hello";
     props[2].name  = "offer.domain";
-    props[2].value = "OpenBus Demos";
+    props[2].value = "Interoperability Tests";
     openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     if (offers->length()) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");

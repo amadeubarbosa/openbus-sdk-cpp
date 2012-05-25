@@ -1,6 +1,3 @@
-DEFINES=OPENBUS_SDK_MULTITHREAD
-DEFINES+=SCS_THREADING_ENABLED
-
 # Descomente a linha abaixo para o uso em Valgrind.
 # p.s.: O modo debug(DBG) deve estar ativado.
 #CPPFLAGS= -fno-inline
