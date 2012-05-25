@@ -38,3 +38,11 @@ else
   OPENBUS_LIB=libopenbus-micosinglethread${MICO_DEBUG}.a
   SCS_LIB=libscs-micosinglethread${MICO_DEBUG}.a
 endif
+
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+  LIBS+= boost_thread
+  LDIR+= ${OPENBUS_HOME}/lib/boost
+else
+  DEFINES+=LOGGER_DISABLE_THREADS
+endif
+LIBS+= logger

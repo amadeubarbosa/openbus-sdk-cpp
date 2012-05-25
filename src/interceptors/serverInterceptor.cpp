@@ -104,7 +104,7 @@ namespace openbus {
       if (any >>= credential) {
         Connection* conn;
         if (_manager) {
-          conn = _manager->getBusDispatcher(credential.bus);
+          conn = _manager->getDispatcher(credential.bus);
           if (conn) {
             #ifdef OPENBUS_SDK_MULTITHREAD
             MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, conn);

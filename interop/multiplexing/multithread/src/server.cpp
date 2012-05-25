@@ -75,8 +75,8 @@ int main(int argc, char** argv) {
     connBusA->loginByPassword("demo", "demo");
     connBusB->loginByPassword("demo", "demo");
 
-    manager->setBusDispatcher(connBusB.get());
-    manager->setBusDispatcher(connBusA.get());
+    manager->setDispatcher(connBusB.get());
+    manager->setDispatcher(connBusA.get());
 
     RegisterThread* registerThreadA = new RegisterThread(manager, connBusA.get());
     RegisterThread* registerThreadB = new RegisterThread(manager, connBusB.get());

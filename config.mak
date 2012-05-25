@@ -69,6 +69,8 @@ ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
 else
   DEFINES+=LOGGER_DISABLE_THREADS
 endif
+LIBS+= logger
+
 
 OBJROOT=obj
 TARGETROOT=lib
@@ -78,17 +80,17 @@ INCLUDES=. \
          stubs \
          include \
          ${MICO_INC} \
-         ${OPENBUS_INC}/openssl-0.9.9 ${OPENBUSINC} ${OPENBUSINC}/boost
+         ${OPENBUS_INC} \
+         ${OPENBUS_INC}/openssl-0.9.9 \
+         ${OPENBUS_INC}/boost
  
-LDIR=${MICO_LIB} ${OPENBUS_LDIR}
+LDIR+=${MICO_LIB} ${OPENBUS_LDIR}
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   LIBS+=mico${MICOVERSION}
 else
   LIBS+=mico${MICOVERSION} crypto dl
 endif
-
-LIBS+= logger
 
 USE_NODEPEND=Yes
 

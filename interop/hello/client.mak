@@ -12,11 +12,13 @@ OBJROOT=obj
 INCLUDES= . \
   stubs \
   ${MICO_INC} \
+  ${OPENBUS_INC} \
+  ${OPENBUS_INC}/scs \
   ${OPENBUS_INC}/openbus/cpp \
   ${OPENBUS_INC}/openbus/cpp/stubs \
-  ${OPENBUS_INC}
+  ${OPENBUS_INC}/boost
 
-LDIR= ${OPENBUS_LDIR} ${MICO_LDIR}
+LDIR+= ${OPENBUS_LDIR} ${MICO_LDIR}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 

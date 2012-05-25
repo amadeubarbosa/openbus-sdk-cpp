@@ -28,11 +28,11 @@ namespace openbus {
     std::auto_ptr<Connection> createConnection(const char* host, short port); 
     void setDefaultConnection(Connection* c) { _defaultConnection = c; }
     Connection* getDefaultConnection() const { return _defaultConnection; }
-    void setBusDispatcher(Connection*);
-    Connection* getBusDispatcher(const char* busid);
-    Connection* clearBusDispatcher(const char* busid);
-    void setThreadRequester(Connection*);
-    Connection* getThreadRequester();
+    void setDispatcher(Connection*);
+    Connection* getDispatcher(const char* busid);
+    Connection* clearDispatcher(const char* busid);
+    void setRequester(Connection*);
+    Connection* getRequester();
     CORBA::ORB* orb() const { return _orb; }
   private:
     #ifdef OPENBUS_SDK_MULTITHREAD

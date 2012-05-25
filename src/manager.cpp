@@ -14,14 +14,14 @@ namespace openbus {
     _receiveRequestInterceptorConnection = 0;
     #endif
   }
-  
+
   ConnectionManager::~ConnectionManager() { 
     #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Thread::delete_key(_threadConnectionKey);
     MICOMT::Thread::delete_key(_threadConnectionDispatcherKey);
     #endif
   }
-  
+
   std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) {
     int p = port;
     log_scope function_scope(log.general_logger(), debug_level
@@ -29,24 +29,24 @@ namespace openbus {
     function_scope.vlog("createConnection para host %s:%d", host, p);
     return std::auto_ptr<Connection> (new Connection(host, port, _orb, _orbInitializer, this));
   }
-  
-  void ConnectionManager::setBusDispatcher(Connection* c) {
+
+  void ConnectionManager::setDispatcher(Connection* c) {
     log_scope function_scope(log.general_logger(), info_level
-                             , "openbus::ConnectionManager::setBusDispatcher");
-    function_scope.vlog("setBusDispatcher para o barramento %s", c->busid());
+                             , "openbus::ConnectionManager::setDispatcher");
+    function_scope.vlog("setDispatcher para o barramento %s", c->busid());
     _busidConnection[std::string(c->busid())] = c;
   }
 
-  Connection* ConnectionManager::getBusDispatcher(const char* busid) {
+  Connection* ConnectionManager::getDispatcher(const char* busid) {
     log_scope function_scope(log.general_logger(), info_level
-                             , "openbus::ConnectionManager::getBusDispatcher");
-    function_scope.vlog("getBusDispatcher do barramento %s", busid);
+                             , "openbus::ConnectionManager::getDispatcher");
+    function_scope.vlog("getDispatcher do barramento %s", busid);
     BusidConnection::iterator it = _busidConnection.find(std::string(busid));
     if (it != _busidConnection.end()) return it->second;
     else return 0;
   }
 
-  Connection* ConnectionManager::clearBusDispatcher(const char* busid) {
+  Connection* ConnectionManager::clearDispatcher(const char* busid) {
     BusidConnection::iterator it = _busidConnection.find(std::string(busid));
     if (it != _busidConnection.end()) {
       Connection* c = it->second;
@@ -54,8 +54,8 @@ namespace openbus {
       return c;
     } else return 0;    
   }
-  
-  void ConnectionManager::setThreadRequester(Connection* c) { 
+
+  void ConnectionManager::setRequester(Connection* c) { 
     #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Thread::set_specific(_threadConnectionKey, c);
     #else
@@ -63,7 +63,7 @@ namespace openbus {
     #endif
   }
 
-  Connection* ConnectionManager::getThreadRequester() { 
+  Connection* ConnectionManager::getRequester() { 
     #ifdef OPENBUS_SDK_MULTITHREAD
     return (Connection*) MICOMT::Thread::get_specific(_threadConnectionKey);
     #else
