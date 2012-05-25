@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     if (offers->length()) {
       CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
-      Hello* hello = Hello::_narrow(o);
+      tecgraf::openbus::interop::Hello* hello = tecgraf::openbus::interop::Hello::_narrow(o);
       hello->sayHello();
     } else std::cout << "nenhuma oferta encontrada." << std::endl;
   } catch (const CORBA::Exception& e) {
