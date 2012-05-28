@@ -177,7 +177,8 @@ namespace openbus {
                 //[doubt] trocar assert por exceção ?
                 assert(0);
       
-              assert(secret = (unsigned char*) OPENSSL_malloc(secretLen));
+              secret = (unsigned char*) OPENSSL_malloc(secretLen);
+              assert(secret != 0);
               if (EVP_PKEY_decrypt(
                     ctx,
                     secret,
