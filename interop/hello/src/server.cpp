@@ -34,6 +34,7 @@ private:
 
 int main(int argc, char** argv) {
   try {
+    openbus::log.set_level(openbus::debug_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
     openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
