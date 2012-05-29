@@ -6,7 +6,7 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
-struct HelloImpl : virtual public POA_Hello {
+struct HelloImpl : virtual public POA_tecgraf::openbus::interop::hello::IHello {
   HelloImpl(openbus::Connection* c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
     openbus::CallerChain* chain = _conn->getCallerChain();
