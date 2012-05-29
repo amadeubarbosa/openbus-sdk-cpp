@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
-    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/Hello:1.0", helloServant);
+    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/hello/IHello:1.0", helloServant);
     
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
