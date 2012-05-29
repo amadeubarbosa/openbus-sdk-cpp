@@ -13,8 +13,9 @@ namespace openbus {
       IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
       _codec = codec_factory->create_codec(cdr_encoding);
       clientInterceptor = std::auto_ptr<ClientInterceptor> 
-        (new ClientInterceptor(_slotId_joinedCallChain, _codec.in()));
+        (new ClientInterceptor(_slotId_connectionAddr, _slotId_joinedCallChain, _codec.in()));
       info->add_client_request_interceptor(clientInterceptor.get());
+      _slotId_connectionAddr = info->allocate_slot_id();
       _slotId_joinedCallChain = info->allocate_slot_id();
       _slotId_signedCallChain = info->allocate_slot_id();
       _slotId_busid = info->allocate_slot_id();

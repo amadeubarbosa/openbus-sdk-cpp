@@ -1,5 +1,6 @@
 #include <interceptors/clientInterceptor_impl.h>
 #include <legacy/stubs/credential_v1_05.h>
+#include <log.h>
 
 #include <openssl/sha.h>
 #include <sstream>
@@ -7,10 +8,11 @@
 namespace openbus {
   namespace interceptors {    
     ClientInterceptor::ClientInterceptor(
+      PortableInterceptor::SlotId slotId_connectionAddr,
       PortableInterceptor::SlotId slotId_joinedCallChain,
       IOP::Codec* cdr_codec) 
       : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _manager(0),
-      _slotId_joinedCallChain(slotId_joinedCallChain) 
+      _slotId_connectionAddr(slotId_connectionAddr), _slotId_joinedCallChain(slotId_joinedCallChain) 
     { }
     
     ClientInterceptor::~ClientInterceptor() { }
@@ -20,10 +22,10 @@ namespace openbus {
     {
       const char* operation = ri->operation();
       #ifdef OPENBUS_SDK_MULTITHREAD
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] send_request: " 
-        << operation << std::endl;
+      log_scope l(log.client_interceptor_logger(), debug_level, "ClientInterceptor::send_request");
+      l.level_vlog(debug_level, "[%p] send_request: %s", (void*) MICOMT::Thread::self(), operation);
       #else
-      std::cout << "send_request: " << operation << std::endl;
+      l.level_vlog(debug_level, "send_request: %s", operation);
       #endif
       if (!allowRequestWithoutCredential) {
         Connection* conn;
@@ -118,10 +120,12 @@ namespace openbus {
     {
       const char* operation = ri->operation();
       #ifdef OPENBUS_SDK_MULTITHREAD
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] receive_exception: " 
-        << operation << std::endl;
+      log_scope l(log.client_interceptor_logger(), debug_level, 
+        "ClientInterceptor::receive_exception");
+      l.level_vlog(debug_level, "[%p] receive_exception: %s", (void*) MICOMT::Thread::self(), 
+        operation);
       #else
-      std::cout << "receive_exception: " << operation << std::endl;
+      l.level_vlog(debug_level, "receive_exception: %s", operation);
       #endif
       Connection* conn;
       if (_manager) {
@@ -146,10 +150,11 @@ namespace openbus {
         if (ex->completed() == CORBA::COMPLETED_NO) {
           if (ex->minor() == idl_ac::InvalidCredentialCode) {
             #ifdef OPENBUS_SDK_MULTITHREAD
-            std::cout << "[thread: " << MICOMT::Thread::self() << 
-              "] receive_exception: creating credential session." << std::endl;
+            l.level_vlog(debug_level, "[%p] receive_exception: creating credential session", 
+              (void*) MICOMT::Thread::self());
             #else
-            std::cout << "receive_exception: creating credential session." << std::endl;            
+            l.level_vlog(debug_level, 
+              "receive_exception: receive_exception: creating credential session");
             #endif
             IOP::ServiceContext_var sctx;
             if (sctx = ri->get_request_service_context(idl_cr::CredentialContextId)) {

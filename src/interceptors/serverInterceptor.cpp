@@ -1,6 +1,7 @@
 #include <interceptors/serverInterceptor_impl.h>
 #include <connection_impl.h>
 #include <legacy/stubs/credential_v1_05.h>
+#include <log.h>
 
 #include <iostream>
 #include <openssl/sha.h>
@@ -29,10 +30,10 @@ namespace openbus {
     {
       const char* operation = r->operation();
       #ifdef OPENBUS_SDK_MULTITHREAD
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] send_reply: " 
-        << operation << std::endl;
+      log_scope l(log.server_interceptor_logger(), debug_level, "ServerInterceptor::send_reply");
+      l.level_vlog(debug_level, "[%p] send_reply: %s", (void*) MICOMT::Thread::self(), operation);
       #else
-      std::cout << "send_reply: " << operation << std::endl;
+      l.level_vlog(debug_level, "send_reply: %s", operation);
       #endif
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
@@ -48,10 +49,10 @@ namespace openbus {
     {
       const char* operation = r->operation();
       #ifdef OPENBUS_SDK_MULTITHREAD
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] send_exception: " 
-        << operation << std::endl;
+      log_scope l(log.server_interceptor_logger(), debug_level,"ServerInterceptor::send_exception");
+      l.level_vlog(debug_level,"[%p] send_exception: %s",(void*) MICOMT::Thread::self(), operation);
       #else
-      std::cout << "send_exception: " << operation << std::endl;
+      l.level_vlog(debug_level, "send_exception: %s", operation);
       #endif
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
@@ -67,10 +68,10 @@ namespace openbus {
     { 
       const char* operation = r->operation();
       #ifdef OPENBUS_SDK_MULTITHREAD
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] send_other: " 
-        << operation << std::endl;
+      log_scope l(log.server_interceptor_logger(), debug_level,"ServerInterceptor::send_other");
+      l.level_vlog(debug_level,"[%p] send_other: %s",(void*) MICOMT::Thread::self(), operation);
       #else
-      std::cout << "send_other: " << operation << std::endl;
+      l.level_vlog(debug_level, "send_other: %s", operation);
       #endif
       #ifdef OPENBUS_SDK_MULTITHREAD
       MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
@@ -87,10 +88,12 @@ namespace openbus {
     {
       const char* operation = r->operation();
       #ifdef OPENBUS_SDK_MULTITHREAD
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] receive_request_service_contexts: " 
-        << operation << std::endl;
+      log_scope l(log.server_interceptor_logger(), debug_level,
+        "ServerInterceptor::receive_request_service_contexts");
+      l.level_vlog(debug_level,"[%p] receive_request_service_contexts: %s",
+        (void*) MICOMT::Thread::self(), operation);
       #else
-      std::cout << "receive_request_service_contexts: " << operation << std::endl;
+      l.level_vlog(debug_level, "receive_request_service_contexts: %s", operation);
       #endif
       
       /* [doubt] o que eu devo fazer se eu não conseguir extrair a credencial neste ponto em
@@ -142,7 +145,12 @@ namespace openbus {
             if (session && !memcmp(hash, credential.hash, 32) && 
                 tickets_check(&session->ticketsHistory, credential.ticket)) 
             {
-              std::cout << "credential is valid." << std::endl;
+              #ifdef OPENBUS_SDK_MULTITHREAD
+              l.level_vlog(debug_level,"[%p] receive_request_service_contexts: credential is valid",
+                (void*) MICOMT::Thread::self());
+              #else
+              l.level_vlog(debug_level, "receive_request_service_contexts: credential is valid");
+              #endif
               bool invalidChain = false;
               if (credential.chain.encoded.length()) {
                 idl::HashValue hash;
@@ -177,16 +185,15 @@ namespace openbus {
              if (invalidChain) 
                throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
             } else {
-              //credential not valid, try to reset credetial session
               #ifdef OPENBUS_SDK_MULTITHREAD
-              std::cout << "[thread: " << MICOMT::Thread::self() 
-                << "] receive_request_service_contexts: credential not valid, \
-                try to reset credetial session" 
-                << std::endl;
+              l.level_vlog(debug_level,"[%p] receive_request_service_contexts: "
+                "receive_request_service_contexts: credential not valid, try to "
+                "reset credetial session",
+                (void*) MICOMT::Thread::self());
               #else
-              std::cout << "receive_request_service_contexts: credential not valid, \
-                try to reset credetial session" 
-                << std::endl;
+              l.level_vlog(debug_level, "receive_request_service_contexts: "
+                "receive_request_service_contexts: credential not valid, try to "
+                "reset credetial session");
               #endif
               CORBA::ULong newSessionId = _idSecretSession.size() + 1;
               SecretSession* secretSession = new SecretSession(newSessionId);

@@ -23,7 +23,7 @@ namespace openbus {
   
   class ConnectionManager : public CORBA::LocalObject {
   public:
-    ConnectionManager();
+    ConnectionManager(CORBA::ORB*);
     ~ConnectionManager();
     std::auto_ptr<Connection> createConnection(const char* host, short port); 
     void setDefaultConnection(Connection* c) { _defaultConnection = c; }
@@ -36,14 +36,13 @@ namespace openbus {
     CORBA::ORB* orb() const { return _orb; }
   private:
     #ifdef OPENBUS_SDK_MULTITHREAD
-    MICOMT::Thread::ThreadKey _threadConnectionKey;
     MICOMT::Thread::ThreadKey _threadConnectionDispatcherKey;
     #else
-    Connection* _threadConnection;
     Connection* _receiveRequestInterceptorConnection;
     #endif
     void orb(CORBA::ORB* o) { _orb = o; }
     CORBA::ORB* _orb;
+    PortableInterceptor::Current_var _piCurrent;
     interceptors::ORBInitializer* _orbInitializer;
     BusidConnection _busidConnection;
     Connection* _defaultConnection;

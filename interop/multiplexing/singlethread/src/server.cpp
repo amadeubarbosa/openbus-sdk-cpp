@@ -20,6 +20,7 @@ private:
 
 int main(int argc, char** argv) {
   try {
+    openbus::log.set_level(openbus::debug_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
     openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
     std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
@@ -35,7 +36,7 @@ int main(int argc, char** argv) {
     scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
-    ctx->addFacet("hello", "IDL:Hello:1.0", helloServant);
+    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/Hello:1.0", helloServant);
     
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);

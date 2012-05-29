@@ -19,6 +19,7 @@ namespace openbus {
       ClientInterceptor* getClientInterceptor() const { return clientInterceptor.get(); }
       ServerInterceptor* getServerInterceptor() const { return serverInterceptor.get(); }
       IOP::Codec* codec() const { return _codec; }
+      PortableInterceptor::SlotId slotId_connectionAddr() const { return _slotId_connectionAddr; }      
       PortableInterceptor::SlotId slotId_joinedCallChain() const { return _slotId_joinedCallChain; }
       PortableInterceptor::SlotId slotId_signedCallChain() const { return _slotId_signedCallChain; }
       PortableInterceptor::SlotId slotId_legacyCallChain() const { return _slotId_legacyCallChain; }
@@ -27,6 +28,7 @@ namespace openbus {
       std::auto_ptr<ClientInterceptor> clientInterceptor; 
       std::auto_ptr<ServerInterceptor> serverInterceptor;
       IOP::Codec_var _codec;
+      PortableInterceptor::SlotId _slotId_connectionAddr;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
       PortableInterceptor::SlotId _slotId_signedCallChain;
       PortableInterceptor::SlotId _slotId_legacyCallChain;
