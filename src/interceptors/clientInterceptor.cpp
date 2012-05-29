@@ -7,6 +7,36 @@
 
 namespace openbus {
   namespace interceptors {    
+
+    Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* ri)
+    {
+      Connection* conn = 0;
+      CORBA::Any_var connectionAddrAny;
+      try
+      {
+        connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
+        idl::OctetSeq connectionAddrOctetSeq;
+        if (*connectionAddrAny >>= connectionAddrOctetSeq)
+          if(connectionAddrOctetSeq.length() == sizeof(conn))
+          {
+            unsigned char* buf = connectionAddrOctetSeq.get_buffer();
+            std::memcpy(conn, buf, sizeof(conn));
+          }
+      }
+      catch(PortableInterceptor::InvalidSlot const&)
+      {
+        conn = _manager->getDefaultConnection();
+      }
+      
+      if(!conn)
+      {
+        conn = _manager->getDefaultConnection();
+        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+      }
+      assert(conn != 0);
+      return *conn;
+    }
+
     ClientInterceptor::ClientInterceptor(
       PortableInterceptor::SlotId slotId_connectionAddr,
       PortableInterceptor::SlotId slotId_joinedCallChain,
@@ -27,25 +57,17 @@ namespace openbus {
       #else
       l.level_vlog(debug_level, "send_request: %s", operation);
       #endif
-      if (!allowRequestWithoutCredential) {
-        Connection* conn = 0;
-        CORBA::Any_var connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
-        idl::OctetSeq connectionAddrOctetSeq;
-        if (*connectionAddrAny >>= connectionAddrOctetSeq) {
-          unsigned char* buf = connectionAddrOctetSeq.get_buffer();
-          //[todo]: avaliar o uso do ptrdiff_t
-          conn = (Connection*)(*(ptrdiff_t*)buf);
-        }
-        if (!conn) conn = _manager->getDefaultConnection();
-        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+      if (!allowRequestWithoutCredential)
+      {
+        Connection& conn = getCurrentConnection(ri);
 
-        if (conn && conn->login()) {
+        if (conn.login()) {
           CallerChain* callerChain = 0;
           IOP::ServiceContext serviceContext;
           serviceContext.context_id = idl_cr::CredentialContextId;
           idl_cr::CredentialData credential;
-          credential.bus = CORBA::string_dup(conn->busid());
-          credential.login = CORBA::string_dup(conn->login()->id);
+          credential.bus = CORBA::string_dup(conn.busid());
+          credential.login = CORBA::string_dup(conn.login()->id);
           
           idl::HashValue profileDataHash;
           ::IOP::TaggedProfile::_profile_data_seq profile = ri->effective_profile()->profile_data;
@@ -66,13 +88,14 @@ namespace openbus {
             memcpy(s+22, operation, strlen(operation));
             SHA256(s, slen, credential.hash);
             
-            callerChain = conn->getJoinedChain();
-            if (strcmp(conn->busid(), session->remoteid)) {
-              CORBA::Object_var picRef = conn->orb()->resolve_initial_references("PICurrent");
-              assert(!CORBA::is_nil(picRef));
-              PortableInterceptor::Current_var p = PortableInterceptor::Current::_narrow(picRef);
-              CORBA::Any_var signedCallChainAny = p->get_slot(_slotId_joinedCallChain);
-              credential.chain = *conn->access_control()->signChainFor(session->remoteid);
+            callerChain = conn.getJoinedChain();
+            if (strcmp(conn.busid(), session->remoteid)) {
+              // [todo] para ver quando usar o demo delegate
+              // CORBA::Object_var picRef = conn.orb()->resolve_initial_references("PICurrent");
+              // assert(!CORBA::is_nil(picRef));
+              // PortableInterceptor::Current_var p = PortableInterceptor::Current::_narrow(picRef);
+              // CORBA::Any_var signedCallChainAny = p->get_slot(_slotId_joinedCallChain);
+              credential.chain = *conn.access_control()->signChainFor(session->remoteid);
             } else {
               if (callerChain) credential.chain = *callerChain->signedCallChain();
               else memset(credential.chain.signature, '\0', 256);
@@ -93,8 +116,8 @@ namespace openbus {
           IOP::ServiceContext legacyContext;
           legacyContext.context_id = 1234;
           legacy::v1_05::Credential legacyCredential;
-          legacyCredential.identifier = conn->login()->id;
-          legacyCredential.owner = conn->login()->entity;
+          legacyCredential.identifier = conn.login()->id;
+          legacyCredential.owner = conn.login()->entity;
           if (callerChain && (callerChain->callers.length() > 1))
             legacyCredential.delegate = CORBA::string_dup(callerChain->callers[0].entity);
           else legacyCredential.delegate = "";
@@ -115,18 +138,9 @@ namespace openbus {
       log_scope l(log.client_interceptor_logger(), debug_level, 
         "ClientInterceptor::receive_exception");
       l.level_vlog(debug_level, "receive_exception: %s", operation);
-      Connection* conn = 0;
 
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
-        CORBA::Any_var connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
-        idl::OctetSeq connectionAddrOctetSeq;
-        if (*connectionAddrAny >>= connectionAddrOctetSeq) {
-          unsigned char* buf = connectionAddrOctetSeq.get_buffer();
-          //[todo]: avaliar o uso do ptrdiff_t
-          conn = (Connection*)(*(ptrdiff_t*)buf);
-        }
-        if (!conn) conn = _manager->getDefaultConnection();
-        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+        Connection& conn = getCurrentConnection(ri);
 
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
         if (ex->completed() == CORBA::COMPLETED_NO) {
@@ -151,7 +165,7 @@ namespace openbus {
             
               unsigned char* secret;
               size_t secretLen;
-              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->prvKey(), 0);
+              EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn.prvKey(), 0);
               if (!(ctx && 
                   (EVP_PKEY_decrypt_init(ctx) > 0) &&
                   (EVP_PKEY_decrypt(
@@ -193,9 +207,9 @@ namespace openbus {
             throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
           } else if (ex->minor() == idl_ac::InvalidLoginCode) {
             //[todo] tratar valor de retorno
-            if (conn && conn->onInvalidLoginCallback())
-              (conn->onInvalidLoginCallback())(conn, conn->login());
-            conn->_logout(true);
+            if (conn.onInvalidLoginCallback())
+              (conn.onInvalidLoginCallback())(&conn, conn.login());
+            conn._logout(true);
           }
         }
       }

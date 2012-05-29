@@ -31,6 +31,7 @@ namespace openbus {
       void destroy() { }
       void setConnectionManager(ConnectionManager* m) { _manager = m; }
       void resetCaches() { _profileSecretSession.clear(); }
+      Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo* ri);
 
       /* Flag que indica ao interceptador cliente se este deve verificar a existencia de uma  
       ** credencial anexada a chamada remota em execucao
