@@ -8,31 +8,18 @@
 namespace openbus {
   namespace interceptors {    
 
-    Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* ri)
-    {
+    Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* ri){
       Connection* conn = 0;
       CORBA::Any_var connectionAddrAny;
-      try
-      {
-        connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
-        idl::OctetSeq connectionAddrOctetSeq;
-        if (*connectionAddrAny >>= connectionAddrOctetSeq)
-          if(connectionAddrOctetSeq.length() == sizeof(conn))
-          {
-            unsigned char* buf = connectionAddrOctetSeq.get_buffer();
-            std::memcpy(&conn, buf, sizeof(conn));
-          }
+      connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
+      idl::OctetSeq connectionAddrOctetSeq;
+      if (*connectionAddrAny >>= connectionAddrOctetSeq) {
+        assert(connectionAddrOctetSeq.length() == sizeof(conn));
+        std::memcpy(&conn, connectionAddrOctetSeq.get_buffer(), sizeof(conn));
       }
-      catch(PortableInterceptor::InvalidSlot const&)
-      {
-        conn = _manager->getDefaultConnection();
-      }
-      
       if(!conn)
-      {
-        conn = _manager->getDefaultConnection();
-        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-      }
+        if (!(conn = _manager->getDefaultConnection()))
+          throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
       assert(conn != 0);
       return *conn;
     }
@@ -51,14 +38,9 @@ namespace openbus {
       throw (CORBA::Exception)
     {
       const char* operation = ri->operation();
-      #ifdef OPENBUS_SDK_MULTITHREAD
       log_scope l(log.client_interceptor_logger(), debug_level, "ClientInterceptor::send_request");
-      l.level_vlog(debug_level, "[%p] send_request: %s", (void*) MICOMT::Thread::self(), operation);
-      #else
       l.level_vlog(debug_level, "send_request: %s", operation);
-      #endif
-      if (!allowRequestWithoutCredential)
-      {
+      if (!allowRequestWithoutCredential) {
         Connection& conn = getCurrentConnection(ri);
 
         if (conn.login()) {
@@ -145,13 +127,7 @@ namespace openbus {
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
         if (ex->completed() == CORBA::COMPLETED_NO) {
           if (ex->minor() == idl_ac::InvalidCredentialCode) {
-            #ifdef OPENBUS_SDK_MULTITHREAD
-            l.level_vlog(debug_level, "[%p] receive_exception: creating credential session", 
-              (void*) MICOMT::Thread::self());
-            #else
-            l.level_vlog(debug_level, 
-              "receive_exception: receive_exception: creating credential session");
-            #endif
+            l.level_vlog(debug_level, "receive_exception: creating credential session");
             IOP::ServiceContext_var sctx;
             if (sctx = ri->get_request_service_context(idl_cr::CredentialContextId)) {
               CORBA::OctetSeq o(
