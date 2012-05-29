@@ -24,7 +24,8 @@ namespace openbus {
       PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
       serverInterceptor = std::auto_ptr<ServerInterceptor> (
         new ServerInterceptor(
-          piCurrent.in(), 
+          piCurrent.in(),
+          _slotId_connectionAddr,
           _slotId_joinedCallChain,
           _slotId_signedCallChain,
           _slotId_legacyCallChain,

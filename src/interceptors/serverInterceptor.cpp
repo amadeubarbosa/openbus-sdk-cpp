@@ -11,12 +11,14 @@ namespace openbus {
   namespace interceptors {
     ServerInterceptor::ServerInterceptor(
       PortableInterceptor::Current* piCurrent, 
+      PortableInterceptor::SlotId slotId_connectionAddr,
       PortableInterceptor::SlotId slotId_joinedCallChain,
       PortableInterceptor::SlotId slotId_signedCallChain, 
       PortableInterceptor::SlotId slotId_legacyCallChain,
       PortableInterceptor::SlotId slotId_busid, 
       IOP::Codec* cdr_codec) 
-      : _piCurrent(piCurrent),  _slotId_joinedCallChain(slotId_joinedCallChain), 
+      : _piCurrent(piCurrent), _slotId_connectionAddr(slotId_connectionAddr),
+        _slotId_joinedCallChain(slotId_joinedCallChain), 
         _slotId_signedCallChain(slotId_signedCallChain),
         _slotId_legacyCallChain(slotId_legacyCallChain), _slotId_busid(slotId_busid), 
         _cdrCodec(cdr_codec), 
@@ -28,58 +30,16 @@ namespace openbus {
     void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException) 
     {
-      const char* operation = r->operation();
-      #ifdef OPENBUS_SDK_MULTITHREAD
-      log_scope l(log.server_interceptor_logger(), debug_level, "ServerInterceptor::send_reply");
-      l.level_vlog(debug_level, "[%p] send_reply: %s", (void*) MICOMT::Thread::self(), operation);
-      #else
-      l.level_vlog(debug_level, "send_reply: %s", operation);
-      #endif
-      #ifdef OPENBUS_SDK_MULTITHREAD
-      MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
-      #else
-      if (_manager)
-        if (_manager->_receiveRequestInterceptorConnection) 
-          _manager->_receiveRequestInterceptorConnection = 0;
-      #endif
     }
     
     void ServerInterceptor::send_exception(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
     {
-      const char* operation = r->operation();
-      #ifdef OPENBUS_SDK_MULTITHREAD
-      log_scope l(log.server_interceptor_logger(), debug_level,"ServerInterceptor::send_exception");
-      l.level_vlog(debug_level,"[%p] send_exception: %s",(void*) MICOMT::Thread::self(), operation);
-      #else
-      l.level_vlog(debug_level, "send_exception: %s", operation);
-      #endif
-      #ifdef OPENBUS_SDK_MULTITHREAD
-      MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
-      #else
-      if (_manager)
-        if (_manager->_receiveRequestInterceptorConnection) 
-          _manager->_receiveRequestInterceptorConnection = 0;
-      #endif
     }
     
     void ServerInterceptor::send_other(PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
     { 
-      const char* operation = r->operation();
-      #ifdef OPENBUS_SDK_MULTITHREAD
-      log_scope l(log.server_interceptor_logger(), debug_level,"ServerInterceptor::send_other");
-      l.level_vlog(debug_level,"[%p] send_other: %s",(void*) MICOMT::Thread::self(), operation);
-      #else
-      l.level_vlog(debug_level, "send_other: %s", operation);
-      #endif
-      #ifdef OPENBUS_SDK_MULTITHREAD
-      MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, 0);
-      #else
-      if (_manager)
-        if (_manager->_receiveRequestInterceptorConnection) 
-          _manager->_receiveRequestInterceptorConnection = 0;
-      #endif
     }
     
     void ServerInterceptor::receive_request_service_contexts(
@@ -109,11 +69,15 @@ namespace openbus {
         if (_manager) {
           conn = _manager->getDispatcher(credential.bus);
           if (conn) {
-            #ifdef OPENBUS_SDK_MULTITHREAD
-            MICOMT::Thread::set_specific(_manager->_threadConnectionDispatcherKey, conn);
-            #else
-            _manager->_receiveRequestInterceptorConnection = conn;
-            #endif
+            size_t size = sizeof(Connection*);
+            unsigned char buf[size];
+            memcpy(buf, &conn, size);
+            idl::OctetSeq_var connectionAddrOctetSeq = new idl::OctetSeq(size, size, buf);
+            CORBA::Any connectionAddrAny;
+            connectionAddrAny <<= *(connectionAddrOctetSeq);
+            r->set_slot(_slotId_connectionAddr, connectionAddrAny);
+            //[doubt] ??
+            _manager->setRequester(conn);
           } else conn = _manager->getDefaultConnection();
         }
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);

@@ -28,21 +28,17 @@ namespace openbus {
       l.level_vlog(debug_level, "send_request: %s", operation);
       #endif
       if (!allowRequestWithoutCredential) {
-        Connection* conn;
+        Connection* conn = 0;
         if (_manager) {
-          #ifdef OPENBUS_SDK_MULTITHREAD
-          conn = (Connection*) 
-            MICOMT::Thread::get_specific(_manager->_threadConnectionDispatcherKey);
-          if (!conn) {
-            conn = _manager->getRequester();
-            if (!conn) conn = _manager->getDefaultConnection();
+          // conn = _manager->getRequester();
+          CORBA::Any_var connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
+          idl::OctetSeq connectionAddrOctetSeq;
+          if (*connectionAddrAny >>= connectionAddrOctetSeq) {
+            unsigned char* buf = connectionAddrOctetSeq.get_buffer();
+            //[todo]: avaliar o uso do ptrdiff_t
+            conn = (Connection*)(*(ptrdiff_t*)buf);
           }
-          #else
-          if(!(conn = _manager->_receiveRequestInterceptorConnection)) {
-            if (!(conn = _manager->getRequester()))
-              conn = _manager->getDefaultConnection();
-          }
-          #endif
+          if (!conn) conn = _manager->getDefaultConnection();
         }
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
@@ -127,21 +123,17 @@ namespace openbus {
       #else
       l.level_vlog(debug_level, "receive_exception: %s", operation);
       #endif
-      Connection* conn;
+      Connection* conn = 0;
       if (_manager) {
-        #ifdef OPENBUS_SDK_MULTITHREAD
-        conn = (Connection*) 
-          MICOMT::Thread::get_specific(_manager->_threadConnectionDispatcherKey);
-        if (!conn) {
-          conn = _manager->getRequester();
-          if (!conn) conn = _manager->getDefaultConnection();
+        // conn = _manager->getRequester();
+        CORBA::Any_var connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
+        idl::OctetSeq connectionAddrOctetSeq;
+        if (*connectionAddrAny >>= connectionAddrOctetSeq) {
+          unsigned char* buf = connectionAddrOctetSeq.get_buffer();
+          //[todo]: avaliar o uso do ptrdiff_t
+          conn = (Connection*)(*(ptrdiff_t*)buf);
         }
-        #else
-        if(!(conn = _manager->_receiveRequestInterceptorConnection)) {
-          if (!(conn = _manager->getRequester()))
-            conn = _manager->getDefaultConnection();
-        }
-        #endif
+        if (!conn) conn = _manager->getDefaultConnection();
       }
       if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 

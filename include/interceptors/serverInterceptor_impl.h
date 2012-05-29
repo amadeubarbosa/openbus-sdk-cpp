@@ -22,6 +22,7 @@ namespace openbus {
     public:
       ServerInterceptor(
         PortableInterceptor::Current* piCurrent, 
+        PortableInterceptor::SlotId slotId_connectionAddr,
         PortableInterceptor::SlotId slotId_joinedCallChain,
         PortableInterceptor::SlotId slotId_signedCallChain, 
         PortableInterceptor::SlotId slotId_legacyCallChain,
@@ -45,6 +46,7 @@ namespace openbus {
       void resetCaches() { _idSecretSession.clear(); }
     private:
       PortableInterceptor::Current* _piCurrent;
+      PortableInterceptor::SlotId _slotId_connectionAddr;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
       PortableInterceptor::SlotId _slotId_signedCallChain;
       PortableInterceptor::SlotId _slotId_legacyCallChain;
