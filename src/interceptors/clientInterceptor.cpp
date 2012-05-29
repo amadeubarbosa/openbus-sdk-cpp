@@ -112,26 +112,22 @@ namespace openbus {
       throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
     {
       const char* operation = ri->operation();
-      #ifdef OPENBUS_SDK_MULTITHREAD
       log_scope l(log.client_interceptor_logger(), debug_level, 
         "ClientInterceptor::receive_exception");
-      l.level_vlog(debug_level, "[%p] receive_exception: %s", (void*) MICOMT::Thread::self(), 
-        operation);
-      #else
       l.level_vlog(debug_level, "receive_exception: %s", operation);
-      #endif
       Connection* conn = 0;
-      CORBA::Any_var connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
-      idl::OctetSeq connectionAddrOctetSeq;
-      if (*connectionAddrAny >>= connectionAddrOctetSeq) {
-        unsigned char* buf = connectionAddrOctetSeq.get_buffer();
-        //[todo]: avaliar o uso do ptrdiff_t
-        conn = (Connection*)(*(ptrdiff_t*)buf);
-      }
-      if (!conn) conn = _manager->getDefaultConnection();
-      if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
       if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
+        CORBA::Any_var connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
+        idl::OctetSeq connectionAddrOctetSeq;
+        if (*connectionAddrAny >>= connectionAddrOctetSeq) {
+          unsigned char* buf = connectionAddrOctetSeq.get_buffer();
+          //[todo]: avaliar o uso do ptrdiff_t
+          conn = (Connection*)(*(ptrdiff_t*)buf);
+        }
+        if (!conn) conn = _manager->getDefaultConnection();
+        if (!conn) throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+
         CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
         if (ex->completed() == CORBA::COMPLETED_NO) {
           if (ex->minor() == idl_ac::InvalidCredentialCode) {
