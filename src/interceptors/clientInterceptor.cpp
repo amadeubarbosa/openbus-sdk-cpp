@@ -20,7 +20,7 @@ namespace openbus {
           if(connectionAddrOctetSeq.length() == sizeof(conn))
           {
             unsigned char* buf = connectionAddrOctetSeq.get_buffer();
-            std::memcpy(conn, buf, sizeof(conn));
+            std::memcpy(&conn, buf, sizeof(conn));
           }
       }
       catch(PortableInterceptor::InvalidSlot const&)
