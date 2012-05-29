@@ -12,11 +12,11 @@ namespace openbus {
       IOP::CodecFactory_var codec_factory = info->codec_factory();
       IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
       _codec = codec_factory->create_codec(cdr_encoding);
+      _slotId_connectionAddr = info->allocate_slot_id();
+      _slotId_joinedCallChain = info->allocate_slot_id();
       clientInterceptor = std::auto_ptr<ClientInterceptor> 
         (new ClientInterceptor(_slotId_connectionAddr, _slotId_joinedCallChain, _codec.in()));
       info->add_client_request_interceptor(clientInterceptor.get());
-      _slotId_connectionAddr = info->allocate_slot_id();
-      _slotId_joinedCallChain = info->allocate_slot_id();
       _slotId_signedCallChain = info->allocate_slot_id();
       _slotId_busid = info->allocate_slot_id();
       CORBA::Object_var init_ref = info->resolve_initial_references("PICurrent");
