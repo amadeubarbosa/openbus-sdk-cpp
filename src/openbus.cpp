@@ -68,20 +68,4 @@ namespace openbus {
     l.log("Retornando ORB");
     return singleORB;
   }
-
-  ConnectionManager* getConnectionManager(CORBA::ORB* orb) {
-    log_scope l(log.general_logger(), info_level, "openbus::getConnectionManager");
-    CORBA::Object* o;
-    try {
-      l.level_log(debug_level, "Fazendo resolve_initial_references");
-      o = orb->resolve_initial_references(CONNECTION_MANAGER_ID);
-      if(CORBA::is_nil(o))
-        l.level_log(error_level, "Não há um ConnectionManager");
-    } catch(CORBA::Exception& e) {
-      l.level_log(error_level, "Uma exceção foi lançada ao executar resolve_initial_references para"
-        " retornar ConnectionManager associado ao ORB");
-      return 0;
-    }
-    return  dynamic_cast<ConnectionManager*> (o);
-  }
 }

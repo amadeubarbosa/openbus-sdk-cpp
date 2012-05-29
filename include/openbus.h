@@ -20,7 +20,6 @@ namespace openbus {
 
 namespace openbus {
   CORBA::ORB* initORB(int argc, char** argv) throw(CORBA::Exception);
-  ConnectionManager* getConnectionManager(CORBA::ORB* orb);
 }
 
 #endif

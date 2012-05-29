@@ -6,7 +6,8 @@ int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
-    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     {
       std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
       manager->setDefaultConnection(connBusA.get());
