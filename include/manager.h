@@ -35,11 +35,6 @@ namespace openbus {
     Connection* getRequester();
     CORBA::ORB* orb() const { return _orb; }
   private:
-    #ifdef OPENBUS_SDK_MULTITHREAD
-    MICOMT::Thread::ThreadKey _threadConnectionDispatcherKey;
-    #else
-    Connection* _receiveRequestInterceptorConnection;
-    #endif
     void orb(CORBA::ORB* o) { _orb = o; }
     CORBA::ORB* _orb;
     PortableInterceptor::Current_var _piCurrent;

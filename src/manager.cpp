@@ -8,18 +8,9 @@ namespace openbus {
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-    #ifdef OPENBUS_SDK_MULTITHREAD
-    MICOMT::Thread::create_key(_threadConnectionDispatcherKey);
-    #else
-    _receiveRequestInterceptorConnection = 0;
-    #endif
   }
 
-  ConnectionManager::~ConnectionManager() { 
-    #ifdef OPENBUS_SDK_MULTITHREAD
-    MICOMT::Thread::delete_key(_threadConnectionDispatcherKey);
-    #endif
-  }
+  ConnectionManager::~ConnectionManager() { }
 
   std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) {
     int p = port;

@@ -27,21 +27,6 @@ namespace openbus {
     
     ServerInterceptor::~ServerInterceptor() { }
     
-    void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo* r)
-      throw (CORBA::SystemException) 
-    {
-    }
-    
-    void ServerInterceptor::send_exception(PortableInterceptor::ServerRequestInfo* r)
-      throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
-    {
-    }
-    
-    void ServerInterceptor::send_other(PortableInterceptor::ServerRequestInfo* r)
-      throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) 
-    { 
-    }
-    
     void ServerInterceptor::receive_request_service_contexts(
       PortableInterceptor::ServerRequestInfo* r)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
@@ -66,21 +51,18 @@ namespace openbus {
       idl_cr::CredentialData credential;
       if (any >>= credential) {
         Connection* conn;
-        if (_manager) {
-          conn = _manager->getDispatcher(credential.bus);
-          if (conn) {
-            size_t size = sizeof(Connection*);
-            unsigned char buf[size];
-            memcpy(buf, &conn, size);
-            idl::OctetSeq_var connectionAddrOctetSeq = new idl::OctetSeq(size, size, buf);
-            CORBA::Any connectionAddrAny;
-            connectionAddrAny <<= *(connectionAddrOctetSeq);
-            r->set_slot(_slotId_connectionAddr, connectionAddrAny);
-            //[doubt] ??
-            _manager->setRequester(conn);
-          } else conn = _manager->getDefaultConnection();
-        }
+        conn = _manager->getDispatcher(credential.bus);
+        if (!conn) conn = _manager->getDefaultConnection();
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+
+        size_t size = sizeof(Connection*);
+        unsigned char buf[size];
+        memcpy(buf, &conn, size);
+        idl::OctetSeq_var connectionAddrOctetSeq = new idl::OctetSeq(size, size, buf);
+        CORBA::Any connectionAddrAny;
+        connectionAddrAny <<= *(connectionAddrOctetSeq);
+        r->set_slot(_slotId_connectionAddr, connectionAddrAny);
+        _manager->setRequester(conn);
         
         if (conn->login()) {
           Login* caller;
@@ -92,8 +74,7 @@ namespace openbus {
           if (caller) {
             SecretSession* session = 0;
             idl::HashValue hash;
-            if (_idSecretSession.find(credential.session) != _idSecretSession.end()) 
-            {
+            if (_idSecretSession.find(credential.session) != _idSecretSession.end()) {
               session = _idSecretSession[credential.session];
               size_t slenOperation = strlen(r->operation());
               int slen = 22 + slenOperation;
@@ -107,7 +88,7 @@ namespace openbus {
             }
 
             if (session && !memcmp(hash, credential.hash, 32) && 
-                tickets_check(&session->ticketsHistory, credential.ticket)) 
+              tickets_check(&session->ticketsHistory, credential.ticket)) 
             {
               #ifdef OPENBUS_SDK_MULTITHREAD
               l.level_vlog(debug_level,"[%p] receive_request_service_contexts: credential is valid",
