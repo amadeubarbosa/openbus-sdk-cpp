@@ -1,0 +1,27 @@
+Category {
+  id = "DemoCppHelloCategory",
+  name = "Categoria gerada pelo script",
+}
+
+Entity {
+  id = "demo",
+  category = "DemoCppHelloCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Certificate {
+  id = "DemoCppHello",
+  certificate = "DemoCppHello.crt",
+}
+
+Interface {
+  id = "IDL:tecgraf/openbus/interop/hello/IHello:1.0"
+}
+
+Grant {
+  id = "demo",
+  interfaces = {
+    "IDL:tecgraf/openbus/interop/hello/IHello:1.0",
+  }
+}
+

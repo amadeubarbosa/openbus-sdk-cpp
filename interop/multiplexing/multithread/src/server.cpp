@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
     ctx = new scs::core::ComponentContext(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
-    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/Hello:1.0", helloServant);
+    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/hello/IHello:1.0", helloServant);
     
     connBusA->loginByPassword("demo", "demo");
     connBusB->loginByPassword("demo", "demo");
