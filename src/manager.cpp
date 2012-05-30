@@ -59,9 +59,9 @@ namespace openbus {
     CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_orbInitializer->slotId_connectionAddr());
     idl::OctetSeq connectionAddrOctetSeq;
     if (*connectionAddrAny >>= connectionAddrOctetSeq) {
-      unsigned char* buf = connectionAddrOctetSeq.get_buffer();
-      //[todo]: avaliar o uso do ptrdiff_t
-      Connection* c = (Connection*)(*(ptrdiff_t*)buf);
+      assert(connectionAddrOctetSeq.length() == sizeof(Connection*));
+      Connection* c;
+      std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection*));
       return c;
     } else return 0;
   }

@@ -3,8 +3,8 @@
 
 #include <CORBA.h>
 
-#include "connection.h"
-#include "interceptors/orbInitializer_impl.h"
+#include <connection.h>
+#include <interceptors/orbInitializer_impl.h>
 
 #define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
 
@@ -26,11 +26,11 @@ namespace openbus {
     std::auto_ptr<Connection> createConnection(const char* host, short port); 
     void setDefaultConnection(Connection* c) { _defaultConnection = c; }
     Connection* getDefaultConnection() const { return _defaultConnection; }
+    void setRequester(Connection*);
+    Connection* getRequester();
     void setDispatcher(Connection*);
     Connection* getDispatcher(const char* busid);
     Connection* clearDispatcher(const char* busid);
-    void setRequester(Connection*);
-    Connection* getRequester();
     CORBA::ORB* orb() const { return _orb; }
   private:
     ConnectionManager(CORBA::ORB*, interceptors::ORBInitializer*);

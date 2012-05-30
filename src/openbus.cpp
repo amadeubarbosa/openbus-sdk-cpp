@@ -1,5 +1,4 @@
 #include <openbus.h>
-#include <log.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <util/mutex.h>
 #endif
