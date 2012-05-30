@@ -33,10 +33,7 @@ namespace openbus {
 #ifdef OPENBUS_SDK_MULTITHREAD
   class RenewLogin : public MICOMT::Thread {
   public:
-    RenewLogin(
-      Connection*, 
-      ConnectionManager*, 
-      idl_ac::ValidityTime validityTime);
+    RenewLogin(Connection*, ConnectionManager*, idl_ac::ValidityTime validityTime);
     ~RenewLogin();
     void _run(void*);
     void stop() { _sigINT = true; }
@@ -52,10 +49,7 @@ namespace openbus {
 #else
   class RenewLogin : public CORBA::DispatcherCallback {
   public:
-    RenewLogin(
-      Connection*, 
-      ConnectionManager*,
-      idl_ac::ValidityTime validityTime);
+    RenewLogin(Connection*, ConnectionManager*, idl_ac::ValidityTime validityTime);
     void callback(CORBA::Dispatcher* dispatcher, Event event);
   private:
     Connection* _conn;

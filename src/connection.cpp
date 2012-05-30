@@ -7,6 +7,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/sha.h>
+#include <log.h>
 
 namespace openbus {
   Connection::Connection(
@@ -18,6 +19,7 @@ namespace openbus {
     throw(CORBA::Exception)
     : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _onInvalidLogin(0), _manager(m)
   {
+    log_scope l(log.general_logger(), info_level, "Connection::Connection");
     std::stringstream corbaloc;
     corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
     CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
@@ -61,6 +63,7 @@ namespace openbus {
   void Connection::loginByPassword(const char* entity, const char* password)
     throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception) 
   {
+    log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
     #endif
@@ -140,6 +143,7 @@ namespace openbus {
     throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate,
     idl::services::ServiceFailure, CORBA::Exception)
   {
+    log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
     #endif
@@ -257,6 +261,7 @@ namespace openbus {
     throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
     idl::services::ServiceFailure, CORBA::Exception)
   {
+    log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
     FILE* privateKeyFile = fopen(privateKeyFilename, "r");
     if (!privateKeyFile) throw CorruptedPrivateKey();
     EVP_PKEY* privateKey = PEM_read_PrivateKey(privateKeyFile, 0, 0, 0);
@@ -268,6 +273,7 @@ namespace openbus {
   std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn() 
     throw (CORBA::Exception)
   {
+    log_scope l(log.general_logger(), info_level, "Connection::startSingleSignOn");
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
     #endif
@@ -304,6 +310,7 @@ namespace openbus {
 		throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
 		CORBA::Exception)
   {
+    log_scope l(log.general_logger(), info_level, "Connection::loginBySingleSignOn");
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
     #endif
@@ -410,9 +417,13 @@ namespace openbus {
     return sucess;    
   }
 
-  bool Connection::logout() { return _logout(false); }
+  bool Connection::logout() { 
+    log_scope l(log.general_logger(), info_level, "Connection::logout");
+    return _logout(false); 
+  }
   
   CallerChain* Connection::getCallerChain() {
+    log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -445,6 +456,7 @@ namespace openbus {
   }
 
   void Connection::joinChain(CallerChain* chain) {
+    log_scope l(log.general_logger(), info_level, "Connection::joinChain");
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -454,6 +466,7 @@ namespace openbus {
   }
 
   void Connection::exitChain() {
+    log_scope l(log.general_logger(), info_level, "Connection::exitChain");
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -462,6 +475,7 @@ namespace openbus {
   }
 
   CallerChain* Connection::getJoinedChain() {
+    log_scope l(log.general_logger(), info_level, "Connection::getJoinedChain");
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -528,7 +542,10 @@ namespace openbus {
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime t)
-    : _conn(c), _manager(m), _validityTime(t), _sigINT(false) { }
+    : _conn(c), _manager(m), _validityTime(t), _sigINT(false) 
+  {
+    log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
+  }
 
   RenewLogin::~RenewLogin() { }
 
@@ -536,27 +553,8 @@ namespace openbus {
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&(_conn->_mutex));
     #endif
-    idl_ac::ValidityTime time;
-    Connection* c;
-    if (_manager) {
-      c = _manager->getRequester();
-      _manager->setRequester(_conn);
-      try {
-        time = _conn->access_control()->renew();
-        _manager->setRequester(c);
-      } catch (...) {
-        _manager->setRequester(c);
-        throw;
-      }
-    } else
-      try {
-        time = _conn->access_control()->renew();
-        _manager->setRequester(c);
-      } catch (...) {
-        _manager->setRequester(c);
-        throw;
-      }
-    return time;
+    log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
+    return _conn->access_control()->renew();
   }
 
   bool RenewLogin::_sleep(unsigned int time) {
@@ -571,17 +569,18 @@ namespace openbus {
   }
 
   void RenewLogin::_run(void*) {
+    _manager->setRequester(_conn);
     while (true) {
       if (_sleep(_validityTime)) break;
       else _validityTime = renew();
     }
   }
   #else
-  RenewLogin::RenewLogin(
-    Connection* c, 
-    ConnectionManager* m, 
-    idl_ac::ValidityTime t)
-    : _conn(c), _manager(m), _validityTime(t) { }
+  RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime t)
+    : _conn(c), _manager(m), _validityTime(t) 
+  { 
+    log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
+  }
 
   void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
     _validityTime = renew();
@@ -589,19 +588,9 @@ namespace openbus {
   }
 
   idl_ac::ValidityTime RenewLogin::renew() {
-    idl_ac::ValidityTime t;
-    if (_manager) {
-      Connection* c = _manager->getRequester();
-      _manager->setRequester(_conn);
-      try {
-        t = _conn->access_control()->renew();
-        _manager->setRequester(c);
-      } catch (...) {
-        _manager->setRequester(c);
-        throw;
-      }
-    } else t = _conn->access_control()->renew();
-    return t;
+    log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
+    _manager->setRequester(_conn);
+    return _conn->access_control()->renew();
   }
   #endif
 }

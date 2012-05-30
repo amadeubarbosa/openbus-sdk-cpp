@@ -9,6 +9,8 @@ namespace openbus {
   namespace interceptors {    
 
     Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* ri){
+      log_scope l(log.client_interceptor_logger(), info_level, 
+        "ClientInterceptor::getCurrentConnection");
       Connection* conn = 0;
       CORBA::Any_var connectionAddrAny;
       connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
@@ -21,6 +23,7 @@ namespace openbus {
         if (!(conn = _manager->getDefaultConnection()))
           throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
       assert(conn != 0);
+      l.vlog("connection:%p", conn);
       return *conn;
     }
 
@@ -30,7 +33,10 @@ namespace openbus {
       IOP::Codec* cdr_codec) 
       : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _manager(0),
       _slotId_connectionAddr(slotId_connectionAddr), _slotId_joinedCallChain(slotId_joinedCallChain) 
-    { }
+    { 
+      log_scope l(log.client_interceptor_logger(), info_level, 
+        "ClientInterceptor::ClientInterceptor");
+    }
     
     ClientInterceptor::~ClientInterceptor() { }
     

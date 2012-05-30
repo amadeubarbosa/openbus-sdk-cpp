@@ -26,7 +26,7 @@ namespace openbus {
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
     #endif
-    log_scope l(log.general_logger(), info_level, "openbus::initORB");
+    log_scope l(log.general_logger(), info_level, "initORB");
     if (!singleORB) {
       /* [doubt] se eu receber uma exceção após a construção do orbInitializer, quem 
       ** vai liberar a memória do orbInitializer ? O destrutor não pode fazer 
