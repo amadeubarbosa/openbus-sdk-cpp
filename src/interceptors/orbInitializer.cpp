@@ -1,10 +1,14 @@
 #include <interceptors/orbInitializer_impl.h>
-
 #include <openbus.h>
+#include <log.h>
+
 
 namespace openbus {
   namespace interceptors {
-    ORBInitializer::ORBInitializer() {}
+    ORBInitializer::ORBInitializer() {
+      log_scope l(log.general_logger(), debug_level, 
+        "openbus::interceptors::ORBInitializer::ORBInitializer");
+    }
 
     ORBInitializer::~ORBInitializer() {}
     

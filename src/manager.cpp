@@ -1,9 +1,9 @@
 #include <manager.h>
-
 #include <log.h>
 
 namespace openbus {
-  ConnectionManager::ConnectionManager(CORBA::ORB* o) : _orb(o), _defaultConnection(0) {
+  ConnectionManager::ConnectionManager(CORBA::ORB* o, interceptors::ORBInitializer* i) 
+  : _orb(o), _orbInitializer(i), _defaultConnection(0) {
     log_scope l(log.general_logger(), debug_level, "openbus::ConnectionManager::ConnectionManager");
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));

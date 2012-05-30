@@ -23,8 +23,6 @@ namespace openbus {
   
   class ConnectionManager : public CORBA::LocalObject {
   public:
-    ConnectionManager(CORBA::ORB*);
-    ~ConnectionManager();
     std::auto_ptr<Connection> createConnection(const char* host, short port); 
     void setDefaultConnection(Connection* c) { _defaultConnection = c; }
     Connection* getDefaultConnection() const { return _defaultConnection; }
@@ -35,6 +33,8 @@ namespace openbus {
     Connection* getRequester();
     CORBA::ORB* orb() const { return _orb; }
   private:
+    ConnectionManager(CORBA::ORB*, interceptors::ORBInitializer*);
+    ~ConnectionManager();
     void orb(CORBA::ORB* o) { _orb = o; }
     CORBA::ORB* _orb;
     PortableInterceptor::Current_var _piCurrent;

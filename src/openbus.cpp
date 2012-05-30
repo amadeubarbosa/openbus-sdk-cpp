@@ -1,11 +1,11 @@
-#include <memory>
-
 #include <openbus.h>
+#include <log.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <util/mutex.h>
 #endif
+#include <interceptors/orbInitializer_impl.h>
 
-#include <log.h>
+#include <memory>
 
 namespace openbus {
   log_type log;
@@ -29,14 +29,12 @@ namespace openbus {
     #endif
     log_scope l(log.general_logger(), info_level, "openbus::initORB");
     if (!singleORB) {
-      l.level_log(debug_level, "Criando ORB");
       /* [doubt] se eu receber uma exceção após a construção do orbInitializer, quem 
       ** vai liberar a memória do orbInitializer ? O destrutor não pode fazer 
       ** isso... P.S.: Acho que não posso liberar o orbInitializer, pelo menos 
       ** no Mico.
       */
       if (!orbInitializer) {
-        l.level_log(debug_level, "Criando ORBInitializer");
         orbInitializer = new interceptors::ORBInitializer();
         PortableInterceptor::register_orb_initializer(orbInitializer);
       }
@@ -44,9 +42,7 @@ namespace openbus {
       ** CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
       */
       CORBA::ORB* orb = CORBA::ORB_init(argc, argv);
-      l.level_log(debug_level, "Criando ConnectionManager");
-      ConnectionManager* manager = new ConnectionManager(orb);
-      manager->_orbInitializer = orbInitializer;
+      ConnectionManager* manager = new ConnectionManager(orb, orbInitializer);
       l.level_log(debug_level, "Registrando ConnectionManager");
       orb->register_initial_reference(CONNECTION_MANAGER_ID, manager);
       /* [obs]
@@ -57,6 +53,7 @@ namespace openbus {
       ** A responsabilidade desta ativação deve ser do SDK ou do SCS?
       */
       CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+      assert(!CORBA::is_nil(o));
       PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
       PortableServer::POAManager_var poa_manager = poa->the_POAManager();
       l.level_log(debug_level, "Ativando RootPOA");
