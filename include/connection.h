@@ -106,7 +106,7 @@ namespace openbus {
       
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
-    EVP_PKEY* prvKey() const { return _prvKey; }
+    EVP_PKEY* prvKey() const { return _key; }
     EVP_PKEY* busKey() const { return _busKey; }
     bool _logout(bool local);
     std::string _host;
@@ -124,8 +124,8 @@ namespace openbus {
     idl_or::OfferRegistry_var _offer_registry;
     idl::Identifier_var _busid;
     EVP_PKEY* _busKey;
-    idl::OctetSeq_var buskeyOctetSeq;
-    EVP_PKEY* _prvKey;
+    idl::OctetSeq_var _buskeyOctetSeq;
+    EVP_PKEY* _key;
     InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;
     ConnectionManager* _manager;
