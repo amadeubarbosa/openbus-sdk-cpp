@@ -12,9 +12,10 @@ namespace openbus {
 Login* LoginCache::validateLogin(char* id) {
   std::string sid(id);
 
-  /* coleta de informações pertinentes ao login id. (getLoginInfo) */
-  Login* login = _id_Login->fetch(sid);
+  /* este login está no cache? */
+  Login* login = _loginLRUCache->fetch(sid);
   if (!login) {
+    /* criando uma entrada no cache para o login. */
     login = new Login;
     login->time2live = -1;
     try {
@@ -22,12 +23,16 @@ Login* LoginCache::validateLogin(char* id) {
     } catch (idl_ac::InvalidLogins& e) { return 0; }
     const unsigned char* buf = login->encodedCallerPubKey->get_buffer();
     login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
-    _id_Login->insert(sid, login);
+    _loginLRUCache->insert(sid, login);
   }
 
-  /* validação do login. (getValidity) */
+  /* se time2live é zero então o login é inválido. */
   if (!login->time2live) return 0;
+  
+  /* se time2live é maior do que o intervalo de tempo de atualização, o login é válido. */
   if (login->time2live > (time(0) - _timeUpdated)) return login;
+  
+  /* preciso consultar o barramento para validar o login. */
   else {
     /*
     * Substituir a implementação da LRU para permitir que o cache avise ao SDK o  elemento 
@@ -37,16 +42,18 @@ Login* LoginCache::validateLogin(char* id) {
     */
     _timeUpdated = time(0);
     idl::IdentifierSeq ids(LOGINCACHE_LRU_SIZE);
-    ids.length(_id_Login->size());
-    std::vector<std::string> keys = _id_Login->get_all_keys();
+    ids.length(_loginLRUCache->size());
+    std::vector<std::string> keys = _loginLRUCache->get_all_keys();
     std::vector<std::string>::iterator it;
     int i = 0;
     for (it=keys.begin(); it<keys.end(); ++i, ++it) ids[i] = CORBA::string_dup((*it).c_str());
+    /* validando no barramento todos os logins que estão na cache. */
     idl_ac::ValidityTimeSeq_var validity = _conn->login_registry()->getValidity(ids);
     for (unsigned int i=0; i<validity->length(); ++i) {
-      Login* l = _id_Login->fetch(std::string(ids[i]));
+      Login* l = _loginLRUCache->fetch(std::string(ids[i]));
       l->time2live = validity[i];
     }
+    /* o login de interesse, após atualização da cache, ainda é válido? */
     if (login->time2live > 0) return login;
   }
   return 0;

@@ -63,7 +63,8 @@ namespace openbus {
         
         if (conn->login()) {
           Login* caller;
-          /* consulta ao cache de logins para saber se este login é valido. */
+          /* consulta ao cache de logins para saber se este login é valido. 
+          ** obtenção da estrutura Login referente a este login id. (caller) */
           try {
             caller = conn->_loginCache->validateLogin(credential.login);
           } catch(CORBA::SystemException &e) {
@@ -71,10 +72,12 @@ namespace openbus {
             ** com o barramento. */
             throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
           }
+          /* o login do caller é valido? */
           if (caller) {
             SecretSession* session = 0;
             idl::HashValue hash;
             if (_idSecretSession.find(credential.session) != _idSecretSession.end()) {
+              /* montando uma hash com os dados da credencial recebida e da sessão existente. */
               session = _idSecretSession[credential.session];
               size_t slenOperation = strlen(r->operation());
               int slen = 22 + slenOperation;
@@ -90,12 +93,9 @@ namespace openbus {
             if (session && !memcmp(hash, credential.hash, 32) && 
               tickets_check(&session->ticketsHistory, credential.ticket)) 
             {
-              #ifdef OPENBUS_SDK_MULTITHREAD
-              l.level_vlog(debug_level,"[%p] receive_request_service_contexts: credential is valid",
-                (void*) MICOMT::Thread::self());
-              #else
-              l.level_vlog(debug_level, "receive_request_service_contexts: credential is valid");
-              #endif
+              /* a credencial recebida é válida. */
+              l.level_vlog(debug_level, "credential is valid");
+              //?
               bool invalidChain = false;
               if (credential.chain.encoded.length()) {
                 idl::HashValue hash;
@@ -130,22 +130,15 @@ namespace openbus {
              if (invalidChain) 
                throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
             } else {
-              #ifdef OPENBUS_SDK_MULTITHREAD
-              l.level_vlog(debug_level,"[%p] receive_request_service_contexts: "
-                "receive_request_service_contexts: credential not valid, try to "
-                "reset credetial session",
-                (void*) MICOMT::Thread::self());
-              #else
-              l.level_vlog(debug_level, "receive_request_service_contexts: "
-                "receive_request_service_contexts: credential not valid, try to "
-                "reset credetial session");
-              #endif
+              l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
+
+              /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
               CORBA::ULong newSessionId = _idSecretSession.size() + 1;
               SecretSession* secretSession = new SecretSession(newSessionId);
               _idSecretSession[newSessionId] = secretSession;
 
               EVP_PKEY_CTX* ctx;
-              unsigned char* encrypted;
+              unsigned char* encrypted = 0;
               size_t encryptedLen;
               if (!((ctx = EVP_PKEY_CTX_new(caller->key, 0)) &&
                   (EVP_PKEY_encrypt_init(ctx) > 0) &&
@@ -155,20 +148,18 @@ namespace openbus {
                     &encryptedLen,
                     secretSession->secret,
                     SECRET_SIZE) > 0))
-              )
-                //[doubt] trocar assert por exceção ?
-                assert(0);
+              ) assert(0);
 
-              assert(encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen));
+              encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen);
+              assert(encrypted);
+              
               if (EVP_PKEY_encrypt(
                     ctx, 
                     encrypted, 
                     &encryptedLen,
                     secretSession->secret,
                     SECRET_SIZE) <= 0
-              )
-                //[doubt] trocar assert por exceção ?
-                assert(0);
+              ) assert(0);
               
               idl_cr::CredentialReset credentialReset;
               credentialReset.login = conn->login()->id;
@@ -179,6 +170,7 @@ namespace openbus {
               any <<= credentialReset;
               CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
 
+              /* anexando CredentialReset a resposta para o cliente. */
               IOP::ServiceContext serviceContext;
               serviceContext.context_id = idl_cr::CredentialContextId;
               IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), o->get_buffer(), 0);
@@ -193,8 +185,8 @@ namespace openbus {
         IOP::ServiceContext_var sc = r->get_request_service_context(1234);
         IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
         CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
-        CORBA::Any_var lany = _cdrCodec->decode_value(
-          contextData, openbus::legacy::v1_05::_tc_Credential);
+        CORBA::Any_var lany = _cdrCodec->decode_value(contextData, 
+          openbus::legacy::v1_05::_tc_Credential);
         openbus::legacy::v1_05::Credential legacyCredential;
         if (lany >>= legacyCredential) {
           idl_ac::CallChain legacyChain;
