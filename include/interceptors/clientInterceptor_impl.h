@@ -2,7 +2,7 @@
 #define TECGRAF_CLIENTINTERCEPTOR_IMPL_H_
 
 #include <CORBA.h>
-#include <connection.h>
+#include "connection.h"
 #include "../manager.h"
 
 /* forward declarations */
@@ -30,12 +30,9 @@ namespace openbus {
       char* name() throw (CORBA::Exception) { return CORBA::string_dup("ClientInterceptor"); }
       void destroy() { }
       void setConnectionManager(ConnectionManager* m) { _manager = m; }
-      void resetCaches() { _profileSecretSession.clear(); }
+      void resetCaches() { _session.clear(); }
       Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
 
-      /* Flag que indica ao interceptador cliente se este deve verificar a existencia de uma  
-      ** credencial anexada a chamada remota em execucao
-      */
       bool allowRequestWithoutCredential;
     private:
       IOP::Codec* _cdrCodec;
@@ -48,7 +45,9 @@ namespace openbus {
         unsigned char* secret;
         CORBA::ULong ticket;
       };
-      std::map<std::string, SecretSession*> _profileSecretSession;
+      /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite 
+      ** uma comunicação com o objeto CORBA que está sendo requisitado. */
+      std::map<std::string, SecretSession*> _session;
     };
   }
 }

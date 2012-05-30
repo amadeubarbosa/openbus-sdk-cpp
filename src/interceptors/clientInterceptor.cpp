@@ -8,6 +8,16 @@
 namespace openbus {
   namespace interceptors {    
 
+    /* montando uma indentificador(chave) para esta requisição através de uma hash do profile 
+    ** da requisição. */
+    std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
+      idl::HashValue profileDataHash;
+      ::IOP::TaggedProfile::_profile_data_seq profile = r->effective_profile()->profile_data;
+      SHA256(profile.get_buffer(), profile.length(), profileDataHash);
+      std::string sprofileDataHash((const char*) profileDataHash, 32);
+      return sprofileDataHash;
+    }
+
     Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* ri){
       log_scope l(log.client_interceptor_logger(), info_level, 
         "ClientInterceptor::getCurrentConnection");
@@ -34,36 +44,38 @@ namespace openbus {
       : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _manager(0),
       _slotId_connectionAddr(slotId_connectionAddr), _slotId_joinedCallChain(slotId_joinedCallChain) 
     { 
-      log_scope l(log.client_interceptor_logger(), info_level, 
+      log_scope l(log.client_interceptor_logger(), info_level,
         "ClientInterceptor::ClientInterceptor");
     }
     
     ClientInterceptor::~ClientInterceptor() { }
     
-    void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* ri)
+    void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       throw (CORBA::Exception)
     {
-      const char* operation = ri->operation();
+      const char* operation = r->operation();
       log_scope l(log.client_interceptor_logger(), debug_level, "ClientInterceptor::send_request");
-      l.level_vlog(debug_level, "send_request: %s", operation);
-      if (!allowRequestWithoutCredential) {
-        Connection& conn = getCurrentConnection(ri);
+      l.level_vlog(debug_level, "operation: %s", operation);
 
+      /* esta chamada remota precisa ser interceptada? */
+      if (!allowRequestWithoutCredential) {
+        Connection& conn = getCurrentConnection(r);
         if (conn.login()) {
           CallerChain* callerChain = 0;
           IOP::ServiceContext serviceContext;
           serviceContext.context_id = idl_cr::CredentialContextId;
+
+          /* montando uma credencial com os dados(busid e login) da conexão. */
           idl_cr::CredentialData credential;
           credential.bus = CORBA::string_dup(conn.busid());
           credential.login = CORBA::string_dup(conn.login()->id);
           
-          idl::HashValue profileDataHash;
-          ::IOP::TaggedProfile::_profile_data_seq profile = ri->effective_profile()->profile_data;
-          SHA256(profile.get_buffer(), profile.length(), profileDataHash);
-          std::string sprofileDataHash((const char*) profileDataHash, 32);
+          /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
+          std::string sessionKey = getSessionKey(r);
         
-          if (_profileSecretSession.find(sprofileDataHash) != _profileSecretSession.end()) {
-            SecretSession* session = _profileSecretSession[sprofileDataHash];
+          if (_session.find(sessionKey) != _session.end()) {
+            /* recuperando uma sessão para esta requisição. */
+            SecretSession* session = _session[sessionKey];
             credential.session = session->id;
             session->ticket++;
             credential.ticket = session->ticket;
@@ -76,6 +88,7 @@ namespace openbus {
             memcpy(s+22, operation, strlen(operation));
             SHA256(s, slen, credential.hash);
             
+            //[todo]
             callerChain = conn.getJoinedChain();
             if (strcmp(conn.busid(), session->remoteid)) {
               // [todo] para ver quando usar o demo delegate
@@ -89,18 +102,24 @@ namespace openbus {
               else memset(credential.chain.signature, '\0', 256);
             }
           } else {
+            /* montando uma credencial com o propósito de requisitar o estabelecimento de uma 
+            ** nova sessão. */
             credential.ticket = 0;
             credential.session = 0;
             memset(credential.hash, '\0', 32);
             memset(credential.chain.signature, '\0', 256);
           }
+          
+          /* anexando a credencial a esta requisição. */
           CORBA::Any any;
           any <<= credential;
           CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
           IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), o->get_buffer(), 0);
           serviceContext.context_data = s;
-          ri->add_request_service_context(serviceContext, true);
+          r->add_request_service_context(serviceContext, true);
           
+          /* anexando uma credencial legacy a esta requisição. */
+          //[todo]
           IOP::ServiceContext legacyContext;
           legacyContext.context_id = 1234;
           legacy::v1_05::Credential legacyCredential;
@@ -114,28 +133,29 @@ namespace openbus {
           o = _cdrCodec->encode_value(lany);
           IOP::ServiceContext::_context_data_seq ls(o->length(), o->length(), o->get_buffer(), 0);
           legacyContext.context_data = ls;
-          ri->add_request_service_context(legacyContext, true);
+          r->add_request_service_context(legacyContext, true);
         } else throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
       }
     }
 
-    void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo* ri)
+    void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo* r)
       throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
     {
-      const char* operation = ri->operation();
+      const char* operation = r->operation();
       log_scope l(log.client_interceptor_logger(), debug_level, 
         "ClientInterceptor::receive_exception");
       l.level_vlog(debug_level, "receive_exception: %s", operation);
 
-      if (!strcmp(ri->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
-        Connection& conn = getCurrentConnection(ri);
-
-        CORBA::SystemException* ex = CORBA::SystemException::_decode(*ri->received_exception());
+      if (!strcmp(r->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
+        CORBA::SystemException* ex = CORBA::SystemException::_decode(*r->received_exception());
         if (ex->completed() == CORBA::COMPLETED_NO) {
+          Connection& conn = getCurrentConnection(r);
           if (ex->minor() == idl_ac::InvalidCredentialCode) {
-            l.level_vlog(debug_level, "receive_exception: creating credential session");
+            l.level_vlog(debug_level, "creating credential session");
             IOP::ServiceContext_var sctx;
-            if (sctx = ri->get_request_service_context(idl_cr::CredentialContextId)) {
+            if (sctx = r->get_request_service_context(idl_cr::CredentialContextId)) {
+              /* montando CredentialReset que foi enviado por quem está respondendo a um pedido de 
+              ** inicialização de uma sessão. */
               CORBA::OctetSeq o(
                 sctx->context_data.length(), 
                 sctx->context_data.length(), 
@@ -145,7 +165,8 @@ namespace openbus {
               idl_cr::CredentialReset credentialReset;
               any >>= credentialReset;
             
-              unsigned char* secret;
+              //?
+              unsigned char* secret = 0;
               size_t secretLen;
               EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn.prvKey(), 0);
               if (!(ctx && 
@@ -156,34 +177,32 @@ namespace openbus {
                     &secretLen,
                     credentialReset.challenge,
                     256) > 0))
-              )
-                //[doubt] trocar assert por exceção ?
-                assert(0);
+              ) assert(0);
       
               secret = (unsigned char*) OPENSSL_malloc(secretLen);
-              assert(secret != 0);
+              assert(secret);
+              
               if (EVP_PKEY_decrypt(
                     ctx,
                     secret,
                     &secretLen,
                     credentialReset.challenge,
                     256) <= 0
-              )
-                //[doubt] trocar assert por exceção ?
-                assert(0);
+              ) assert(0);
               secret[secretLen] = '\0';
 
-              idl::HashValue profileDataHash;
-              IOP::TaggedProfile::_profile_data_seq profile = ri->effective_profile()->profile_data;
-              SHA256(profile.get_buffer(), profile.length(), profileDataHash);
-              std::string sprofileDataHash((const char*) profileDataHash, 32);
+              /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
+              std::string sessionKey = getSessionKey(r);
+              
+              /* criando uma sessão. */
               SecretSession* session = new SecretSession();
               session->id = credentialReset.session;
               session->remoteid  = CORBA::string_dup(credentialReset.login);
               session->secret = secret;
               session->ticket = 0;
-              _profileSecretSession[sprofileDataHash] = session;
-              throw PortableInterceptor::ForwardRequest(ri->target(), false);
+              _session[sessionKey] = session;
+              /* retransmitindo a requisição após ter estabelecido uma sessão. */
+              throw PortableInterceptor::ForwardRequest(r->target(), false);
             }
           } else if (ex->minor() == idl_ac::NoCredentialCode) {
             throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);

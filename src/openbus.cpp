@@ -57,8 +57,8 @@ namespace openbus {
       PortableServer::POAManager_var poa_manager = poa->the_POAManager();
       l.level_log(debug_level, "Ativando RootPOA");
       poa_manager->activate();
-      orbInitializer->getClientInterceptor()->setConnectionManager(manager);
-      orbInitializer->getServerInterceptor()->setConnectionManager(manager);
+      orbInitializer->clientInterceptor()->setConnectionManager(manager);
+      orbInitializer->serverInterceptor()->setConnectionManager(manager);
       singleORB = orb;
     }
     l.log("Retornando ORB");

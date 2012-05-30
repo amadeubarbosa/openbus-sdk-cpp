@@ -97,6 +97,7 @@ USE_NODEPEND=Yes
 SRC=src/openbus.cpp \
     src/manager.cpp \
     src/connection.cpp \
+    src/connection_impl.cpp \
     src/interceptors/orbInitializer.cpp \
     src/interceptors/clientInterceptor.cpp \
     src/interceptors/serverInterceptor.cpp \

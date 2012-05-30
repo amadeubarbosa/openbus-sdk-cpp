@@ -23,7 +23,10 @@ namespace openbus {
         _slotId_legacyCallChain(slotId_legacyCallChain), _slotId_busid(slotId_busid), 
         _cdrCodec(cdr_codec), 
         _manager(0) 
-    { }
+    {
+      log_scope l(log.server_interceptor_logger(), debug_level,
+        "ServerInterceptor::ServerInterceptor");
+    }
     
     ServerInterceptor::~ServerInterceptor() { }
     
@@ -32,29 +35,23 @@ namespace openbus {
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
     {
       const char* operation = r->operation();
-      #ifdef OPENBUS_SDK_MULTITHREAD
       log_scope l(log.server_interceptor_logger(), debug_level,
         "ServerInterceptor::receive_request_service_contexts");
-      l.level_vlog(debug_level,"[%p] receive_request_service_contexts: %s",
-        (void*) MICOMT::Thread::self(), operation);
-      #else
-      l.level_vlog(debug_level, "receive_request_service_contexts: %s", operation);
-      #endif
+      l.level_vlog(debug_level, "operation: %s", operation);
       
-      /* [doubt] o que eu devo fazer se eu não conseguir extrair a credencial neste ponto em
-      ** que não tenho conexão?
-      */
+      /* extraindo a credencial desta requisição. */
       IOP::ServiceContext_var sc = r->get_request_service_context(idl_cr::CredentialContextId);
       IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
       CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
       CORBA::Any_var any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
       idl_cr::CredentialData credential;
       if (any >>= credential) {
-        Connection* conn;
-        conn = _manager->getDispatcher(credential.bus);
+        Connection* conn = _manager->getDispatcher(credential.bus);
         if (!conn) conn = _manager->getDefaultConnection();
         if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
 
+        /* disponibilizando a conexão para o usuário (getRequester()) e configurando a conexão 
+        ** para ser utilizada por esta thread até o término do tratamento desta requisição. */
         size_t size = sizeof(Connection*);
         unsigned char buf[size];
         memcpy(buf, &conn, size);
@@ -66,9 +63,12 @@ namespace openbus {
         
         if (conn->login()) {
           Login* caller;
+          /* consulta ao cache de logins para saber se este login é valido. */
           try {
             caller = conn->_loginCache->validateLogin(credential.login);
           } catch(CORBA::SystemException &e) {
+            /* não há uma entrada válida no cache e o cache nõo consegui validar o login 
+            ** com o barramento. */
             throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
           }
           if (caller) {

@@ -2,8 +2,8 @@
 #define TECGRAF_SERVERINTERCEPTOR_IMPL_H_
 
 #include <CORBA.h>
-#include <connection.h>
-#include <manager.h>
+#include "connection.h"
+#include "manager.h"
 extern "C" {
   #include <util/tickets.h>
 }

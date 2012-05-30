@@ -7,14 +7,14 @@
 #include <string>
 #include <openssl/evp.h>
 
-#include <interceptors/orbInitializer_impl.h>
-#include <stubs/scs.h>
-#include <stubs/core.h>
-#include <stubs/credential.h>
-#include <stubs/access_control.h>
-#include <stubs/offer_registry.h>
+#include "interceptors/orbInitializer_impl.h"
+#include "stubs/scs.h"
+#include "stubs/core.h"
+#include "stubs/credential.h"
+#include "stubs/access_control.h"
+#include "stubs/offer_registry.h"
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <util/mutex.h>
+#include "util/mutex.h"
 #endif
 
 /* forward declarations */

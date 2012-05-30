@@ -16,8 +16,8 @@ namespace openbus {
       ~ORBInitializer();
       void pre_init(PortableInterceptor::ORBInitInfo*);
       void post_init(PortableInterceptor::ORBInitInfo*) { }
-      ClientInterceptor* getClientInterceptor() const { return clientInterceptor.get(); }
-      ServerInterceptor* getServerInterceptor() const { return serverInterceptor.get(); }
+      ClientInterceptor* clientInterceptor() const { return _clientInterceptor.get(); }
+      ServerInterceptor* serverInterceptor() const { return _serverInterceptor.get(); }
       IOP::Codec* codec() const { return _codec; }
       PortableInterceptor::SlotId slotId_connectionAddr() const { return _slotId_connectionAddr; }      
       PortableInterceptor::SlotId slotId_joinedCallChain() const { return _slotId_joinedCallChain; }
@@ -25,8 +25,8 @@ namespace openbus {
       PortableInterceptor::SlotId slotId_legacyCallChain() const { return _slotId_legacyCallChain; }
       PortableInterceptor::SlotId slotId_busid() const { return _slotId_busid; }
     private:
-      std::auto_ptr<ClientInterceptor> clientInterceptor; 
-      std::auto_ptr<ServerInterceptor> serverInterceptor;
+      std::auto_ptr<ClientInterceptor> _clientInterceptor; 
+      std::auto_ptr<ServerInterceptor> _serverInterceptor;
       IOP::Codec_var _codec;
       PortableInterceptor::SlotId _slotId_connectionAddr;
       PortableInterceptor::SlotId _slotId_joinedCallChain;
