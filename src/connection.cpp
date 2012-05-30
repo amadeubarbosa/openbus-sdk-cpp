@@ -39,9 +39,11 @@ namespace openbus {
     _loginInfo.reset();
     buskeyOctetSeq = _access_control->buskey();
     _clientInterceptor->allowRequestWithoutCredential = false;
-    //[doubt] não seria melhor trocar o assert por uma estrutura condicional?
+
     const unsigned char* buf = buskeyOctetSeq->get_buffer();
-    assert(_busKey = d2i_PUBKEY(0, &buf, buskeyOctetSeq->length()));
+    _busKey = 0;
+    _busKey = d2i_PUBKEY(0, &buf, buskeyOctetSeq->length());
+    assert(_busKey);
 
     _prvKey = 0;
     EVP_PKEY_CTX* ctx;
@@ -49,30 +51,22 @@ namespace openbus {
       (EVP_PKEY_keygen_init(ctx) > 0) &&
       (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 2048) > 0) &&
       (EVP_PKEY_keygen(ctx, &_prvKey) > 0))
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
-    
+    ) assert(0);
+
     _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
   }
 
   Connection::~Connection() { logout(); }
 
   void Connection::loginByPassword(const char* entity, const char* password)
-    throw (
-      AlreadyLogged, 
-      idl_ac::AccessDenied, 
-      idl_ac::WrongEncoding,
-      idl::services::ServiceFailure,
-      CORBA::Exception)
+    throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception) 
   {
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
     #endif
-    if (login())
-      throw AlreadyLogged();
+    if (login()) throw AlreadyLoggedIn();
     _clientInterceptor->allowRequestWithoutCredential = true;
-    idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
+    idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo =
       new idl_ac::LoginAuthenticationInfo;
     idl::OctetSeq_var passwordOctetSeq = new idl::OctetSeq(
       static_cast<CORBA::ULong> (strlen(password)),
@@ -81,18 +75,15 @@ namespace openbus {
     loginAuthenticationInfo->data = passwordOctetSeq;
     unsigned char* encodedPrvKey = 0;
     size_t len = i2d_PUBKEY(_prvKey, &encodedPrvKey);
-    if (len < 0)
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    assert(len > 0);
     SHA256(encodedPrvKey, len, loginAuthenticationInfo->hash);
 
     CORBA::Any any;
     any <<= *loginAuthenticationInfo;
-    CORBA::OctetSeq_var encodedLoginAuthenticationInfo = 
-      _orbInitializer->codec()->encode_value(any);
+    CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
     EVP_PKEY_CTX* ctx;
-    unsigned char* encrypted;
+    unsigned char* encrypted = 0;
     size_t encryptedLen;
     if (!((ctx = EVP_PKEY_CTX_new(_busKey, 0)) &&
         (EVP_PKEY_encrypt_init(ctx) > 0) &&
@@ -102,20 +93,18 @@ namespace openbus {
           &encryptedLen,
           encodedLoginAuthenticationInfo->get_buffer(),
           encodedLoginAuthenticationInfo->length()) > 0))
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
 
-    assert(encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen));
+    encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen);
+    assert(encrypted);
+    
     if (EVP_PKEY_encrypt(
       ctx, 
       encrypted, 
       &encryptedLen,
       encodedLoginAuthenticationInfo->get_buffer(),
       encodedLoginAuthenticationInfo->length()) <= 0
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
 
     idl::EncryptedBlock encryptedBlock;
     memcpy(encryptedBlock, encrypted, 256);
@@ -142,37 +131,31 @@ namespace openbus {
     _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
     _renewLogin->start();
     #else
-    _renewLogin.reset(
-      new RenewLogin(this, _manager, validityTime));  
+    _renewLogin.reset(new RenewLogin(this, _manager, validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
     #endif
   }
 
   void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
-    throw (
-      CorruptedPrivateKey, 
-      CorruptedBusCertificate,
-      WrongPrivateKey,
-      AlreadyLogged, 
-      idl_ac::MissingCertificate, 
-      idl_ac::AccessDenied, 
-      idl_ac::WrongEncoding,
-      idl::services::ServiceFailure,
-      CORBA::Exception)
+    throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate,
+    idl::services::ServiceFailure, CORBA::Exception)
   {
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
     #endif
-    if (login()) throw AlreadyLogged();
+    if (login()) throw AlreadyLoggedIn();
     idl::EncryptedBlock challenge;
     _clientInterceptor->allowRequestWithoutCredential = true;
+    // throw (idl_ac::MissingCertificate)
     idl_ac::LoginProcess_var loginProcess = _access_control->startLoginByCertificate(
       entity, 
       challenge);
     _clientInterceptor->allowRequestWithoutCredential = false;
 
+    // decifrar o desafio usando a chave privada do usuário
+    // [todo] WrongPrivateKey e CorruptedPrivateKey
     EVP_PKEY_CTX* ctx;
-    unsigned char* secret;
+    unsigned char* secret = 0;
     size_t secretLen;
     if (!((ctx = EVP_PKEY_CTX_new(privateKey, 0)) &&
         (EVP_PKEY_decrypt_init(ctx) > 0) &&
@@ -182,21 +165,21 @@ namespace openbus {
           &secretLen,
           (unsigned char*) challenge,
           256) > 0))
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
 
-    assert(secret = (unsigned char*) OPENSSL_malloc(secretLen));
+    secret = (unsigned char*) OPENSSL_malloc(secretLen);
+    assert(secret);
+    
     if (EVP_PKEY_decrypt(
       ctx,
       secret,
       &secretLen,
       challenge,
       256) <= 0
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
+    
     secret[secretLen] = '\0';
+    
     idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
       new idl_ac::LoginAuthenticationInfo;
     idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
@@ -208,18 +191,16 @@ namespace openbus {
     EVP_PKEY_CTX_free(ctx);
     unsigned char* encodedPrvKey = 0;
     size_t len = i2d_PUBKEY(_prvKey, &encodedPrvKey);
-    if (len < 0)
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    assert(len > 0);
     SHA256(encodedPrvKey, len, loginAuthenticationInfo->hash);
 
     CORBA::Any any;
     any <<= *loginAuthenticationInfo;
-    CORBA::OctetSeq_var encodedLoginAuthenticationInfo = 
-      _orbInitializer->codec()->encode_value(any);
+    CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
+    // cifrar encodedLoginAuthenticationInfo utilizando a chave publica do barramento
     // EVP_PKEY_CTX* ctx;
-    unsigned char* encrypted;
+    unsigned char* encrypted = 0;
     size_t encryptedLen;
     if (!((ctx = EVP_PKEY_CTX_new(_busKey, 0)) &&
         (EVP_PKEY_encrypt_init(ctx) > 0) &&
@@ -229,20 +210,18 @@ namespace openbus {
           &encryptedLen,
           encodedLoginAuthenticationInfo->get_buffer(),
           encodedLoginAuthenticationInfo->length()) > 0))
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
 
-    assert(encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen));
+    encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen);
+    assert(encrypted);
+    
     if (EVP_PKEY_encrypt(
       ctx, 
       encrypted, 
       &encryptedLen,
       encodedLoginAuthenticationInfo->get_buffer(),
       encodedLoginAuthenticationInfo->length()) <= 0
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
 
     idl::EncryptedBlock encryptedBlock;
     memcpy(encryptedBlock, encrypted, 256);
@@ -257,6 +236,7 @@ namespace openbus {
 
     idl_ac::ValidityTime validityTime;
     _clientInterceptor->allowRequestWithoutCredential = true;
+    
     idl_ac::LoginInfo* loginInfo = loginProcess->login(
       prvkeyOctetSeq,
       encryptedBlock,
@@ -268,23 +248,14 @@ namespace openbus {
     _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
     _renewLogin->start();
   #else
-    _renewLogin.reset(
-      new RenewLogin(this, _manager, validityTime));  
+    _renewLogin.reset(new RenewLogin(this, _manager, validityTime));  
     _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   }
 
   void Connection::loginByCertificate(const char* entity, const char* privateKeyFilename)
-    throw (
-      CorruptedPrivateKey, 
-      CorruptedBusCertificate,
-      WrongPrivateKey,
-      AlreadyLogged, 
-      idl_ac::MissingCertificate, 
-      idl_ac::AccessDenied, 
-      idl_ac::WrongEncoding,
-      idl::services::ServiceFailure,
-      CORBA::Exception)
+    throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
+    idl::services::ServiceFailure, CORBA::Exception)
   {
     FILE* privateKeyFile = fopen(privateKeyFilename, "r");
     if (!privateKeyFile) throw CorruptedPrivateKey();
@@ -295,7 +266,7 @@ namespace openbus {
   }
 
   std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn() 
-    throw (idl::services::ServiceFailure)
+    throw (CORBA::Exception)
   {
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
@@ -304,7 +275,7 @@ namespace openbus {
     idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
 
     EVP_PKEY_CTX* ctx;
-    unsigned char* secret;
+    unsigned char* secret = 0;
     size_t secretLen;
     if (!((ctx = EVP_PKEY_CTX_new(_prvKey, 0)) &&
       (EVP_PKEY_decrypt_init(ctx) > 0) &&
@@ -314,37 +285,30 @@ namespace openbus {
         &secretLen,
         challenge,
         256) > 0))
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
 
-    assert(secret = (unsigned char*) OPENSSL_malloc(secretLen));
+    secret = (unsigned char*) OPENSSL_malloc(secretLen);
+    assert(secret);
     if (EVP_PKEY_decrypt(
       ctx,
       secret,
       &secretLen,
       challenge,
       256) <= 0
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
     secret[secretLen] = '\0';
-    
-    //[todo] CorruptedPrivateKey
     return std::make_pair(loginProcess, secret);
   }
     
-  void Connection::loginBySingleSignOn(
-    idl_ac::LoginProcess* loginProcess, 
-    unsigned char* secret)
-  throw (idl::services::ServiceFailure)
+  void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigned char* secret)
+		throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
+		CORBA::Exception)
   {
     #ifdef OPENBUS_SDK_MULTITHREAD
     Mutex m(&_mutex);
     #endif
-    if (login()) throw AlreadyLogged();
-    idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo = 
-      new idl_ac::LoginAuthenticationInfo;
+    if (login()) throw AlreadyLoggedIn();
+    idl_ac::LoginAuthenticationInfo_var loginAuthenticationInfo=new idl_ac::LoginAuthenticationInfo;
     idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
       static_cast<CORBA::ULong> (strlen((const char*) secret)),
       static_cast<CORBA::ULong> (strlen((const char*) secret)),
@@ -352,9 +316,7 @@ namespace openbus {
     loginAuthenticationInfo->data = secretOctetSeq;
     unsigned char* encodedPrvKey = 0;
     size_t len = i2d_PUBKEY(_prvKey, &encodedPrvKey);
-    if (len < 0)
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    assert(len > 0);
     SHA256(encodedPrvKey, len, loginAuthenticationInfo->hash);
 
     CORBA::Any any;
@@ -362,9 +324,10 @@ namespace openbus {
     CORBA::OctetSeq_var encodedLoginAuthenticationInfo = 
       _orbInitializer->codec()->encode_value(any);
 
+    // cifrar encodedLoginAuthenticationInfo utilizando a chave publica do barramento
     // EVP_PKEY_CTX* ctx;
     EVP_PKEY_CTX* ctx;
-    unsigned char* encrypted;
+    unsigned char* encrypted = 0;
     size_t encryptedLen;
     if (!((ctx = EVP_PKEY_CTX_new(_busKey, 0)) &&
       (EVP_PKEY_encrypt_init(ctx) > 0) &&
@@ -374,20 +337,17 @@ namespace openbus {
         &encryptedLen,
         encodedLoginAuthenticationInfo->get_buffer(),
         encodedLoginAuthenticationInfo->length()) > 0))
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
 
-    assert(encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen));
+    encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen);
+    assert(encrypted);
     if (EVP_PKEY_encrypt(
       ctx, 
       encrypted, 
       &encryptedLen,
       encodedLoginAuthenticationInfo->get_buffer(),
       encodedLoginAuthenticationInfo->length()) <= 0
-    )
-      //[doubt] trocar assert por exceção ?
-      assert(0);
+    ) assert(0);
 
     idl::EncryptedBlock encryptedBlock;
     memcpy(encryptedBlock, encrypted, 256);
@@ -452,8 +412,39 @@ namespace openbus {
 
   bool Connection::logout() { return _logout(false); }
   
+  CallerChain* Connection::getCallerChain() {
+    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+    assert(!CORBA::is_nil(init_ref));
+    PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+    CORBA::Any* signedCallChainAny = piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
+    CORBA::Any* busidAny = piCurrent->get_slot(_orbInitializer->slotId_busid());
+    const char* busid;
+    CallerChain* callerChain = 0;
+    idl_ac::CallChain callChain;
+    if (*busidAny >>= busid) {
+      idl_cr::SignedCallChain signedCallChain;
+      if (*signedCallChainAny >>= signedCallChain) {
+        CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
+          signedCallChain.encoded,
+          idl_ac::_tc_CallChain);
+        *callChainAny >>= callChain;
+        callerChain = new CallerChain();
+        callerChain->_callers = callChain.callers;
+        callerChain->_busid = CORBA::string_dup(busid);
+        callerChain->signedCallChain(signedCallChain);
+      } else return 0;
+    } else {
+      CORBA::Any* legacyChainAny = piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
+      if (*legacyChainAny >>= callChain) {
+        callerChain = new CallerChain();
+        callerChain->_callers = callChain.callers;
+        callerChain->_busid = 0;
+      } else return 0;
+    }
+    return callerChain;
+  }
+
   void Connection::joinChain(CallerChain* chain) {
-    // [doubt] concorrência?
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -463,7 +454,6 @@ namespace openbus {
   }
 
   void Connection::exitChain() {
-    // [doubt] concorrência?
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -472,7 +462,6 @@ namespace openbus {
   }
 
   CallerChain* Connection::getJoinedChain() {
-    // [doubt] concorrência?
     CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -485,43 +474,13 @@ namespace openbus {
         signedCallChain.encoded,
         idl_ac::_tc_CallChain);
       idl_ac::CallChain callChain;
-      callChainAny >>= callChain;
-      c->signedCallChain(signedCallChain);
-      c->busid = callChain.target;
-      c->callers = callChain.callers;
-      return c;
+      if (callChainAny >>= callChain) {
+        c->signedCallChain(signedCallChain);
+        c->_busid = callChain.target;
+        c->_callers = callChain.callers;
+        return c;
+      } else return 0;
     } else return 0;
-  }
-
-  CallerChain* Connection::getCallerChain() {
-    // [doubt] concorrência?
-    CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-    assert(!CORBA::is_nil(init_ref));
-    PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-    CORBA::Any* signedCallChainAny = piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
-    CORBA::Any* busidAny = piCurrent->get_slot(_orbInitializer->slotId_busid());
-    const char* busid;
-    CallerChain* callerChain = 0;
-    idl_ac::CallChain callChain;
-    if (*busidAny >>= busid) {
-      idl_cr::SignedCallChain signedCallChain;
-      *signedCallChainAny >>= signedCallChain;
-      CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
-        signedCallChain.encoded,
-        idl_ac::_tc_CallChain);
-      *callChainAny >>= callChain;
-      callerChain = new CallerChain();
-      callerChain->callers = callChain.callers;
-      callerChain->busid = CORBA::string_dup(busid);
-      callerChain->signedCallChain(signedCallChain);
-    } else {
-      CORBA::Any* legacyChainAny = piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
-      *legacyChainAny >>= callChain;
-      callerChain = new CallerChain();
-      callerChain->callers = callChain.callers;
-      callerChain->busid = 0;
-    }
-    return callerChain;
   }
 
   Login* LoginCache::validateLogin(char* id) {
@@ -568,10 +527,7 @@ namespace openbus {
   }
 
   #ifdef OPENBUS_SDK_MULTITHREAD
-  RenewLogin::RenewLogin(
-    Connection* c, 
-    ConnectionManager* m, 
-    idl_ac::ValidityTime t)
+  RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime t)
     : _conn(c), _manager(m), _validityTime(t), _sigINT(false) { }
 
   RenewLogin::~RenewLogin() { }

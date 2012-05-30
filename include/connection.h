@@ -1,18 +1,18 @@
 #ifndef TECGRAF_CONNECTION_H_
 #define TECGRAF_CONNECTION_H_
 
+#include <CORBA.h>
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <CORBA.h>
 #include <openssl/evp.h>
 
-#include "interceptors/orbInitializer_impl.h"
-#include "stubs/scs.h"
-#include "stubs/core.h"
-#include "stubs/credential.h"
-#include "stubs/access_control.h"
-#include "stubs/offer_registry.h"
+#include <interceptors/orbInitializer_impl.h>
+#include <stubs/scs.h>
+#include <stubs/core.h>
+#include <stubs/credential.h>
+#include <stubs/access_control.h>
+#include <stubs/offer_registry.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <util/mutex.h>
 #endif
@@ -38,95 +38,72 @@ namespace openbus {
   namespace idl_offerregistry = idl_or;
   namespace idl_cr = tecgraf::openbus::core::v2_00::credential;
   namespace idl_credential = idl_cr;
-  
+
   class Connection {
   public:
-    typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const idl_ac::LoginInfo* login);
+    typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const idl_ac::LoginInfo*);
     
-    /** exceptions */
-    //[todo] revisar
     struct Exception {
       virtual const char* name() const { return "Exception"; }
     };
       
-    struct AlreadyLogged : public Exception {
-      const char* name() const { return "AlreadyLogged"; }
+    struct AccessDenied : public Exception {
+      const char* name() const { return "AccessDenied"; }
+    };
+
+    struct AlreadyLoggedIn : public Exception {
+      const char* name() const { return "AlreadyLoggedIn"; }
     };
 
     struct CorruptedPrivateKey : public Exception {
       const char* name() const { return "CorruptedPrivateKey"; }
     };
 
-    struct CorruptedBusCertificate : public Exception {
-      const char* name() const { return "CorruptedBusCertificate"; }
-    };
-
     struct WrongPrivateKey : public Exception {
       const char* name() const { return "WrongPrivateKey"; }
     };
+
+    struct WrongSecret : public Exception {
+      const char* name() const { return "WrongSecret"; }
+    };
     
-    struct InvalidRemoteCode : public Exception {
-      const char* name() const { return "InvalidRemoteCode"; }
+    struct InvalidLoginProcess : public Exception {
+      const char* name() const { return "InvalidLoginProcess"; }
     };
 
-    ~Connection();
-    
     void loginByPassword(const char* entity, const char* password)
-      throw (
-        AlreadyLogged, 
-        idl_ac::AccessDenied, 
-        idl_ac::WrongEncoding,
-        idl::services::ServiceFailure,
-        CORBA::Exception);
+      throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception);
 
     void loginByCertificate(const char* entity, EVP_PKEY* privateKey)
-      throw (
-        CorruptedPrivateKey, 
-        CorruptedBusCertificate,
-        WrongPrivateKey,
-        AlreadyLogged, 
-        idl_ac::MissingCertificate, 
-        idl_ac::AccessDenied, 
-        idl_ac::WrongEncoding,
-        idl::services::ServiceFailure,
-        CORBA::Exception);
+      throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
+      idl::services::ServiceFailure, CORBA::Exception);
 
     void loginByCertificate(const char* entity, const char* privateKeyFilename)
-      throw (
-        CorruptedPrivateKey, 
-        CorruptedBusCertificate,
-        WrongPrivateKey,
-        AlreadyLogged, 
-        idl_ac::MissingCertificate, 
-        idl_ac::AccessDenied, 
-        idl_ac::WrongEncoding,
-        idl::services::ServiceFailure,
-        CORBA::Exception);
+      throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
+      idl::services::ServiceFailure, CORBA::Exception);
     
-    std::pair <idl_ac::LoginProcess*, unsigned char*> startSingleSignOn() 
-      throw (idl::services::ServiceFailure);
+    std::pair <idl_ac::LoginProcess*, unsigned char*> startSingleSignOn() throw (CORBA::Exception);
       
     void loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigned char* secret)
-      throw (idl::services::ServiceFailure);
-      
-    void onInvalidLoginCallback(InvalidLoginCallback_ptr p) { _onInvalidLogin = p; }
-    InvalidLoginCallback_ptr onInvalidLoginCallback() { return _onInvalidLogin; }      
+  		throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
+  		CORBA::Exception);
+          
     bool logout();
     CallerChain* getCallerChain();
     void joinChain(CallerChain* chain);
     void exitChain();
     CallerChain* getJoinedChain();
-    const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
-    const char* busid() const { return _busid; }
+    
+    void onInvalidLogin(InvalidLoginCallback_ptr p) { _onInvalidLogin = p; }
+    InvalidLoginCallback_ptr onInvalidLogin() const { return _onInvalidLogin; }      
     const idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
-    CORBA::ORB* orb() const { return _orb; }
+    const char* busid() const { return _busid; }
+    const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
+    ~Connection();
   private:
-    Connection(
-      const std::string host,
-      const unsigned int port,
-      CORBA::ORB*,
-      const interceptors::ORBInitializer*,
-      ConnectionManager*) throw(CORBA::Exception);
+    Connection(const std::string host, const unsigned int port, CORBA::ORB*, 
+      const interceptors::ORBInitializer*, ConnectionManager*) throw(CORBA::Exception);
+      
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
     EVP_PKEY* prvKey() const { return _prvKey; }
@@ -134,6 +111,7 @@ namespace openbus {
     bool _logout(bool local);
     std::string _host;
     unsigned int _port;
+    CORBA::ORB* orb() const { return _orb; }
     CORBA::ORB* _orb;
     const interceptors::ORBInitializer* _orbInitializer;
     interceptors::ClientInterceptor* _clientInterceptor;
@@ -162,14 +140,17 @@ namespace openbus {
   };
   
   struct CallerChain {
-    char* busid;
-    idl_ac::LoginInfoSeq callers;
+    char* busid() const { return _busid; }
+    idl_ac::LoginInfoSeq callers() const { return _callers; }
+    CallerChain() : _busid(0) { _callers.length(0); }
     const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
-    CallerChain() : busid(0) { callers.length(0); }
   private:
+    char* _busid;
+    idl_ac::LoginInfoSeq _callers;
     idl_cr::SignedCallChain _signedCallChain;
     void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
     friend class Connection;
+    friend class openbus::interceptors::ClientInterceptor;
   };
 }
 

@@ -11,7 +11,8 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::hello::IHello {
   void sayHello() throw (CORBA::SystemException) {
     openbus::CallerChain* chain = _conn->getCallerChain();
     if (chain) 
-      std::cout << "Hello from " << chain->callers[0].entity << "@" << chain->busid << std::endl;
+      std::cout << "Hello from " 
+      << (chain->callers())[0].entity << "@" << chain->busid() << std::endl;
     else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
   }
 private:

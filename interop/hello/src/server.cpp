@@ -15,7 +15,7 @@ bool onInvalidLogin(const openbus::Connection* conn, const openbus::idl_ac::Logi
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::Hello {
   HelloImpl(openbus::Connection* c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
-    const char* caller = _conn->getCallerChain()->callers[0].entity;
+    const char* caller = _conn->getCallerChain()->callers()[0].entity;
     std::cout << "Hello from '" << caller << "'." << std::endl;
   }
 private:
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     manager->setDefaultConnection(conn.get());
-    conn->onInvalidLoginCallback(&onInvalidLogin);
+    conn->onInvalidLogin(&onInvalidLogin);
     #ifdef OPENBUS_SDK_MULTITHREAD
     RunThread* runThread = new RunThread(manager);
     runThread->start();

@@ -100,8 +100,8 @@ namespace openbus {
           legacy::v1_05::Credential legacyCredential;
           legacyCredential.identifier = conn.login()->id;
           legacyCredential.owner = conn.login()->entity;
-          if (callerChain && (callerChain->callers.length() > 1))
-            legacyCredential.delegate = CORBA::string_dup(callerChain->callers[0].entity);
+          if (callerChain && (callerChain->_callers.length() > 1))
+            legacyCredential.delegate = CORBA::string_dup(callerChain->_callers[0].entity);
           else legacyCredential.delegate = "";
           CORBA::Any lany;
           lany <<= legacyCredential;
@@ -183,8 +183,7 @@ namespace openbus {
             throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
           } else if (ex->minor() == idl_ac::InvalidLoginCode) {
             //[todo] tratar valor de retorno
-            if (conn.onInvalidLoginCallback())
-              (conn.onInvalidLoginCallback())(&conn, conn.login());
+            if (conn.onInvalidLogin()) (conn.onInvalidLogin())(&conn, conn.login());
             conn._logout(true);
           }
         }
