@@ -102,6 +102,7 @@ SRC=src/openbus.cpp \
     src/interceptors/clientInterceptor.cpp \
     src/interceptors/serverInterceptor.cpp \
     src/util/tickets.c \
+    src/util/openssl.c \
     stubs/core.cc \
     stubs/scs.cc \
     stubs/credential.cc \

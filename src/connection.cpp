@@ -1,61 +1,14 @@
 #include <connection.h>
 #include <connection_impl.h>
+#include <util/openssl.h>
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
 #include <ctime>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
-#include <openssl/sha.h>
 #include <log.h>
 
 namespace openbus {
   
-EVP_PKEY* byteSeq2EVPPkey(const unsigned char* buf, size_t len) {
-  EVP_PKEY* key = 0;
-  key = d2i_PUBKEY(0, &buf, len);
-  assert(key);
-  return key;
-}
-
-unsigned char* EVPPkey2byteSeq(EVP_PKEY* key, size_t& len) {
-  unsigned char* buf = 0;
-  len = i2d_PUBKEY(key, &buf);
-  assert(len > 0);
-  return buf;
-}
-
-unsigned char* encrypt(EVP_PKEY* key, const unsigned char* buf, size_t l) {
-  EVP_PKEY_CTX* ctx;
-  unsigned char* encrypted = 0;
-  size_t encryptedLen;
-  if (!((ctx = EVP_PKEY_CTX_new(key, 0)) && (EVP_PKEY_encrypt_init(ctx) > 0) 
-     &&(EVP_PKEY_encrypt(ctx, 0, &encryptedLen, buf, l) > 0))) assert(0);
-
-  encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen);
-  assert(encrypted);
-  
-  if (EVP_PKEY_encrypt(ctx, encrypted, &encryptedLen, buf, l) <= 0) assert(0);
-  EVP_PKEY_CTX_free(ctx);
-  return encrypted;
-}
-
-unsigned char* decrypt(EVP_PKEY* key, const unsigned char* buf, size_t l) {
-  EVP_PKEY_CTX* ctx;
-  unsigned char* secret = 0;
-  size_t secretLen;
-  if (!((ctx = EVP_PKEY_CTX_new(key, 0)) && (EVP_PKEY_decrypt_init(ctx) > 0)
-     &&(EVP_PKEY_decrypt(ctx, 0, &secretLen, buf, l) > 0))) assert(0);
-
-  secret = (unsigned char*) OPENSSL_malloc(secretLen);
-  assert(secret);
-
-  if (EVP_PKEY_decrypt(ctx, secret, &secretLen, buf, l) <= 0) assert(0);
-  secret[secretLen] = '\0';
-  EVP_PKEY_CTX_free(ctx);
-  return secret;
-}
-
 Connection::Connection(
   const std::string h,
   const unsigned int p,
@@ -89,7 +42,7 @@ Connection::Connection(
   _clientInterceptor->allowRequestWithoutCredential = false;
 
   /* armazenando a chave pública do barramento. */
-  _busKey = byteSeq2EVPPkey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
+  _busKey = openssl::byteSeq2EVPPkey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
 
   /* criando um par de chaves para esta conexão. */
   _key = 0;
@@ -124,9 +77,9 @@ void Connection::loginByPassword(const char* entity, const char* password)
     (CORBA::Octet*) CORBA::string_dup(password));
   loginAuthenticationInfo.data = passwordOctetSeq;
   
-  /* representação da minha chave em um cadeia de bytes. */
+  /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  unsigned char* bufKey = EVPPkey2byteSeq(_key, len);
+  unsigned char* bufKey = openssl::EVPPkey2byteSeq(_key, len);
 
   /* criando uma hash da minha chave. */
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
@@ -137,7 +90,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);
@@ -178,7 +131,7 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
 
   /* decifrar o desafio usando a chave privada do usuário. */
   // [todo] WrongPrivateKey e CorruptedPrivateKey
-  unsigned char* secret = decrypt(privateKey, (unsigned char*) challenge, 256);
+  unsigned char* secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 256);
   
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
 
@@ -189,9 +142,9 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   loginAuthenticationInfo.data = secretOctetSeq;
   OPENSSL_free(secret);
 
-  /* representação da minha chave em um cadeia de bytes. */
+  /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  unsigned char* bufKey = EVPPkey2byteSeq(_key, len);
+  unsigned char* bufKey = openssl::EVPPkey2byteSeq(_key, len);
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
 
   CORBA::Any any;
@@ -199,7 +152,7 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);
@@ -246,7 +199,7 @@ std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn(
   unsigned char* challenge = new unsigned char[256];
   idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
 
-  unsigned char* secret = decrypt(_key, (unsigned char*) challenge, 256);
+  unsigned char* secret = openssl::decrypt(_key, (unsigned char*) challenge, 256);
   return std::make_pair(loginProcess, secret);
 }
   
@@ -266,9 +219,9 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigne
     (CORBA::Octet*) CORBA::string_dup((const char*) secret));
   loginAuthenticationInfo.data = secretOctetSeq;
   
-  /* representação da minha chave em um cadeia de bytes. */
+  /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  unsigned char* bufKey = EVPPkey2byteSeq(_key, len);
+  unsigned char* bufKey = openssl::EVPPkey2byteSeq(_key, len);
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
 
   CORBA::Any any;
@@ -276,7 +229,7 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigne
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo =_orbInitializer->codec()->encode_value(any);
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);

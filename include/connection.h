@@ -106,7 +106,7 @@ namespace openbus {
       
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
-    EVP_PKEY* prvKey() const { return _key; }
+    EVP_PKEY* key() const { return _key; }
     EVP_PKEY* busKey() const { return _busKey; }
     bool _logout(bool local);
     std::string _host;

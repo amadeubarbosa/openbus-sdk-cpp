@@ -1,6 +1,7 @@
 #include <interceptors/serverInterceptor_impl.h>
 #include <connection_impl.h>
 #include <legacy/stubs/credential_v1_05.h>
+#include <util/openssl.h>
 #include <log.h>
 
 #include <iostream>
@@ -136,35 +137,15 @@ void ServerInterceptor::receive_request_service_contexts(
           CORBA::ULong newSessionId = _idSecretSession.size() + 1;
           SecretSession* secretSession = new SecretSession(newSessionId);
           _idSecretSession[newSessionId] = secretSession;
-
-          EVP_PKEY_CTX* ctx;
-          unsigned char* encrypted = 0;
-          size_t encryptedLen;
-          if (!((ctx = EVP_PKEY_CTX_new(caller->key, 0)) &&
-              (EVP_PKEY_encrypt_init(ctx) > 0) &&
-              (EVP_PKEY_encrypt(
-                ctx, 
-                0, 
-                &encryptedLen,
-                secretSession->secret,
-                SECRET_SIZE) > 0))
-          ) assert(0);
-
-          encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen);
-          assert(encrypted);
           
-          if (EVP_PKEY_encrypt(
-                ctx, 
-                encrypted, 
-                &encryptedLen,
-                secretSession->secret,
-                SECRET_SIZE) <= 0
-          ) assert(0);
-          
+          /* cifrando o segredo com a chave pública do cliente. */
+          unsigned char* encrypted= openssl::encrypt(caller->key,secretSession->secret,SECRET_SIZE); 
+
           idl_cr::CredentialReset credentialReset;
           credentialReset.login = conn->login()->id;
           credentialReset.session = secretSession->id;
           memcpy(credentialReset.challenge, encrypted, 256);
+          OPENSSL_free(encrypted);
         
           CORBA::Any any;
           any <<= credentialReset;

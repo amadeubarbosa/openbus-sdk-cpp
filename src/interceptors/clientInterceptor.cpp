@@ -1,5 +1,6 @@
 #include <interceptors/clientInterceptor_impl.h>
 #include <legacy/stubs/credential_v1_05.h>
+#include <util/openssl.h>
 #include <log.h>
 
 #include <openssl/sha.h>
@@ -8,8 +9,7 @@
 namespace openbus {
 namespace interceptors {    
 
-/* montando uma indentificador(chave) para esta requisição através de uma hash do profile 
-** da requisição. */
+/* monta uma indentificador(chave) para uma requisição através de uma hash do profile. */
 std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
   idl::HashValue profileDataHash;
   ::IOP::TaggedProfile::_profile_data_seq profile = r->effective_profile()->profile_data;
@@ -165,31 +165,8 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           idl_cr::CredentialReset credentialReset;
           any >>= credentialReset;
         
-          //?
-          unsigned char* secret = 0;
-          size_t secretLen;
-          EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn.prvKey(), 0);
-          if (!(ctx && 
-              (EVP_PKEY_decrypt_init(ctx) > 0) &&
-              (EVP_PKEY_decrypt(
-                ctx,
-                0,
-                &secretLen,
-                credentialReset.challenge,
-                256) > 0))
-          ) assert(0);
-  
-          secret = (unsigned char*) OPENSSL_malloc(secretLen);
-          assert(secret);
-          
-          if (EVP_PKEY_decrypt(
-                ctx,
-                secret,
-                &secretLen,
-                credentialReset.challenge,
-                256) <= 0
-          ) assert(0);
-          secret[secretLen] = '\0';
+          /* decifrar o segredo usando a chave do usuário. */
+          unsigned char* secret = openssl::decrypt(conn.key(), credentialReset.challenge, 256);
 
           /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
           std::string sessionKey = getSessionKey(r);
