@@ -10,6 +10,7 @@
 
 namespace openbus {
 namespace interceptors {
+
 ServerInterceptor::ServerInterceptor(
   PortableInterceptor::Current* piCurrent, 
   PortableInterceptor::SlotId slotId_connectionAddr,
@@ -27,6 +28,7 @@ ServerInterceptor::ServerInterceptor(
 {
   log_scope l(log.server_interceptor_logger(), debug_level,
     "ServerInterceptor::ServerInterceptor");
+  _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
 }
 
 ServerInterceptor::~ServerInterceptor() { }
@@ -75,11 +77,10 @@ void ServerInterceptor::receive_request_service_contexts(
       }
       /* o login do caller é valido? */
       if (caller) {
-        SecretSession* session = 0;
-        idl::HashValue hash;
-        if (_idSecretSession.find(credential.session) != _idSecretSession.end()) {
+        idl::HashValue hash;        
+        Session* session;
+        if (_sessionLRUCache->fetch(credential.session, session)) {
           /* montando uma hash com os dados da credencial recebida e da sessão existente. */
-          session = _idSecretSession[credential.session];
           size_t slenOperation = strlen(r->operation());
           int slen = 22 + slenOperation;
           unsigned char* s = new unsigned char[slen];
@@ -134,16 +135,16 @@ void ServerInterceptor::receive_request_service_contexts(
           l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
 
           /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
-          CORBA::ULong newSessionId = _idSecretSession.size() + 1;
-          SecretSession* secretSession = new SecretSession(newSessionId);
-          _idSecretSession[newSessionId] = secretSession;
+          CORBA::ULong newSessionId = _sessionLRUCache->size() + 1;
+          Session* session = new Session(newSessionId);
+          _sessionLRUCache->insert(newSessionId, session);
           
           /* cifrando o segredo com a chave pública do cliente. */
-          unsigned char* encrypted= openssl::encrypt(caller->key,secretSession->secret,SECRET_SIZE); 
+          unsigned char* encrypted = openssl::encrypt(caller->key, session->secret, SECRET_SIZE); 
 
           idl_cr::CredentialReset credentialReset;
           credentialReset.login = conn->login()->id;
-          credentialReset.session = secretSession->id;
+          credentialReset.session = session->id;
           memcpy(credentialReset.challenge, encrypted, 256);
           OPENSSL_free(encrypted);
         
@@ -195,5 +196,10 @@ void ServerInterceptor::receive_request_service_contexts(
     } else throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, CORBA::COMPLETED_NO);
   }
 }
+
+void ServerInterceptor::resetCaches() {
+  _sessionLRUCache->clear();
+}
+
 }
 }

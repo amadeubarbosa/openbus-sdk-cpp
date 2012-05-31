@@ -7,6 +7,10 @@
 extern "C" {
   #include <util/tickets.h>
 }
+#ifndef TECGRAF_LRUCACHE_H_
+#define TECGRAF_LRUCACHE_H_
+#include "util/lru_cache.h"
+#endif
 
 /* forward declarations */
 namespace openbus {
@@ -18,6 +22,7 @@ namespace openbus {
 
 namespace openbus {
 namespace interceptors {
+
   class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor {
   public:
     ServerInterceptor(
@@ -42,7 +47,7 @@ namespace interceptors {
     char* name() throw (CORBA::SystemException) { return CORBA::string_dup("ServerInterceptor"); }
     void destroy() { }
     void setConnectionManager(ConnectionManager* m) { _manager = m; }
-    void resetCaches() { _idSecretSession.clear(); }
+    void resetCaches();
   private:
     PortableInterceptor::Current* _piCurrent;
     PortableInterceptor::SlotId _slotId_connectionAddr;
@@ -52,16 +57,19 @@ namespace interceptors {
     PortableInterceptor::SlotId _slotId_busid;
     IOP::Codec* _cdrCodec;
     ConnectionManager* _manager;
-    struct SecretSession {
+
+    struct Session {
       CORBA::ULong id;
       tickets_History ticketsHistory;
       unsigned char secret[SECRET_SIZE];
-      SecretSession(CORBA::ULong id) : id(id) {
+      Session(CORBA::ULong id) : id(id) {
         tickets_init(&ticketsHistory);
         for (short i=0;i<SECRET_SIZE;++i) secret[i] = rand() % 255;
       }
     };
-    std::map<CORBA::ULong, SecretSession*> _idSecretSession;
+
+    typedef LRUCache<CORBA::ULong, Session*> SessionLRUCache;
+    std::auto_ptr<SessionLRUCache> _sessionLRUCache;
   };
 }
 }
