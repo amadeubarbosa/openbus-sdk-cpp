@@ -6,6 +6,16 @@
 #include "stubs/service.h"
 #include <CORBA.h>
 
+#ifdef OPENBUS_SDK_MULTITHREAD
+class RunThread : public MICOMT::Thread {
+public:
+  RunThread(openbus::ConnectionManager* m) : _manager(m) {}
+  void _run(void*) { _manager->orb()->run(); }
+private:
+  openbus::ConnectionManager* _manager;
+};
+#endif
+
 struct CertifierImpl : virtual public POA_Certifier {
   CertifierImpl(openbus::Connection* c) : _conn(c) { }
   CORBA::Boolean stamp(CORBA::Object* o, CORBA::Long passportNumber) 
@@ -30,10 +40,16 @@ struct CertifierImpl : virtual public POA_Certifier {
 int main(int argc, char** argv) {
   try {
     CORBA::ORB* orb = openbus::initORB(argc, argv);
-    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     manager->setDefaultConnection(conn.get());
     
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    RunThread* runThread = new RunThread(manager);
+    runThread->start();
+    #endif
+
     scs::core::ComponentId componentId;
     componentId.name = "Certifier";
     componentId.major_version = '1';
@@ -54,7 +70,7 @@ int main(int argc, char** argv) {
 
     conn->loginByPassword("goGo", "goGo");
     conn->offers()->registerService(ctx->getIComponent(), props);
-    manager->orb()->run();
+    runThread->wait();
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;

@@ -316,8 +316,7 @@ CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
   if (*busidAny >>= busid) {
     idl_cr::SignedCallChain signedCallChain;
     if (*signedCallChainAny >>= signedCallChain) {
-      CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
-        signedCallChain.encoded,
+      CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(signedCallChain.encoded,
         idl_ac::_tc_CallChain);
       *callChainAny >>= callChain;
       callerChain = new CallerChain();
@@ -360,13 +359,11 @@ CallerChain* Connection::getJoinedChain() throw (CORBA::Exception) {
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   assert(!CORBA::is_nil(init_ref));
   PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-  CORBA::Any_var signedCallChainAny = piCurrent->get_slot(
-    _orbInitializer->slotId_joinedCallChain());
+  CORBA::Any_var signedCallChainAny= piCurrent->get_slot(_orbInitializer->slotId_joinedCallChain());
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) {
     CallerChain* c = new CallerChain();
-    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(
-      signedCallChain.encoded,
+    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(signedCallChain.encoded,
       idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
     if (callChainAny >>= callChain) {

@@ -39,6 +39,23 @@ Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientR
   return *conn;
 }
 
+CallerChain* ClientInterceptor::getJoinedChain(PortableInterceptor::ClientRequestInfo* r) {
+  CORBA::Any_var signedCallChainAny= r->get_slot(_slotId_joinedCallChain);
+  idl_cr::SignedCallChain signedCallChain;
+  if (*signedCallChainAny >>= signedCallChain) {
+    CallerChain* c = new CallerChain();
+    CORBA::Any_var callChainAny = _cdrCodec->decode_value(signedCallChain.encoded,
+      idl_ac::_tc_CallChain);
+    idl_ac::CallChain callChain;
+    if (callChainAny >>= callChain) {
+      c->signedCallChain(signedCallChain);
+      c->_busid = callChain.target;
+      c->_callers = callChain.callers;
+      return c;
+    } else return 0;
+  } else return 0;
+}
+
 ClientInterceptor::ClientInterceptor(
   PortableInterceptor::SlotId slotId_connectionAddr,
   PortableInterceptor::SlotId slotId_joinedCallChain,
@@ -91,19 +108,13 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
         memcpy(s+22, operation, strlen(operation));
         SHA256(s, slen, credential.hash);
         
-        //[todo]
-        callerChain = conn.getJoinedChain();
-        if (strcmp(conn.busid(), session->remoteid)) {
-          // [todo] para ver quando usar o demo delegate
-          // CORBA::Object_var picRef = conn.orb()->resolve_initial_references("PICurrent");
-          // assert(!CORBA::is_nil(picRef));
-          // PortableInterceptor::Current_var p = PortableInterceptor::Current::_narrow(picRef);
-          // CORBA::Any_var signedCallChainAny = p->get_slot(_slotId_joinedCallChain);
+        callerChain = getJoinedChain(r);
+        if (strcmp(conn.busid(), session->remoteid))
+          /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
           credential.chain = *conn.access_control()->signChainFor(session->remoteid);
-        } else {
+        else
           if (callerChain) credential.chain = *callerChain->signedCallChain();
           else memset(credential.chain.signature, '\0', 256);
-        }
       } else {
         /* montando uma credencial com o propósito de requisitar o estabelecimento de uma 
         ** nova sessão. */

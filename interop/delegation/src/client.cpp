@@ -5,6 +5,16 @@
 
 openbus::CallerChain* certification;
 
+#ifdef OPENBUS_SDK_MULTITHREAD
+class RunThread : public MICOMT::Thread {
+public:
+  RunThread(openbus::ConnectionManager* m) : _manager(m) {}
+  void _run(void*) { _manager->orb()->run(); }
+private:
+  openbus::ConnectionManager* _manager;
+};
+#endif
+
 struct ClientImpl : virtual public POA_Client {
   ClientImpl(openbus::Connection* c) : _conn(c) { }
   void sign(CORBA::Long passportNumber) 
@@ -12,6 +22,7 @@ struct ClientImpl : virtual public POA_Client {
   {
     std::cout << "Signing #" << passportNumber << "." << std::endl;
     certification = _conn->getCallerChain();
+    std::cout << "Certified by " << certification->callers()[0].entity << "." << std::endl;
   }
   private:
     openbus::Connection* _conn;
@@ -20,9 +31,16 @@ struct ClientImpl : virtual public POA_Client {
 int main(int argc, char** argv) {
   try {
     CORBA::ORB* orb = openbus::initORB(argc, argv);
-    openbus::ConnectionManager* manager = openbus::getConnectionManager(orb);
+    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     manager->setDefaultConnection(conn.get());
+    
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    RunThread* runThread = new RunThread(manager);
+    runThread->start();
+    #endif
+    
     conn->loginByPassword("client", "client");
     scs::core::ComponentId componentId;
     componentId.name = "Client";

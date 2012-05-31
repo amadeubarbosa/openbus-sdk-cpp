@@ -14,18 +14,11 @@
 namespace openbus {
   class Connection;
   class ConnectionManager;
+  struct CallerChain;
 }
 
 namespace openbus {
 namespace interceptors {
-  struct SecretSession {
-    CORBA::ULong id;
-    char* remoteid;
-    unsigned char* secret;
-    CORBA::ULong ticket;
-  };
-
-  typedef LRUCache<std::string, SecretSession*> SessionLRUCache;
 
   class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor {
   public:
@@ -46,12 +39,22 @@ namespace interceptors {
     void setConnectionManager(ConnectionManager* m) { _manager = m; }
     void resetCaches();
     Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
+    openbus::CallerChain* getJoinedChain(PortableInterceptor::ClientRequestInfo* r);
     bool allowRequestWithoutCredential;
   private:
     IOP::Codec* _cdrCodec;
     ConnectionManager* _manager;
     PortableInterceptor::SlotId _slotId_connectionAddr;
     PortableInterceptor::SlotId _slotId_joinedCallChain;
+
+    struct SecretSession {
+      CORBA::ULong id;
+      char* remoteid;
+      unsigned char* secret;
+      CORBA::ULong ticket;
+    };
+
+    typedef LRUCache<std::string, SecretSession*> SessionLRUCache;
     /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite 
     ** uma comunicação com o objeto CORBA que está sendo requisitado. */
     std::auto_ptr<SessionLRUCache> _sessionLRUCache;
