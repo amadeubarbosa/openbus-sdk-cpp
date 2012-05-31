@@ -65,11 +65,12 @@ OPENBUS_INC=${OPENBUS_HOME}/include
 OPENBUS_LDIR=${OPENBUS_HOME}/lib
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   LIBS+= boost_thread
+  LIBS+= logger-multithread${MICO_DEBUG}
   LDIR+= ${OPENBUS_HOME}/lib/boost
 else
   DEFINES+=LOGGER_DISABLE_THREADS
+  LIBS+= logger-singlethread${MICO_DEBUG}
 endif
-LIBS+= logger
 
 
 OBJROOT=obj
