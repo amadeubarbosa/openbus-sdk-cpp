@@ -98,9 +98,16 @@ void Connection::loginByPassword(const char* entity, const char* password)
     
   idl_ac::ValidityTime validityTime;
   idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(len, len,static_cast<CORBA::Octet*> (bufKey));
-  idl_ac::LoginInfo* loginInfo = _access_control->loginByPassword(entity, keyOctetSeq,
-    encryptedBlock, validityTime);
-  _clientInterceptor->allowRequestWithoutCredential = false;
+  idl_ac::LoginInfo* loginInfo;
+  //[doubt] segundo openbus.idl eu não posso repassar WrongEncoding, devo mapear para uma 
+  //AccessDenied?
+  try {
+    loginInfo = _access_control->loginByPassword(entity, keyOctetSeq, encryptedBlock, validityTime);
+    _clientInterceptor->allowRequestWithoutCredential = false;
+  } catch (idl_ac::WrongEncoding&) {
+    _clientInterceptor->allowRequestWithoutCredential = false;
+    throw AccessDenied();
+  }
 
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _clientInterceptor->allowRequestWithoutCredential = false;
@@ -124,23 +131,21 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   if (login()) throw AlreadyLoggedIn();
   idl::EncryptedBlock challenge;
   _clientInterceptor->allowRequestWithoutCredential = true;
-  // throw (idl_ac::MissingCertificate)
-  idl_ac::LoginProcess_var loginProcess = _access_control->startLoginByCertificate(entity, 
-    challenge);
+  //_access_control->startLoginByCertificate: throw (idl_ac::MissingCertificate, ServiceFailure)
+  idl_ac::LoginProcess_var loginProcess= _access_control->startLoginByCertificate(entity,challenge);
   _clientInterceptor->allowRequestWithoutCredential = false;
 
   /* decifrar o desafio usando a chave privada do usuário. */
-  // [todo] WrongPrivateKey e CorruptedPrivateKey
   unsigned char* secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 256);
+  if (!secret) throw CorruptedPrivateKey();
   
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
-
   idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
     static_cast<CORBA::ULong> (strlen((const char*) secret)),
     static_cast<CORBA::ULong> (strlen((const char*) secret)),
     (CORBA::Octet*) CORBA::string_dup((const char*) secret));
-  loginAuthenticationInfo.data = secretOctetSeq;
   OPENSSL_free(secret);
+  loginAuthenticationInfo.data = secretOctetSeq;
 
   /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
@@ -162,11 +167,17 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
 
   _clientInterceptor->allowRequestWithoutCredential = true;
   idl_ac::ValidityTime validityTime;    
-  idl_ac::LoginInfo* loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
-  _clientInterceptor->allowRequestWithoutCredential = false;
+  //[doubt] o que eu devo fazer com exceção idl_ac::WrongEncoding ?
+  idl_ac::LoginInfo* loginInfo;
+  try {
+    loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
+    _clientInterceptor->allowRequestWithoutCredential = false;
+  } catch (idl_ac::AccessDenied& e) {
+    _clientInterceptor->allowRequestWithoutCredential = false;
+    throw WrongPrivateKey();
+  }
   
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  _clientInterceptor->allowRequestWithoutCredential = false;
 #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
   _renewLogin->start();
@@ -190,7 +201,7 @@ void Connection::loginByCertificate(const char* entity, const char* privateKeyFi
 }
 
 std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn() 
-  throw (CORBA::Exception)
+  throw (idl::services::ServiceFailure, CORBA::Exception)
 {
   log_scope l(log.general_logger(), info_level, "Connection::startSingleSignOn");
   #ifdef OPENBUS_SDK_MULTITHREAD
@@ -239,14 +250,21 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigne
 
   _clientInterceptor->allowRequestWithoutCredential = true;
   idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo* loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
-  _clientInterceptor->allowRequestWithoutCredential = false;
+  // loginProcess->login(): throw (WrongEncoding, AccessDenied, ServiceFailure)
+  //[doubt] InvalidLoginProcess
+  //[doubt] WrongEncoding deve ser mapeado para o que?
+  idl_ac::LoginInfo* loginInfo; 
+  try {
+    loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
+    _clientInterceptor->allowRequestWithoutCredential = false;
+  } catch(idl_ac::AccessDenied&) {
+    _clientInterceptor->allowRequestWithoutCredential = false;
+    throw WrongSecret();
+  }
   
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  _clientInterceptor->allowRequestWithoutCredential = false;
   #ifdef OPENBUS_SDK_MULTITHREAD
-  _renewLogin.reset(new RenewLogin(this, _manager, 
-    validityTime));
+  _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
   _renewLogin->start();
   #else
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));  
@@ -280,12 +298,12 @@ bool Connection::_logout(bool local) {
   return sucess;    
 }
 
-bool Connection::logout() { 
+bool Connection::logout() throw (CORBA::Exception) { 
   log_scope l(log.general_logger(), info_level, "Connection::logout");
   return _logout(false); 
 }
 
-CallerChain* Connection::getCallerChain() {
+CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   assert(!CORBA::is_nil(init_ref));
@@ -318,7 +336,7 @@ CallerChain* Connection::getCallerChain() {
   return callerChain;
 }
 
-void Connection::joinChain(CallerChain* chain) {
+void Connection::joinChain(CallerChain* chain) throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::joinChain");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   assert(!CORBA::is_nil(init_ref));
@@ -328,7 +346,7 @@ void Connection::joinChain(CallerChain* chain) {
   piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), signedCallChainAny);
 }
 
-void Connection::exitChain() {
+void Connection::exitChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::exitChain");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   assert(!CORBA::is_nil(init_ref));
@@ -337,7 +355,7 @@ void Connection::exitChain() {
   piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), any);    
 }
 
-CallerChain* Connection::getJoinedChain() {
+CallerChain* Connection::getJoinedChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::getJoinedChain");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   assert(!CORBA::is_nil(init_ref));
@@ -359,4 +377,5 @@ CallerChain* Connection::getJoinedChain() {
     } else return 0;
   } else return 0;
 }
+
 }

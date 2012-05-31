@@ -44,31 +44,31 @@ namespace openbus {
     typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const idl_ac::LoginInfo*);
     
     struct Exception {
-      virtual const char* name() const { return "Exception"; }
+      virtual const char* name() const { return "openbus::Connection::Exception"; }
     };
       
     struct AccessDenied : public Exception {
-      const char* name() const { return "AccessDenied"; }
+      const char* name() const { return "openbus::Connection::AccessDenied"; }
     };
 
     struct AlreadyLoggedIn : public Exception {
-      const char* name() const { return "AlreadyLoggedIn"; }
+      const char* name() const { return "openbus::Connection::AlreadyLoggedIn"; }
     };
 
     struct CorruptedPrivateKey : public Exception {
-      const char* name() const { return "CorruptedPrivateKey"; }
+      const char* name() const { return "openbus::Connection::CorruptedPrivateKey"; }
     };
 
     struct WrongPrivateKey : public Exception {
-      const char* name() const { return "WrongPrivateKey"; }
+      const char* name() const { return "openbus::Connection::WrongPrivateKey"; }
     };
 
     struct WrongSecret : public Exception {
-      const char* name() const { return "WrongSecret"; }
+      const char* name() const { return "openbus::Connection::WrongSecret"; }
     };
     
     struct InvalidLoginProcess : public Exception {
-      const char* name() const { return "InvalidLoginProcess"; }
+      const char* name() const { return "openbus::Connection::InvalidLoginProcess"; }
     };
 
     void loginByPassword(const char* entity, const char* password)
@@ -82,17 +82,18 @@ namespace openbus {
       throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
       idl::services::ServiceFailure, CORBA::Exception);
     
-    std::pair <idl_ac::LoginProcess*, unsigned char*> startSingleSignOn() throw (CORBA::Exception);
+    std::pair <idl_ac::LoginProcess*, unsigned char*> startSingleSignOn() 
+      throw (idl::services::ServiceFailure, CORBA::Exception);
       
     void loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigned char* secret)
   		throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
   		CORBA::Exception);
           
-    bool logout();
-    CallerChain* getCallerChain();
-    void joinChain(CallerChain* chain);
-    void exitChain();
-    CallerChain* getJoinedChain();
+    bool logout() throw (CORBA::Exception);
+    CallerChain* getCallerChain() throw (CORBA::Exception);
+    void joinChain(CallerChain* chain) throw (CORBA::Exception);
+    void exitChain() throw (CORBA::Exception);
+    CallerChain* getJoinedChain() throw (CORBA::Exception);
     
     void onInvalidLogin(InvalidLoginCallback_ptr p) { _onInvalidLogin = p; }
     InvalidLoginCallback_ptr onInvalidLogin() const { return _onInvalidLogin; }      

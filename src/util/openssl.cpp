@@ -38,16 +38,23 @@ unsigned char* decrypt(EVP_PKEY* key, const unsigned char* buf, size_t l) {
   EVP_PKEY_CTX* ctx;
   unsigned char* secret = 0;
   size_t secretLen;
-  if (!((ctx = EVP_PKEY_CTX_new(key, 0)) && (EVP_PKEY_decrypt_init(ctx) > 0)
-     &&(EVP_PKEY_decrypt(ctx, 0, &secretLen, buf, l) > 0))) assert(0);
-
-  secret = (unsigned char*) OPENSSL_malloc(secretLen);
-  assert(secret);
-
-  if (EVP_PKEY_decrypt(ctx, secret, &secretLen, buf, l) <= 0) assert(0);
-  secret[secretLen] = '\0';
-  EVP_PKEY_CTX_free(ctx);
-  return secret;
+  ctx = EVP_PKEY_CTX_new(key, 0);
+  if (ctx) {
+    if (!((EVP_PKEY_decrypt_init(ctx) > 0) &&(EVP_PKEY_decrypt(ctx, 0, &secretLen, buf, l) > 0))) {
+      EVP_PKEY_CTX_free(ctx);
+      return 0;
+    }
+    secret = (unsigned char*) OPENSSL_malloc(secretLen);
+    assert(secret);
+    if (EVP_PKEY_decrypt(ctx, secret, &secretLen, buf, l) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        return 0;
+    }
+    secret[secretLen] = '\0';
+    EVP_PKEY_CTX_free(ctx);
+    return secret;
+  } return 0;
 }
+
 }
 }

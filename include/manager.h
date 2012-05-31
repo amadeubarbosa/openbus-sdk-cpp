@@ -23,11 +23,12 @@ namespace openbus {
   
   class ConnectionManager : public CORBA::LocalObject {
   public:
-    std::auto_ptr<Connection> createConnection(const char* host, short port); 
+    std::auto_ptr<Connection> createConnection(const char* host, short port) 
+      throw (CORBA::Exception); 
     void setDefaultConnection(Connection* c) { _defaultConnection = c; }
     Connection* getDefaultConnection() const { return _defaultConnection; }
-    void setRequester(Connection*);
-    Connection* getRequester();
+    void setRequester(Connection*) throw (CORBA::Exception);
+    Connection* getRequester() throw (CORBA::Exception);
     void setDispatcher(Connection*);
     Connection* getDispatcher(const char* busid);
     Connection* clearDispatcher(const char* busid);

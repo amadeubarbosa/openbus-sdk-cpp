@@ -35,11 +35,9 @@ Login* LoginCache::validateLogin(char* id) {
   /* preciso consultar o barramento para validar o login. */
   else {
     /*
-    * Substituir a implementação da LRU para permitir que o cache avise ao SDK o  elemento 
-    * que está sendo substituído, permitindo assim que eu possa manter uma IdentifierSeq e
-    * ValidityTimeSeq.
-    * Esforço atual: O(3n) !?
-    */
+    ** a implementação atual da LRU não permite que o  cache  avise  ao  SDK  o  elemento 
+    ** que está sendo substituído, desta forma eu preciso construir uma  IdentifierSeq  
+    ** antes de cada chamada getValidity(). */
     _timeUpdated = time(0);
     idl::IdentifierSeq ids(LOGINCACHE_LRU_SIZE);
     ids.length(_loginLRUCache->size());

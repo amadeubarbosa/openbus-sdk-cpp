@@ -24,7 +24,6 @@ namespace openbus {
     }
     //return 0: login inválido
     Login* validateLogin(char* id);
-    void connection(Connection* c) { _conn = c; }
   private:
     Connection* _conn;
     LoginLRUCache* _loginLRUCache;

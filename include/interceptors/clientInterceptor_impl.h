@@ -32,7 +32,6 @@ namespace interceptors {
     void setConnectionManager(ConnectionManager* m) { _manager = m; }
     void resetCaches() { _session.clear(); }
     Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
-
     bool allowRequestWithoutCredential;
   private:
     IOP::Codec* _cdrCodec;

@@ -39,8 +39,7 @@ namespace interceptors {
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) { }
     void send_other(PortableInterceptor::ServerRequestInfo*)
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) { }
-    char* name() throw (CORBA::SystemException)
-      { return CORBA::string_dup("ServerInterceptor"); }
+    char* name() throw (CORBA::SystemException) { return CORBA::string_dup("ServerInterceptor"); }
     void destroy() { }
     void setConnectionManager(ConnectionManager* m) { _manager = m; }
     void resetCaches() { _idSecretSession.clear(); }
@@ -59,8 +58,7 @@ namespace interceptors {
       unsigned char secret[SECRET_SIZE];
       SecretSession(CORBA::ULong id) : id(id) {
         tickets_init(&ticketsHistory);
-        for (short i=0;i<SECRET_SIZE;++i)
-          secret[i] = rand() % 255;
+        for (short i=0;i<SECRET_SIZE;++i) secret[i] = rand() % 255;
       }
     };
     std::map<CORBA::ULong, SecretSession*> _idSecretSession;

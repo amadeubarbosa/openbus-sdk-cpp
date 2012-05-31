@@ -12,7 +12,9 @@ ConnectionManager::ConnectionManager(CORBA::ORB* o, interceptors::ORBInitializer
 
 ConnectionManager::~ConnectionManager() { }
 
-std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) {
+std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) 
+ throw (CORBA::Exception)
+{
   int p = port;
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::createConnection");
   l.vlog("createConnection para host %s:%d", host, p);
@@ -43,7 +45,7 @@ Connection* ConnectionManager::clearDispatcher(const char* busid) {
   } else return 0;    
 }
 
-void ConnectionManager::setRequester(Connection* c) {
+void ConnectionManager::setRequester(Connection* c) throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::setRequester");
   l.vlog("connection:%p", c);
   size_t size = sizeof(Connection*);
@@ -55,7 +57,7 @@ void ConnectionManager::setRequester(Connection* c) {
   _piCurrent->set_slot(_orbInitializer->slotId_connectionAddr(), connectionAddrAny);
 }
 
-Connection* ConnectionManager::getRequester() { 
+Connection* ConnectionManager::getRequester() throw (CORBA::Exception) { 
   log_scope l(log.general_logger(), info_level, "ConnectionManager::getRequester");
   CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_orbInitializer->slotId_connectionAddr());
   idl::OctetSeq connectionAddrOctetSeq;
