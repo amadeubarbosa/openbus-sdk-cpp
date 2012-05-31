@@ -23,8 +23,8 @@ int main(int argc, char** argv) {
       openbus::idl_or::ServiceOfferDescSeq_var offersA = connBusA->offers()->findServices(propsA);
       if (offersA->length()) {
         CORBA::Object_var o = offersA[0].service_ref->getFacetByName("hello");
-        tecgraf::openbus::interop::hello::IHello* hello = 
-          tecgraf::openbus::interop::hello::IHello::_narrow(o);
+        tecgraf::openbus::interop::simple::Hello* hello = 
+          tecgraf::openbus::interop::simple::Hello::_narrow(o);
         hello->sayHello();
       } else std::cout << "nenhuma oferta encontrada." << std::endl;
     }
@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
       openbus::idl_or::ServiceOfferDescSeq_var offersB = connBusB->offers()->findServices(propsB);
       if (offersB->length()) {
         CORBA::Object_var o = offersB[0].service_ref->getFacetByName("hello");
-        tecgraf::openbus::interop::hello::IHello* hello = 
-          tecgraf::openbus::interop::hello::IHello::_narrow(o);
+        tecgraf::openbus::interop::simple::Hello* hello = 
+          tecgraf::openbus::interop::simple::Hello::_narrow(o);
         hello->sayHello();
       } else std::cout << "nenhuma oferta encontrada." << std::endl;
     }

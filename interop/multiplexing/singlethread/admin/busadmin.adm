@@ -15,13 +15,13 @@ Certificate {
 }
 
 Interface {
-  id = "IDL:tecgraf/openbus/interop/hello/IHello:1.0"
+  id = "IDL:tecgraf/openbus/interop/simple/Hello:1.0"
 }
 
 Grant {
   id = "demo",
   interfaces = {
-    "IDL:tecgraf/openbus/interop/hello/IHello:1.0",
+    "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
   }
 }
 
