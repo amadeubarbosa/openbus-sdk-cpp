@@ -98,9 +98,9 @@ SRC=src/openbus.cpp \
     src/manager.cpp \
     src/connection.cpp \
     src/connection_impl.cpp \
-    src/interceptors/orbInitializer.cpp \
-    src/interceptors/clientInterceptor.cpp \
-    src/interceptors/serverInterceptor.cpp \
+    src/interceptors/orbInitializer_impl.cpp \
+    src/interceptors/clientInterceptor_impl.cpp \
+    src/interceptors/serverInterceptor_impl.cpp \
     src/util/tickets.c \
     src/util/openssl.c \
     stubs/core.cc \

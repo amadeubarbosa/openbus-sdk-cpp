@@ -6,6 +6,8 @@
 #include <openssl/sha.h>
 #include <sstream>
 
+#define LOGINCACHE_LRU_SIZE 256
+
 namespace openbus {
 namespace interceptors {    
 
@@ -18,12 +20,12 @@ std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
   return sprofileDataHash;
 }
 
-Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* ri){
+Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* r) {
   log_scope l(log.client_interceptor_logger(), info_level, 
     "ClientInterceptor::getCurrentConnection");
   Connection* conn = 0;
   CORBA::Any_var connectionAddrAny;
-  connectionAddrAny = ri->get_slot(_slotId_connectionAddr);
+  connectionAddrAny = r->get_slot(_slotId_connectionAddr);
   idl::OctetSeq connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) {
     assert(connectionAddrOctetSeq.length() == sizeof(conn));
@@ -46,6 +48,7 @@ ClientInterceptor::ClientInterceptor(
 { 
   log_scope l(log.client_interceptor_logger(), info_level,
     "ClientInterceptor::ClientInterceptor");
+  _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
 }
 
 ClientInterceptor::~ClientInterceptor() { }
@@ -73,9 +76,9 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
       std::string sessionKey = getSessionKey(r);
     
-      if (_session.find(sessionKey) != _session.end()) {
+      SecretSession* session;
+      if (_sessionLRUCache->fetch(sessionKey, session)) {
         /* recuperando uma sessão para esta requisição. */
-        SecretSession* session = _session[sessionKey];
         credential.session = session->id;
         session->ticket++;
         credential.ticket = session->ticket;
@@ -177,7 +180,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           session->remoteid  = CORBA::string_dup(credentialReset.login);
           session->secret = secret;
           session->ticket = 0;
-          _session[sessionKey] = session;
+          _sessionLRUCache->insert(sessionKey, session);
           /* retransmitindo a requisição após ter estabelecido uma sessão. */
           throw PortableInterceptor::ForwardRequest(r->target(), false);
         }
@@ -191,5 +194,10 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     }
   }
 }
+
+void ClientInterceptor::resetCaches() { 
+  _sessionLRUCache->clear(); 
+}
+
 }
 }

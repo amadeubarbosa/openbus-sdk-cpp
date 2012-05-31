@@ -5,6 +5,11 @@
 #include "connection.h"
 #include "../manager.h"
 
+#ifndef TECGRAF_LRUCACHE_H_
+#define TECGRAF_LRUCACHE_H_
+#include "util/lru_cache.h"
+#endif
+
 /* forward declarations */
 namespace openbus {
   class Connection;
@@ -13,6 +18,15 @@ namespace openbus {
 
 namespace openbus {
 namespace interceptors {
+  struct SecretSession {
+    CORBA::ULong id;
+    char* remoteid;
+    unsigned char* secret;
+    CORBA::ULong ticket;
+  };
+
+  typedef LRUCache<std::string, SecretSession*> SessionLRUCache;
+
   class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor {
   public:
     ClientInterceptor(
@@ -30,7 +44,7 @@ namespace interceptors {
     char* name() throw (CORBA::Exception) { return CORBA::string_dup("ClientInterceptor"); }
     void destroy() { }
     void setConnectionManager(ConnectionManager* m) { _manager = m; }
-    void resetCaches() { _session.clear(); }
+    void resetCaches();
     Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
     bool allowRequestWithoutCredential;
   private:
@@ -38,15 +52,9 @@ namespace interceptors {
     ConnectionManager* _manager;
     PortableInterceptor::SlotId _slotId_connectionAddr;
     PortableInterceptor::SlotId _slotId_joinedCallChain;
-    struct SecretSession {
-      CORBA::ULong id;
-      char* remoteid;
-      unsigned char* secret;
-      CORBA::ULong ticket;
-    };
     /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite 
     ** uma comunicação com o objeto CORBA que está sendo requisitado. */
-    std::map<std::string, SecretSession*> _session;
+    std::auto_ptr<SessionLRUCache> _sessionLRUCache;
   };
 }
 }

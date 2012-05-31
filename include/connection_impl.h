@@ -2,7 +2,11 @@
 #define TECGRAF_CONNECTION_IMPL_H_
 
 #include "connection.h"
+
+#ifndef TECGRAF_LRUCACHE_H_
+#define TECGRAF_LRUCACHE_H_
 #include "util/lru_cache.h"
+#endif
 
 #define LOGINCACHE_LRU_SIZE 128
 
