@@ -198,8 +198,9 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       } else if (ex->minor() == idl_ac::NoCredentialCode) {
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
-        //[todo] tratar valor de retorno
-        if (conn.onInvalidLogin()) (conn.onInvalidLogin())(&conn, conn.login());
+        if (conn.onInvalidLogin()) 
+          if ((conn.onInvalidLogin())(&conn, conn.login()))
+            throw PortableInterceptor::ForwardRequest(r->target(), false);            
         conn._logout(true);
       }
     }
