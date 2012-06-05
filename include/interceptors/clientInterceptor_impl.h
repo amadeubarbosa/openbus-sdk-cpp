@@ -2,7 +2,7 @@
 #define TECGRAF_CLIENTINTERCEPTOR_IMPL_H_
 
 #include <CORBA.h>
-#include "connection.h"
+#include "connection_impl.h"
 #include "../manager.h"
 
 #ifndef TECGRAF_LRUCACHE_H_

@@ -16,6 +16,7 @@ extern "C" {
 namespace openbus {
   class Connection;
   class ConnectionManager;
+  struct Login;
 }
 
 #define SECRET_SIZE 16
@@ -57,6 +58,7 @@ namespace interceptors {
     PortableInterceptor::SlotId _slotId_busid;
     IOP::Codec* _cdrCodec;
     ConnectionManager* _manager;
+    void sendCredentialReset(Connection *, Login*, PortableInterceptor::ServerRequestInfo*);
 
     struct Session {
       CORBA::ULong id;

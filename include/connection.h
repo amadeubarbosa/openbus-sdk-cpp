@@ -7,12 +7,23 @@
 #include <string>
 #include <openssl/evp.h>
 
-#include "interceptors/orbInitializer_impl.h"
 #include "stubs/scs.h"
 #include "stubs/core.h"
 #include "stubs/credential.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
+
+namespace openbus {  
+  namespace idl = tecgraf::openbus::core::v2_00;
+  namespace idl_ac = tecgraf::openbus::core::v2_00::services::access_control;
+  namespace idl_accesscontrol = idl_ac;
+  namespace idl_or = tecgraf::openbus::core::v2_00::services::offer_registry;
+  namespace idl_offerregistry = idl_or;
+  namespace idl_cr = tecgraf::openbus::core::v2_00::credential;
+  namespace idl_credential = idl_cr;
+}
+
+#include "interceptors/orbInitializer_impl.h"
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include "util/mutex.h"
 #endif
@@ -31,14 +42,6 @@ namespace openbus {
 }
 
 namespace openbus {  
-  namespace idl = tecgraf::openbus::core::v2_00;
-  namespace idl_ac = tecgraf::openbus::core::v2_00::services::access_control;
-  namespace idl_accesscontrol = idl_ac;
-  namespace idl_or = tecgraf::openbus::core::v2_00::services::offer_registry;
-  namespace idl_offerregistry = idl_or;
-  namespace idl_cr = tecgraf::openbus::core::v2_00::credential;
-  namespace idl_credential = idl_cr;
-
   class Connection {
   public:
     typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const idl_ac::LoginInfo*);

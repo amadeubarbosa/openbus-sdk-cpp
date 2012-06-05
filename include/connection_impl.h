@@ -10,6 +10,12 @@
 
 #define LOGINCACHE_LRU_SIZE 128
 
+/* forward declarations */
+namespace openbus {
+  class Connection;
+  class ConnectionManager;
+}
+
 namespace openbus {
   struct Login {
     idl_ac::LoginInfo* loginInfo;

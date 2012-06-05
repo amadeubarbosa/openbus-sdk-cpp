@@ -1,5 +1,4 @@
 #include <interceptors/serverInterceptor_impl.h>
-#include <connection_impl.h>
 #include <legacy/stubs/credential_v1_05.h>
 #include <util/openssl.h>
 #include <log.h>
@@ -29,6 +28,37 @@ ServerInterceptor::ServerInterceptor(
   log_scope l(log.server_interceptor_logger(), debug_level,
     "ServerInterceptor::ServerInterceptor");
   _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
+}
+
+void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller, 
+  PortableInterceptor::ServerRequestInfo* r) 
+{
+  /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
+  CORBA::ULong newSessionId = _sessionLRUCache->size() + 1;
+  Session* session = new Session(newSessionId);
+  _sessionLRUCache->insert(newSessionId, session);
+  
+  /* cifrando o segredo com a chave pública do cliente. */
+  unsigned char* encrypted = openssl::encrypt(caller->key, session->secret, SECRET_SIZE); 
+
+  idl_cr::CredentialReset credentialReset;
+  credentialReset.login = conn->login()->id;
+  credentialReset.session = session->id;
+  memcpy(credentialReset.challenge, encrypted, 256);
+  OPENSSL_free(encrypted);
+
+  CORBA::Any any;
+  any <<= credentialReset;
+  CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
+
+  /* anexando CredentialReset a resposta para o cliente. */
+  IOP::ServiceContext serviceContext;
+  serviceContext.context_id = idl_cr::CredentialContextId;
+  IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), o->get_buffer(), 0);
+  serviceContext.context_data = s;
+  r->add_reply_service_context(serviceContext, true);          
+
+  throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, CORBA::COMPLETED_NO);              
 }
 
 ServerInterceptor::~ServerInterceptor() { }
@@ -97,8 +127,8 @@ void ServerInterceptor::receive_request_service_contexts(
         {
           /* a credencial recebida é válida. */
           l.level_vlog(debug_level, "credential is valid");
-          //?
-          bool invalidChain = false;
+
+          bool sendInvalidChain = false;
           if (credential.chain.encoded.length()) {
             idl::HashValue hash;
             SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
@@ -107,18 +137,17 @@ void ServerInterceptor::receive_request_service_contexts(
             assert(ctx);
             assert(EVP_PKEY_verify_init(ctx));
             if (EVP_PKEY_verify(ctx, credential.chain.signature, 256, hash, 32) != 1) {
-              invalidChain = true;
+              sendInvalidChain = true;
             } else {
               CORBA::Any_var callChainAny = _cdrCodec->decode_value(
-                credential.chain.encoded,
-                idl_ac::_tc_CallChain);
+                credential.chain.encoded, idl_ac::_tc_CallChain);
               idl_ac::CallChain callChain;
               callChainAny >>= callChain;
-              if (strcmp(callChain.target, conn->login()->id) ||
-                 (strcmp(callChain.callers[callChain.callers.length()-1].id, 
-                 caller->loginInfo->id)))
-              {
-                invalidChain = true;
+              if (strcmp(callChain.target, conn->login()->id)) { 
+                sendCredentialReset(conn, caller, r);
+              } else if(strcmp(callChain.callers[callChain.callers.length()-1].id,
+                caller->loginInfo->id)) {
+                sendInvalidChain = true;
               } else {
                 CORBA::Any signedCallChainAny;
                 signedCallChainAny <<= credential.chain;
@@ -128,38 +157,12 @@ void ServerInterceptor::receive_request_service_contexts(
                 r->set_slot(_slotId_busid, busidAny);
               }
             }
-          } else invalidChain = true;
-         if (invalidChain) 
+          } else sendInvalidChain = true;
+         if (sendInvalidChain) 
            throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
         } else {
           l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
-
-          /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
-          CORBA::ULong newSessionId = _sessionLRUCache->size() + 1;
-          Session* session = new Session(newSessionId);
-          _sessionLRUCache->insert(newSessionId, session);
-          
-          /* cifrando o segredo com a chave pública do cliente. */
-          unsigned char* encrypted = openssl::encrypt(caller->key, session->secret, SECRET_SIZE); 
-
-          idl_cr::CredentialReset credentialReset;
-          credentialReset.login = conn->login()->id;
-          credentialReset.session = session->id;
-          memcpy(credentialReset.challenge, encrypted, 256);
-          OPENSSL_free(encrypted);
-        
-          CORBA::Any any;
-          any <<= credentialReset;
-          CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
-
-          /* anexando CredentialReset a resposta para o cliente. */
-          IOP::ServiceContext serviceContext;
-          serviceContext.context_id = idl_cr::CredentialContextId;
-          IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), o->get_buffer(), 0);
-          serviceContext.context_data = s;
-          r->add_reply_service_context(serviceContext, true);          
-
-          throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, CORBA::COMPLETED_NO);            
+          sendCredentialReset(conn, caller, r);
         }
       } else throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
     } else throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
