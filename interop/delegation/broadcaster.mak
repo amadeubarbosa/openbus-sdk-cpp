@@ -35,6 +35,6 @@ STUBS= stubs/messages.cc stubs/messages.h
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa --typename ../idl/messages.idl
+	cd stubs ; ${MICO_BIN}/idl --poa --typecode ../idl/messages.idl
 
 genstubs: $(STUBS)
