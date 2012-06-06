@@ -22,10 +22,11 @@ struct AirportImpl : virtual public POA_Airport {
     throw (CORBA::SystemException) 
   {
     openbus::CallerChain* chain = _conn->getCallerChain();
-    char* certifier = chain->callers()[0].entity;
+    const char* certifier = chain->callers()[0].entity;
+    std::cout << "certifier: " << certifier << std::endl;
     if (strcmp(certifier, "goGo"))
       return false;
-    char* passenger = chain->callers()[1].entity;
+    const char* passenger = chain->callers()[1].entity;
     std::cout << "'" << passenger << "' flying with passport #" << passportNumber << std::endl;
     return true;
   }

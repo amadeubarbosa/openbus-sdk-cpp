@@ -6,8 +6,6 @@
 #include <openssl/sha.h>
 #include <sstream>
 
-#define LOGINCACHE_LRU_SIZE 256
-
 namespace openbus {
 namespace interceptors {    
 

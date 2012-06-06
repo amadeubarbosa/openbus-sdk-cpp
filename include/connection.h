@@ -144,8 +144,8 @@ namespace openbus {
   };
   
   struct CallerChain {
-    char* busid() const { return _busid; }
-    idl_ac::LoginInfoSeq callers() const { return _callers; }
+    const char* busid() const { return _busid; }
+    const idl_ac::LoginInfoSeq& callers() const { return _callers; }
     CallerChain() : _busid(0) { _callers.length(0); }
     const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
   private:
