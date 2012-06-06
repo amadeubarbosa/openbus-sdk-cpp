@@ -1,4 +1,4 @@
-PROJNAME=airport
+PROJNAME=messenger
 APPNAME=${PROJNAME}
 
 include config
@@ -27,14 +27,14 @@ SLIB= ${OPENBUS_LDIR}/$(OPENBUS_LIB) \
       
 USE_NODEPEND= Yes
 
-SRC= src/airport.cpp stubs/service.cc
+SRC= src/messenger.cpp stubs/messages.cc
 
-IDLS= idl/service.idl
+IDLS= idl/messages.idl
 
-STUBS= stubs/service.cc stubs/service.h
+STUBS= stubs/messages.cc stubs/messages.h
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../idl/service.idl
+	cd stubs ; ${MICO_BIN}/idl --poa --typecode ../idl/messages.idl
 
 genstubs: $(STUBS)

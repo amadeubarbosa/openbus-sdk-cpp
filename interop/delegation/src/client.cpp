@@ -1,9 +1,11 @@
 #include <openbus.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
-#include "stubs/service.h"
+#include "stubs/messages.h"
 
 openbus::CallerChain* certification;
+
+namespace delegation = tecgraf::openbus::interop::delegation;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
@@ -14,19 +16,6 @@ private:
   openbus::ConnectionManager* _manager;
 };
 #endif
-
-struct ClientImpl : virtual public POA_Client {
-  ClientImpl(openbus::Connection* c) : _conn(c) { }
-  void sign(CORBA::Long passportNumber) 
-    throw (CORBA::SystemException) 
-  {
-    std::cout << "Signing #" << passportNumber << "." << std::endl;
-    certification = _conn->getCallerChain();
-    std::cout << "Certified by " << certification->callers()[0].entity << "." << std::endl;
-  }
-  private:
-    openbus::Connection* _conn;
-};
 
 int main(int argc, char** argv) {
   try {
@@ -42,37 +31,77 @@ int main(int argc, char** argv) {
     #endif
     
     conn->loginByPassword("client", "client");
-    scs::core::ComponentId componentId;
-    componentId.name = "Client";
-    componentId.major_version = '1';
-    componentId.minor_version = '0';
-    componentId.patch_version = '0';
-    componentId.platform_spec = "";
-    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
-    PortableServer::ServantBase* clientServant(new ClientImpl(conn.get()));
-    ctx->addFacet("client", "IDL:Client:1.0", clientServant);    
-    openbus::idl_or::ServicePropertySeq props;
-    props.length(0);
-    conn->offers()->registerService(ctx->getIComponent(), props);
 
-    openbus::idl_or::ServicePropertySeq _props;
-    _props.length(1);
-    _props[0].name  = "certifier";
-    _props[0].value = "goGo";
-    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(_props);
-    if (offers->length()) {
-      CORBA::Object_var o = offers[0].service_ref->getFacetByName("certifier");
-      Certifier* c = Certifier::_narrow(o);
-      CORBA::Long passportNumber = 103045;
-      if (c->stamp(clientServant->_this(), passportNumber)) {
-        props.length(1);
-        props[0].name  = "openbus.component.facet";
-        props[0].value = "airport";
-        openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
-        CORBA::Object_var o = offers[0].service_ref->getFacetByName("airport");
-        Airport* a = Airport::_narrow(o);
-        conn->joinChain(certification);
-        a->fly(passportNumber, "iberia");
+    openbus::idl_or::ServicePropertySeq properties;
+    properties.length(2);
+    properties[0].name  = "offer.domain";
+    properties[0].value = "Interoperability Tests";
+    properties[1].name  = "openbus.component.interface";
+    properties[1].value = tecgraf::openbus::interop::delegation::_tc_Messenger->id();
+    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(properties);
+    if (offers->length() > 0)
+    {
+      CORBA::Object_var o = offers[0].service_ref->getFacetByName("messenger");
+      tecgraf::openbus::interop::delegation::Messenger_var
+        m = tecgraf::openbus::interop::delegation::Messenger::_narrow(o);
+      
+      properties[1].value = tecgraf::openbus::interop::delegation::_tc_Forwarder->id();
+      offers = conn->offers()->findServices(properties);
+      if(offers->length() > 0)
+      {
+        o = offers[0].service_ref->getFacetByName("forwarder");
+        tecgraf::openbus::interop::delegation::Forwarder_var
+          forwarder = tecgraf::openbus::interop::delegation::Forwarder::_narrow(o);
+
+        properties[1].value = tecgraf::openbus::interop::delegation::_tc_Broadcaster->id();
+        offers = conn->offers()->findServices(properties);
+        if(offers->length() > 0)
+        {
+          o = offers[0].service_ref->getFacetByName("broadcaster");
+          tecgraf::openbus::interop::delegation::Broadcaster_var
+            broadcaster = tecgraf::openbus::interop::delegation::Broadcaster::_narrow(o);
+
+          conn->logout();
+
+          conn->loginByPassword("willian", "willian");
+          forwarder->setForward("bill");
+          broadcaster->subscribe();
+          conn->logout();
+
+          conn->loginByPassword("paul", "paul");
+          broadcaster->subscribe();
+          conn->logout();
+
+          conn->loginByPassword("mary", "mary");
+          broadcaster->subscribe();
+          conn->logout();
+
+          conn->loginByPassword("steve", "steve");
+          broadcaster->subscribe();
+          broadcaster->post("Testando a lista!");
+          conn->logout();
+
+          int i = 10;
+          while(i = sleep(i));
+
+          const char* names[] = {"willian", "bill", "paul", "mary", "steve"};
+          for(const char** first = &names[0]; first != &names[sizeof(names)/sizeof(names[0])]
+                ;++first)
+          {
+            conn->loginByPassword(*first, *first);
+            delegation::PostDescSeq_var posts = m->receivePosts();
+            for(std::size_t i = 0; i != posts->length(); ++i)
+            {
+              std::cout << i << ") " << posts[i].from << ": " << posts[i].message << std::endl;
+            }
+            broadcaster->unsubscribe();
+            conn->logout();
+          }
+
+          conn->loginByPassword("willian", "willian");
+          forwarder->cancelForward("bill");
+          conn->logout();
+        }
       }
     } else
       std::cout << "nenhuma oferta encontrada." << std::endl;

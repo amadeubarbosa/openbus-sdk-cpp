@@ -1,4 +1,4 @@
-PROJNAME=client
+PROJNAME=forwarder
 APPNAME=${PROJNAME}
 
 include config
@@ -27,4 +27,14 @@ SLIB= ${OPENBUS_LDIR}/$(OPENBUS_LIB) \
 
 USE_NODEPEND= Yes
 
-SRC= src/client.cpp stubs/messages.cc
+SRC= src/forwarder.cpp stubs/messages.cc
+
+IDLS= idl/messages.idl
+
+STUBS= stubs/messages.cc stubs/messages.h
+
+$(STUBS): $(IDLS)
+	mkdir -p stubs
+	cd stubs ; ${MICO_BIN}/idl --poa --typename ../idl/messages.idl
+
+genstubs: $(STUBS)

@@ -1,4 +1,4 @@
-PROJNAME=certifier
+PROJNAME=broadcaster
 APPNAME=${PROJNAME}
 
 include config
@@ -27,14 +27,14 @@ SLIB= ${OPENBUS_LDIR}/$(OPENBUS_LIB) \
 
 USE_NODEPEND= Yes
 
-SRC= src/certifier.cpp stubs/service.cc
+SRC= src/broadcaster.cpp stubs/messages.cc
 
-IDLS= idl/service.idl
+IDLS= idl/messages.idl
 
-STUBS= stubs/service.cc stubs/service.h
+STUBS= stubs/messages.cc stubs/messages.h
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../idl/service.idl
+	cd stubs ; ${MICO_BIN}/idl --poa --typename ../idl/messages.idl
 
 genstubs: $(STUBS)

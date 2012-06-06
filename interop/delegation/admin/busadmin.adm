@@ -1,55 +1,61 @@
 Category {
-  id = "DemoCppDelegationCategory",
+  id = "InteropCppDelegationCategory",
   name = "Categoria gerada pelo script",
 }
 
 Entity {
-  id = "goGo",
-  category = "DemoCppDelegationCategory",
+  id = "forwarder",
+  category = "InteropCppDelegationCategory",
   name = "Entidade gerada pelo script",
 }
 
 Entity {
   id = "client",
-  category = "DemoCppDelegationCategory",
+  category = "InteropCppDelegationCategory",
   name = "Entidade gerada pelo script",
 }
 
 Entity {
-  id = "airport",
-  category = "DemoCppDelegationCategory",
+  id = "messenger",
+  category = "InteropCppDelegationCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "broadcaster",
+  category = "InteropCppDelegationCategory",
   name = "Entidade gerada pelo script",
 }
 
 Interface {
-  id = "IDL:Certifier:1.0"
+  id = "IDL:tecgraf/openbus/interop/delegation/Forwarder:1.0"
 }
 
 Interface {
-  id = "IDL:Client:1.0"
+  id = "IDL:tecgraf/openbus/interop/delegation/Broadcaster:1.0"
 }
 
 Interface {
-  id = "IDL:Airport:1.0"
+  id = "IDL:tecgraf/openbus/interop/delegation/Messenger:1.0"
 }
 
 Grant {
-  id = "goGo",
+  id = "forwarder",
   interfaces = {
-    "IDL:Certifier:1.0",
+    "IDL:tecgraf/openbus/interop/delegation/Forwarder:1.0",
   }
 }
 
 Grant {
-  id = "client",
+  id = "broadcaster",
   interfaces = {
-    "IDL:Client:1.0",
+    "IDL:tecgraf/openbus/interop/delegation/Broadcaster:1.0",
   }
 }
 
 Grant {
-  id = "airport",
+  id = "messenger",
   interfaces = {
-    "IDL:Airport:1.0",
+    "IDL:tecgraf/openbus/interop/delegation/Messenger:1.0",
   }
 }
