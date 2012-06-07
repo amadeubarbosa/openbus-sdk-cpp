@@ -64,6 +64,7 @@ ClientInterceptor::ClientInterceptor(
   log_scope l(log.client_interceptor_logger(), info_level,
     "ClientInterceptor::ClientInterceptor");
   _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
+  _callChainLRUCache = std::auto_ptr<CallChainLRUCache>(new CallChainLRUCache(LOGINCACHE_LRU_SIZE));
 }
 
 ClientInterceptor::~ClientInterceptor() { }
@@ -107,10 +108,27 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
         SHA256(s, slen, credential.hash);
         
         callerChain = getJoinedChain(r);
-        if (strcmp(conn.busid(), session->remoteid))
+        if (strcmp(conn.busid(), session->remoteid)) {
           /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
-          credential.chain = *conn.access_control()->signChainFor(session->remoteid);
-        else
+          /* montando uma hash para consultar o cache de cadeias assinadas. */
+          idl::HashValue hash;
+          slen = strlen(conn.login()->id) + strlen(session->remoteid) + 256;
+          s = new unsigned char[slen];
+          memcpy(s, conn.login()->id, strlen(conn.login()->id));
+          memcpy(s+strlen(conn.login()->id), session->remoteid, strlen(session->remoteid));
+          if (callerChain)memcpy(s+strlen(session->remoteid), callerChain->signedCallChain(), 256);
+          else memset(s+strlen(session->remoteid), '\0', 256);
+          SHA256(s, slen, hash);
+          std::string shash((const char*) hash, 32);
+          idl_cr::SignedCallChain* signedCallChain;
+          if(_callChainLRUCache->fetch(shash, signedCallChain)) {
+            l.level_vlog(debug_level, "Recuperando signedCallChain para [%s]", session->remoteid);
+            credential.chain = *signedCallChain;
+          } else {
+            credential.chain = *conn.access_control()->signChainFor(session->remoteid);
+            _callChainLRUCache->insert(shash, &credential.chain);
+          }
+        } else
           if (callerChain) credential.chain = *callerChain->signedCallChain();
           else memset(credential.chain.signature, '\0', 256);
       } else {
@@ -206,7 +224,8 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
 }
 
 void ClientInterceptor::resetCaches() { 
-  _sessionLRUCache->clear(); 
+  _sessionLRUCache->clear();
+  _callChainLRUCache->clear(); 
 }
 
 }

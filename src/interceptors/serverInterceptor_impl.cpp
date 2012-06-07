@@ -144,9 +144,11 @@ void ServerInterceptor::receive_request_service_contexts(
               idl_ac::CallChain callChain;
               callChainAny >>= callChain;
               if (strcmp(callChain.target, conn->login()->id)) { 
+                /* a cadeia tem como destino(target) o meu login. */
                 sendCredentialReset(conn, caller, r);
               } else if(strcmp(callChain.callers[callChain.callers.length()-1].id,
                 caller->loginInfo->id)) {
+                /* o último elemento da cadeia não é quem está me chamando. */
                 sendInvalidChain = true;
               } else {
                 CORBA::Any signedCallChainAny;
