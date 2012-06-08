@@ -59,7 +59,7 @@ namespace interceptors {
     ** uma comunicação com o objeto CORBA que está sendo requisitado. */
     std::auto_ptr<SessionLRUCache> _sessionLRUCache;
     
-    typedef LRUCache<std::string, const idl_cr::SignedCallChain*> CallChainLRUCache;
+    typedef LRUCache<std::string, const idl_cr::SignedCallChain> CallChainLRUCache;
     std::auto_ptr<CallChainLRUCache> _callChainLRUCache;
   };
 }

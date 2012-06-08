@@ -112,21 +112,25 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
           /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
           /* montando uma hash para consultar o cache de cadeias assinadas. */
           idl::HashValue hash;
-          slen = strlen(conn.login()->id) + strlen(session->remoteid) + 256;
+          const char* connId = conn.login()->id;
+          size_t sid = strlen(connId);
+          size_t sremoteid = strlen(session->remoteid);
+          slen = sid + sremoteid + 256;
           s = new unsigned char[slen];
-          memcpy(s, conn.login()->id, strlen(conn.login()->id));
-          memcpy(s+strlen(conn.login()->id), session->remoteid, strlen(session->remoteid));
-          if (callerChain)memcpy(s+strlen(session->remoteid), callerChain->signedCallChain(), 256);
-          else memset(s+strlen(session->remoteid), '\0', 256);
+          memcpy(s, connId, sid);
+          memcpy(s+sid, session->remoteid, sremoteid);
+          if (callerChain) memcpy(s+sid+sremoteid, callerChain->signedCallChain()->signature, 256);
+          else memset(s+sid+sremoteid, '\0', 256);
           SHA256(s, slen, hash);
           std::string shash((const char*) hash, 32);
-          idl_cr::SignedCallChain* signedCallChain;
-          if(_callChainLRUCache->fetch(shash, signedCallChain)) {
-            l.level_vlog(debug_level, "Recuperando signedCallChain para [%s]", session->remoteid);
-            credential.chain = *signedCallChain;
+          idl_cr::SignedCallChain signedCallChain;
+          if (_callChainLRUCache->exists(shash)) {
+            signedCallChain = _callChainLRUCache->fetch(shash);
+            l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s",session->remoteid);
+            credential.chain = signedCallChain;
           } else {
             credential.chain = *conn.access_control()->signChainFor(session->remoteid);
-            _callChainLRUCache->insert(shash, &credential.chain);
+            _callChainLRUCache->insert(shash, credential.chain);
           }
         } else
           if (callerChain) credential.chain = *callerChain->signedCallChain();
