@@ -33,6 +33,7 @@ namespace interceptors {
     PortableInterceptor::SlotId _slotId_signedCallChain;
     PortableInterceptor::SlotId _slotId_legacyCallChain;
     PortableInterceptor::SlotId _slotId_busid;
+    PortableInterceptor::SlotId _slotId_ignoreInterceptor;
   };
 }
 }

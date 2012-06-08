@@ -25,21 +25,25 @@ Connection::Connection(
   assert(!CORBA::is_nil(obj));
   _clientInterceptor = _orbInitializer->clientInterceptor();
   _serverInterceptor = _orbInitializer->serverInterceptor();
-  _clientInterceptor->allowRequestWithoutCredential = true;
-  _iComponent = scs::core::IComponent::_narrow(obj);
-  obj = _iComponent->getFacetByName(idl_ac::AccessControlFacet);
-  assert(!CORBA::is_nil(obj));
-  _access_control = idl_ac::AccessControl::_narrow(obj);
-  obj = _iComponent->getFacetByName(idl_or::OfferRegistryFacet);
-  assert(!CORBA::is_nil(obj));
-  _offer_registry = idl_or::OfferRegistry::_narrow(obj);
-  obj = _iComponent->getFacetByName(idl_ac::LoginRegistryFacet);
-  assert(!CORBA::is_nil(obj));
-  _login_registry = idl_ac::LoginRegistry::_narrow(obj);
-  _busid = _access_control->busid();
-  _loginInfo.reset();
-  _buskeyOctetSeq = _access_control->buskey();
-  _clientInterceptor->allowRequestWithoutCredential = false;
+  CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+  assert(!CORBA::is_nil(init_ref));
+  _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+  {
+    interceptors::IgnoreInterceptor _i(_piCurrent);
+    _iComponent = scs::core::IComponent::_narrow(obj);
+    obj = _iComponent->getFacetByName(idl_ac::AccessControlFacet);
+    assert(!CORBA::is_nil(obj));
+    _access_control = idl_ac::AccessControl::_narrow(obj);
+    obj = _iComponent->getFacetByName(idl_or::OfferRegistryFacet);
+    assert(!CORBA::is_nil(obj));
+    _offer_registry = idl_or::OfferRegistry::_narrow(obj);
+    obj = _iComponent->getFacetByName(idl_ac::LoginRegistryFacet);
+    assert(!CORBA::is_nil(obj));
+    _login_registry = idl_ac::LoginRegistry::_narrow(obj);
+    _busid = _access_control->busid();
+    _loginInfo.reset();
+    _buskeyOctetSeq = _access_control->buskey();
+  }
 
   /* armazenando a chave pública do barramento. */
   _busKey = openssl::byteSeq2EVPPkey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
@@ -67,7 +71,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   #endif
   if (login()) throw AlreadyLoggedIn();
   
-  _clientInterceptor->allowRequestWithoutCredential = true;
+  interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
   /* representação do password em uma cadeia de bytes. */
@@ -103,14 +107,12 @@ void Connection::loginByPassword(const char* entity, const char* password)
   //AccessDenied?
   try {
     loginInfo = _access_control->loginByPassword(entity, keyOctetSeq, encryptedBlock, validityTime);
-    _clientInterceptor->allowRequestWithoutCredential = false;
   } catch (idl_ac::WrongEncoding&) {
-    _clientInterceptor->allowRequestWithoutCredential = false;
     throw AccessDenied();
   }
 
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  _clientInterceptor->allowRequestWithoutCredential = false;
+
   #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
   _renewLogin->start();
@@ -130,11 +132,12 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   #endif
   if (login()) throw AlreadyLoggedIn();
   idl::EncryptedBlock challenge;
-  _clientInterceptor->allowRequestWithoutCredential = true;
-  //_access_control->startLoginByCertificate: throw (idl_ac::MissingCertificate, ServiceFailure)
-  idl_ac::LoginProcess_var loginProcess= _access_control->startLoginByCertificate(entity,challenge);
-  _clientInterceptor->allowRequestWithoutCredential = false;
-
+  idl_ac::LoginProcess_var loginProcess;
+  {
+    interceptors::IgnoreInterceptor _i(_piCurrent);
+    //_access_control->startLoginByCertificate: throw (idl_ac::MissingCertificate, ServiceFailure)
+    loginProcess = _access_control->startLoginByCertificate(entity,challenge);
+  }
   /* decifrar o desafio usando a chave privada do usuário. */
   unsigned char* secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 256);
   if (!secret) throw CorruptedPrivateKey();
@@ -165,15 +168,13 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
 
   idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(len, len,static_cast<CORBA::Octet*> (bufKey));
 
-  _clientInterceptor->allowRequestWithoutCredential = true;
+  interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::ValidityTime validityTime;    
   //[doubt] o que eu devo fazer com exceção idl_ac::WrongEncoding ?
   idl_ac::LoginInfo* loginInfo;
   try {
     loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
-    _clientInterceptor->allowRequestWithoutCredential = false;
   } catch (idl_ac::AccessDenied& e) {
-    _clientInterceptor->allowRequestWithoutCredential = false;
     throw WrongPrivateKey();
   }
   
@@ -248,7 +249,7 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigne
 
   idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(len,len, static_cast<CORBA::Octet*> (bufKey));
 
-  _clientInterceptor->allowRequestWithoutCredential = true;
+  interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::ValidityTime validityTime;
   // loginProcess->login(): throw (WrongEncoding, AccessDenied, ServiceFailure)
   //[doubt] InvalidLoginProcess
@@ -256,12 +257,10 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigne
   idl_ac::LoginInfo* loginInfo; 
   try {
     loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
-    _clientInterceptor->allowRequestWithoutCredential = false;
   } catch(idl_ac::AccessDenied&) {
-    _clientInterceptor->allowRequestWithoutCredential = false;
     throw WrongSecret();
   }
-  
+
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));

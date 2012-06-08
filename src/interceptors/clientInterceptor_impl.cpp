@@ -9,6 +9,8 @@
 namespace openbus {
 namespace interceptors {    
 
+PortableInterceptor::SlotId ClientInterceptor::_slotId_ignoreInterceptor;
+
 /* monta uma indentificador(chave) para uma requisição através de uma hash do profile. */
 std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
   idl::HashValue profileDataHash;
@@ -19,8 +21,7 @@ std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
 }
 
 Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* r) {
-  log_scope l(log.client_interceptor_logger(), info_level, 
-    "ClientInterceptor::getCurrentConnection");
+  log_scope l(log.client_interceptor_logger(),info_level,"ClientInterceptor::getCurrentConnection");
   Connection* conn = 0;
   CORBA::Any_var connectionAddrAny;
   connectionAddrAny = r->get_slot(_slotId_connectionAddr);
@@ -57,9 +58,10 @@ CallerChain* ClientInterceptor::getJoinedChain(PortableInterceptor::ClientReques
 ClientInterceptor::ClientInterceptor(
   PortableInterceptor::SlotId slotId_connectionAddr,
   PortableInterceptor::SlotId slotId_joinedCallChain,
-  IOP::Codec* cdr_codec) 
+  PortableInterceptor::SlotId slotId_ignoreInterceptor,
+  IOP::Codec* cdr_codec)
   : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _manager(0),
-  _slotId_connectionAddr(slotId_connectionAddr), _slotId_joinedCallChain(slotId_joinedCallChain) 
+  _slotId_connectionAddr(slotId_connectionAddr), _slotId_joinedCallChain(slotId_joinedCallChain)
 { 
   log_scope l(log.client_interceptor_logger(), info_level,
     "ClientInterceptor::ClientInterceptor");
@@ -77,7 +79,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
   l.level_vlog(debug_level, "operation: %s", operation);
 
   /* esta chamada remota precisa ser interceptada? */
-  if (!allowRequestWithoutCredential) {
+  if (!IgnoreInterceptor::status(r)) {
     Connection& conn = getCurrentConnection(r);
     if (conn.login()) {
       CallerChain* callerChain = 0;
@@ -153,7 +155,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       r->add_request_service_context(serviceContext, true);
       
       /* anexando uma credencial legacy a esta requisição. */
-      //[todo]
+      //[todo] revisar/testar
       IOP::ServiceContext legacyContext;
       legacyContext.context_id = 1234;
       legacy::v1_05::Credential legacyCredential;

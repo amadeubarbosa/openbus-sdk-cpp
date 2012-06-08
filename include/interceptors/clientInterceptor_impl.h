@@ -18,13 +18,13 @@ namespace openbus {
 }
 
 namespace openbus {
-namespace interceptors {
-
+namespace interceptors {  
   class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor {
   public:
     ClientInterceptor(
       PortableInterceptor::SlotId slotId_connectionAddr,
       PortableInterceptor::SlotId slotId_joinedCallChain,
+      PortableInterceptor::SlotId slotId_ignoreInterceptor,
       IOP::Codec* cdr_codec);
     ~ClientInterceptor();
     void send_request(PortableInterceptor::ClientRequestInfo*) throw (CORBA::Exception);
@@ -41,6 +41,7 @@ namespace interceptors {
     Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
     openbus::CallerChain* getJoinedChain(PortableInterceptor::ClientRequestInfo* r);
     bool allowRequestWithoutCredential;
+    static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
   private:
     IOP::Codec* _cdrCodec;
     ConnectionManager* _manager;
@@ -61,6 +62,29 @@ namespace interceptors {
     
     typedef LRUCache<std::string, const idl_cr::SignedCallChain> CallChainLRUCache;
     std::auto_ptr<CallChainLRUCache> _callChainLRUCache;
+  };
+
+  class IgnoreInterceptor {
+  public:
+    IgnoreInterceptor(PortableInterceptor::Current* c) : _piCurrent(c)
+    {
+      CORBA::Any ignoreInterceptorAny;
+      ignoreInterceptorAny <<= CORBA::Any::from_boolean(true);
+      _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, ignoreInterceptorAny);
+    }
+    ~IgnoreInterceptor() {
+      CORBA::Any ignoreInterceptorAny;
+      ignoreInterceptorAny <<= CORBA::Any::from_boolean(false);
+      _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, ignoreInterceptorAny);      
+    }
+    static bool status(PortableInterceptor::ClientRequestInfo* r) {
+      CORBA::Any_var any = r->get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
+      CORBA::Boolean b;
+      *any >>= CORBA::Any::to_boolean(b);
+      return b;
+    }
+  private:
+    PortableInterceptor::Current* _piCurrent;
   };
 }
 }

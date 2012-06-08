@@ -18,14 +18,16 @@ namespace interceptors {
     _codec = codec_factory->create_codec(cdr_encoding);
     _slotId_connectionAddr = info->allocate_slot_id();
     _slotId_joinedCallChain = info->allocate_slot_id();
-    _clientInterceptor = std::auto_ptr<ClientInterceptor> 
-      (new ClientInterceptor(_slotId_connectionAddr, _slotId_joinedCallChain, _codec.in()));
-    info->add_client_request_interceptor(_clientInterceptor.get());
-    _slotId_signedCallChain = info->allocate_slot_id();
-    _slotId_busid = info->allocate_slot_id();
+    _slotId_ignoreInterceptor = info->allocate_slot_id();
     CORBA::Object_var init_ref = info->resolve_initial_references("PICurrent");
     assert(!CORBA::is_nil(init_ref));
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+    _clientInterceptor = std::auto_ptr<ClientInterceptor> 
+      (new ClientInterceptor(_slotId_connectionAddr, _slotId_joinedCallChain, 
+      _slotId_ignoreInterceptor, _codec.in()));
+    info->add_client_request_interceptor(_clientInterceptor.get());
+    _slotId_signedCallChain = info->allocate_slot_id();
+    _slotId_busid = info->allocate_slot_id();
     _serverInterceptor = std::auto_ptr<ServerInterceptor> (
       new ServerInterceptor(
         piCurrent.in(),

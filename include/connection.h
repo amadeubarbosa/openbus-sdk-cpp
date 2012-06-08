@@ -117,6 +117,7 @@ namespace openbus {
     unsigned int _port;
     CORBA::ORB* orb() const { return _orb; }
     CORBA::ORB* _orb;
+    PortableInterceptor::Current_var _piCurrent;
     const interceptors::ORBInitializer* _orbInitializer;
     interceptors::ClientInterceptor* _clientInterceptor;
     interceptors::ServerInterceptor* _serverInterceptor;
