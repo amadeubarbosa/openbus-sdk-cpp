@@ -9,6 +9,7 @@
 #define TECGRAF_LRUCACHE_H_
 #include "util/lru_cache.h"
 #endif
+#include "util/mutex.h"
 
 /* forward declarations */
 namespace openbus {
@@ -40,9 +41,11 @@ namespace interceptors {
     void resetCaches();
     Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
     openbus::CallerChain* getJoinedChain(PortableInterceptor::ClientRequestInfo* r);
-    bool allowRequestWithoutCredential;
     static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
   private:
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    MICOMT::Mutex _mutex;
+    #endif
     IOP::Codec* _cdrCodec;
     ConnectionManager* _manager;
     PortableInterceptor::SlotId _slotId_connectionAddr;
@@ -66,8 +69,7 @@ namespace interceptors {
 
   class IgnoreInterceptor {
   public:
-    IgnoreInterceptor(PortableInterceptor::Current* c) : _piCurrent(c)
-    {
+    IgnoreInterceptor(PortableInterceptor::Current* c) : _piCurrent(c) {
       CORBA::Any ignoreInterceptorAny;
       ignoreInterceptorAny <<= CORBA::Any::from_boolean(true);
       _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, ignoreInterceptorAny);

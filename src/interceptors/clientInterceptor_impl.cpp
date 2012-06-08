@@ -30,6 +30,7 @@ Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientR
     assert(connectionAddrOctetSeq.length() == sizeof(conn));
     std::memcpy(&conn, connectionAddrOctetSeq.get_buffer(), sizeof(conn));
   }
+  assert(_manager);
   if(!conn)
     if (!(conn = _manager->getDefaultConnection()))
       throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
@@ -60,8 +61,8 @@ ClientInterceptor::ClientInterceptor(
   PortableInterceptor::SlotId slotId_joinedCallChain,
   PortableInterceptor::SlotId slotId_ignoreInterceptor,
   IOP::Codec* cdr_codec)
-  : allowRequestWithoutCredential(false), _cdrCodec(cdr_codec), _manager(0),
-  _slotId_connectionAddr(slotId_connectionAddr), _slotId_joinedCallChain(slotId_joinedCallChain)
+  : _cdrCodec(cdr_codec), _manager(0), _slotId_connectionAddr(slotId_connectionAddr), 
+    _slotId_joinedCallChain(slotId_joinedCallChain)
 { 
   log_scope l(log.client_interceptor_logger(), info_level,
     "ClientInterceptor::ClientInterceptor");
@@ -95,7 +96,10 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       std::string sessionKey = getSessionKey(r);
     
       SecretSession* session;
-      if (_sessionLRUCache->fetch(sessionKey, session)) {
+      Mutex m(&_mutex);
+      bool b = _sessionLRUCache->fetch(sessionKey, session);
+      m.unlock();
+      if (b) {
         /* recuperando uma sessão para esta requisição. */
         credential.session = session->id;
         session->ticket++;
@@ -126,12 +130,15 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
           SHA256(s, slen, hash);
           std::string shash((const char*) hash, 32);
           idl_cr::SignedCallChain signedCallChain;
+          Mutex m(&_mutex);
           if (_callChainLRUCache->exists(shash)) {
             signedCallChain = _callChainLRUCache->fetch(shash);
             l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s",session->remoteid);
             credential.chain = signedCallChain;
           } else {
+            m.unlock();
             credential.chain = *conn.access_control()->signChainFor(session->remoteid);
+            m.lock();
             _callChainLRUCache->insert(shash, credential.chain);
           }
         } else
@@ -213,7 +220,10 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           session->remoteid  = CORBA::string_dup(credentialReset.login);
           session->secret = secret;
           session->ticket = 0;
-          _sessionLRUCache->insert(sessionKey, session);
+          {
+            Mutex m(&_mutex);
+            _sessionLRUCache->insert(sessionKey, session);
+          }
           /* retransmitindo a requisição após ter estabelecido uma sessão. */
           throw PortableInterceptor::ForwardRequest(r->target(), false);
         }
@@ -230,6 +240,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
 }
 
 void ClientInterceptor::resetCaches() { 
+  Mutex m(&_mutex);
   _sessionLRUCache->clear();
   _callChainLRUCache->clear(); 
 }

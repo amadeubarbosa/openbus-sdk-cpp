@@ -50,6 +50,9 @@ namespace interceptors {
     void setConnectionManager(ConnectionManager* m) { _manager = m; }
     void resetCaches();
   private:
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    MICOMT::Mutex _mutex;
+    #endif
     PortableInterceptor::Current* _piCurrent;
     PortableInterceptor::SlotId _slotId_connectionAddr;
     PortableInterceptor::SlotId _slotId_joinedCallChain;

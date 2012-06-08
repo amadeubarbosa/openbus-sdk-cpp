@@ -33,10 +33,12 @@ ServerInterceptor::ServerInterceptor(
 void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller, 
   PortableInterceptor::ServerRequestInfo* r) 
 {
+  Mutex m(&_mutex);
   /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
   CORBA::ULong newSessionId = _sessionLRUCache->size() + 1;
   Session* session = new Session(newSessionId);
   _sessionLRUCache->insert(newSessionId, session);
+  m.unlock();
   
   /* cifrando o segredo com a chave pública do cliente. */
   unsigned char* encrypted = openssl::encrypt(caller->key, session->secret, SECRET_SIZE); 
@@ -109,6 +111,7 @@ void ServerInterceptor::receive_request_service_contexts(
       if (caller) {
         idl::HashValue hash;        
         Session* session;
+        Mutex m(&_mutex);
         if (_sessionLRUCache->fetch(credential.session, session)) {
           /* montando uma hash com os dados da credencial recebida e da sessão existente. */
           size_t slenOperation = strlen(r->operation());
@@ -121,7 +124,8 @@ void ServerInterceptor::receive_request_service_contexts(
           memcpy(s+22, r->operation(), slenOperation);
           SHA256(s, slen, hash);
         }
-
+        m.unlock();
+        
         if (session && !memcmp(hash, credential.hash, 32) && 
           tickets_check(&session->ticketsHistory, credential.ticket)) 
         {
@@ -203,6 +207,7 @@ void ServerInterceptor::receive_request_service_contexts(
 }
 
 void ServerInterceptor::resetCaches() {
+  Mutex m(&_mutex);
   _sessionLRUCache->clear();
 }
 
