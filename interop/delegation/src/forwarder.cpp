@@ -38,29 +38,53 @@ struct forwarding_thread
 
   void run()
   {
-    std::cout << "thread run" << std::endl;
-    boost::unique_lock<boost::mutex> lock(mutex);
-    while(!canceled)
+    try
     {
-      c.timed_wait(lock, boost::posix_time::seconds(5));
-      if(!canceled)
+      std::cout << "thread run" << std::endl;
+      boost::unique_lock<boost::mutex> lock(mutex);
+      while(!canceled)
       {
-        std::string from (caller_chain.callers()[0].entity);
-        std::cout << "Checking messages of " << from << std::endl;
-        connection.joinChain(&caller_chain);
-        delegation::PostDescSeq_var posts = messenger->receivePosts();
-        std::cout << "Found " << posts->length() << " messages" << std::endl;
-        connection.exitChain();
-        for(std::size_t i = 0; i != posts->length(); ++i)
+        c.timed_wait(lock, boost::posix_time::seconds(5));
+        if(!canceled)
         {
-          std::cout << "Has message" << std::endl;
-          std::string msg("forwarded from ");
-          msg += posts[i].from;
-          msg += ':';
-          msg += posts[i].message;
-          messenger->post(from.c_str(), msg.c_str());
+          std::string from (caller_chain.callers()[0].entity);
+          std::cout << "Checking messages of " << from << std::endl;
+          connection.joinChain(&caller_chain);
+          delegation::PostDescSeq_var posts = messenger->receivePosts();
+          std::cout << "Found " << posts->length() << " messages" << std::endl;
+          connection.exitChain();
+          for(std::size_t i = 0; i != posts->length(); ++i)
+          {
+            std::cout << "Has message" << std::endl;
+            std::string msg("forwarded from ");
+            msg += posts[i].from;
+            msg += ':';
+            msg += posts[i].message;
+            messenger->post(from.c_str(), msg.c_str());
+          }
         }
       }
+    }
+    catch(CORBA::COMM_FAILURE const&)
+    {
+      std::cout << "Communication failure while contacting messenger (COMM_FAILURE)" << std::endl;
+      std::abort();
+    }
+    catch(CORBA::OBJECT_NOT_EXIST const&)
+    {
+      std::cout << "Communication failure while contacting messenger (OBJECT_NOT_EXISTS)" << std::endl;
+      std::abort();
+    }
+    catch(CORBA::TRANSIENT const&)
+    {
+      std::cout << "Communication failure while contacting messenger (TRANSIENT)" << std::endl;
+      std::abort();
+    }
+    catch(std::exception const& e)
+    {
+      std::cout << "A C++ exception was thrown of type " << typeid(e).name()
+                << " with what: " << e.what() << std::endl;
+      std::abort();
     }
   }
 };
