@@ -42,7 +42,7 @@ endif
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
 LIBS+= boost_thread
-LDIR+= ${OPENBUS_HOME}/lib/boost
+LDIR+= ${OPENBUSLIB}/boost
 else
 DEFINES+=LOGGER_DISABLE_THREADS
 endif
@@ -50,18 +50,18 @@ endif
 OPENBUSINC= ${OPENBUS_HOME}/include
 OPENBUSLIB= ${OPENBUS_HOME}/lib
 
-LDIR= ${OPENBUSLIB} ${MICO_LIB}
+LDIR+= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
-  SLIB= ${OPENBUSLIB}/libopenbus-micomultithread.a \
-        ${OPENBUSLIB}/libscs-micomultithread.a \
-        ${OPENBUSLIB}/liblogger.a
+  SLIB= ${OPENBUSLIB}/libopenbus-micomultithread${MICO_DEBUG}.a \
+        ${OPENBUSLIB}/libscs-micomultithread${MICO_DEBUG}.a \
+        ${OPENBUSLIB}/liblogger-multithread${MICO_DEBUG}.a
 else
-  SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread.a \
-        ${OPENBUSLIB}/libscs-micosinglethread.a \
-        ${OPENBUSLIB}/liblogger.a
+  SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread${MICO_DEBUG}.a \
+        ${OPENBUSLIB}/libscs-micosinglethread${MICO_DEBUG}.a \
+        ${OPENBUSLIB}/liblogger$-singlethread{MICO_DEBUG}.a
 endif
 
 #USE_LUA51= YES

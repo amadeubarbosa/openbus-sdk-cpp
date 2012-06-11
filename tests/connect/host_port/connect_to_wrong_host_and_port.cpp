@@ -6,8 +6,9 @@ int main(int argc, char* argv[])
 {
   try
   {
-    openbus::ConnectionManager* manager = openbus::getConnectionManager
-      (openbus::initORB(argc, argv));
+    CORBA::ORB_var orb = openbus::initORB(argc, argv);
+    CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenbusConnectionManager");
+    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>(obj_connection_manager);
     std::auto_ptr<openbus::Connection> conn(manager->createConnection("localhost", 9999 /* Nenhum barramento nesta porta */));
     std::cout << "No exception was thrown, exception COMM_FAILURE was expected" << std::endl;
     std::abort();

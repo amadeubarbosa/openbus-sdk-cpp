@@ -14,7 +14,7 @@ struct hello_impl : public POA_Hello
 
   void sayHello()
   {
-    const char* caller = conn.getCallerChain()->callers[0].entity;
+    const char* caller = conn.getCallerChain()->callers()[0].entity;
     std::cout << "Hello from '" << caller << "'." << std::endl;
     servant_called = true;
   }  
@@ -24,8 +24,9 @@ struct hello_impl : public POA_Hello
 
 int main(int argc, char** argv)
 {
-  openbus::ConnectionManager* manager = openbus::getConnectionManager
-    (openbus::initORB(argc, argv));
+  CORBA::ORB_var orb = openbus::initORB(argc, argv);
+  CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenbusConnectionManager");
+  openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>(obj_connection_manager);
   std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
   manager->setDefaultConnection(conn.get());
   conn->loginByPassword("demo", "demo");
