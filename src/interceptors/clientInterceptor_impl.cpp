@@ -114,7 +114,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
         SHA256(s, slen, credential.hash);
         
         callerChain = getJoinedChain(r);
-        if (strcmp(conn.busid(), session->remoteid)) {
+        if (strcmp(idl::BusLogin, session->remoteid)) {
           /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
           /* montando uma hash para consultar o cache de cadeias assinadas. */
           idl::HashValue hash;
