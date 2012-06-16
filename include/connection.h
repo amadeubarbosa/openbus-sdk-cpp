@@ -107,7 +107,7 @@ namespace openbus {
   private:
     Connection(const std::string host, const unsigned int port, CORBA::ORB*, 
       const interceptors::ORBInitializer*, ConnectionManager*) throw(CORBA::Exception);
-      
+	void fetchBusKey();
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
     EVP_PKEY* key() const { return _key; }

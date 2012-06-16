@@ -8,7 +8,13 @@
 #include <log.h>
 
 namespace openbus {
-  
+
+void Connection::fetchBusKey() {
+  /* armazenando a chave pública do barramento. */
+   _buskeyOctetSeq = _access_control->buskey();
+  _busKey = openssl::byteSeq2EVPPkey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
+}
+
 Connection::Connection(
   const std::string h,
   const unsigned int p,
@@ -40,14 +46,9 @@ Connection::Connection(
     obj = _iComponent->getFacetByName(idl_ac::LoginRegistryFacet);
     assert(!CORBA::is_nil(obj));
     _login_registry = idl_ac::LoginRegistry::_narrow(obj);
-    _busid = _access_control->busid();
     _loginInfo.reset();
-    _buskeyOctetSeq = _access_control->buskey();
   }
-
-  /* armazenando a chave pública do barramento. */
-  _busKey = openssl::byteSeq2EVPPkey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
-
+	
   /* criando um par de chaves para esta conexão. */
   _key = 0;
   EVP_PKEY_CTX* ctx;
@@ -93,6 +94,8 @@ void Connection::loginByPassword(const char* entity, const char* password)
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
+  fetchBusKey();
+
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
   unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
@@ -112,6 +115,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   }
 
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
+  _busid = _access_control->busid();
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
@@ -159,6 +163,8 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
+  fetchBusKey();
+
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
   unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
@@ -179,6 +185,8 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   }
   
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
+  _busid = _access_control->busid();
+
 #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
   _renewLogin->start();
@@ -240,6 +248,8 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigne
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo =_orbInitializer->codec()->encode_value(any);
 
+  fetchBusKey();
+
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
   unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
@@ -262,6 +272,8 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigne
   }
 
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
+  _busid = _access_control->busid();
+
   #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
   _renewLogin->start();
