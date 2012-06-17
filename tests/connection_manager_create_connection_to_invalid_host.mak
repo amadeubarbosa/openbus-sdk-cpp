@@ -1,0 +1,6 @@
+PROJNAME= SDKTest
+APPNAME= connection_manager_create_connection_to_invalid_host
+
+include config.mak
+
+SRC= connection_manager/create_connection_to_invalid_host.cpp

@@ -2,6 +2,11 @@
 #include <openbus.h>
 #include "stubs/hello.h"
 #include <scs/ComponentContext.h>
+#include <configuration.h>
+#ifdef OPENBUS_SDK_MULTITHREAD
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#endif
 
 struct hello_impl : public POA_Hello
 {
@@ -22,15 +27,28 @@ struct hello_impl : public POA_Hello
   bool& servant_called;
 };
 
+#ifdef OPENBUS_SDK_MULTITHREAD
+void call_orb(CORBA::ORB_var orb)
+{
+  orb->run();
+}
+#endif
+
 int main(int argc, char** argv)
 {
+  openbus::configuration cfg(argc, argv);
   CORBA::ORB_var orb = openbus::initORB(argc, argv);
+
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::thread orb_thread(boost::bind(&call_orb, orb));
+#endif
+
   CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenbusConnectionManager");
   openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>(obj_connection_manager);
-  std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+  std::auto_ptr <openbus::Connection> conn (manager->createConnection(cfg.host().c_str(), cfg.port()));
   manager->setDefaultConnection(conn.get());
-  conn->loginByPassword("demo", "demo");
-  
+  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
+
   scs::core::ComponentId componentId;
   componentId.name = "Hello";
   componentId.major_version = '1';
@@ -68,5 +86,9 @@ int main(int argc, char** argv)
 
   hello->sayHello();
 
+#ifdef OPENBUS_SDK_MULTITHREAD
+  orb->shutdown(true);
+  orb_thread.join();
+#endif
   assert(servant_called);
 }

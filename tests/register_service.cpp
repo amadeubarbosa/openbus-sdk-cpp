@@ -2,6 +2,7 @@
 #include <openbus.h>
 #include "stubs/hello.h"
 #include <scs/ComponentContext.h>
+#include <configuration.h>
 
 struct hello_impl : public POA_Hello
 {
@@ -24,11 +25,13 @@ struct hello_impl : public POA_Hello
 
 int main(int argc, char** argv)
 {
+  openbus::configuration cfg(argc, argv);
   CORBA::ORB_var orb = openbus::initORB(argc, argv);
+
   CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenbusConnectionManager");
   openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>(obj_connection_manager);
-  std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
-  conn->loginByPassword("demo", "demo");
+  std::auto_ptr <openbus::Connection> conn (manager->createConnection(cfg.host().c_str(), cfg.port()));
+  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
   
   scs::core::ComponentId componentId;
   componentId.name = "Hello";
