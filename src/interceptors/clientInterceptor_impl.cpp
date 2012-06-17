@@ -66,6 +66,7 @@ ClientInterceptor::ClientInterceptor(
 { 
   log_scope l(log.client_interceptor_logger(), info_level,
     "ClientInterceptor::ClientInterceptor");
+  _slotId_ignoreInterceptor = slotId_ignoreInterceptor;
   _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
   _callChainLRUCache = std::auto_ptr<CallChainLRUCache>(new CallChainLRUCache(LOGINCACHE_LRU_SIZE));
 }
