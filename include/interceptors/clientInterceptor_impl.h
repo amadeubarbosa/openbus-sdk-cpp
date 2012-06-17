@@ -81,9 +81,9 @@ namespace interceptors {
     }
     static bool status(PortableInterceptor::ClientRequestInfo* r) {
       CORBA::Any_var any = r->get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
-      CORBA::Boolean b;
-      *any >>= CORBA::Any::to_boolean(b);
-      return b;
+      CORBA::Boolean b = 0;
+      if (*any >>= CORBA::Any::to_boolean(b)) return b;
+      else return 0;
     }
   private:
     PortableInterceptor::Current* _piCurrent;
