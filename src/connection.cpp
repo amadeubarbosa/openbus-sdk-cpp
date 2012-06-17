@@ -61,7 +61,7 @@ Connection::Connection(
   _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
 }
 
-Connection::~Connection() { }
+Connection::~Connection() { _logout(true); }
 
 void Connection::loginByPassword(const char* entity, const char* password)
   throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception) 

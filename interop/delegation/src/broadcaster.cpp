@@ -121,9 +121,6 @@ int main(int argc, char** argv) {
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
-  } catch (const openbus::Connection::Exception& e) {
-    std::cout << "[error (Connection::Exception)] " << e.name() << std::endl;
-    return -1;
   } catch (...) {
     std::cout << "[error *unknow exception*]" << std::endl;
     return -1;

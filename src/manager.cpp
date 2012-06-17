@@ -30,6 +30,7 @@ void ConnectionManager::setDispatcher(Connection* c) throw (NotLoggedIn) {
 Connection* ConnectionManager::getDispatcher(const char* busid) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::getDispatcher");
   l.vlog("getDispatcher do barramento %s", busid);
+  if (!busid) return 0;
   BusidConnection::iterator it = _busidConnection.find(std::string(busid));
   if (it != _busidConnection.end()) return it->second;
   else return 0;
@@ -38,6 +39,7 @@ Connection* ConnectionManager::getDispatcher(const char* busid) {
 Connection* ConnectionManager::clearDispatcher(const char* busid) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::clearDispatcher");
   l.vlog("clearDispatcher para a conexão [busid:%s]", busid);
+  if (!busid) return 0;
   BusidConnection::iterator it = _busidConnection.find(std::string(busid));
   if (it != _busidConnection.end()) {
     Connection* c = it->second;
