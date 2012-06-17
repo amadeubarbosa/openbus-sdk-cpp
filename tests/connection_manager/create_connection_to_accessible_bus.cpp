@@ -1,10 +1,12 @@
 
 #include <openbus.h>
+#include <configuration.h>
 
 int main(int argc, char* argv[])
 {
-  openbus::ConnectionManager* manager = openbus::getConnectionManager
-    (openbus::initORB(argc, argv));
-  assert(manager != 0);
-  std::auto_ptr<openbus::Connection> conn(manager->createConnection("localhost", 2089));
+  openbus::configuration cfg(argc, argv);
+  CORBA::ORB_var orb = openbus::initORB(argc, argv);
+  CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenbusConnectionManager");
+  openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>(obj_connection_manager);
+  std::auto_ptr<openbus::Connection> conn(manager->createConnection(cfg.host().c_str(), cfg.port()));
 }
