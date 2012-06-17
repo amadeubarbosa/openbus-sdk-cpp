@@ -42,12 +42,12 @@ namespace openbus {
 }
 
 namespace openbus {  
-  struct AccessDenied  { const char* name() const { return "openbus::::AccessDenied"; } };
-  struct AlreadyLoggedIn { const char* name() const { return "openbus::::AlreadyLoggedIn"; } };
-  struct CorruptedPrivateKey{ const char* name() const { return "openbus::::CorruptedPrivateKey";}};
-  struct WrongPrivateKey {const char* name() const { return "openbus::::WrongPrivateKey"; } };
-  struct WrongSecret { const char* name() const { return "openbus::::WrongSecret"; } };
-  struct InvalidLoginProcess{ const char* name() const { return "openbus::::InvalidLoginProcess";}};
+  struct AccessDenied  { const char* name() const { return "openbus::AccessDenied"; } };
+  struct AlreadyLoggedIn { const char* name() const { return "openbus::AlreadyLoggedIn"; } };
+  struct CorruptedPrivateKey{ const char* name() const { return "openbus::CorruptedPrivateKey";}};
+  struct WrongPrivateKey {const char* name() const { return "openbus::WrongPrivateKey"; } };
+  struct WrongSecret { const char* name() const { return "openbus::WrongSecret"; } };
+  struct InvalidLoginProcess{ const char* name() const { return "openbus::InvalidLoginProcess";}};
 
   class Connection {
   public:
