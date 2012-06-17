@@ -71,6 +71,7 @@ idl_ac::ValidityTime RenewLogin::renew() {
   Mutex m(&(_conn->_mutex));
   #endif
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
+  assert(_conn->access_control());
   return _conn->access_control()->renew();
 }
 
@@ -107,6 +108,7 @@ void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
 idl_ac::ValidityTime RenewLogin::renew() {
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
   _manager->setRequester(_conn);
+  assert(_conn->access_control());
   return _conn->access_control()->renew();
 }
 #endif

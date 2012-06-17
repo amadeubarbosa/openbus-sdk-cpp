@@ -13,7 +13,7 @@ ConnectionManager::ConnectionManager(CORBA::ORB* o, interceptors::ORBInitializer
 ConnectionManager::~ConnectionManager() { }
 
 std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) 
- throw (CORBA::Exception)
+  throw (CORBA::Exception)
 {
   int p = port;
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::createConnection");
@@ -21,9 +21,10 @@ std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, 
   return std::auto_ptr<Connection> (new Connection(host, port, _orb, _orbInitializer, this));
 }
 
-void ConnectionManager::setDispatcher(Connection* c) {
+void ConnectionManager::setDispatcher(Connection* c) throw (NotLoggedIn) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::setDispatcher");
-  _busidConnection[std::string(c->busid())] = c;
+  if (c && c->busid()) _busidConnection[std::string(c->busid())] = c;
+  else throw NotLoggedIn();
 }
 
 Connection* ConnectionManager::getDispatcher(const char* busid) {

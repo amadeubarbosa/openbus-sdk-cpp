@@ -42,38 +42,17 @@ namespace openbus {
 }
 
 namespace openbus {  
+  struct AccessDenied  { const char* name() const { return "openbus::::AccessDenied"; } };
+  struct AlreadyLoggedIn { const char* name() const { return "openbus::::AlreadyLoggedIn"; } };
+  struct CorruptedPrivateKey{ const char* name() const { return "openbus::::CorruptedPrivateKey";}};
+  struct WrongPrivateKey {const char* name() const { return "openbus::::WrongPrivateKey"; } };
+  struct WrongSecret { const char* name() const { return "openbus::::WrongSecret"; } };
+  struct InvalidLoginProcess{ const char* name() const { return "openbus::::InvalidLoginProcess";}};
+
   class Connection {
   public:
     typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const idl_ac::LoginInfo*);
-    
-    struct Exception {
-      virtual const char* name() const { return "openbus::Connection::Exception"; }
-    };
-      
-    struct AccessDenied : public Exception {
-      const char* name() const { return "openbus::Connection::AccessDenied"; }
-    };
-
-    struct AlreadyLoggedIn : public Exception {
-      const char* name() const { return "openbus::Connection::AlreadyLoggedIn"; }
-    };
-
-    struct CorruptedPrivateKey : public Exception {
-      const char* name() const { return "openbus::Connection::CorruptedPrivateKey"; }
-    };
-
-    struct WrongPrivateKey : public Exception {
-      const char* name() const { return "openbus::Connection::WrongPrivateKey"; }
-    };
-
-    struct WrongSecret : public Exception {
-      const char* name() const { return "openbus::Connection::WrongSecret"; }
-    };
-    
-    struct InvalidLoginProcess : public Exception {
-      const char* name() const { return "openbus::Connection::InvalidLoginProcess"; }
-    };
-
+  
     void loginByPassword(const char* entity, const char* password)
       throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception);
 
@@ -101,13 +80,13 @@ namespace openbus {
     void onInvalidLogin(InvalidLoginCallback_ptr p) { _onInvalidLogin = p; }
     InvalidLoginCallback_ptr onInvalidLogin() const { return _onInvalidLogin; }      
     const idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
-    const char* busid() const { return _busid; }
+    const char* busid() const { return CORBA::string_dup(_busid); }
     const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
     ~Connection();
   private:
     Connection(const std::string host, const unsigned int port, CORBA::ORB*, 
       const interceptors::ORBInitializer*, ConnectionManager*) throw(CORBA::Exception);
-	void fetchBusKey();
+    void fetchBusKey();
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
     EVP_PKEY* key() const { return _key; }
@@ -127,7 +106,7 @@ namespace openbus {
     idl_ac::AccessControl_var _access_control;
     idl_ac::LoginRegistry_var _login_registry;
     idl_or::OfferRegistry_var _offer_registry;
-    idl::Identifier_var _busid;
+    char* _busid;
     EVP_PKEY* _busKey;
     idl::OctetSeq_var _buskeyOctetSeq;
     EVP_PKEY* _key;

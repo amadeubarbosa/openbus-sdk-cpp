@@ -2,6 +2,7 @@
 #define _TECGRAF_MANAGER_H_
 
 #include <CORBA.h>
+#include <stdexcept>
 
 #include <connection.h>
 #include <interceptors/orbInitializer_impl.h>
@@ -19,6 +20,8 @@ namespace openbus {
 }
 
 namespace openbus {
+  struct NotLoggedIn  { const char* name() const { return "openbus::NotLoggedIn"; } };
+
   typedef std::map<std::string, Connection*> BusidConnection;
   
   class ConnectionManager : public CORBA::LocalObject {
@@ -29,7 +32,7 @@ namespace openbus {
     Connection* getDefaultConnection() const { return _defaultConnection; }
     void setRequester(Connection*) throw (CORBA::Exception);
     Connection* getRequester() throw (CORBA::Exception);
-    void setDispatcher(Connection*);
+    void setDispatcher(Connection*) throw (NotLoggedIn);
     Connection* getDispatcher(const char* busid);
     Connection* clearDispatcher(const char* busid);
     CORBA::ORB* orb() const { return _orb; }

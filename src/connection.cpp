@@ -22,7 +22,7 @@ Connection::Connection(
   const interceptors::ORBInitializer* ini,
   ConnectionManager* m) 
   throw(CORBA::Exception)
-  : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _onInvalidLogin(0), _manager(m)
+  : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _busid(0), _onInvalidLogin(0), _manager(m)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -61,7 +61,7 @@ Connection::Connection(
   _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
 }
 
-Connection::~Connection() { logout(); }
+Connection::~Connection() { }
 
 void Connection::loginByPassword(const char* entity, const char* password)
   throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception) 
@@ -304,6 +304,9 @@ bool Connection::_logout(bool local) {
       }
     }
   } else sucess = false;
+  _busid = 0;
+  _busKey = 0;
+  if (_manager->getDispatcher(this->_busid)) _manager->clearDispatcher(this->_busid);
   _clientInterceptor->resetCaches();
   _serverInterceptor->resetCaches();
   return sucess;    
