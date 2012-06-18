@@ -188,12 +188,14 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   const char* operation = r->operation();
   log_scope l(log.client_interceptor_logger(), debug_level, 
     "ClientInterceptor::receive_exception");
-  l.level_vlog(debug_level, "receive_exception: %s", operation);
+  l.level_vlog(debug_level, "operation: %s", operation); 
+  l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
 
   if (!strcmp(r->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
     CORBA::SystemException* ex = CORBA::SystemException::_decode(*r->received_exception());
     if (ex->completed() == CORBA::COMPLETED_NO) {
       Connection& conn = getCurrentConnection(r);
+      l.level_vlog(debug_level, "minor: %d", ex->minor());
       if (ex->minor() == idl_ac::InvalidCredentialCode) {
         l.level_vlog(debug_level, "creating credential session");
         IOP::ServiceContext_var sctx;
