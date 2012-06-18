@@ -13,7 +13,7 @@ Login* LoginCache::validateLogin(char* id) {
   std::string sid(id);
 
   /* este login está no cache? */
-  Login* login = _loginLRUCache->fetch(sid);
+  Login* login = _loginLRUCache.fetch(sid);
   if (!login) {
     /* criando uma entrada no cache para o login. */
     login = new Login;
@@ -23,7 +23,7 @@ Login* LoginCache::validateLogin(char* id) {
     } catch (idl_ac::InvalidLogins& e) { return 0; }
     const unsigned char* buf = login->encodedCallerPubKey->get_buffer();
     login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
-    _loginLRUCache->insert(sid, login);
+    _loginLRUCache.insert(sid, login);
   }
 
   /* se time2live é zero então o login é inválido. */
@@ -40,15 +40,15 @@ Login* LoginCache::validateLogin(char* id) {
     ** antes de cada chamada getValidity(). */
     _timeUpdated = time(0);
     idl::IdentifierSeq ids(LOGINCACHE_LRU_SIZE);
-    ids.length(_loginLRUCache->size());
-    std::vector<std::string> keys = _loginLRUCache->get_all_keys();
+    ids.length(_loginLRUCache.size());
+    std::vector<std::string> keys = _loginLRUCache.get_all_keys();
     std::vector<std::string>::iterator it;
     int i = 0;
     for (it=keys.begin(); it<keys.end(); ++i, ++it) ids[i] = CORBA::string_dup((*it).c_str());
     /* validando no barramento todos os logins que estão na cache. */
     idl_ac::ValidityTimeSeq_var validity = _conn->login_registry()->getValidity(ids);
     for (unsigned int i=0; i<validity->length(); ++i) {
-      Login* l = _loginLRUCache->fetch(std::string(ids[i]));
+      Login* l = _loginLRUCache.fetch(std::string(ids[i]));
       l->time2live = validity[i];
     }
     /* o login de interesse, após atualização da cache, ainda é válido? */

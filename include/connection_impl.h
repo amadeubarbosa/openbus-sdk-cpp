@@ -29,14 +29,14 @@ namespace openbus {
 
   class LoginCache {
   public:
-    LoginCache(Connection* c) : _conn(c) {
-      _loginLRUCache = new LoginLRUCache(LOGINCACHE_LRU_SIZE);
+    LoginCache(Connection* c) : _conn(c), _loginLRUCache(LOGINCACHE_LRU_SIZE)
+    {
     }
     //return 0: login inválido
     Login* validateLogin(char* id);
   private:
     Connection* _conn;
-    LoginLRUCache* _loginLRUCache;
+    LoginLRUCache _loginLRUCache;
     time_t _timeUpdated;
   };
   
