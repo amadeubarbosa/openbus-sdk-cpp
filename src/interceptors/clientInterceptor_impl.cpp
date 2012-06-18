@@ -194,6 +194,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   if (!strcmp(r->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
     CORBA::SystemException* ex = CORBA::SystemException::_decode(*r->received_exception());
     if (ex->completed() == CORBA::COMPLETED_NO) {
+      l.level_vlog(debug_level, "minor: %d", ex->minor());
       Connection& conn = getCurrentConnection(r);
       l.level_vlog(debug_level, "minor: %d", ex->minor());
       if (ex->minor() == idl_ac::InvalidCredentialCode) {

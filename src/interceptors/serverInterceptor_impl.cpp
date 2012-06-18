@@ -75,12 +75,18 @@ void ServerInterceptor::receive_request_service_contexts(
   l.level_vlog(debug_level, "operation: %s", operation);
   
   /* extraindo a credencial desta requisição. */
-  IOP::ServiceContext_var sc = r->get_request_service_context(idl_cr::CredentialContextId);
-  IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
-  CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
-  CORBA::Any_var any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
+  CORBA::Any_var any;
+  bool hasContext = true;
+  try {
+    IOP::ServiceContext_var sc = r->get_request_service_context(idl_cr::CredentialContextId);
+    IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
+    CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
+    any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
+  } catch (CORBA::Exception) {
+    hasContext = false;
+  }
   idl_cr::CredentialData credential;
-  if (any >>= credential) {
+  if (hasContext && (any >>= credential)) {
     Connection* conn = _manager->getDispatcher(credential.bus);
     if (!conn) conn = _manager->getDefaultConnection();
     if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
@@ -173,13 +179,24 @@ void ServerInterceptor::receive_request_service_contexts(
       } else throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
     } else throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
   } else {
-    IOP::ServiceContext_var sc = r->get_request_service_context(1234);
-    IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
-    CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
-    CORBA::Any_var lany = _cdrCodec->decode_value(contextData, 
-      openbus::legacy::v1_05::_tc_Credential);
+    l.level_vlog(debug_level, "verificando se existe uma credencial legacy");
+    hasContext = true;
+    CORBA::Any_var lany;
+    try {
+      IOP::ServiceContext_var sc = r->get_request_service_context(1234);
+      IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
+      CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
+      lany = _cdrCodec->decode_value(contextData, 
+        openbus::legacy::v1_05::_tc_Credential);
+    } catch (CORBA::Exception) {
+      hasContext = false;
+    }
     openbus::legacy::v1_05::Credential legacyCredential;
-    if (lany >>= legacyCredential) {
+    if (hasContext && (lany >>= legacyCredential)) {
+      l.level_vlog(info_level, "extraindo credencial legacy");
+      l.level_vlog(debug_level, "credential.identifier: %s", legacyCredential.identifier.in());
+      l.level_vlog(debug_level, "credential.owner: %s", legacyCredential.owner.in());
+      l.level_vlog(debug_level, "credential.delegate: %s", legacyCredential.delegate.in());
       idl_ac::CallChain legacyChain;
       legacyChain.target = "";
       if (strcmp(legacyCredential.delegate, "")) {
