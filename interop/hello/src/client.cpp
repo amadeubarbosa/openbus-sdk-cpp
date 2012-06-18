@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     props[2].value = "Interoperability Tests";
     openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     if (offers->length()) {
-      CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
+      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("hello");
       tecgraf::openbus::interop::simple::Hello* hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       hello->sayHello();
