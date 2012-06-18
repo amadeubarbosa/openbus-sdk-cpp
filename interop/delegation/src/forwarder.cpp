@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
     
     if (offers->length() > 0)
     {
-      CORBA::Object_var o = offers[0].service_ref->getFacetByName("messenger");
+      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("messenger");
       tecgraf::openbus::interop::delegation::Messenger_var
         m = tecgraf::openbus::interop::delegation::Messenger::_narrow(o);
 

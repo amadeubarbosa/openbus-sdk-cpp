@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
       propsA[2].value = "Interoperability Tests";
       openbus::idl_or::ServiceOfferDescSeq_var offersA = connBusA->offers()->findServices(propsA);
       if (offersA->length()) {
-        CORBA::Object_var o = offersA[0].service_ref->getFacetByName("hello");
+        CORBA::Object_var o = offersA[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("hello");
         tecgraf::openbus::interop::simple::Hello* hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
         hello->sayHello();
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
       propsB[2].value = "Interoperability Tests";
       openbus::idl_or::ServiceOfferDescSeq_var offersB = connBusB->offers()->findServices(propsB);
       if (offersB->length()) {
-        CORBA::Object_var o = offersB[0].service_ref->getFacetByName("hello");
+        CORBA::Object_var o = offersB[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("hello");
         tecgraf::openbus::interop::simple::Hello* hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
         hello->sayHello();

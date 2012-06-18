@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(properties);
     if (offers->length() > 0)
     {
-      CORBA::Object_var o = offers[0].service_ref->getFacetByName("messenger");
+      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("messenger");
       tecgraf::openbus::interop::delegation::Messenger_var
         m = tecgraf::openbus::interop::delegation::Messenger::_narrow(o);
       
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
       offers = conn->offers()->findServices(properties);
       if(offers->length() > 0)
       {
-        o = offers[0].service_ref->getFacetByName("forwarder");
+        o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("forwarder");
         tecgraf::openbus::interop::delegation::Forwarder_var
           forwarder = tecgraf::openbus::interop::delegation::Forwarder::_narrow(o);
 
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
         offers = conn->offers()->findServices(properties);
         if(offers->length() > 0)
         {
-          o = offers[0].service_ref->getFacetByName("broadcaster");
+          o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("broadcaster");
           tecgraf::openbus::interop::delegation::Broadcaster_var
             broadcaster = tecgraf::openbus::interop::delegation::Broadcaster::_narrow(o);
 
