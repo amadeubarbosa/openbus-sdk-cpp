@@ -28,6 +28,7 @@ namespace interceptors {
     info->add_client_request_interceptor(_clientInterceptor.get());
     _slotId_signedCallChain = info->allocate_slot_id();
     _slotId_busid = info->allocate_slot_id();
+    _slotId_legacyCallChain = info->allocate_slot_id();
     _serverInterceptor = std::auto_ptr<ServerInterceptor> (
       new ServerInterceptor(
         piCurrent.in(),
