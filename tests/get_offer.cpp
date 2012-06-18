@@ -19,8 +19,7 @@ struct hello_impl : public POA_Hello
 
   void sayHello()
   {
-    const char* caller = conn.getCallerChain()->callers()[0].entity;
-    std::cout << "Hello from '" << caller << "'." << std::endl;
+    std::cout << "Hello" << std::endl;
     servant_called = true;
   }  
 
@@ -54,41 +53,45 @@ int main(int argc, char** argv)
   componentId.major_version = '1';
   componentId.minor_version = '0';
   componentId.patch_version = '0';
-  componentId.platform_spec = "";    
-  scs::core::ComponentContext ctx(manager->orb(), componentId);
+  componentId.platform_spec = "";
+  {
+    scs::core::ComponentContext ctx(manager->orb(), componentId);
 
-  bool servant_called = false;
-  hello_impl hello_servant (*conn, servant_called);
+    bool servant_called = false;
+    hello_impl hello_servant (*conn, servant_called);
 
-  ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
+    ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
 
-  openbus::idl_or::ServicePropertySeq props;
-  props.length(1);
-  openbus::idl_or::ServiceProperty property;
-  property.name = "offer.domain";
-  property.value = "OpenBus Demos";
-  props[0] = property;
-  conn->offers()->registerService(ctx.getIComponent(), props);
+    openbus::idl_or::ServicePropertySeq props;
+    props.length(1);
+    openbus::idl_or::ServiceProperty property;
+    property.name = "offer.domain";
+    property.value = "OpenBus Demos";
+    props[0] = property;
+    conn->offers()->registerService(ctx.getIComponent(), props);
 
-  props.length(3);
-  props[0].name  = "openbus.offer.entity";
-  props[0].value = "demo";
-  props[1].name  = "openbus.component.facet";
-  props[1].value = "hello";
-  props[2].name  = "offer.domain";
-  props[2].value = "OpenBus Demos";
-  openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
-  assert (offers->length() == 1);
-  CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
-  Hello* hello = Hello::_narrow(o);
+    props.length(3);
+    props[0].name  = "openbus.offer.entity";
+    props[0].value = "test";
+    props[1].name  = "openbus.component.facet";
+    props[1].value = "hello";
+    props[2].name  = "offer.domain";
+    props[2].value = "OpenBus Demos";
+    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    std::cout << "Returned " << offers->length() << " offers" << std::endl;
+    assert (offers->length() == 1);
+    CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
+    Hello* hello = Hello::_narrow(o);
 
-  assert(!servant_called);
+    assert(!servant_called);
 
-  hello->sayHello();
+    hello->sayHello();
+    assert(servant_called);
+  }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
   orb->shutdown(true);
   orb_thread.join();
 #endif
-  assert(servant_called);
+
 }
