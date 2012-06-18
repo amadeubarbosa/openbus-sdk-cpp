@@ -163,7 +163,6 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       r->add_request_service_context(serviceContext, true);
       
       /* anexando uma credencial legacy a esta requisição. */
-      //[todo] revisar/testar
       IOP::ServiceContext legacyContext;
       legacyContext.context_id = 1234;
       legacy::v1_05::Credential legacyCredential;
