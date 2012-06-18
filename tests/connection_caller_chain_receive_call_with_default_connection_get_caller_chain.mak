@@ -1,0 +1,6 @@
+PROJNAME= SDKTest
+APPNAME= connection_caller_chain_receive_call_with_default_connection_get_caller_chain
+
+include config.mak
+
+SRC= connection/caller_chain/receive_call_with_default_connection_get_caller_chain.cpp stubs/hello.cc
