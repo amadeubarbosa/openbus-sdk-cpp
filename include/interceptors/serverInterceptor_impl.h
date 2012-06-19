@@ -5,11 +5,11 @@
 #include "connection.h"
 #include "manager.h"
 extern "C" {
-  #include <util/tickets.h>
+  #include <util/tickets_impl.h>
 }
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include "util/lru_cache.h"
+#include "util/lru_cache_impl.h"
 #endif
 
 /* forward declarations */

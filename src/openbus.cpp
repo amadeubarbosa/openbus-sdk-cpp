@@ -1,6 +1,6 @@
 #include <openbus.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <util/mutex.h>
+#include <util/mutex_impl.h>
 #endif
 #include <interceptors/orbInitializer_impl.h>
 

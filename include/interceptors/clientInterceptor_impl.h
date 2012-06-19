@@ -7,9 +7,9 @@
 
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include "util/lru_cache.h"
+#include "util/lru_cache_impl.h"
 #endif
-#include "util/mutex.h"
+#include "util/mutex_impl.h"
 
 /* forward declarations */
 namespace openbus {

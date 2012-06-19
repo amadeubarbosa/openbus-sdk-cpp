@@ -5,7 +5,7 @@
 
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include "util/lru_cache.h"
+#include "util/lru_cache_impl.h"
 #endif
 
 #define LOGINCACHE_LRU_SIZE 128

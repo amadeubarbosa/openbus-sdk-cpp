@@ -1,6 +1,6 @@
 #include <connection.h>
 #include <connection_impl.h>
-#include <util/openssl.h>
+#include <util/openssl_impl.h>
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
