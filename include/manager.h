@@ -28,9 +28,6 @@ namespace openbus {
 * \brief openbus
 */
 namespace openbus {
-  /**
-  * \brief A conexão não está autenticada ou é nula.
-  */
   struct NotLoggedIn  { const char* name() const { return "openbus::NotLoggedIn"; } };
 
  /**
