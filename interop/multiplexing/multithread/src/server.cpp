@@ -6,8 +6,6 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
-scs::core::ComponentContext* ctx;
-
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(openbus::Connection* c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
@@ -31,7 +29,8 @@ private:
 
 class RegisterThread : public MICOMT::Thread {
 public:
-  RegisterThread(openbus::ConnectionManager* m, openbus::Connection* c) : _manager(m), _conn(c) {}
+  RegisterThread(openbus::ConnectionManager* m, scs::core::ComponentContext& ctx, 
+    openbus::Connection* c) : _manager(m), _conn(c), _ctx(ctx) {}
   void _run(void*) {
     try {
       openbus::idl_or::ServicePropertySeq props;
@@ -41,7 +40,7 @@ public:
       property.value = "Interoperability Tests";
       props[0] = property;
       _manager->setRequester(_conn);
-      _conn->offers()->registerService(ctx->getIComponent(), props);
+      _conn->offers()->registerService(_ctx.getIComponent(), props);
     } catch (const CORBA::Exception& e) {
       std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e 
       << std::endl;
@@ -50,6 +49,7 @@ public:
 private:
   openbus::ConnectionManager* _manager;
   openbus::Connection* _conn;
+  scs::core::ComponentContext& _ctx;
 };
 
 int main(int argc, char** argv) {
@@ -76,10 +76,10 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    ctx = new scs::core::ComponentContext(manager->orb(), componentId);
+    scs::core::ComponentContext ctx(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
-    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
+    ctx.addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
     connBusA->loginByPassword("demo", "demo");
     connBusB->loginByPassword("demo", "demo");
@@ -87,8 +87,8 @@ int main(int argc, char** argv) {
     manager->setDispatcher(connBusB.get());
     manager->setDispatcher(connBusA.get());
 
-    RegisterThread* registerThreadA = new RegisterThread(manager, connBusA.get());
-    RegisterThread* registerThreadB = new RegisterThread(manager, connBusB.get());
+    RegisterThread* registerThreadA = new RegisterThread(manager, ctx, connBusA.get());
+    RegisterThread* registerThreadB = new RegisterThread(manager, ctx, connBusB.get());
     registerThreadA->start();
     registerThreadB->start();
     runThread->wait();

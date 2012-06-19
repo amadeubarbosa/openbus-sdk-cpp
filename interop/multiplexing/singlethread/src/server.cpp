@@ -40,10 +40,10 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
+    scs::core::ComponentContext ctx(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
-    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
+    ctx.addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
@@ -58,9 +58,9 @@ int main(int argc, char** argv) {
     manager->setDispatcher(connBusB.get());
     manager->setDispatcher(connBusA.get());
 
-    connBusA->offers()->registerService(ctx->getIComponent(), props);
+    connBusA->offers()->registerService(ctx.getIComponent(), props);
     manager->setRequester(connBusB.get());
-    connBusB->offers()->registerService(ctx->getIComponent(), props);
+    connBusB->offers()->registerService(ctx.getIComponent(), props);
 
     manager->orb()->run();
   } catch (const CORBA::Exception& e) {

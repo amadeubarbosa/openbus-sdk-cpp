@@ -56,10 +56,10 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext* ctx = new scs::core::ComponentContext(manager->orb(), componentId);
+    scs::core::ComponentContext ctx(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
-    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
+    ctx.addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     props[0] = property;
 
     conn->loginByPassword("demo", "demo");
-    conn->offers()->registerService(ctx->getIComponent(), props);
+    conn->offers()->registerService(ctx.getIComponent(), props);
     #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
     #else
