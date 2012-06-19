@@ -163,7 +163,10 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
-  fetchBusKey();
+  {
+    interceptors::IgnoreInterceptor _i(_piCurrent);
+    fetchBusKey();
+  }
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
   unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
@@ -231,6 +234,7 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
   #ifdef OPENBUS_SDK_MULTITHREAD
   Mutex m(&_mutex);
   #endif
+  interceptors::IgnoreInterceptor _i(_piCurrent);
   if (login()) throw AlreadyLoggedIn();
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
@@ -259,7 +263,6 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
 
   idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(len,len, static_cast<CORBA::Octet*> (bufKey));
 
-  interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::ValidityTime validityTime;
   // loginProcess->login(): throw (WrongEncoding, AccessDenied, ServiceFailure)
   //[doubt] InvalidLoginProcess
