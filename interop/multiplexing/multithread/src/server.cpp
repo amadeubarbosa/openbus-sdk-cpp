@@ -43,7 +43,8 @@ public:
       _manager->setRequester(_conn);
       _conn->offers()->registerService(ctx->getIComponent(), props);
     } catch (const CORBA::Exception& e) {
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e << std::endl;
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e 
+      << std::endl;
     }
   }
 private:
@@ -55,6 +56,11 @@ int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
+    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+    assert(!CORBA::is_nil(o));
+    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+    poa_manager->activate();
     openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));

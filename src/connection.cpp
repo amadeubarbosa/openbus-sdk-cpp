@@ -209,7 +209,7 @@ void Connection::loginByCertificate(const char* entity, const char* privateKeyFi
   loginByCertificate(entity, privateKey);
 }
 
-std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn() 
+std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSingleSignOn() 
   throw (idl::services::ServiceFailure, CORBA::Exception)
 {
   log_scope l(log.general_logger(), info_level, "Connection::startSingleSignOn");
@@ -219,11 +219,11 @@ std::pair <idl_ac::LoginProcess*, unsigned char*> Connection::startSingleSignOn(
   unsigned char* challenge = new unsigned char[256];
   idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
 
-  unsigned char* secret = openssl::decrypt(_key, (unsigned char*) challenge, 256);
+  const unsigned char* secret = openssl::decrypt(_key, (unsigned char*) challenge, 256);
   return std::make_pair(loginProcess, secret);
 }
   
-void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigned char* secret)
+void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const unsigned char* secret)
 	throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
 	CORBA::Exception)
 {

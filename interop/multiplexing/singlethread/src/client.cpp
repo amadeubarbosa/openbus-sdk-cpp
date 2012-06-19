@@ -6,6 +6,11 @@ int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
+    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+    assert(!CORBA::is_nil(o));
+    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+    poa_manager->activate();
     openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     {
@@ -22,7 +27,8 @@ int main(int argc, char** argv) {
       propsA[2].value = "Interoperability Tests";
       openbus::idl_or::ServiceOfferDescSeq_var offersA = connBusA->offers()->findServices(propsA);
       if (offersA->length()) {
-        CORBA::Object_var o = offersA[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("hello");
+        CORBA::Object_var o = offersA[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName(
+          "hello");
         tecgraf::openbus::interop::simple::Hello* hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
         hello->sayHello();
@@ -43,7 +49,8 @@ int main(int argc, char** argv) {
       propsB[2].value = "Interoperability Tests";
       openbus::idl_or::ServiceOfferDescSeq_var offersB = connBusB->offers()->findServices(propsB);
       if (offersB->length()) {
-        CORBA::Object_var o = offersB[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("hello");
+        CORBA::Object_var o = offersB[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName(
+          "hello");
         tecgraf::openbus::interop::simple::Hello* hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
         hello->sayHello();

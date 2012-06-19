@@ -153,6 +153,11 @@ int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::info_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
+    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+    assert(!CORBA::is_nil(o));
+    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+    poa_manager->activate();
     openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));

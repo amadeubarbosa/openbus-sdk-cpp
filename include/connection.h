@@ -138,7 +138,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    std::pair <idl_ac::LoginProcess*, unsigned char*> startSingleSignOn() 
+    std::pair <idl_ac::LoginProcess*, const unsigned char*> startSingleSignOn() 
       throw (idl::services::ServiceFailure, CORBA::Exception);
       
 	  /**
@@ -155,7 +155,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    void loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, unsigned char* secret)
+    void loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const unsigned char* secret)
   		throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
   		CORBA::Exception);
           

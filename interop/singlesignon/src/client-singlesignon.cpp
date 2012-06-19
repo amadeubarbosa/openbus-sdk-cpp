@@ -6,11 +6,16 @@ int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
+    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+    assert(!CORBA::is_nil(o));
+    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+    poa_manager->activate();
     openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     manager->setDefaultConnection(conn.get());
-    CORBA::Object_var o = manager->orb()->string_to_object(argv[1]);
+    o = manager->orb()->string_to_object(argv[1]);
     openbus::idl_ac::LoginProcess_var loginProcess = openbus::idl_ac::LoginProcess::_narrow(o);
     unsigned char* secret = (unsigned char*) argv[2];
     conn->loginBySingleSignOn(loginProcess, secret);
@@ -24,7 +29,8 @@ int main(int argc, char** argv) {
     props[2].value = "Interoperability Tests";
     openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     if (offers->length()) {
-      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("hello");
+      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName(
+        "hello");
       tecgraf::openbus::interop::simple::Hello* hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       hello->sayHello();

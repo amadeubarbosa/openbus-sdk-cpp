@@ -44,19 +44,6 @@ CORBA::ORB* initORB(int argc, char** argv) throw(CORBA::Exception) {
     ConnectionManager* manager = new ConnectionManager(orb, orbInitializer);
     l.level_log(debug_level, "Registrando ConnectionManager");
     orb->register_initial_reference(CONNECTION_MANAGER_ID, manager);
-    /* [obs]
-    ** É necessário ativar o POA para evitar uma deadlock distribuído, que pode por exemplo ser 
-    ** exercitado com uma chamada offer_registry::registerService(), em que  o  servidor  chama 
-    ** um getComponentId() ao servant que é responsável pelo serviço que está sendo registrado.
-    ** [doubt] 
-    ** A responsabilidade desta ativação deve ser do SDK ou do SCS?
-    */
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    assert(!CORBA::is_nil(o));
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    l.level_log(debug_level, "Ativando RootPOA");
-    poa_manager->activate();
     orbInitializer->clientInterceptor()->setConnectionManager(manager);
     orbInitializer->serverInterceptor()->setConnectionManager(manager);
     singleORB = orb;
