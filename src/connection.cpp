@@ -11,13 +11,13 @@ namespace openbus {
 
 void Connection::fetchBusKey() {
   /* armazenando a chave pública do barramento. */
-   _buskeyOctetSeq = _access_control->buskey();
+  idl::OctetSeq_var _buskeyOctetSeq = _access_control->buskey();
   _busKey = openssl::byteSeq2EVPPkey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
 }
 
 Connection::Connection(
   const std::string h,
-  const unsigned int p,
+  const unsigned short p,
   CORBA::ORB* orb,
   const interceptors::ORBInitializer* ini,
   ConnectionManager* m) 
@@ -32,8 +32,8 @@ Connection::Connection(
   _clientInterceptor = _orbInitializer->clientInterceptor();
   _serverInterceptor = _orbInitializer->serverInterceptor();
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  assert(!CORBA::is_nil(init_ref));
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+  assert(!CORBA::is_nil(_piCurrent));
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     _iComponent = scs::core::IComponent::_narrow(obj);
@@ -106,22 +106,19 @@ void Connection::loginByPassword(const char* entity, const char* password)
   idl_ac::ValidityTime validityTime;
   idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(len, len,static_cast<CORBA::Octet*> (bufKey));
   idl_ac::LoginInfo* loginInfo;
-  //[doubt] segundo openbus.idl eu não posso repassar WrongEncoding, devo mapear para uma 
-  //AccessDenied?
   try {
     loginInfo = _access_control->loginByPassword(entity, keyOctetSeq, encryptedBlock, validityTime);
   } catch (idl_ac::WrongEncoding&) {
-    throw AccessDenied();
+    throw idl::services::ServiceFailure();
   }
 
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
 
-  #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
+  #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin->start();
   #else
-  _renewLogin.reset(new RenewLogin(this, _manager, validityTime));  
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
 }
@@ -179,24 +176,24 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
 
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::ValidityTime validityTime;    
-  //[doubt] o que eu devo fazer com exceção idl_ac::WrongEncoding ?
   idl_ac::LoginInfo* loginInfo;
   try {
     loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
-  } catch (idl_ac::AccessDenied& e) {
+  } catch (idl_ac::AccessDenied&) {
     throw WrongPrivateKey();
+  } catch (idl_ac::WrongEncoding&) {
+    throw idl::services::ServiceFailure();
   }
   
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
 
-#ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
+  #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin->start();
-#else
-  _renewLogin.reset(new RenewLogin(this, _manager, validityTime));  
+  #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
-#endif
+  #endif
 }
 
 void Connection::loginByCertificate(const char* entity, const char* privateKeyFilename)
@@ -277,11 +274,10 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
 
-  #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
+  #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin->start();
   #else
-  _renewLogin.reset(new RenewLogin(this, _manager, validityTime));  
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif    
 }
@@ -323,8 +319,8 @@ bool Connection::logout() throw (CORBA::Exception) {
 CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  assert(!CORBA::is_nil(init_ref));
   PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+  assert(!CORBA::is_nil(piCurrent));
   CORBA::Any* signedCallChainAny = piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
   CORBA::Any* busidAny = piCurrent->get_slot(_orbInitializer->slotId_busid());
   const char* busid;
@@ -355,8 +351,8 @@ CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
 void Connection::joinChain(CallerChain* chain) throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::joinChain");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  assert(!CORBA::is_nil(init_ref));
   PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+  assert(!CORBA::is_nil(piCurrent));
   CORBA::Any signedCallChainAny;
   signedCallChainAny <<= *(chain->signedCallChain());
   piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), signedCallChainAny);
@@ -365,8 +361,8 @@ void Connection::joinChain(CallerChain* chain) throw (CORBA::Exception) {
 void Connection::exitChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::exitChain");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  assert(!CORBA::is_nil(init_ref));
   PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+  assert(!CORBA::is_nil(piCurrent));
   CORBA::Any any;
   piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), any);    
 }
@@ -374,8 +370,8 @@ void Connection::exitChain() throw (CORBA::Exception) {
 CallerChain* Connection::getJoinedChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::getJoinedChain");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  assert(!CORBA::is_nil(init_ref));
   PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
+  assert(!CORBA::is_nil(piCurrent));
   CORBA::Any_var signedCallChainAny= piCurrent->get_slot(_orbInitializer->slotId_joinedCallChain());
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) {

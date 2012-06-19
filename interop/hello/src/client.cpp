@@ -7,8 +7,8 @@ int main(int argc, char** argv) {
     openbus::log.set_level(openbus::debug_level);
     CORBA::ORB* orb = openbus::initORB(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    assert(!CORBA::is_nil(o));
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+    assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
     openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>

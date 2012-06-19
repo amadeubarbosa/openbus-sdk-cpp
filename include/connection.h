@@ -103,6 +103,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
+    //[todo] ficar aderente a IDL da biblioteca.
     void loginByCertificate(const char* entity, EVP_PKEY* privateKey)
       throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
       idl::services::ServiceFailure, CORBA::Exception);
@@ -124,6 +125,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
+    //[todo] ficar aderente a IDL da biblioteca.
     void loginByCertificate(const char* entity, const char* privateKeyFilename)
       throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
       idl::services::ServiceFailure, CORBA::Exception);
@@ -245,7 +247,7 @@ namespace openbus {
     
     ~Connection();
   private:
-    Connection(const std::string host, const unsigned int port, CORBA::ORB*, 
+    Connection(const std::string host, const unsigned short port, CORBA::ORB*, 
       const interceptors::ORBInitializer*, ConnectionManager*) throw(CORBA::Exception);
     void fetchBusKey();
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
@@ -254,7 +256,7 @@ namespace openbus {
     EVP_PKEY* busKey() const { return _busKey; }
     bool _logout(bool local);
     std::string _host;
-    unsigned int _port;
+    unsigned short _port;
     CORBA::ORB* orb() const { return _orb; }
     CORBA::ORB* _orb;
     PortableInterceptor::Current_var _piCurrent;
@@ -269,7 +271,6 @@ namespace openbus {
     idl_or::OfferRegistry_var _offer_registry;
     char* _busid;
     EVP_PKEY* _busKey;
-    idl::OctetSeq_var _buskeyOctetSeq;
     EVP_PKEY* _key;
     InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;

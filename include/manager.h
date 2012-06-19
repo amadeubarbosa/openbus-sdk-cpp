@@ -12,6 +12,10 @@
 #include <connection.h>
 #include <interceptors/orbInitializer_impl.h>
 
+#ifdef OPENBUS_SDK_MULTITHREAD
+#include "util/mutex_impl.h"
+#endif
+
 #define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
 
 /* forward declarations */
@@ -120,6 +124,9 @@ namespace openbus {
 	  */
     CORBA::ORB* orb() const { return _orb; }
   private:
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    MICOMT::Mutex _mutex;
+    #endif
     typedef std::map<std::string, Connection*> BusidConnection;
     ConnectionManager(CORBA::ORB*, interceptors::ORBInitializer*);
     ~ConnectionManager();

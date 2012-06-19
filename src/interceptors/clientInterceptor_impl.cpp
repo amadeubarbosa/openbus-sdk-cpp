@@ -107,8 +107,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
         credential.ticket = session->ticket;
         int slen = 22 + strlen(operation);
         unsigned char* s = new unsigned char[slen];
-        s[0] = 2;
-        s[1] = 0;
+        s[0] = idl::MajorVersion;
+        s[1] = idl::MinorVersion;
         memcpy(s+2, session->secret, 16);
         memcpy(s+18, &credential.ticket, 4);
         memcpy(s+22, operation, strlen(operation));

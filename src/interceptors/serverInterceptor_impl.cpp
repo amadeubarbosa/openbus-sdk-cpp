@@ -82,7 +82,7 @@ void ServerInterceptor::receive_request_service_contexts(
     IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
     CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
     any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
-  } catch (CORBA::Exception) {
+  } catch (CORBA::BAD_PARAM&) {
     hasContext = false;
   }
   idl_cr::CredentialData credential;
@@ -108,7 +108,7 @@ void ServerInterceptor::receive_request_service_contexts(
       ** obtenção da estrutura Login referente a este login id. (caller) */
       try {
         caller = conn->_loginCache->validateLogin(credential.login);
-      } catch(CORBA::SystemException &e) {
+      } catch(CORBA::Exception&) {
         /* não há uma entrada válida no cache e o cache nõo consegui validar o login 
         ** com o barramento. */
         throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
@@ -123,14 +123,14 @@ void ServerInterceptor::receive_request_service_contexts(
           size_t slenOperation = strlen(r->operation());
           int slen = 22 + slenOperation;
           unsigned char* s = new unsigned char[slen];
-          s[0] = 2;
-          s[1] = 0;
+          s[0] = idl::MajorVersion;
+          s[1] = idl::MinorVersion;
           memcpy(s+2, session->secret, SECRET_SIZE);
           memcpy(s+18, &credential.ticket, 4);
           memcpy(s+22, r->operation(), slenOperation);
           SHA256(s, slen, hash);
         }
-        m.unlock();
+        m.unlock(); //[todo] isso só deve ser feito depois do 'if' abaixo
         
         if (session && !memcmp(hash, credential.hash, 32) && 
           tickets_check(&session->ticketsHistory, credential.ticket)) 
@@ -145,7 +145,7 @@ void ServerInterceptor::receive_request_service_contexts(
 
             EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->busKey(), 0);
             assert(ctx);
-            assert(EVP_PKEY_verify_init(ctx));
+            assert(EVP_PKEY_verify_init(ctx)); //[todo] esse 'assert' está correto?
             if (EVP_PKEY_verify(ctx, credential.chain.signature, 256, hash, 32) != 1) {
               sendInvalidChain = true;
             } else {
@@ -154,7 +154,7 @@ void ServerInterceptor::receive_request_service_contexts(
               idl_ac::CallChain callChain;
               callChainAny >>= callChain;
               if (strcmp(callChain.target, conn->login()->id)) { 
-                /* a cadeia tem como destino(target) o meu login. */
+                /* a cadeia tem como destino(target) outro login. */
                 sendCredentialReset(conn, caller, r);
               } else if(strcmp(callChain.callers[callChain.callers.length()-1].id,
                 caller->loginInfo->id)) {
@@ -170,8 +170,8 @@ void ServerInterceptor::receive_request_service_contexts(
               }
             }
           } else sendInvalidChain = true;
-         if (sendInvalidChain) 
-           throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
+          if (sendInvalidChain) 
+            throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
         } else {
           l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
           sendCredentialReset(conn, caller, r);
@@ -188,7 +188,7 @@ void ServerInterceptor::receive_request_service_contexts(
       CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
       lany = _cdrCodec->decode_value(contextData, 
         openbus::legacy::v1_05::_tc_Credential);
-    } catch (CORBA::Exception) {
+    } catch (CORBA::BAD_PARAM&) {
       hasContext = false;
     }
     openbus::legacy::v1_05::Credential legacyCredential;

@@ -17,7 +17,6 @@ log_type log;
 ** VERIFICAR se o Mico está liberando o objeto.
 */
 interceptors::ORBInitializer* orbInitializer;
-CORBA::ORB* singleORB;
 #ifdef OPENBUS_SDK_MULTITHREAD
 MICOMT::Mutex _mutex;
 #endif
@@ -27,28 +26,25 @@ CORBA::ORB* initORB(int argc, char** argv) throw(CORBA::Exception) {
   Mutex m(&_mutex);
   #endif
   log_scope l(log.general_logger(), info_level, "initORB");
-  if (!singleORB) {
-    /* [doubt] se eu receber uma exceção após a construção do orbInitializer, quem 
-    ** vai liberar a memória do orbInitializer ? O destrutor não pode fazer 
-    ** isso... P.S.: Acho que não posso liberar o orbInitializer, pelo menos 
-    ** no Mico.
-    */
-    if (!orbInitializer) {
-      orbInitializer = new interceptors::ORBInitializer();
-      PortableInterceptor::register_orb_initializer(orbInitializer);
-    }
-    /* [obs] Mico 2.3.13 só permite a criação de apenas *um* ORB.
-    ** CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
-    */
-    CORBA::ORB* orb = CORBA::ORB_init(argc, argv);
+  if (!orbInitializer) {
+    orbInitializer = new interceptors::ORBInitializer();
+    PortableInterceptor::register_orb_initializer(orbInitializer);
+  }
+  /* [obs] Mico 2.3.13 só permite a criação de apenas *um* ORB.
+  ** CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
+  */
+  CORBA::ORB* orb = CORBA::ORB_init(argc, argv);
+  try {
+    orb->resolve_initial_references(CONNECTION_MANAGER_ID);
+    l.log("Este ORB ja foi criado.");
+  } catch(CORBA::ORB_InvalidName&) {
     ConnectionManager* manager = new ConnectionManager(orb, orbInitializer);
     l.level_log(debug_level, "Registrando ConnectionManager");
     orb->register_initial_reference(CONNECTION_MANAGER_ID, manager);
     orbInitializer->clientInterceptor()->setConnectionManager(manager);
     orbInitializer->serverInterceptor()->setConnectionManager(manager);
-    singleORB = orb;
   }
   l.log("Retornando ORB");
-  return singleORB;
+  return orb;
 }
 }
