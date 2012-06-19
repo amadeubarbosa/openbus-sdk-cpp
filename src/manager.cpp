@@ -60,7 +60,7 @@ void ConnectionManager::setRequester(Connection* c) throw (CORBA::Exception) {
   _piCurrent->set_slot(_orbInitializer->slotId_connectionAddr(), connectionAddrAny);
 }
 
-Connection* ConnectionManager::getRequester() throw (CORBA::Exception) { 
+Connection* ConnectionManager::getRequester() const throw (CORBA::Exception) { 
   log_scope l(log.general_logger(), info_level, "ConnectionManager::getRequester");
   CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_orbInitializer->slotId_connectionAddr());
   idl::OctetSeq connectionAddrOctetSeq;

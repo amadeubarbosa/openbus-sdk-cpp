@@ -1,3 +1,8 @@
+/**
+* API - SDK Openbus C++
+* \file manager.h
+*/
+
 #ifndef _TECGRAF_MANAGER_H_
 #define _TECGRAF_MANAGER_H_
 
@@ -19,24 +24,106 @@ namespace openbus {
   }
 }
 
+/**
+* \brief openbus
+*/
 namespace openbus {
+  /**
+  * \brief A conexão não está autenticada ou é nula.
+  */
   struct NotLoggedIn  { const char* name() const { return "openbus::NotLoggedIn"; } };
 
-  typedef std::map<std::string, Connection*> BusidConnection;
-  
+ /**
+ * \brief Interface com operações para gerenciar o acesso a barramentos OpenBus através de um ORB 
+ *  CORBA.
+ */
   class ConnectionManager : public CORBA::LocalObject {
   public:
+    /**
+	  * Cria uma conexão para um barramento a partir de um endereço de rede IP e uma porta.
+	  * 
+	  * @param[in] host Endereço de rede IP onde o barramento está executando.
+	  * @param[in] port Porta do processo do barramento no endereço indicado.
+	  * 
+	  * @throw CORBA::Exception
+	  *
+	  * @return Conexão ao barramento referenciado.
+	  */
     std::auto_ptr<Connection> createConnection(const char* host, short port) 
       throw (CORBA::Exception); 
+      
+    /**
+ 	  * Define a conexão a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
+ 	  * sempre que não houver uma conexão específica definida. Sempre que não houver uma conexão 
+ 	  * associada tanto as chamadas realizadas como as chamadas recebidas são negadas com a exceção 
+ 	  * CORBA::NO_PERMISSION.
+ 	  *
+ 	  * @param[in] c Conexão a ser definida como conexão default.
+  	*/
     void setDefaultConnection(Connection* c) { _defaultConnection = c; }
+    
+    /**
+	  * Obtém a conexão a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
+	  * sempre que não houver uma conexão específica definida.
+	  * 
+	  * @return Conexão definida como conexão default.
+	  */
     Connection* getDefaultConnection() const { return _defaultConnection; }
+    
+    /**
+	  * Define a conexão com o barramento a ser utilizada em todas as chamadas feitas pela thread 
+	  * corrente. Quando a conexão passada é zero a thread passa a ficar sem nenhuma conexão 
+	  * associada.
+	  * 
+	  * @throw CORBA::Exception
+	  *
+	  * @param[in] Conexão a barramento a ser associada a thread corrente.
+	  */
     void setRequester(Connection*) throw (CORBA::Exception);
-    Connection* getRequester() throw (CORBA::Exception);
+    
+    /**
+	  * Devolve a conexão com o barramento associada a thread corrente, ou zero caso não haja 
+	  * nenhuma conexão associada à thread.
+	  * 
+	  * @throw CORBA::Exception
+	  *
+	  * @return Conexão a barramento associada a thread corrente.
+  	*/
+    Connection* getRequester() const throw (CORBA::Exception);
+    
+	  /**
+	  * Define que conexão deve ser utilizada para receber chamadas oriundas do barramento ao qual 
+	  * está conectada e autenticada, denominada conexão de despacho.
+	  * 
+	  * @param[in] Conexão a barramento a ser associada a thread corrente.
+    *
+	  * @throw NotLoggedIn A conexão não está autenticada ou é nula.
+  	*/
     void setDispatcher(Connection*) throw (NotLoggedIn);
+    
+	  /**
+	  * Devolve a conexão de despacho associada ao barramento indicado, se houver. dado barramento, 
+	  * ou zero caso não haja nenhuma conexão associada ao barramento.
+	  * 
+	  * @param[in] busid Identificador do barramento ao qual a conexão está associada.
+	  * @return Conexão a barramento associada ao barramento.
+	  */
     Connection* getDispatcher(const char* busid);
+    
+	  /**
+	  * Remove a conexão de despacho associada ao barramento indicado, se houver.
+	  * 
+	  * @return Conexão a barramento associada ao barramento ou zero se não houver nenhuma conexão
+	  * associada.
+	  */
     Connection* clearDispatcher(const char* busid);
+    
+	  /** 
+	  * ORB utilizado pela conexão. 
+	  */
     CORBA::ORB* orb() const { return _orb; }
   private:
+    typedef std::map<std::string, Connection*> BusidConnection;
     ConnectionManager(CORBA::ORB*, interceptors::ORBInitializer*);
     ~ConnectionManager();
     void orb(CORBA::ORB* o) { _orb = o; }
