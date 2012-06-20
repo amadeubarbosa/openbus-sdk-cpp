@@ -25,8 +25,7 @@ ServerInterceptor::ServerInterceptor(
     _cdrCodec(cdr_codec), 
     _manager(0) 
 {
-  log_scope l(log.server_interceptor_logger(), debug_level,
-    "ServerInterceptor::ServerInterceptor");
+  log_scope l(log.server_interceptor_logger(), debug_level,"ServerInterceptor::ServerInterceptor");
   _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
 }
 
@@ -65,8 +64,7 @@ void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller,
 
 ServerInterceptor::~ServerInterceptor() { }
 
-void ServerInterceptor::receive_request_service_contexts(
-  PortableInterceptor::ServerRequestInfo* r)
+void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::ServerRequestInfo* r)
   throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
 {
   const char* operation = r->operation();
@@ -130,24 +128,24 @@ void ServerInterceptor::receive_request_service_contexts(
           memcpy(s+22, r->operation(), slenOperation);
           SHA256(s, slen, hash);
         }
-        m.unlock(); //[todo] isso só deve ser feito depois do 'if' abaixo
         
         if (session && !memcmp(hash, credential.hash, 32) && 
-          tickets_check(&session->ticketsHistory, credential.ticket)) 
+            tickets_check(&session->ticketsHistory, credential.ticket)) 
         {
           /* a credencial recebida é válida. */
           l.level_vlog(debug_level, "credential is valid");
 
-          bool sendInvalidChain = false;
+          bool sendInvalidChainCode = false;
           if (credential.chain.encoded.length()) {
             idl::HashValue hash;
             SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
 
             EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->busKey(), 0);
             assert(ctx);
-            assert(EVP_PKEY_verify_init(ctx)); //[todo] esse 'assert' está correto?
+            int status = EVP_PKEY_verify_init(ctx);
+            assert(status);
             if (EVP_PKEY_verify(ctx, credential.chain.signature, 256, hash, 32) != 1) {
-              sendInvalidChain = true;
+              sendInvalidChainCode = true;
             } else {
               CORBA::Any_var callChainAny = _cdrCodec->decode_value(
                 credential.chain.encoded, idl_ac::_tc_CallChain);
@@ -155,11 +153,12 @@ void ServerInterceptor::receive_request_service_contexts(
               callChainAny >>= callChain;
               if (strcmp(callChain.target, conn->login()->id)) { 
                 /* a cadeia tem como destino(target) outro login. */
+                m.unlock();
                 sendCredentialReset(conn, caller, r);
               } else if(strcmp(callChain.callers[callChain.callers.length()-1].id,
                 caller->loginInfo->id)) {
                 /* o último elemento da cadeia não é quem está me chamando. */
-                sendInvalidChain = true;
+                sendInvalidChainCode = true;
               } else {
                 CORBA::Any signedCallChainAny;
                 signedCallChainAny <<= credential.chain;
@@ -169,11 +168,12 @@ void ServerInterceptor::receive_request_service_contexts(
                 r->set_slot(_slotId_busid, busidAny);
               }
             }
-          } else sendInvalidChain = true;
-          if (sendInvalidChain) 
+          } else sendInvalidChainCode = true;
+          if (sendInvalidChainCode) 
             throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
         } else {
           l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
+          m.unlock();
           sendCredentialReset(conn, caller, r);
         }
       } else throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
@@ -186,8 +186,7 @@ void ServerInterceptor::receive_request_service_contexts(
       IOP::ServiceContext_var sc = r->get_request_service_context(1234);
       IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
       CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
-      lany = _cdrCodec->decode_value(contextData, 
-        openbus::legacy::v1_05::_tc_Credential);
+      lany = _cdrCodec->decode_value(contextData, openbus::legacy::v1_05::_tc_Credential);
     } catch (CORBA::BAD_PARAM&) {
       hasContext = false;
     }
