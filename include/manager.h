@@ -59,9 +59,9 @@ namespace openbus {
  	  * associada tanto as chamadas realizadas como as chamadas recebidas são negadas com a exceção 
  	  * CORBA::NO_PERMISSION.
  	  *
- 	  * @param[in] c Conexão a ser definida como conexão default.
+ 	  * @param[in] conn Conexão a ser definida como conexão default.
   	*/
-    void setDefaultConnection(Connection* c) { _defaultConnection = c; }
+    void setDefaultConnection(Connection* conn) { _defaultConnection = conn; }
     
     /**
 	  * Obtém a conexão a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
@@ -100,7 +100,7 @@ namespace openbus {
     *
 	  * @throw NotLoggedIn A conexão não está autenticada ou é nula.
   	*/
-    void setDispatcher(Connection*) throw (NotLoggedIn);
+    void setDispatcher(Connection&) throw (NotLoggedIn);
     
 	  /**
 	  * Devolve a conexão de despacho associada ao barramento indicado, se houver. dado barramento, 

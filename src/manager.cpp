@@ -21,11 +21,34 @@ std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, 
   return std::auto_ptr<Connection> (new Connection(host, port, _orb, _orbInitializer, this));
 }
 
-void ConnectionManager::setDispatcher(Connection* c) throw (NotLoggedIn) {
+void ConnectionManager::setRequester(Connection* c) throw (CORBA::Exception) {
+  log_scope l(log.general_logger(), info_level, "ConnectionManager::setRequester");
+  l.vlog("connection:%p", c);
+  size_t size = sizeof(Connection*);
+  unsigned char buf[size];
+  memcpy(buf, &c, size);
+  idl::OctetSeq_var connectionAddrOctetSeq = new idl::OctetSeq(size, size, buf);
+  CORBA::Any connectionAddrAny;
+  connectionAddrAny <<= *(connectionAddrOctetSeq);
+  _piCurrent->set_slot(_orbInitializer->slotId_connectionAddr(), connectionAddrAny);
+}
+
+Connection* ConnectionManager::getRequester() const throw (CORBA::Exception) { 
+  log_scope l(log.general_logger(), info_level, "ConnectionManager::getRequester");
+  CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_orbInitializer->slotId_connectionAddr());
+  idl::OctetSeq connectionAddrOctetSeq;
+  if (*connectionAddrAny >>= connectionAddrOctetSeq) {
+    assert(connectionAddrOctetSeq.length() == sizeof(Connection*));
+    Connection* c;
+    std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection*));
+    return c;
+  } else return 0;
+}
+
+void ConnectionManager::setDispatcher(Connection& c) throw (NotLoggedIn) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::setDispatcher");
   Mutex m(&_mutex);
-  assert(c);
-  if (c->busid()) _busidConnection[std::string(c->busid())] = c;
+  if (c.busid()) _busidConnection[std::string(c.busid())] = &c;
   else throw NotLoggedIn();
 }
 
@@ -50,29 +73,5 @@ Connection* ConnectionManager::clearDispatcher(const char* busid) {
     _busidConnection.erase(it);
     return c;
   } else return 0;    
-}
-
-void ConnectionManager::setRequester(Connection* c) throw (CORBA::Exception) {
-  log_scope l(log.general_logger(), info_level, "ConnectionManager::setRequester");
-  l.vlog("connection:%p", c);
-  size_t size = sizeof(Connection*);
-  unsigned char buf[size];
-  memcpy(buf, &c, size);
-  idl::OctetSeq_var connectionAddrOctetSeq = new idl::OctetSeq(size, size, buf);
-  CORBA::Any connectionAddrAny;
-  connectionAddrAny <<= *(connectionAddrOctetSeq);
-  _piCurrent->set_slot(_orbInitializer->slotId_connectionAddr(), connectionAddrAny);
-}
-
-Connection* ConnectionManager::getRequester() const throw (CORBA::Exception) { 
-  log_scope l(log.general_logger(), info_level, "ConnectionManager::getRequester");
-  CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_orbInitializer->slotId_connectionAddr());
-  idl::OctetSeq connectionAddrOctetSeq;
-  if (*connectionAddrAny >>= connectionAddrOctetSeq) {
-    assert(connectionAddrOctetSeq.length() == sizeof(Connection*));
-    Connection* c;
-    std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection*));
-    return c;
-  } else return 0;
 }
 }

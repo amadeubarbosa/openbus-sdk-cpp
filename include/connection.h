@@ -276,13 +276,9 @@ namespace openbus {
     */
     const idl_ac::LoginInfoSeq& callers() const { return _callers; }
     
-    /**
-    * Retorna a cadeia de chamadas assinada pelo barramento.
-    */
-    const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
-
     CallerChain() : _busid(0) { _callers.length(0); }
   private:
+    const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
     char* _busid;
     idl_ac::LoginInfoSeq _callers;
     idl_cr::SignedCallChain _signedCallChain;

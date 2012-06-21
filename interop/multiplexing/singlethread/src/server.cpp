@@ -55,8 +55,8 @@ int main(int argc, char** argv) {
     connBusA->loginByPassword("demo", "demo");
     connBusB->loginByPassword("demo", "demo");
 
-    manager->setDispatcher(connBusB.get());
-    manager->setDispatcher(connBusA.get());
+    manager->setDispatcher(*connBusB.get());
+    manager->setDispatcher(*connBusA.get());
 
     connBusA->offers()->registerService(ctx.getIComponent(), props);
     manager->setRequester(connBusB.get());

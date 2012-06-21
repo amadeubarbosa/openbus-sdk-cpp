@@ -162,7 +162,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _orbInitializer->codec()->encode_value(any);
 
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
@@ -238,7 +238,7 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo =_orbInitializer->codec()->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _orbInitializer->codec()->encode_value(any);
 
   fetchBusKey();
 
