@@ -90,8 +90,7 @@ namespace openbus {
 	  * Efetua login no barramento como uma entidade usando autenticação por certificado.
 	  * 
 	  * @param[in] entity Identificador da entidade a ser conectada.
-	  * @param[in] privateKey Chave privada da entidade utilizada na autenticação. Essa chave é 
-	  *            passada através de um ponteiro para uma estrutura OpenSSL do tipo EVP_PKEY. 
+	  * @param[in] privKey Chave privada da entidade utilizada na autenticação.
 	  * 
 	  * @throw CorruptedPrivateKey A chave privada fornecida está corrompida.
 	  * @throw WrongPrivateKey A chave privada fornecida não corresponde ao certificado da entidade 
@@ -103,33 +102,10 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    //[todo] ficar aderente a IDL da biblioteca.
-    void loginByCertificate(const char* entity, EVP_PKEY* privateKey)
+    void loginByCertificate(const char* entity, const idl::OctetSeq& privKey)
       throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
       idl::services::ServiceFailure, CORBA::Exception);
 
-	  /**
-	  * Efetua login no barramento como uma entidade usando autenticação por certificado.
-	  * 
-	  * @param[in] entity Identificador da entidade a ser conectada.
-	  * @param[in] privateKeyFilename Nome do arquivo que contêm a chave privada da entidade utilizada 
-	  *            na autenticação. Esse valor será repassado para uma função fopen().
-	  * 
-	  * @throw CorruptedPrivateKey A chave privada fornecida está corrompida.
-	  * @throw WrongPrivateKey A chave privada fornecida não corresponde ao certificado da entidade 
-	  *        registrado no barramento indicado.
-	  * @throw AlreadyLoggedIn A conexão já está logada.
-	  * @throw MissingCertificate Não há certificado para essa entidade registrado no barramento 
-	  *        indicado.
-	  * @throw ServiceFailure Ocorreu uma falha interna nos serviços do barramento que impediu o 
-	  *        estabelecimento da conexão.
-	  * @throw CORBA::Exception
-	  */
-    //[todo] ficar aderente a IDL da biblioteca.
-    void loginByCertificate(const char* entity, const char* privateKeyFilename)
-      throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
-      idl::services::ServiceFailure, CORBA::Exception);
-    
 	  /**
 	  * Inicia o processo de login por single sign-on.
 	  * 

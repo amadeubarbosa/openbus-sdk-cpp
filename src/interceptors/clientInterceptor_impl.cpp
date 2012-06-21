@@ -1,6 +1,6 @@
 #include <interceptors/clientInterceptor_impl.h>
 #include <legacy/stubs/credential_v1_05.h>
-#include <util/openssl_impl.h>
+#include <util/openssl.h>
 #include <log.h>
 
 #include <openssl/sha.h>

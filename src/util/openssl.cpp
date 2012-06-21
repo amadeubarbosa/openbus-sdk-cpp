@@ -1,20 +1,34 @@
-#include <util/openssl_impl.h>
+#include <util/openssl.h>
 
 #include <cassert>
 
 namespace openbus {
 namespace openssl {
     
-EVP_PKEY* byteSeq2EVPPkey(const unsigned char* buf, size_t len) {
+EVP_PKEY* byteSeq2PubKey(const unsigned char* buf, size_t len) {
   EVP_PKEY* key = 0;
   key = d2i_PUBKEY(0, &buf, len);
   assert(key);
   return key;
 }
 
-unsigned char* EVPPkey2byteSeq(EVP_PKEY* key, size_t& len) {
+unsigned char* PubKey2byteSeq(EVP_PKEY* key, size_t& len) {
   unsigned char* buf = 0;
   len = i2d_PUBKEY(key, &buf);
+  assert(len > 0);
+  return buf;
+}
+
+EVP_PKEY* byteSeq2PrvKey(const unsigned char* buf, size_t len) {
+  EVP_PKEY* key = 0;
+  key = d2i_AutoPrivateKey(0, &buf, len);
+  assert(key);
+  return key;  
+}
+
+unsigned char* PrvKey2byteSeq(EVP_PKEY* key, size_t& len) {
+  unsigned char* buf = 0;
+  len = i2d_PrivateKey(key, &buf);
   assert(len > 0);
   return buf;
 }

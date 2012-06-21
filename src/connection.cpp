@@ -1,18 +1,20 @@
 #include <connection.h>
 #include <connection_impl.h>
-#include <util/openssl_impl.h>
+#include <util/openssl.h>
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
 #include <ctime>
 #include <log.h>
+#include <openssl/x509.h>
+#include <openssl/sha.h>
 
 namespace openbus {
 
 void Connection::fetchBusKey() {
   /* armazenando a chave pública do barramento. */
   idl::OctetSeq_var _buskeyOctetSeq = _access_control->buskey();
-  _busKey = openssl::byteSeq2EVPPkey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
+  _busKey = openssl::byteSeq2PubKey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
 }
 
 Connection::Connection(
@@ -84,7 +86,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   
   /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  unsigned char* bufKey = openssl::EVPPkey2byteSeq(_key, len);
+  unsigned char* bufKey = openssl::PubKey2byteSeq(_key, len);
 
   /* criando uma hash da minha chave. */
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
@@ -123,7 +125,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   #endif
 }
 
-void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
+void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& privKey)
   throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate,
   idl::services::ServiceFailure, CORBA::Exception)
 {
@@ -136,9 +138,11 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   idl_ac::LoginProcess_var loginProcess;
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
-    //_access_control->startLoginByCertificate: throw (idl_ac::MissingCertificate, ServiceFailure)
     loginProcess = _access_control->startLoginByCertificate(entity,challenge);
   }
+  
+  EVP_PKEY* privateKey = openssl::byteSeq2PrvKey(privKey.get_buffer(), privKey.length());
+  
   /* decifrar o desafio usando a chave privada do usuário. */
   unsigned char* secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 256);
   if (!secret) throw CorruptedPrivateKey();
@@ -153,7 +157,7 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
 
   /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  unsigned char* bufKey = openssl::EVPPkey2byteSeq(_key, len);
+  unsigned char* bufKey = openssl::PubKey2byteSeq(_key, len);
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
 
   CORBA::Any any;
@@ -196,19 +200,6 @@ void Connection::loginByCertificate(const char* entity, EVP_PKEY* privateKey)
   #endif
 }
 
-void Connection::loginByCertificate(const char* entity, const char* privateKeyFilename)
-  throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
-  idl::services::ServiceFailure, CORBA::Exception)
-{
-  log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
-  FILE* privateKeyFile = fopen(privateKeyFilename, "r");
-  if (!privateKeyFile) throw CorruptedPrivateKey();
-  EVP_PKEY* privateKey = PEM_read_PrivateKey(privateKeyFile, 0, 0, 0);
-  fclose(privateKeyFile);
-  if (!privateKey) throw CorruptedPrivateKey();
-  loginByCertificate(entity, privateKey);
-}
-
 std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSingleSignOn() 
   throw (idl::services::ServiceFailure, CORBA::Exception)
 {
@@ -242,7 +233,7 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
   
   /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  unsigned char* bufKey = openssl::EVPPkey2byteSeq(_key, len);
+  unsigned char* bufKey = openssl::PubKey2byteSeq(_key, len);
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
 
   CORBA::Any any;
