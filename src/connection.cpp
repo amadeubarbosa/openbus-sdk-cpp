@@ -273,23 +273,28 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
 }
 
 bool Connection::_logout(bool local) {
+  Mutex m(&_mutex);
   bool sucess = false;
   if (login()) {
     #ifdef OPENBUS_SDK_MULTITHREAD
     _renewLogin->stop();
     _renewLogin->wait();
-    _renewLogin.reset();
     #else
     _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
-    _renewLogin.reset();
     #endif
+    _renewLogin.reset();
     _loginInfo.reset();
     if (!local) {
+      Connection* c = 0;
       try {
+        c = _manager->getRequester();
+        _manager->setRequester(this);
         _access_control->logout();
         sucess = true;
-      } catch(...) {
-        sucess = false;
+        _manager->setRequester(c);
+      } catch(...) { 
+        sucess = false; 
+        _manager->setRequester(c);        
       }
     }
   } else sucess = false;
