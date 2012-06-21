@@ -10,7 +10,7 @@ Entity {
 }
 
 Certificate {
-  id = "DemoCppHello",
+  id = "demo",
   certificate = "DemoCppHello.crt",
 }
 
