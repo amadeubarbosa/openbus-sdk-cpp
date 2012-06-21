@@ -252,14 +252,13 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
   idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(len,len, static_cast<CORBA::Octet*> (bufKey));
 
   idl_ac::ValidityTime validityTime;
-  // loginProcess->login(): throw (WrongEncoding, AccessDenied, ServiceFailure)
-  //[doubt] InvalidLoginProcess
-  //[doubt] WrongEncoding deve ser mapeado para o que?
   idl_ac::LoginInfo* loginInfo; 
   try {
     loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
-  } catch(idl_ac::AccessDenied&) {
+  } catch (idl_ac::AccessDenied&) {
     throw WrongSecret();
+  } catch (idl_ac::WrongEncoding&) {
+    throw idl::services::ServiceFailure();
   }
 
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
