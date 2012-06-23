@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
   CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenbusConnectionManager");
   openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>(obj_connection_manager);
   std::auto_ptr<openbus::Connection> conn(manager->createConnection(cfg.host().c_str(), cfg.port()));
-  manager->setDispatcher(conn.get());
+  manager->setDispatcher(*conn);
   
   openbus::idl_or::ServicePropertySeq properties;
   openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(properties);
