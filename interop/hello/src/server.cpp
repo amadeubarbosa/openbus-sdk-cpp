@@ -6,8 +6,8 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
-bool onInvalidLogin(const openbus::Connection* conn, const openbus::idl_ac::LoginInfo* login) {
-  std::cout << "login [" << login->id << "," << login->entity << 
+bool onInvalidLogin(const openbus::Connection& conn, const openbus::idl_ac::LoginInfo& login) {
+  std::cout << "login [" << login.id << "," << login.entity << 
     "] terminated shutting the server down." << std::endl;
   return false;
 }
@@ -15,8 +15,7 @@ bool onInvalidLogin(const openbus::Connection* conn, const openbus::idl_ac::Logi
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(openbus::Connection* c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
-    const char* caller = _conn->getCallerChain()->callers()[0].entity;
-    std::cout << "Hello from '" << caller << "'." << std::endl;
+    std::cout << "Hello from '" <<  _conn->getCallerChain()->caller().entity << "'." << std::endl;
   }
 private:
   openbus::Connection* _conn;

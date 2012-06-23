@@ -15,7 +15,7 @@ struct hello_impl : public POA_Hello
 
   void sayHello()
   {
-    const char* caller = conn.getCallerChain()->callers()[0].entity;
+    const char* caller = conn.getCallerChain()->caller().entity;
     std::cout << "Hello from '" << caller << "'." << std::endl;
     servant_called = true;
   }  

@@ -50,7 +50,8 @@ CallerChain* ClientInterceptor::getJoinedChain(PortableInterceptor::ClientReques
     if (callChainAny >>= callChain) {
       c->signedCallChain(signedCallChain);
       c->_busid = callChain.target;
-      c->_callers = callChain.callers;
+      c->_originators = callChain.originators;
+      c->_caller = callChain.caller;
       return c;
     } else return 0;
   } else return 0;
@@ -168,8 +169,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       legacy::v1_05::Credential legacyCredential;
       legacyCredential.identifier = conn.login()->id;
       legacyCredential.owner = conn.login()->entity;
-      if (callerChain && (callerChain->_callers.length() > 1))
-        legacyCredential.delegate = CORBA::string_dup(callerChain->_callers[0].entity);
+      if (callerChain && (callerChain->_originators.length() > 1))
+        legacyCredential.delegate = CORBA::string_dup(callerChain->_originators[0].entity);
       else legacyCredential.delegate = "";
       CORBA::Any lany;
       lany <<= legacyCredential;
@@ -234,7 +235,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
         if (conn.onInvalidLogin()) 
-          if ((conn.onInvalidLogin())(&conn, conn.login()))
+          if ((conn.onInvalidLogin())(conn, *conn.login()))
             throw PortableInterceptor::ForwardRequest(r->target(), false);            
         conn._logout(true);
       }

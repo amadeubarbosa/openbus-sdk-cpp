@@ -155,8 +155,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
                 /* a cadeia tem como destino(target) outro login. */
                 m.unlock();
                 sendCredentialReset(conn, caller, r);
-              } else if(strcmp(callChain.callers[callChain.callers.length()-1].id,
-                caller->loginInfo->id)) {
+              } else if(strcmp(callChain.caller.id, caller->loginInfo->id)) {
                 /* o último elemento da cadeia não é quem está me chamando. */
                 sendInvalidChainCode = true;
               } else {
@@ -199,21 +198,21 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
       idl_ac::CallChain legacyChain;
       legacyChain.target = "";
       if (strcmp(legacyCredential.delegate, "")) {
-        legacyChain.callers.length(2);
+        legacyChain.originators.length(1);
         idl_ac::LoginInfo delegate;
         delegate.id = "<unknown>";
         delegate.entity = legacyCredential.delegate;
-        legacyChain.callers[0] = delegate;
+        legacyChain.originators[0] = delegate;
         idl_ac::LoginInfo login;
         login.id = legacyCredential.identifier;
         login.entity = legacyCredential.owner;
-        legacyChain.callers[0] = login;
+        legacyChain.caller = login;
       } else {
-        legacyChain.callers.length(1);
+        legacyChain.originators.length(0);
         idl_ac::LoginInfo loginInfo;
         loginInfo.id = legacyCredential.identifier;
         loginInfo.entity = legacyCredential.owner;
-        legacyChain.callers[0] = loginInfo;            
+        legacyChain.caller = loginInfo;            
       }
       CORBA::Any legacyChainAny;
       legacyChainAny <<= legacyChain;

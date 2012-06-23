@@ -3,7 +3,8 @@
 
 namespace openbus {
 ConnectionManager::ConnectionManager(CORBA::ORB* o, interceptors::ORBInitializer* i) 
-: _orb(o), _orbInitializer(i), _defaultConnection(0) {
+ : _orb(o), _orbInitializer(i), _defaultConnection(0) 
+{
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::ConnectionManager");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);

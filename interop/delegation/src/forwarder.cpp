@@ -47,7 +47,7 @@ struct forwarding_thread
         c.timed_wait(lock, boost::posix_time::seconds(5));
         if(!canceled)
         {
-          std::string from (caller_chain.callers()[0].entity);
+          std::string from (caller_chain.caller().entity);
           std::cout << "Checking messages of " << from << std::endl;
           connection.joinChain(&caller_chain);
           delegation::PostDescSeq_var posts = messenger->receivePosts();
@@ -98,7 +98,7 @@ struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation:
   void setForward(const char* to)
   {
     boost::unique_lock<boost::mutex> lock(mutex);
-    std::string from(connection.getCallerChain()->callers()[0].entity);
+    std::string from(connection.getCallerChain()->caller().entity);
     std::cout << "setup forward to " << to << " by " << from << std::endl;
     std::map<std::string, boost::shared_ptr<forwarding_thread> >::const_iterator
       iterator = threads.find(from);
@@ -116,7 +116,7 @@ struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation:
   void cancelForward(const char* to)
   {
     boost::unique_lock<boost::mutex> lock(mutex);
-    std::string from(connection.getCallerChain()->callers()[0].entity);
+    std::string from(connection.getCallerChain()->caller().entity);
     std::cout << "cancel forward to " << to << " by " << from << std::endl;
     std::map<std::string, boost::shared_ptr<forwarding_thread> >::iterator
       iterator = threads.find(from);

@@ -26,16 +26,16 @@ struct MessengerImpl : virtual public POA_tecgraf::openbus::interop::delegation:
 
   void post(const char* to, const char* message) 
   {
-    std::cout << "post to " << to << " by " << connection.getCallerChain()->callers()[0].entity
+    std::cout << "post to " << to << " by " << connection.getCallerChain()->caller().entity
               << std::endl;
     std::cout << " Message content: " << message << std::endl;
-    delegation::PostDesc desc = {connection.getCallerChain()->callers()[0].entity, message};
+    delegation::PostDesc desc = {connection.getCallerChain()->caller().entity, message};
     inbox.insert(std::make_pair(to, desc));
   }
 
   delegation::PostDescSeq* receivePosts()
   {
-    std::string from (connection.getCallerChain()->callers()[0].entity);
+    std::string from (connection.getCallerChain()->caller().entity);
     std::cout << "Retrieving messages for " << from << std::endl;
     typedef std::multimap<std::string, delegation::PostDesc>::const_iterator iterator;
     std::pair<iterator, iterator> range = inbox.equal_range(from);

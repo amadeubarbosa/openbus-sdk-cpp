@@ -328,15 +328,17 @@ CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
         idl_ac::_tc_CallChain);
       *callChainAny >>= callChain;
       callerChain = new CallerChain();
-      callerChain->_callers = callChain.callers;
+      callerChain->_originators = callChain.originators;
       callerChain->_busid = CORBA::string_dup(busid);
+      callerChain->_caller = callChain.caller;
       callerChain->signedCallChain(signedCallChain);
     } else return 0;
   } else {
     CORBA::Any* legacyChainAny = piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
     if (*legacyChainAny >>= callChain) {
       callerChain = new CallerChain();
-      callerChain->_callers = callChain.callers;
+      callerChain->_originators = callChain.originators;
+      callerChain->_caller = callChain.caller;
       callerChain->_busid = 0;
     } else return 0;
   }
@@ -377,7 +379,8 @@ CallerChain* Connection::getJoinedChain() throw (CORBA::Exception) {
     if (callChainAny >>= callChain) {
       c->signedCallChain(signedCallChain);
       c->_busid = callChain.target;
-      c->_callers = callChain.callers;
+      c->_originators = callChain.originators;
+      c->_caller = callChain.caller;
       return c;
     } else return 0;
   } else return 0;

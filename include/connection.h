@@ -68,7 +68,7 @@ namespace openbus {
     * @return 'true' se a chamada que recebeu a indicação que o login se tornou inválido deve ser 
     * refeita, ou 'false' caso a execção de NO_PERMISSION deve ser lançada.
     */
-    typedef bool (*InvalidLoginCallback_ptr) (const Connection*, const idl_ac::LoginInfo*);
+    typedef bool (*InvalidLoginCallback_ptr) (const Connection&, const idl_ac::LoginInfo&);
   
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por senha.
@@ -270,17 +270,25 @@ namespace openbus {
 	  */
     const char* busid() const { return _busid; }
     
-    /**
-    * Lista de informações de login de todas as entidades que participaram dessa cadeia de chamadas,
-    * na ordem em que elas entraram na cadeia.
-    */
-    const idl_ac::LoginInfoSeq& callers() const { return _callers; }
+	  /**
+	  * Lista de informações de login de todas as entidades que realizaram chamadas
+	  * que originaram a cadeia de chamadas da qual essa chamada está inclusa.
+ 	  * Quando essa lista é vazia isso indica que a chamada não está inclusa numa 
+	  * cadeia de chamadas.
+ 	  */
+    const idl_ac::LoginInfoSeq& originators() const { return _originators; }
     
-    CallerChain() : _busid(0) { _callers.length(0); }
+	  /**
+	  * Informação de login da entidade que iniciou a chamada
+	  */
+    const idl_ac::LoginInfo& caller() const { return _caller; }
+      
+    CallerChain() : _busid(0) { _originators.length(0); }
   private:
     const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
     char* _busid;
-    idl_ac::LoginInfoSeq _callers;
+    idl_ac::LoginInfoSeq _originators;
+    idl_ac::LoginInfo _caller;
     idl_cr::SignedCallChain _signedCallChain;
     void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
     friend class Connection;
