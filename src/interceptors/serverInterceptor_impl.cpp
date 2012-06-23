@@ -16,12 +16,11 @@ ServerInterceptor::ServerInterceptor(
   PortableInterceptor::SlotId slotId_joinedCallChain,
   PortableInterceptor::SlotId slotId_signedCallChain, 
   PortableInterceptor::SlotId slotId_legacyCallChain,
-  PortableInterceptor::SlotId slotId_busid, 
   IOP::Codec* cdr_codec) 
   : _piCurrent(piCurrent), _slotId_connectionAddr(slotId_connectionAddr),
     _slotId_joinedCallChain(slotId_joinedCallChain), 
     _slotId_signedCallChain(slotId_signedCallChain),
-    _slotId_legacyCallChain(slotId_legacyCallChain), _slotId_busid(slotId_busid), 
+    _slotId_legacyCallChain(slotId_legacyCallChain),
     _cdrCodec(cdr_codec), 
     _manager(0) 
 {
@@ -162,9 +161,6 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
                 CORBA::Any signedCallChainAny;
                 signedCallChainAny <<= credential.chain;
                 r->set_slot(_slotId_signedCallChain, signedCallChainAny);
-                CORBA::Any busidAny;
-                busidAny <<= credential.bus;
-                r->set_slot(_slotId_busid, busidAny);
               }
             }
           } else sendInvalidChainCode = true;

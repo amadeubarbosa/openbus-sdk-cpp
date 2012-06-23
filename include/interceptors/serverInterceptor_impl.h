@@ -32,7 +32,6 @@ namespace interceptors {
       PortableInterceptor::SlotId slotId_joinedCallChain,
       PortableInterceptor::SlotId slotId_signedCallChain, 
       PortableInterceptor::SlotId slotId_legacyCallChain,
-      PortableInterceptor::SlotId slotId_busid, 
       IOP::Codec* cdr_codec);
     ~ServerInterceptor();
     void receive_request_service_contexts(PortableInterceptor::ServerRequestInfo*) 
@@ -58,7 +57,6 @@ namespace interceptors {
     PortableInterceptor::SlotId _slotId_joinedCallChain;
     PortableInterceptor::SlotId _slotId_signedCallChain;
     PortableInterceptor::SlotId _slotId_legacyCallChain;
-    PortableInterceptor::SlotId _slotId_busid;
     IOP::Codec* _cdrCodec;
     ConnectionManager* _manager;
     void sendCredentialReset(Connection *, Login*, PortableInterceptor::ServerRequestInfo*);

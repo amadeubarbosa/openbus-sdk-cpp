@@ -27,7 +27,6 @@ namespace interceptors {
       _slotId_ignoreInterceptor, _codec.in()));
     info->add_client_request_interceptor(_clientInterceptor.get());
     _slotId_signedCallChain = info->allocate_slot_id();
-    _slotId_busid = info->allocate_slot_id();
     _slotId_legacyCallChain = info->allocate_slot_id();
     _serverInterceptor = std::auto_ptr<ServerInterceptor> (
       new ServerInterceptor(
@@ -36,7 +35,6 @@ namespace interceptors {
         _slotId_joinedCallChain,
         _slotId_signedCallChain,
         _slotId_legacyCallChain,
-        _slotId_busid,
         _codec.in()));
     info->add_server_request_interceptor(_serverInterceptor.get());
   }

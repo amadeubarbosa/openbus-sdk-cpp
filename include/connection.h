@@ -245,7 +245,7 @@ namespace openbus {
     idl_ac::AccessControl_var _access_control;
     idl_ac::LoginRegistry_var _login_registry;
     idl_or::OfferRegistry_var _offer_registry;
-    char* _busid;
+    const char* _busid;
     EVP_PKEY* _busKey;
     EVP_PKEY* _key;
     InvalidLoginCallback_ptr _onInvalidLogin;
@@ -282,14 +282,19 @@ namespace openbus {
 	  * Informação de login da entidade que iniciou a chamada
 	  */
     const idl_ac::LoginInfo& caller() const { return _caller; }
-      
-    CallerChain() : _busid(0) { _originators.length(0); }
   private:
-    const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
-    char* _busid;
+    CallerChain(const char* a, const idl_ac::LoginInfoSeq& b, const idl_ac::LoginInfo& c, 
+      const idl_cr::SignedCallChain& d) 
+      : _busid(a), _originators(b), _caller(c), _signedCallChain(d) { }
+
+    CallerChain(const char* a, const idl_ac::LoginInfoSeq& b, const idl_ac::LoginInfo& c) 
+      : _busid(a), _originators(b), _caller(c) { }
+
+    const char* _busid;
     idl_ac::LoginInfoSeq _originators;
     idl_ac::LoginInfo _caller;
     idl_cr::SignedCallChain _signedCallChain;
+    const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
     void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
     friend class Connection;
     friend class openbus::interceptors::ClientInterceptor;

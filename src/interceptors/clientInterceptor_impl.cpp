@@ -43,17 +43,12 @@ CallerChain* ClientInterceptor::getJoinedChain(PortableInterceptor::ClientReques
   CORBA::Any_var signedCallChainAny= r->get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) {
-    CallerChain* c = new CallerChain();
     CORBA::Any_var callChainAny = _cdrCodec->decode_value(signedCallChain.encoded,
       idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
-    if (callChainAny >>= callChain) {
-      c->signedCallChain(signedCallChain);
-      c->_busid = callChain.target;
-      c->_originators = callChain.originators;
-      c->_caller = callChain.caller;
-      return c;
-    } else return 0;
+    if (callChainAny >>= callChain) return new CallerChain(callChain.target, callChain.originators, callChain.caller,
+      signedCallChain);
+    else return 0;
   } else return 0;
 }
 
