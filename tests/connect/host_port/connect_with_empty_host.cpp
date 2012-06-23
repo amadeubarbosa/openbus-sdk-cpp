@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     std::cout << "No exception was thrown, exception COMM_FAILURE was expected" << std::endl;
     std::abort();
   }
-  catch(CORBA::COMM_FAILURE const&)
+  catch(CORBA::BAD_PARAM const&)
   {
   }
   catch(...)

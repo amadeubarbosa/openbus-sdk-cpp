@@ -55,6 +55,11 @@ int main(int argc, char** argv)
   componentId.patch_version = '0';
   componentId.platform_spec = "";
   {
+    CORBA::Object_var poa_obj = orb->resolve_initial_references("RootPOA");
+    PortableServer::POA_var poa = PortableServer::POA::_narrow(poa_obj);
+    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+    poa_manager->activate();
+
     scs::core::ComponentContext ctx(manager->orb(), componentId);
 
     bool servant_called = false;
