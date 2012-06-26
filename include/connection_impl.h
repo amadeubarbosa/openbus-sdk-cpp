@@ -46,14 +46,14 @@ namespace openbus {
     RenewLogin(Connection*, ConnectionManager*, idl_ac::ValidityTime validityTime);
     ~RenewLogin();
     void _run(void*);
-    void stop() { _sigINT = true; }
+    void stop();
   private:
-    MICOMT::Mutex* mutex;
+    MICOMT::Mutex _mutex;
     Connection* _conn;
     ConnectionManager* _manager;
     idl_ac::ValidityTime _validityTime;
-    bool _sigINT;
-    bool _sleep(unsigned int time);
+    bool _running;
+    MICOMT::CondVar _condVar;
     idl_ac::ValidityTime renew();
   };
 #else
@@ -65,7 +65,7 @@ namespace openbus {
     Connection* _conn;
     ConnectionManager* _manager;
     idl_ac::ValidityTime _validityTime;
-    idl_ac::ValidityTime renew();
+    idl_ac::ValidityTime renew(CORBA::Dispatcher*);
   };
 #endif
 }

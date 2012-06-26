@@ -59,7 +59,7 @@ Login* LoginCache::validateLogin(char* id) {
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime t)
-  : _conn(c), _manager(m), _validityTime(t), _sigINT(false) 
+  : _conn(c), _manager(m), _validityTime(t), _running(true), _condVar(&_mutex)
 {
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
 }
@@ -72,26 +72,27 @@ idl_ac::ValidityTime RenewLogin::renew() {
   #endif
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
   assert(_conn->access_control());
-  return _conn->access_control()->renew();
-}
-
-bool RenewLogin::_sleep(unsigned int time) {
-  for(unsigned int x=0; x<time; ++x) {
-    if (_sigINT) {
-      _sigINT = false;
-      return true;
-    }
-    sleep(1);
+  idl_ac::ValidityTime validityTime = _validityTime;
+  try {
+    validityTime = _conn->access_control()->renew();
+  } catch (CORBA::Exception&) {
+    l.level_vlog(warning_level, "Falha na renovacao da credencial.");
   }
-  return false;
+  return validityTime;
 }
 
 void RenewLogin::_run(void*) {
   _manager->setRequester(_conn);
-  while (true) {
-    if (_sleep(_validityTime)) break;
-    else _validityTime = renew();
-  }
+  _mutex.lock();
+  while (_running && _condVar.timedwait(_validityTime*1000)) _validityTime = renew();
+  _mutex.unlock();
+}
+
+void RenewLogin::stop() {
+  _mutex.lock();
+  _running = false;
+  _condVar.signal();
+  _mutex.unlock();
 }
 #else
 RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime t)
@@ -101,15 +102,22 @@ RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime
 }
 
 void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
-  _validityTime = renew();
+  _validityTime = renew(dispatcher);
   dispatcher->tm_event(this, _validityTime*1000);
 }
 
-idl_ac::ValidityTime RenewLogin::renew() {
+idl_ac::ValidityTime RenewLogin::renew(CORBA::Dispatcher* dispatcher) {
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
   _manager->setRequester(_conn);
   assert(_conn->access_control());
-  return _conn->access_control()->renew();
+  idl_ac::ValidityTime validityTime = _validityTime;
+  try {
+    validityTime = _conn->access_control()->renew();
+  } catch (CORBA::Exception&) {
+    l.level_vlog(warning_level, "Falha na renovacao da credencial.");
+    dispatcher()->remove(this, CORBA::Dispatcher::Timer);
+  }
+  return validityTime;
 }
 #endif
 }
