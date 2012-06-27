@@ -68,7 +68,7 @@ namespace openbus {
     * @return 'true' se a chamada que recebeu a indicação que o login se tornou inválido deve ser 
     * refeita, ou 'false' caso a execção de NO_PERMISSION deve ser lançada.
     */
-    typedef bool (*InvalidLoginCallback_ptr) (const Connection&, const idl_ac::LoginInfo&);
+    typedef bool (*InvalidLoginCallback_ptr) (Connection&, idl_ac::LoginInfo, const char* busid);
   
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por senha.

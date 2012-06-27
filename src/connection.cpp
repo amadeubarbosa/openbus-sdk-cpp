@@ -24,7 +24,8 @@ Connection::Connection(
   const interceptors::ORBInitializer* ini,
   ConnectionManager* m) 
   throw(CORBA::Exception)
-  : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _busid(0), _onInvalidLogin(0), _manager(m)
+  : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _renewLogin(0), _busid(0), 
+  _onInvalidLogin(0), _manager(m)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -63,7 +64,11 @@ Connection::Connection(
   _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
 }
 
-Connection::~Connection() { _logout(true); }
+Connection::~Connection() { 
+  _logout(true);
+  _renewLogin->stop();
+  _renewLogin->wait();
+}
 
 void Connection::loginByPassword(const char* entity, const char* password)
   throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception) 
@@ -117,9 +122,12 @@ void Connection::loginByPassword(const char* entity, const char* password)
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
 
-  _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
   #ifdef OPENBUS_SDK_MULTITHREAD
-  _renewLogin->start();
+  if (_renewLogin.get()) _renewLogin->run();
+  else {
+    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _manager, validityTime));
+    _renewLogin->start();
+  }
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
@@ -192,9 +200,12 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
 
-  _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
   #ifdef OPENBUS_SDK_MULTITHREAD
-  _renewLogin->start();
+  if (_renewLogin.get()) _renewLogin->run();
+  else {
+    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _manager, validityTime));
+    _renewLogin->start();
+  }
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
@@ -264,9 +275,12 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
 
-  _renewLogin.reset(new RenewLogin(this, _manager, validityTime));
   #ifdef OPENBUS_SDK_MULTITHREAD
-  _renewLogin->start();
+  if (_renewLogin.get()) _renewLogin->run();
+  else {
+    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _manager, validityTime));
+    _renewLogin->start();
+  }
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif    
@@ -277,12 +291,10 @@ bool Connection::_logout(bool local) {
   bool sucess = false;
   if (login()) {
     #ifdef OPENBUS_SDK_MULTITHREAD
-    _renewLogin->stop();
-    _renewLogin->wait();
+    _renewLogin->pause();
     #else
     _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
     #endif
-    _renewLogin.reset();
     _loginInfo.reset();
     if (!local) {
       Connection* c = 0;

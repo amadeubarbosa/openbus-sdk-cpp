@@ -59,21 +59,21 @@ Login* LoginCache::validateLogin(char* id) {
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime t)
-  : _conn(c), _manager(m), _validityTime(t), _running(true), _condVar(&_mutex)
+  : _conn(c), _manager(m), _validityTime(t), _pause(false), _stop(false), _condVar(&_mutex)
 {
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
 }
 
-RenewLogin::~RenewLogin() { }
+RenewLogin::~RenewLogin() { 
+  log_scope l(log.general_logger(), info_level, "RenewLogin::~RenewLogin");
+}
 
 idl_ac::ValidityTime RenewLogin::renew() {
-  #ifdef OPENBUS_SDK_MULTITHREAD
-  Mutex m(&(_conn->_mutex));
-  #endif
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
   assert(_conn->access_control());
   idl_ac::ValidityTime validityTime = _validityTime;
   try {
+    l.level_log(debug_level, "access_control()->renew()");
     validityTime = _conn->access_control()->renew();
   } catch (CORBA::Exception&) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
@@ -82,15 +82,48 @@ idl_ac::ValidityTime RenewLogin::renew() {
 }
 
 void RenewLogin::_run(void*) {
+  log_scope l(log.general_logger(), debug_level, "RenewLogin::_run");
   _manager->setRequester(_conn);
   _mutex.lock();
-  while (_running && _condVar.timedwait(_validityTime*1000)) _validityTime = renew();
+  while (!_stop) {
+    while (!_pause && _condVar.timedwait(_validityTime*1000)) {
+      _mutex.unlock();
+      l.log("chamando RenewLogin::renew() ...");
+      _validityTime = renew();
+      _mutex.lock();
+    }
+    if (!_stop) {
+      l.log("condVar.wait() ...");
+      int r = _condVar.wait();
+      assert(r);
+    }
+  }
   _mutex.unlock();
 }
 
 void RenewLogin::stop() {
+  log_scope l(log.general_logger(), debug_level, "RenewLogin::stop");
   _mutex.lock();
-  _running = false;
+  _stop = true;
+  l.log("condVar.signal()");
+  _condVar.signal();
+  _mutex.unlock();
+}
+
+void RenewLogin::pause() {
+  log_scope l(log.general_logger(), debug_level, "RenewLogin::pause");
+  _mutex.lock();
+  _pause = true;
+  l.log("condVar.signal()");
+  _condVar.signal();
+  _mutex.unlock();
+}
+
+void RenewLogin::run() {
+  log_scope l(log.general_logger(), debug_level, "RenewLogin::run");
+  _mutex.lock();
+  _pause = false;
+  l.log("condVar.signal()");
   _condVar.signal();
   _mutex.unlock();
 }

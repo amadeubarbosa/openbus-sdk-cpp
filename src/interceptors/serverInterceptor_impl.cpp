@@ -24,7 +24,7 @@ ServerInterceptor::ServerInterceptor(
     _cdrCodec(cdr_codec), 
     _manager(0) 
 {
-  log_scope l(log.server_interceptor_logger(), debug_level,"ServerInterceptor::ServerInterceptor");
+  log_scope l(log.general_logger(), debug_level,"ServerInterceptor::ServerInterceptor");
   _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
 }
 
@@ -67,7 +67,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
   throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
 {
   const char* operation = r->operation();
-  log_scope l(log.server_interceptor_logger(), debug_level,
+  log_scope l(log.general_logger(), debug_level,
     "ServerInterceptor::receive_request_service_contexts");
   l.level_vlog(debug_level, "operation: %s", operation);
   

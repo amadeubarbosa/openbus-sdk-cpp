@@ -21,7 +21,7 @@ std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
 }
 
 Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* r) {
-  log_scope l(log.client_interceptor_logger(),info_level,"ClientInterceptor::getCurrentConnection");
+  log_scope l(log.general_logger(),info_level,"ClientInterceptor::getCurrentConnection");
   Connection* conn = 0;
   CORBA::Any_var connectionAddrAny;
   connectionAddrAny = r->get_slot(_slotId_connectionAddr);
@@ -60,7 +60,7 @@ ClientInterceptor::ClientInterceptor(
   : _cdrCodec(cdr_codec), _manager(0), _slotId_connectionAddr(slotId_connectionAddr), 
     _slotId_joinedCallChain(slotId_joinedCallChain)
 { 
-  log_scope l(log.client_interceptor_logger(), info_level,
+  log_scope l(log.general_logger(), info_level,
     "ClientInterceptor::ClientInterceptor");
   _slotId_ignoreInterceptor = slotId_ignoreInterceptor;
   _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
@@ -73,7 +73,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
   throw (CORBA::Exception)
 {
   const char* operation = r->operation();
-  log_scope l(log.client_interceptor_logger(), debug_level, "ClientInterceptor::send_request");
+  log_scope l(log.general_logger(), debug_level, "ClientInterceptor::send_request");
   l.level_vlog(debug_level, "operation: %s", operation);
 
   /* esta chamada remota precisa ser interceptada? */
@@ -181,7 +181,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
 {
   const char* operation = r->operation();
-  log_scope l(log.client_interceptor_logger(), debug_level, 
+  log_scope l(log.general_logger(), debug_level, 
     "ClientInterceptor::receive_exception");
   l.level_vlog(debug_level, "operation: %s", operation); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
@@ -229,10 +229,12 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       } else if (ex->minor() == idl_ac::NoCredentialCode) {
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
-        if (conn.onInvalidLogin()) 
-          if ((conn.onInvalidLogin())(conn, *conn.login()))
-            throw PortableInterceptor::ForwardRequest(r->target(), false);            
+        idl_ac::LoginInfo oldLogin = *conn.login();
+        const char* oldBusid = CORBA::string_dup(conn.busid());
         conn._logout(true);
+        if (conn.onInvalidLogin()) 
+          if ((conn.onInvalidLogin())(conn, oldLogin, oldBusid))
+            throw PortableInterceptor::ForwardRequest(r->target(), false);            
       }
     }
   }

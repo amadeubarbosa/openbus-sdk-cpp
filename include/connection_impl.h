@@ -47,12 +47,15 @@ namespace openbus {
     ~RenewLogin();
     void _run(void*);
     void stop();
+    void pause();
+    void run();
   private:
     MICOMT::Mutex _mutex;
     Connection* _conn;
     ConnectionManager* _manager;
     idl_ac::ValidityTime _validityTime;
-    bool _running;
+    bool _pause;
+    bool _stop;
     MICOMT::CondVar _condVar;
     idl_ac::ValidityTime renew();
   };

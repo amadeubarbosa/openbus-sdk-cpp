@@ -6,11 +6,10 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
-bool onInvalidLogin(const openbus::Connection& conn, const openbus::idl_ac::LoginInfo& login) {
-  std::cout << "login [" << login.id << "," << login.entity << 
-    "] terminated shutting the server down." << std::endl;
-  return false;
-}
+openbus::ConnectionManager* manager;
+std::auto_ptr<openbus::Connection> conn;
+scs::core::ComponentContext* ctx;
+openbus::idl_or::ServicePropertySeq props;
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(openbus::Connection* c) : _conn(c) { }
@@ -20,6 +19,22 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
 private:
   openbus::Connection* _conn;
 };
+
+void loginAndRegister() {
+  conn->loginByPassword("demo", "demo");
+  conn->offers()->registerService(ctx->getIComponent(), props);
+}
+
+bool onInvalidLogin(openbus::Connection& c, openbus::idl_ac::LoginInfo l, const char* busid) {
+  try {
+    std::cout << "invalid login: " << l.id.in() << std::endl; 
+    loginAndRegister();
+    return true;
+  } catch(CORBA::Exception& e) {
+    std::cout << "[error (CORBA::Exception)] " << e << std::endl;    
+  }
+  return false;
+}
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
@@ -40,9 +55,9 @@ int main(int argc, char** argv) {
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+    manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    conn = manager->createConnection("localhost", 2089);
     manager->setDefaultConnection(conn.get());
     conn->onInvalidLogin(&onInvalidLogin);
     #ifdef OPENBUS_SDK_MULTITHREAD
@@ -55,20 +70,18 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext ctx(manager->orb(), componentId);
-    
-    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
-    ctx.addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
-    
-    openbus::idl_or::ServicePropertySeq props;
+    ctx = new scs::core::ComponentContext(manager->orb(), componentId);
+
     props.length(1);
     openbus::idl_or::ServiceProperty property;
     property.name = "offer.domain";
     property.value = "Interoperability Tests";
     props[0] = property;
 
-    conn->loginByPassword("demo", "demo");
-    conn->offers()->registerService(ctx.getIComponent(), props);
+    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
+    ctx->addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
+    
+    loginAndRegister();
     #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
     #else
