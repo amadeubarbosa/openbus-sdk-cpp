@@ -24,7 +24,7 @@ Connection::Connection(
   const interceptors::ORBInitializer* ini,
   ConnectionManager* m) 
   throw(CORBA::Exception)
-  : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _renewLogin(0), _busid(0), 
+  : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _renewLogin(0), _loginInfo(0), _busid(0), 
   _onInvalidLogin(0), _manager(m)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
@@ -36,20 +36,19 @@ Connection::Connection(
   _serverInterceptor = _orbInitializer->serverInterceptor();
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(_piCurrent));
+  assert(!CORBA::is_nil(_piCurrent.in()));
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     _iComponent = scs::core::IComponent::_narrow(obj);
     obj = _iComponent->getFacetByName(idl_ac::AccessControlFacet);
-    assert(!CORBA::is_nil(obj));
     _access_control = idl_ac::AccessControl::_narrow(obj);
+    assert(!CORBA::is_nil(_access_control.in()));
     obj = _iComponent->getFacetByName(idl_or::OfferRegistryFacet);
-    assert(!CORBA::is_nil(obj));
     _offer_registry = idl_or::OfferRegistry::_narrow(obj);
+    assert(!CORBA::is_nil(_offer_registry.in()));
     obj = _iComponent->getFacetByName(idl_ac::LoginRegistryFacet);
-    assert(!CORBA::is_nil(obj));
     _login_registry = idl_ac::LoginRegistry::_narrow(obj);
-    _loginInfo.reset();
+    assert(!CORBA::is_nil(_login_registry.in()));
   }
 	
   /* criando um par de chaves para esta conexão. */
@@ -65,6 +64,7 @@ Connection::Connection(
 }
 
 Connection::~Connection() { 
+  log_scope l(log.general_logger(), info_level, "Connection::~Connection");
   _logout(true);
   #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin->stop();
@@ -213,11 +213,14 @@ std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSingleS
   throw (idl::services::ServiceFailure, CORBA::Exception)
 {
   log_scope l(log.general_logger(), info_level, "Connection::startSingleSignOn");
-  Mutex m(&_mutex);
   unsigned char* challenge = new unsigned char[256];
   idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
 
-  const unsigned char* secret = openssl::decrypt(_key, (unsigned char*) challenge, 256);
+  Mutex m(&_mutex);
+  //[doubt] o que devo fazer para copiar um EVP_PKEY?
+  const unsigned char* secret = openssl::decrypt(_key, challenge, 256);
+  m.unlock();
+  
   return std::make_pair(loginProcess, secret);
 }
   
