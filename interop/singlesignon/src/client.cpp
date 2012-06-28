@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     manager->setDefaultConnection(conn.get());
     conn->loginByPassword("demo", "demo");
     std::pair <openbus::idl_ac::LoginProcess*, const unsigned char*> credential = 
-      conn->startSingleSignOn();
+      conn->startSharedAuth();
     std::cout << "[LoginProcess]: " << manager->orb()->object_to_string(credential.first) 
       << std::endl;
     std::cout << "[secret]: " << credential.second << std::endl;

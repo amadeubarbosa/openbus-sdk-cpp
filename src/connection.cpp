@@ -225,12 +225,12 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   #endif
 }
 
-std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSingleSignOn() 
+std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSharedAuth() 
   throw (idl::services::ServiceFailure, CORBA::Exception)
 {
-  log_scope l(log.general_logger(), info_level, "Connection::startSingleSignOn");
+  log_scope l(log.general_logger(), info_level, "Connection::startSharedAuth");
   unsigned char* challenge = new unsigned char[256];
-  idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
+  idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySharedAuth(challenge);
 
   Mutex m(&_mutex);
   //[doubt] o que devo fazer para copiar um EVP_PKEY?
@@ -240,11 +240,11 @@ std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSingleS
   return std::make_pair(loginProcess, secret);
 }
   
-void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const unsigned char* secret)
+void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const unsigned char* secret)
 	throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
 	CORBA::Exception)
 {
-  log_scope l(log.general_logger(), info_level, "Connection::loginBySingleSignOn");
+  log_scope l(log.general_logger(), info_level, "Connection::loginBySharedAuth");
   Mutex m(&_mutex);
   if (login()) throw AlreadyLoggedIn();
   m.unlock();

@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     o = manager->orb()->string_to_object(argv[1]);
     openbus::idl_ac::LoginProcess_var loginProcess = openbus::idl_ac::LoginProcess::_narrow(o);
     unsigned char* secret = (unsigned char*) argv[2];
-    conn->loginBySingleSignOn(loginProcess, secret);
+    conn->loginBySharedAuth(loginProcess, secret);
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";
