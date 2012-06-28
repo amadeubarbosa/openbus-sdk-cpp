@@ -1,5 +1,5 @@
 #include <interceptors/clientInterceptor_impl.h>
-#include <legacy/stubs/credential_v1_05.h>
+#include <legacy/stubs/credential_v1_5.h>
 #include <util/openssl.h>
 #include <log.h>
 
@@ -161,7 +161,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       /* anexando uma credencial legacy a esta requisição. */
       IOP::ServiceContext legacyContext;
       legacyContext.context_id = 1234;
-      legacy::v1_05::Credential legacyCredential;
+      legacy::v1_5::Credential legacyCredential;
       legacyCredential.identifier = conn.login()->id;
       legacyCredential.owner = conn.login()->entity;
       if (callerChain && (callerChain->_originators.length() > 1))

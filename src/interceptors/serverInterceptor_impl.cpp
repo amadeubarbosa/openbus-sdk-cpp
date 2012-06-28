@@ -1,5 +1,5 @@
 #include <interceptors/serverInterceptor_impl.h>
-#include <legacy/stubs/credential_v1_05.h>
+#include <legacy/stubs/credential_v1_5.h>
 #include <util/openssl.h>
 #include <log.h>
 
@@ -181,11 +181,11 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
       IOP::ServiceContext_var sc = r->get_request_service_context(1234);
       IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
       CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
-      lany = _cdrCodec->decode_value(contextData, openbus::legacy::v1_05::_tc_Credential);
+      lany = _cdrCodec->decode_value(contextData, openbus::legacy::v1_5::_tc_Credential);
     } catch (CORBA::BAD_PARAM&) {
       hasContext = false;
     }
-    openbus::legacy::v1_05::Credential legacyCredential;
+    openbus::legacy::v1_5::Credential legacyCredential;
     if (hasContext && (lany >>= legacyCredential)) {
       l.level_vlog(info_level, "extraindo credencial legacy");
       l.level_vlog(debug_level, "credential.identifier: %s", legacyCredential.identifier.in());

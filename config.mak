@@ -109,35 +109,35 @@ SRC=src/openbus.cpp \
     stubs/credential.cc \
     stubs/access_control.cc \
     stubs/offer_registry.cc \
-    legacy/stubs/credential_v1_05.cc 
+    legacy/stubs/credential_v1_5.cc 
 
 STUBS=stubs/core.h stubs/core.cc \
       stubs/scs.h stubs/scs.cc \
       stubs/credential.h stubs/credential.cc \
       stubs/access_control.h stubs/access_control.cc \
       stubs/offer_registry.h stubs/offer_registry.cc \
-      legacy/stubs/credential_v1_05.h legacy/stubs/credential_v1_05.cc
+      legacy/stubs/credential_v1_5.h legacy/stubs/credential_v1_5.cc
 
-IDLS=${OPENBUS_HOME}/idl/v2_00/core.idl \
-     ${OPENBUS_HOME}/idl/v2_00/scs.idl \
-     ${OPENBUS_HOME}/idl/v2_00/credential.idl \
-     ${OPENBUS_HOME}/idl/v2_00/access_control.idl \
-     ${OPENBUS_HOME}/idl/v2_00/offer_registry.idl \
-     legacy/idl/credential_v1_05.idl
+IDLS=${OPENBUS_HOME}/idl/v2_0/core.idl \
+     ${OPENBUS_HOME}/idl/v2_0/scs.idl \
+     ${OPENBUS_HOME}/idl/v2_0/credential.idl \
+     ${OPENBUS_HOME}/idl/v2_0/access_control.idl \
+     ${OPENBUS_HOME}/idl/v2_0/offer_registry.idl \
+     legacy/idl/credential_v1_5.idl
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
 	mkdir -p legacy/stubs
 	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode \
-	  ${OPENBUS_HOME}/idl/v2_00/access_control.idl
+	  ${OPENBUS_HOME}/idl/v2_0/access_control.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode \
-	  ${OPENBUS_HOME}/idl/v2_00/credential.idl
+	  ${OPENBUS_HOME}/idl/v2_0/credential.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/v2_00/offer_registry.idl
+	  ${OPENBUS_HOME}/idl/v2_0/offer_registry.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/v2_00/core.idl
+	  ${OPENBUS_HOME}/idl/v2_0/core.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/v2_00/scs.idl
-	cd legacy/stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ../idl/credential_v1_05.idl
+	  ${OPENBUS_HOME}/idl/v2_0/scs.idl
+	cd legacy/stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ../idl/credential_v1_5.idl
 
 genstubs: $(STUBS)

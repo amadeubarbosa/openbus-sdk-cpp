@@ -13,7 +13,7 @@ int main(int argc, char** argv)
     conn->loginByPassword(cfg.user().c_str(), (cfg.password() + "WRONG").c_str());
     std::abort();
   }
-  catch(tecgraf::openbus::core::v2_00::services::access_control::AccessDenied const&)
+  catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
   {
   }
 }

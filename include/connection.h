@@ -19,12 +19,12 @@
 #include "stubs/offer_registry.h"
 
 namespace openbus {  
-  namespace idl = tecgraf::openbus::core::v2_00;
-  namespace idl_ac = tecgraf::openbus::core::v2_00::services::access_control;
+  namespace idl = tecgraf::openbus::core::v2_0;
+  namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
   namespace idl_accesscontrol = idl_ac;
-  namespace idl_or = tecgraf::openbus::core::v2_00::services::offer_registry;
+  namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
   namespace idl_offerregistry = idl_or;
-  namespace idl_cr = tecgraf::openbus::core::v2_00::credential;
+  namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
   namespace idl_credential = idl_cr;
 }
 

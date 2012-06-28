@@ -11,9 +11,9 @@
 #endif
 
 namespace offer_registry
- = tecgraf::openbus::core::v2_00::services::offer_registry;
+ = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace simple = tecgraf::openbus::interop::simple;
-namespace services = tecgraf::openbus::core::v2_00::services;
+namespace services = tecgraf::openbus::core::v2_0::services;
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 {
