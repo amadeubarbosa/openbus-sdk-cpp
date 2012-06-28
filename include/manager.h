@@ -13,7 +13,7 @@
 #include <interceptors/orbInitializer_impl.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include "util/mutex_impl.h"
+#include "util/autolock_impl.h"
 #endif
 
 #define CONNECTION_MANAGER_ID "OpenbusConnectionManager"

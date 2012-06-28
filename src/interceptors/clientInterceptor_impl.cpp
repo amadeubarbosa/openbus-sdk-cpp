@@ -93,7 +93,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       std::string sessionKey = getSessionKey(r);
     
       SecretSession* session;
-      Mutex m(&_mutex);
+      AutoLock m(&_mutex);
       bool b = _sessionLRUCache->fetch(sessionKey, session);
       m.unlock();
       if (b) {
@@ -127,7 +127,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
           SHA256(s, slen, hash);
           std::string shash((const char*) hash, 32);
           idl_cr::SignedCallChain signedCallChain;
-          Mutex m(&_mutex);
+          AutoLock m(&_mutex);
           if (_callChainLRUCache->exists(shash)) {
             signedCallChain = _callChainLRUCache->fetch(shash);
             l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s",session->remoteid);
@@ -220,7 +220,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           session->secret = secret;
           session->ticket = 0;
           {
-            Mutex m(&_mutex);
+            AutoLock m(&_mutex);
             _sessionLRUCache->insert(sessionKey, session);
           }
           /* retransmitindo a requisição após ter estabelecido uma sessão. */
@@ -241,7 +241,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
 }
 
 void ClientInterceptor::resetCaches() { 
-  Mutex m(&_mutex);
+  AutoLock m(&_mutex);
   _sessionLRUCache->clear();
   _callChainLRUCache->clear(); 
 }

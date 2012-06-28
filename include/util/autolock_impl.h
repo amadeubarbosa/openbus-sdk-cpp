@@ -4,11 +4,11 @@
 #include <CORBA.h>
 
 namespace openbus {
-  class Mutex {
+  class AutoLock {
   public:
-    Mutex(MICOMT::Mutex* m) : _mutex(m) { lock(); }
+    AutoLock(MICOMT::Mutex* m) : _mutex(m) { lock(); }
     
-    ~Mutex() { if (_locked) unlock(); }
+    ~AutoLock() { if (_locked) unlock(); }
     
     void lock() {
       _mutex->lock();

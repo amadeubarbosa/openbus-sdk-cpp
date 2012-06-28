@@ -1,6 +1,6 @@
 #include <openbus.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <util/mutex_impl.h>
+#include <util/autolock_impl.h>
 #endif
 #include <interceptors/orbInitializer_impl.h>
 
@@ -20,7 +20,7 @@ interceptors::ORBInitializer* orbInitializer;
 MICOMT::Mutex _mutex;
 
 CORBA::ORB* initORB(int argc, char** argv) throw(CORBA::Exception) {
-  Mutex m(&_mutex);
+  AutoLock m(&_mutex);
   log_scope l(log.general_logger(), info_level, "initORB");
   if (!orbInitializer) {
     orbInitializer = new interceptors::ORBInitializer();

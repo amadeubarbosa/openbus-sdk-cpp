@@ -29,14 +29,13 @@ Connection::Connection(
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
-  corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
-  CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
-  assert(!CORBA::is_nil(obj));
   _clientInterceptor = _orbInitializer->clientInterceptor();
   _serverInterceptor = _orbInitializer->serverInterceptor();
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent.in()));
+  corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
+  CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     _iComponent = scs::core::IComponent::_narrow(obj);
@@ -75,7 +74,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception) 
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
-  Mutex m(&_mutex);
+  AutoLock m(&_mutex);
   if (login()) throw AlreadyLoggedIn();
   m.unlock();
   
@@ -83,9 +82,8 @@ void Connection::loginByPassword(const char* entity, const char* password)
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
   /* representação do password em uma cadeia de bytes. */
-  idl::OctetSeq_var passwordOctetSeq = new idl::OctetSeq(
-    static_cast<CORBA::ULong> (strlen(password)),
-    static_cast<CORBA::ULong> (strlen(password)),
+  CORBA::ULong lenpass = static_cast<CORBA::ULong> (strlen(password));
+  idl::OctetSeq_var passwordOctetSeq = new idl::OctetSeq(lenpass, lenpass,
     (CORBA::Octet*) CORBA::string_dup(password));
   loginAuthenticationInfo.data = passwordOctetSeq;
   
@@ -101,10 +99,10 @@ void Connection::loginByPassword(const char* entity, const char* password)
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
-  EVP_PKEY* busKey = fetchBusKey();
+  EVP_PKEY* buskey = fetchBusKey();
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = openssl::encrypt(busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);
@@ -123,7 +121,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   if (login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
-  _busKey = busKey;
+  _busKey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
@@ -141,7 +139,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   idl::services::ServiceFailure, CORBA::Exception)
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
-  Mutex m(&_mutex);
+  AutoLock m(&_mutex);
   if (login()) throw AlreadyLoggedIn();
   m.unlock();
   
@@ -159,9 +157,8 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   if (!secret) throw CorruptedPrivateKey();
   
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
-  idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
-    static_cast<CORBA::ULong> (strlen((const char*) secret)),
-    static_cast<CORBA::ULong> (strlen((const char*) secret)),
+  CORBA::ULong lensrc = static_cast<CORBA::ULong> (strlen((const char*) secret));
+  idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(lensrc, lensrc, 
     (CORBA::Octet*) CORBA::string_dup((const char*) secret));
   OPENSSL_free(secret);
   loginAuthenticationInfo.data = secretOctetSeq;
@@ -175,14 +172,14 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _orbInitializer->codec()->encode_value(any);
 
-  EVP_PKEY* busKey;
+  EVP_PKEY* buskey;
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
-    busKey = fetchBusKey();
+    buskey = fetchBusKey();
   }
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = openssl::encrypt(busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);
@@ -205,7 +202,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   if (login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
-  _busKey = busKey;
+  _busKey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
@@ -233,15 +230,14 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
 	CORBA::Exception)
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginBySharedAuth");
-  Mutex m(&_mutex);
+  AutoLock m(&_mutex);
   if (login()) throw AlreadyLoggedIn();
   m.unlock();
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
-  idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(
-    static_cast<CORBA::ULong> (strlen((const char*) secret)),
-    static_cast<CORBA::ULong> (strlen((const char*) secret)),
+  CORBA::ULong lensrc = static_cast<CORBA::ULong> (strlen((const char*) secret));
+  idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(lensrc, lensrc, 
     (CORBA::Octet*) CORBA::string_dup((const char*) secret));
   loginAuthenticationInfo.data = secretOctetSeq;
   
@@ -257,7 +253,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   EVP_PKEY* buskey = fetchBusKey();
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = openssl::encrypt(busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);
@@ -279,7 +275,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   if (login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
-  _busKey = busKey;
+  _busKey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
@@ -294,7 +290,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
 
 bool Connection::_logout(bool local) {
   bool sucess = false;
-  Mutex m(&_mutex);
+  AutoLock m(&_mutex);
   if (login()) {
     #ifdef OPENBUS_SDK_MULTITHREAD
     m.unlock();

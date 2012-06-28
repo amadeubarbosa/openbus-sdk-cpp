@@ -31,7 +31,7 @@ ServerInterceptor::ServerInterceptor(
 void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller, 
   PortableInterceptor::ServerRequestInfo* r) 
 {
-  Mutex m(&_mutex);
+  AutoLock m(&_mutex);
   /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
   CORBA::ULong newSessionId = _sessionLRUCache->size() + 1;
   Session* session = new Session(newSessionId);
@@ -114,7 +114,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
       if (caller) {
         idl::HashValue hash;        
         Session* session;
-        Mutex m(&_mutex);
+        AutoLock m(&_mutex);
         if (_sessionLRUCache->fetch(credential.session, session)) {
           /* montando uma hash com os dados da credencial recebida e da sessão existente. */
           size_t slenOperation = strlen(r->operation());
@@ -218,7 +218,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
 }
 
 void ServerInterceptor::resetCaches() {
-  Mutex m(&_mutex);
+  AutoLock m(&_mutex);
   _sessionLRUCache->clear();
 }
 

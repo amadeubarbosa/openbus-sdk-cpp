@@ -9,7 +9,7 @@
 #define TECGRAF_LRUCACHE_H_
 #include "util/lru_cache_impl.h"
 #endif
-#include "util/mutex_impl.h"
+#include "util/autolock_impl.h"
 
 /* forward declarations */
 namespace openbus {

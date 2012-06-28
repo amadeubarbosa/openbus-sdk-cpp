@@ -30,7 +30,7 @@ namespace openbus {
 
 #include "interceptors/orbInitializer_impl.h"
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include "util/mutex_impl.h"
+#include "util/autolock_impl.h"
 #endif
 
 /* forward declarations */
