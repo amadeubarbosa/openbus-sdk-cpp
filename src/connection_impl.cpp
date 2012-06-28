@@ -9,6 +9,9 @@
 #include <log.h>
 
 namespace openbus {
+LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
+  : _login_registry(p), _loginLRUCache(LOGINCACHE_LRU_SIZE) { }
+
 Login* LoginCache::validateLogin(char* id) {
   std::string sid(id);
 
@@ -19,7 +22,7 @@ Login* LoginCache::validateLogin(char* id) {
     login = new Login;
     login->time2live = -1;
     try {
-      login->loginInfo = _conn->login_registry()->getLoginInfo(id, login->encodedCallerPubKey);
+      login->loginInfo = _login_registry->getLoginInfo(id, login->encodedCallerPubKey);
     } catch (idl_ac::InvalidLogins& e) { return 0; }
     const unsigned char* buf = login->encodedCallerPubKey->get_buffer();
     login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
@@ -46,7 +49,7 @@ Login* LoginCache::validateLogin(char* id) {
     int i = 0;
     for (it=keys.begin(); it<keys.end(); ++i, ++it) ids[i] = CORBA::string_dup((*it).c_str());
     /* validando no barramento todos os logins que estão na cache. */
-    idl_ac::ValidityTimeSeq_var validity = _conn->login_registry()->getValidity(ids);
+    idl_ac::ValidityTimeSeq_var validity = _login_registry->getValidity(ids);
     for (unsigned int i=0; i<validity->length(); ++i) {
       Login* l = _loginLRUCache.fetch(std::string(ids[i]));
       l->time2live = validity[i];
@@ -58,8 +61,10 @@ Login* LoginCache::validateLogin(char* id) {
 }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime t)
-  : _conn(c), _manager(m), _validityTime(t), _pause(false), _stop(false), _condVar(&_mutex)
+RenewLogin::RenewLogin(Connection* c, idl_ac::AccessControl_ptr a, ConnectionManager* m, 
+  idl_ac::ValidityTime t)
+  : _conn(c), _access_control(a), _manager(m), _validityTime(t), _pause(false), _stop(false), 
+  _condVar(&_mutex)
 {
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
 }
@@ -70,11 +75,11 @@ RenewLogin::~RenewLogin() {
 
 idl_ac::ValidityTime RenewLogin::renew() {
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
-  assert(_conn->access_control());
+  assert(_access_control);
   idl_ac::ValidityTime validityTime = _validityTime;
   try {
     l.level_log(debug_level, "access_control()->renew()");
-    validityTime = _conn->access_control()->renew();
+    validityTime = _access_control->renew();
   } catch (CORBA::Exception&) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
   }
@@ -128,8 +133,9 @@ void RenewLogin::run() {
   _mutex.unlock();
 }
 #else
-RenewLogin::RenewLogin(Connection* c, ConnectionManager* m, idl_ac::ValidityTime t)
-  : _conn(c), _manager(m), _validityTime(t) 
+RenewLogin::RenewLogin(Connection* c, idl_ac::AccessControl_ptr a, ConnectionManager* m, 
+  idl_ac::ValidityTime t)
+  : _conn(c), _access_control(a), _manager(m), _validityTime(t) 
 { 
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
 }
@@ -142,10 +148,10 @@ void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
 idl_ac::ValidityTime RenewLogin::renew(CORBA::Dispatcher* dispatcher) {
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
   _manager->setRequester(_conn);
-  assert(_conn->access_control());
+  assert(_access_control);
   idl_ac::ValidityTime validityTime = _validityTime;
   try {
-    validityTime = _conn->access_control()->renew();
+    validityTime = _access_control->renew();
   } catch (CORBA::Exception&) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
     dispatcher->remove(this, CORBA::Dispatcher::Timer);

@@ -29,13 +29,10 @@ namespace openbus {
 
   class LoginCache {
   public:
-    LoginCache(Connection* c) : _conn(c), _loginLRUCache(LOGINCACHE_LRU_SIZE)
-    {
-    }
-    //return 0: login inválido
+    LoginCache(idl_ac::LoginRegistry_ptr);
     Login* validateLogin(char* id);
   private:
-    Connection* _conn;
+    idl_ac::LoginRegistry_ptr _login_registry;
     LoginLRUCache _loginLRUCache;
     time_t _timeUpdated;
   };
@@ -43,7 +40,8 @@ namespace openbus {
 #ifdef OPENBUS_SDK_MULTITHREAD
   class RenewLogin : public MICOMT::Thread {
   public:
-    RenewLogin(Connection*, ConnectionManager*, idl_ac::ValidityTime validityTime);
+    RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, 
+      idl_ac::ValidityTime validityTime);
     ~RenewLogin();
     void _run(void*);
     void stop();
@@ -52,6 +50,7 @@ namespace openbus {
   private:
     MICOMT::Mutex _mutex;
     Connection* _conn;
+    idl_ac::AccessControl_ptr _access_control;
     ConnectionManager* _manager;
     idl_ac::ValidityTime _validityTime;
     bool _pause;
@@ -62,10 +61,12 @@ namespace openbus {
 #else
   class RenewLogin : public CORBA::DispatcherCallback {
   public:
-    RenewLogin(Connection*, ConnectionManager*, idl_ac::ValidityTime);
+    RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, 
+      idl_ac::ValidityTime validityTime);
     void callback(CORBA::Dispatcher*, Event);
   private:
     Connection* _conn;
+    idl_ac::AccessControl_ptr _access_control;
     ConnectionManager* _manager;
     idl_ac::ValidityTime _validityTime;
     idl_ac::ValidityTime renew(CORBA::Dispatcher*);

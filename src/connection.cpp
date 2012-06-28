@@ -25,7 +25,7 @@ Connection::Connection(
   ConnectionManager* m) 
   throw(CORBA::Exception)
   : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _renewLogin(0), _loginInfo(0), _busid(0), 
-  _key(0), _onInvalidLogin(0), _manager(m)
+  _key(0), _manager(m), _onInvalidLogin(0)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -58,7 +58,7 @@ Connection::Connection(
     (EVP_PKEY_keygen(ctx, &_key) > 0))
   ) assert(0);
 
-  _loginCache = std::auto_ptr<LoginCache> (new LoginCache(this));
+  _loginCache = std::auto_ptr<LoginCache> (new LoginCache(_login_registry));
 }
 
 Connection::~Connection() { 
@@ -121,12 +121,13 @@ void Connection::loginByPassword(const char* entity, const char* password)
   if (login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
-  _busKey = buskey;
+  _buskey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
   else {
-    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _manager, validityTime));
+    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, _manager, 
+      validityTime));
     _renewLogin->start();
   }
   #else
@@ -202,12 +203,13 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   if (login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
-  _busKey = buskey;
+  _buskey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
   else {
-    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _manager, validityTime));
+    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, _manager, 
+      validityTime));
     _renewLogin->start();
   }
   #else
@@ -275,12 +277,13 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   if (login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
-  _busKey = buskey;
+  _buskey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
   else {
-    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _manager, validityTime));
+    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, _manager, 
+      validityTime));
     _renewLogin->start();
   }
   #else
@@ -321,7 +324,7 @@ bool Connection::_logout(bool local) {
   if (_manager->getDispatcher(busid)) _manager->clearDispatcher(busid);
   m.lock();
   _busid = 0;
-  _busKey = 0;
+  _buskey = 0;
   m.unlock();
   _clientInterceptor->resetCaches();
   _serverInterceptor->resetCaches();
@@ -335,10 +338,7 @@ bool Connection::logout() throw (CORBA::Exception) {
 
 CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
-  CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(piCurrent));
-  CORBA::Any* signedCallChainAny = piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
+  CORBA::Any* signedCallChainAny = _piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
   CallerChain* callerChain = 0;
   idl_ac::CallChain callChain;
   idl_cr::SignedCallChain signedCallChain;
@@ -349,7 +349,7 @@ CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
     callerChain = new CallerChain(this->_busid, callChain.originators, callChain.caller, 
       signedCallChain);
   } else {
-    CORBA::Any_var legacyChainAny = piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
+    CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
     if (legacyChainAny >>= callChain)
       callerChain = new CallerChain(0, callChain.originators, callChain.caller);
     else return 0;
@@ -359,29 +359,20 @@ CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
 
 void Connection::joinChain(CallerChain* chain) throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::joinChain");
-  CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(piCurrent));
   CORBA::Any signedCallChainAny;
   signedCallChainAny <<= *(chain->signedCallChain());
-  piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), signedCallChainAny);
+  _piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), signedCallChainAny);
 }
 
 void Connection::exitChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::exitChain");
-  CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(piCurrent));
   CORBA::Any any;
-  piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), any);    
+  _piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), any);    
 }
 
 CallerChain* Connection::getJoinedChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::getJoinedChain");
-  CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
-  PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(piCurrent));
-  CORBA::Any_var signedCallChainAny= piCurrent->get_slot(_orbInitializer->slotId_joinedCallChain());
+  CORBA::Any_var signedCallChainAny=_piCurrent->get_slot(_orbInitializer->slotId_joinedCallChain());
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) {
     CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(signedCallChain.encoded,

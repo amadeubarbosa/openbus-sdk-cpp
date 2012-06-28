@@ -225,38 +225,44 @@ namespace openbus {
   private:
     Connection(const std::string host, const unsigned short port, CORBA::ORB*, 
       const interceptors::ORBInitializer*, ConnectionManager*) throw(CORBA::Exception);
+
     EVP_PKEY* fetchBusKey();
+    bool _logout(bool local);
+
+    EVP_PKEY* key() const { return _key; }
+    EVP_PKEY* buskey() const { return _buskey; }
+    CORBA::ORB* orb() const { return _orb; }
     const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     const idl_ac::AccessControl_var access_control() const { return _access_control; }
-    EVP_PKEY* key() const { return _key; }
-    EVP_PKEY* busKey() const { return _busKey; }
-    bool _logout(bool local);
+    
     std::string _host;
     unsigned short _port;
-    CORBA::ORB* orb() const { return _orb; }
     CORBA::ORB* _orb;
-    PortableInterceptor::Current_var _piCurrent;
     const interceptors::ORBInitializer* _orbInitializer;
     interceptors::ClientInterceptor* _clientInterceptor;
     interceptors::ServerInterceptor* _serverInterceptor;
     std::auto_ptr<RenewLogin> _renewLogin;
     std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
+    const char* _busid;
+    EVP_PKEY* _buskey;
+    
+    /* Variáveis que são modificadas somente no construtor. */
+    EVP_PKEY* _key;
+    PortableInterceptor::Current_var _piCurrent;
     scs::core::IComponent_var _iComponent;
     idl_ac::AccessControl_var _access_control;
     idl_ac::LoginRegistry_var _login_registry;
     idl_or::OfferRegistry_var _offer_registry;
-    const char* _busid;
-    EVP_PKEY* _busKey;
-    EVP_PKEY* _key;
-    InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;
     ConnectionManager* _manager;
+    /**/
+    
+    InvalidLoginCallback_ptr _onInvalidLogin;
     MICOMT::Mutex _mutex;
+
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;
-    friend class RenewLogin;
-    friend class LoginCache;
-    friend class ConnectionManager;
+    friend class openbus::ConnectionManager;
   };
   
   /**

@@ -34,7 +34,7 @@ Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientR
   if(!conn)
     if (!(conn = _manager->getDefaultConnection()))
       throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-  assert(conn != 0);
+  assert(conn);
   l.vlog("connection:%p", conn);
   return *conn;
 }

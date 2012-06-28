@@ -134,10 +134,7 @@ namespace openbus {
     interceptors::ORBInitializer* _orbInitializer;
     BusidConnection _busidConnection;
     Connection* _defaultConnection;
-    friend class openbus::Connection;
     friend CORBA::ORB* openbus::initORB(int argc, char** argv) throw(CORBA::Exception);
-    friend class openbus::interceptors::ClientInterceptor;
-    friend class openbus::interceptors::ServerInterceptor;
   };
 }
 
