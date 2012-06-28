@@ -11,13 +11,10 @@
 
 namespace openbus {
 
-void Connection::fetchBusKey() {
+EVP_PKEY* Connection::fetchBusKey() {
   /* armazenando a chave pública do barramento. */
   idl::OctetSeq_var _buskeyOctetSeq = _access_control->buskey();
-  EVP_PKEY* tmp;
-  tmp = openssl::byteSeq2PubKey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
-  Mutex m(&_mutex);
-  _busKey = tmp;
+  return openssl::byteSeq2PubKey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
 }
 
 Connection::Connection(
@@ -28,7 +25,7 @@ Connection::Connection(
   ConnectionManager* m) 
   throw(CORBA::Exception)
   : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _renewLogin(0), _loginInfo(0), _busid(0), 
-  _onInvalidLogin(0), _manager(m)
+  _key(0), _onInvalidLogin(0), _manager(m)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -55,7 +52,6 @@ Connection::Connection(
   }
 	
   /* criando um par de chaves para esta conexão. */
-  _key = 0;
   EVP_PKEY_CTX* ctx;
   if (!((ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0)) &&
     (EVP_PKEY_keygen_init(ctx) > 0) &&
@@ -95,9 +91,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   
   /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  m.lock();
   unsigned char* bufKey = openssl::PubKey2byteSeq(_key, len);
-  m.unlock();
   
   /* criando uma hash da minha chave. */
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
@@ -107,13 +101,11 @@ void Connection::loginByPassword(const char* entity, const char* password)
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
 
-  fetchBusKey();
+  EVP_PKEY* busKey = fetchBusKey();
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  m.lock();
-  unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
-  m.unlock();
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);
   OPENSSL_free(encrypted);
@@ -128,8 +120,10 @@ void Connection::loginByPassword(const char* entity, const char* password)
   }
 
   m.lock();
-  if (!_loginInfo.get()) _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  if (!_busid) _busid = _access_control->busid();
+  if (login()) throw AlreadyLoggedIn();
+  _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
+  _busid = _access_control->busid();
+  _busKey = busKey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
@@ -174,25 +168,22 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
 
   /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  m.lock();
   unsigned char* bufKey = openssl::PubKey2byteSeq(_key, len);
-  m.unlock();
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _orbInitializer->codec()->encode_value(any);
 
+  EVP_PKEY* busKey;
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
-    fetchBusKey();
+    busKey = fetchBusKey();
   }
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  m.lock();
-  unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
-  m.unlock();
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);
   OPENSSL_free(encrypted);
@@ -211,8 +202,10 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   }
   
   m.lock();
-  if (!_loginInfo.get()) _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  if (!_busid) _busid = _access_control->busid();
+  if (login()) throw AlreadyLoggedIn();
+  _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
+  _busid = _access_control->busid();
+  _busKey = busKey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
@@ -231,12 +224,7 @@ std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSharedA
   log_scope l(log.general_logger(), info_level, "Connection::startSharedAuth");
   unsigned char* challenge = new unsigned char[256];
   idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySharedAuth(challenge);
-
-  Mutex m(&_mutex);
-  //[doubt] o que devo fazer para copiar um EVP_PKEY?
   const unsigned char* secret = openssl::decrypt(_key, challenge, 256);
-  m.unlock();
-  
   return std::make_pair(loginProcess, secret);
 }
   
@@ -259,22 +247,18 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   
   /* representação da minha chave em uma cadeia de bytes. */
   size_t len;
-  m.lock();
   unsigned char* bufKey = openssl::PubKey2byteSeq(_key, len);
-  m.unlock();
   SHA256(bufKey, len, loginAuthenticationInfo.hash);
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _orbInitializer->codec()->encode_value(any);
 
-  fetchBusKey();
+  EVP_PKEY* buskey = fetchBusKey();
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  m.lock();
-  unsigned char* encrypted = openssl::encrypt(_busKey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char* encrypted = openssl::encrypt(busKey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
-  m.unlock();
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, 256);
   OPENSSL_free(encrypted);
@@ -292,8 +276,10 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   }
 
   m.lock();
-  if (!_loginInfo.get()) _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  if (!_busid) _busid = _access_control->busid();
+  if (login()) throw AlreadyLoggedIn();
+  _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
+  _busid = _access_control->busid();
+  _busKey = busKey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) _renewLogin->run();
