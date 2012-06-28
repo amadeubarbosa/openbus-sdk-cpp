@@ -148,7 +148,7 @@ idl_ac::ValidityTime RenewLogin::renew(CORBA::Dispatcher* dispatcher) {
     validityTime = _conn->access_control()->renew();
   } catch (CORBA::Exception&) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
-    dispatcher()->remove(this, CORBA::Dispatcher::Timer);
+    dispatcher->remove(this, CORBA::Dispatcher::Timer);
   }
   return validityTime;
 }

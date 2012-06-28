@@ -43,9 +43,7 @@ namespace interceptors {
     openbus::CallerChain* getJoinedChain(PortableInterceptor::ClientRequestInfo* r);
     static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
   private:
-    #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Mutex _mutex;
-    #endif
     IOP::Codec* _cdrCodec;
     ConnectionManager* _manager;
     PortableInterceptor::SlotId _slotId_connectionAddr;

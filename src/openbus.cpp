@@ -17,14 +17,10 @@ log_type log;
 ** VERIFICAR se o Mico está liberando o objeto.
 */
 interceptors::ORBInitializer* orbInitializer;
-#ifdef OPENBUS_SDK_MULTITHREAD
 MICOMT::Mutex _mutex;
-#endif
 
 CORBA::ORB* initORB(int argc, char** argv) throw(CORBA::Exception) {
-  #ifdef OPENBUS_SDK_MULTITHREAD
   Mutex m(&_mutex);
-  #endif
   log_scope l(log.general_logger(), info_level, "initORB");
   if (!orbInitializer) {
     orbInitializer = new interceptors::ORBInitializer();

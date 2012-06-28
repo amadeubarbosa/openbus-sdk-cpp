@@ -66,17 +66,17 @@ Connection::Connection(
 
 Connection::~Connection() { 
   _logout(true);
+  #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin->stop();
   _renewLogin->wait();
+  #endif
 }
 
 void Connection::loginByPassword(const char* entity, const char* password)
   throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception) 
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
-  #ifdef OPENBUS_SDK_MULTITHREAD
   Mutex m(&_mutex);
-  #endif
   if (login()) throw AlreadyLoggedIn();
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
@@ -138,9 +138,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   idl::services::ServiceFailure, CORBA::Exception)
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
-  #ifdef OPENBUS_SDK_MULTITHREAD
   Mutex m(&_mutex);
-  #endif
   if (login()) throw AlreadyLoggedIn();
   idl::EncryptedBlock challenge;
   idl_ac::LoginProcess_var loginProcess;
@@ -215,9 +213,7 @@ std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSingleS
   throw (idl::services::ServiceFailure, CORBA::Exception)
 {
   log_scope l(log.general_logger(), info_level, "Connection::startSingleSignOn");
-  #ifdef OPENBUS_SDK_MULTITHREAD
   Mutex m(&_mutex);
-  #endif
   unsigned char* challenge = new unsigned char[256];
   idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySingleSignOn(challenge);
 
@@ -230,9 +226,7 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
 	CORBA::Exception)
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginBySingleSignOn");
-  #ifdef OPENBUS_SDK_MULTITHREAD
   Mutex m(&_mutex);
-  #endif
   interceptors::IgnoreInterceptor _i(_piCurrent);
   if (login()) throw AlreadyLoggedIn();
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
@@ -287,15 +281,18 @@ void Connection::loginBySingleSignOn(idl_ac::LoginProcess* loginProcess, const u
 }
 
 bool Connection::_logout(bool local) {
-  Mutex m(&_mutex);
   bool sucess = false;
+  Mutex m(&_mutex);
   if (login()) {
     #ifdef OPENBUS_SDK_MULTITHREAD
+    m.unlock();
     _renewLogin->pause();
+    m.lock();
     #else
     _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
     #endif
     _loginInfo.reset();
+    m.unlock();
     if (!local) {
       Connection* c = 0;
       try {
@@ -304,15 +301,20 @@ bool Connection::_logout(bool local) {
         _access_control->logout();
         sucess = true;
         _manager->setRequester(c);
-      } catch(...) { 
+      } catch (...) { 
         sucess = false; 
         _manager->setRequester(c);        
       }
     }
   } else sucess = false;
+  m.lock();
+  CORBA::String_var busid = CORBA::string_dup(_busid);
+  m.unlock();
+  if (_manager->getDispatcher(busid)) _manager->clearDispatcher(busid);
+  m.lock();
   _busid = 0;
   _busKey = 0;
-  if (_manager->getDispatcher(this->_busid)) _manager->clearDispatcher(this->_busid);
+  m.unlock();
   _clientInterceptor->resetCaches();
   _serverInterceptor->resetCaches();
   return sucess;    
@@ -340,9 +342,9 @@ CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
       signedCallChain);
   } else {
     CORBA::Any_var legacyChainAny = piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
-    if (legacyChainAny >>= callChain) {
+    if (legacyChainAny >>= callChain)
       callerChain = new CallerChain(0, callChain.originators, callChain.caller);
-    } else return 0;
+    else return 0;
   }
   return callerChain;
 }

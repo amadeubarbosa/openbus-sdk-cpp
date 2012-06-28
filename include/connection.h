@@ -251,9 +251,7 @@ namespace openbus {
     InvalidLoginCallback_ptr _onInvalidLogin;
     std::auto_ptr<LoginCache> _loginCache;
     ConnectionManager* _manager;
-    #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Mutex _mutex;
-    #endif
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;
     friend class RenewLogin;

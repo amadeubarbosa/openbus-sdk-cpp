@@ -124,9 +124,7 @@ namespace openbus {
 	  */
     CORBA::ORB* orb() const { return _orb; }
   private:
-    #ifdef OPENBUS_SDK_MULTITHREAD
     MICOMT::Mutex _mutex;
-    #endif
     typedef std::map<std::string, Connection*> BusidConnection;
     ConnectionManager(CORBA::ORB*, interceptors::ORBInitializer*);
     ~ConnectionManager();

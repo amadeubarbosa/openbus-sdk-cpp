@@ -62,8 +62,8 @@ namespace openbus {
 #else
   class RenewLogin : public CORBA::DispatcherCallback {
   public:
-    RenewLogin(Connection*, ConnectionManager*, idl_ac::ValidityTime validityTime);
-    void callback(CORBA::Dispatcher* dispatcher, Event event);
+    RenewLogin(Connection*, ConnectionManager*, idl_ac::ValidityTime);
+    void callback(CORBA::Dispatcher*, Event);
   private:
     Connection* _conn;
     ConnectionManager* _manager;
