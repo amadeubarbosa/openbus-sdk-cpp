@@ -70,9 +70,7 @@ ClientInterceptor::ClientInterceptor(
 
 ClientInterceptor::~ClientInterceptor() { }
 
-void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
-  throw (CORBA::Exception)
-{
+void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
   const char* operation = r->operation();
   log_scope l(log.general_logger(), debug_level, "ClientInterceptor::send_request");
   l.level_vlog(debug_level, "operation: %s", operation);
@@ -99,9 +97,9 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
     
       SecretSession* session;
       AutoLock m(&_mutex);
-      bool b = _sessionLRUCache.fetch(sessionKey, session);
+      bool hasSession = _sessionLRUCache.fetch(sessionKey, session);
       m.unlock();
-      if (b) {
+      if (hasSession) {
         /* recuperando uma sessão para esta requisição. */
         credential.session = session->id;
         session->ticket++;
@@ -187,7 +185,6 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
 }
 
 void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo* r)
-  throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
 {
   const char* operation = r->operation();
   log_scope l(log.general_logger(), debug_level, "ClientInterceptor::receive_exception");
@@ -208,6 +205,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           CORBA::ULong len = sctx->context_data.length();
           CORBA::OctetSeq o(len, len, sctx->context_data.get_buffer());
           //[doubt] pegar exceção FormatMismatch ?
+          //[todo] enviar InvalidRemoteCode caso eu não consiga obter CredentialReset.
           CORBA::Any_var any = _cdrCodec->decode_value(o, idl_cr::_tc_CredentialReset);
           idl_cr::CredentialReset credentialReset;
           any >>= credentialReset;
@@ -228,6 +226,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
             AutoLock m(&_mutex);
             _sessionLRUCache.insert(sessionKey, session);
           }
+          l.log("Retransmissao da requisicao...");
           /* retransmitindo a requisição após ter estabelecido uma sessão. */
           throw PortableInterceptor::ForwardRequest(r->target(), false);
         }

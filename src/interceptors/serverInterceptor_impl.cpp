@@ -64,7 +64,6 @@ void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller,
 ServerInterceptor::~ServerInterceptor() { }
 
 void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::ServerRequestInfo* r)
-  throw (CORBA::SystemException, PortableInterceptor::ForwardRequest)
 {
   const char* operation = r->operation();
   log_scope l(log.general_logger(), debug_level,

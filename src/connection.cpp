@@ -137,6 +137,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
+  l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
 void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& privKey)
@@ -219,6 +220,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
+  l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
 std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSharedAuth() 
@@ -292,7 +294,8 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   }
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
-  #endif    
+  #endif
+  l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
 bool Connection::_logout(bool local) {

@@ -21,14 +21,12 @@ namespace interceptors {
       PortableInterceptor::SlotId slotId_ignoreInterceptor,
       IOP::Codec* cdr_codec);
     ~ClientInterceptor();
-    void send_request(PortableInterceptor::ClientRequestInfo*) throw (CORBA::Exception);
-    void send_poll(PortableInterceptor::ClientRequestInfo*) throw (CORBA::Exception) { }
-    void receive_reply(PortableInterceptor::ClientRequestInfo*) throw (CORBA::Exception) { }
-    void receive_exception(PortableInterceptor::ClientRequestInfo*) 
-      throw (CORBA::Exception, PortableInterceptor::ForwardRequest);
-    void receive_other(PortableInterceptor::ClientRequestInfo* ri) 
-      throw (CORBA::Exception, PortableInterceptor::ForwardRequest) { }
-    char* name() throw (CORBA::Exception) { return CORBA::string_dup("ClientInterceptor"); }
+    void send_request(PortableInterceptor::ClientRequestInfo*);
+    void send_poll(PortableInterceptor::ClientRequestInfo*) { }
+    void receive_reply(PortableInterceptor::ClientRequestInfo*) { }
+    void receive_exception(PortableInterceptor::ClientRequestInfo*);
+    void receive_other(PortableInterceptor::ClientRequestInfo* ri) { }
+    char* name() { return CORBA::string_dup("ClientInterceptor"); }
     void destroy() { }
     void connectionManager(ConnectionManager* m) { _manager = m; }
     void resetCaches();
