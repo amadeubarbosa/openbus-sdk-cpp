@@ -36,7 +36,6 @@ namespace interceptors {
     char* name() { return CORBA::string_dup("ServerInterceptor"); }
     void destroy() { }
     void connectionManager(ConnectionManager* m) { _manager = m; }
-    void resetCaches();
   private:
     MICOMT::Mutex _mutex;
     PortableInterceptor::Current* _piCurrent;

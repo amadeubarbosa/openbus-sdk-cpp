@@ -222,10 +222,5 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
   }
 }
 
-void ServerInterceptor::resetCaches() {
-  AutoLock m(&_mutex);
-  _sessionLRUCache.clear();
-}
-
 }
 }

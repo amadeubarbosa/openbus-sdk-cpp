@@ -249,11 +249,5 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   }
 }
 
-void ClientInterceptor::resetCaches() { 
-  AutoLock m(&_mutex);
-  _sessionLRUCache.clear();
-  _callChainLRUCache.clear(); 
-}
-
 }
 }

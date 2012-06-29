@@ -33,8 +33,6 @@ Connection::Connection(
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
-  _clientInterceptor = _orbInitializer->clientInterceptor();
-  _serverInterceptor = _orbInitializer->serverInterceptor();
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent.in()));
@@ -333,8 +331,6 @@ bool Connection::_logout(bool local) {
   _busid = 0;
   _buskey = 0;
   m.unlock();
-  _clientInterceptor->resetCaches();
-  _serverInterceptor->resetCaches();
   return sucess;    
 }
 

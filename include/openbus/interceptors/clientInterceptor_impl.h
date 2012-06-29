@@ -29,7 +29,6 @@ namespace interceptors {
     char* name() { return CORBA::string_dup("ClientInterceptor"); }
     void destroy() { }
     void connectionManager(ConnectionManager* m) { _manager = m; }
-    void resetCaches();
     Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
     openbus::CallerChain* getJoinedChain(PortableInterceptor::ClientRequestInfo* r);
     static PortableInterceptor::SlotId _slotId_ignoreInterceptor;

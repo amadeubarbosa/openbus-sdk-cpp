@@ -221,8 +221,6 @@ namespace openbus {
     const unsigned short _port;
     CORBA::ORB* _orb;
     const interceptors::ORBInitializer* _orbInitializer;
-    interceptors::ClientInterceptor* _clientInterceptor;
-    interceptors::ServerInterceptor* _serverInterceptor;
     std::auto_ptr<RenewLogin> _renewLogin;
     std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
     const char* _busid;
