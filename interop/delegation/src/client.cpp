@@ -1,4 +1,6 @@
 #include <openbus.h>
+#include <openbus/log.h>
+#include <openbus/manager.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
 #include "stubs/messages.h"

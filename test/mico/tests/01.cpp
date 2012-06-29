@@ -1,6 +1,6 @@
 #include <openbus.h>
 #include <iostream>
-#include "../util/auxiliar.h"
+#include "../openbus/util/auxiliar.h"
 
 #define TESTCASE "01"
 

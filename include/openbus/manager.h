@@ -1,6 +1,6 @@
 /**
 * API - SDK Openbus C++
-* \file manager.h
+* \file openbus/manager.h
 */
 
 #ifndef _TECGRAF_MANAGER_H_
@@ -9,12 +9,12 @@
 #include <CORBA.h>
 #include <stdexcept>
 
-#include <interceptors/orbInitializer_impl.h>
-
-/* forward declarations */
 namespace openbus {
-  class Connection;
+  class ConnectionManager;
 }
+
+#include <openbus/interceptors/orbInitializer_impl.h>
+#include <openbus/connection.h>
 
 #define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
 
@@ -22,8 +22,10 @@ namespace openbus {
 * \brief openbus
 */
 namespace openbus {
+  /* exceptions */
   struct NotLoggedIn  { const char* name() const { return "openbus::NotLoggedIn"; } };
-
+  /**/
+  
  /**
  * \brief Interface com operações para gerenciar o acesso a barramentos OpenBus através de um ORB 
  *  CORBA.
@@ -114,16 +116,20 @@ namespace openbus {
 	  */
     CORBA::ORB* orb() const { return _orb; }
   private:
-    MICOMT::Mutex _mutex;
-    typedef std::map<std::string, Connection*> BusidConnection;
+    /**
+    * ConnectionManager deve ser adquirido através de:
+    *   orb->resolve_initial_references(CONNECTION_MANAGER_ID)
+    */
     ConnectionManager(CORBA::ORB*, interceptors::ORBInitializer*);
     ~ConnectionManager();
     void orb(CORBA::ORB* o) { _orb = o; }
+    typedef std::map<std::string, Connection*> BusidConnection;
+    MICOMT::Mutex _mutex;
     CORBA::ORB* _orb;
     PortableInterceptor::Current_var _piCurrent;
     interceptors::ORBInitializer* _orbInitializer;
-    BusidConnection _busidConnection;
     Connection* _defaultConnection;
+    BusidConnection _busidConnection;
     friend CORBA::ORB* openbus::initORB(int argc, char** argv) throw(CORBA::Exception);
   };
 }

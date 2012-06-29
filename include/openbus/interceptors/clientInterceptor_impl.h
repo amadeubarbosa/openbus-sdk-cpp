@@ -3,12 +3,12 @@
 
 #include <CORBA.h>
 
-#include <connection_impl.h>
-#include <manager.h>
-#include <connection.h>
+#include <openbus/connection_impl.h>
+#include <openbus/manager.h>
+#include <openbus/connection.h>
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include <util/lru_cache_impl.h>
+#include <openbus/util/lru_cache_impl.h>
 #endif
 
 namespace openbus {

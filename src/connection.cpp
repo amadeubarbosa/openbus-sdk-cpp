@@ -1,4 +1,4 @@
-#include <util/openssl.h>
+#include <openbus/util/openssl.h>
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
@@ -7,10 +7,10 @@
 #include <openssl/sha.h>
 #include <CORBA.h>
 
-#include <log.h>
-#include <connection.h>
+#include <openbus/log.h>
+#include <openbus/connection.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <util/autolock_impl.h>
+#include <openbus/util/autolock_impl.h>
 #endif
 
 namespace openbus {
@@ -342,16 +342,15 @@ bool Connection::logout() throw (CORBA::Exception) {
 
 CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
-  CORBA::Any* signedCallChainAny = _piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
+  CORBA::Any* sigCallChainAny = _piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
   CallerChain* callerChain = 0;
   idl_ac::CallChain callChain;
-  idl_cr::SignedCallChain signedCallChain;
-  if (*signedCallChainAny >>= signedCallChain) {
-    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(signedCallChain.encoded,
+  idl_cr::SignedCallChain sigCallChain;
+  if (*sigCallChainAny >>= sigCallChain) {
+    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(sigCallChain.encoded,
       idl_ac::_tc_CallChain);
     *callChainAny >>= callChain;
-    callerChain = new CallerChain(this->_busid, callChain.originators, callChain.caller, 
-      signedCallChain);
+    callerChain = new CallerChain(_busid, callChain.originators, callChain.caller, sigCallChain);
   } else {
     CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
     if (legacyChainAny >>= callChain)
@@ -363,9 +362,9 @@ CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
 
 void Connection::joinChain(CallerChain* chain) throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::joinChain");
-  CORBA::Any signedCallChainAny;
-  signedCallChainAny <<= *(chain->signedCallChain());
-  _piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), signedCallChainAny);
+  CORBA::Any sigCallChainAny;
+  sigCallChainAny <<= *(chain->signedCallChain());
+  _piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), sigCallChainAny);
 }
 
 void Connection::exitChain() throw (CORBA::Exception) {
@@ -376,15 +375,14 @@ void Connection::exitChain() throw (CORBA::Exception) {
 
 CallerChain* Connection::getJoinedChain() throw (CORBA::Exception) {
   log_scope l(log.general_logger(), info_level, "Connection::getJoinedChain");
-  CORBA::Any_var signedCallChainAny=_piCurrent->get_slot(_orbInitializer->slotId_joinedCallChain());
-  idl_cr::SignedCallChain signedCallChain;
-  if (*signedCallChainAny >>= signedCallChain) {
-    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(signedCallChain.encoded,
+  CORBA::Any_var sigCallChainAny=_piCurrent->get_slot(_orbInitializer->slotId_joinedCallChain());
+  idl_cr::SignedCallChain sigCallChain;
+  if (*sigCallChainAny >>= sigCallChain) {
+    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(sigCallChain.encoded,
       idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
-    if (callChainAny >>= callChain)
-      return new CallerChain(callChain.target, callChain.originators, callChain.caller, 
-        signedCallChain);
+    if (callChainAny >>= callChain) return new CallerChain(callChain.target, callChain.originators, 
+      callChain.caller, sigCallChain);
     else return 0;
   } else return 0;
 }

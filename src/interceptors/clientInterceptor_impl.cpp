@@ -1,11 +1,11 @@
 #include <openssl/sha.h>
 #include <sstream>
 
-#include <interceptors/clientInterceptor_impl.h>
+#include <openbus/interceptors/clientInterceptor_impl.h>
 #include <legacy/stubs/credential_v1_5.h>
-#include <log.h>
-#include <util/openssl.h>
-#include <util/autolock_impl.h>
+#include <openbus/log.h>
+#include <openbus/util/openssl.h>
+#include <openbus/util/autolock_impl.h>
 
 namespace openbus {
 namespace interceptors {    

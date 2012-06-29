@@ -24,11 +24,11 @@ namespace openbus {
   class RenewLogin;
 }
 
-#include <manager.h>
-#include <connection.h>
+#include <openbus/manager.h>
+#include <openbus/connection.h>
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include <util/lru_cache_impl.h>
+#include <openbus/util/lru_cache_impl.h>
 #endif
 
 #define LOGINCACHE_LRU_SIZE 128
@@ -74,7 +74,9 @@ namespace openbus {
     MICOMT::CondVar _condVar;
     idl_ac::ValidityTime renew();
   };
+  
 #else
+
   class RenewLogin : public CORBA::DispatcherCallback {
   public:
     RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, idl_ac::ValidityTime);

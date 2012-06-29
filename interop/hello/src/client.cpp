@@ -1,4 +1,6 @@
 #include <openbus.h>
+#include <openbus/manager.h>
+#include <openbus/log.h>
 #include <iostream>
 #include "stubs/hello.h"
 

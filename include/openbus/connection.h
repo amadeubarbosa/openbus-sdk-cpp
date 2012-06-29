@@ -1,6 +1,6 @@
 /**
 * API - SDK Openbus C++
-* \file manager.h
+* \file openbus/manager.h
 */
 
 #ifndef TECGRAF_CONNECTION_H_
@@ -12,34 +12,31 @@
 #include <string>
 #include <openssl/evp.h>
 
-#include <stubs/scs.h>
-#include <stubs/core.h>
-#include <stubs/credential.h>
-#include <stubs/access_control.h>
-#include <stubs/offer_registry.h>
-
 namespace openbus {
   class Connection;
   struct CallerChain;
 }
 
-#include <interceptors/orbInitializer_impl.h>
-#include <interceptors/clientInterceptor_impl.h>
-#include <interceptors/serverInterceptor_impl.h>
-#include <connection_impl.h>
-#include <manager.h>
+#include <openbus/interceptors/orbInitializer_impl.h>
+#include <openbus/interceptors/clientInterceptor_impl.h>
+#include <openbus/interceptors/serverInterceptor_impl.h>
+#include <openbus/connection_impl.h>
+#include <openbus/manager.h>
 
 /**
 * \brief openbus
 */
 namespace openbus {  
+  
+  /* exceptions */
   struct AccessDenied  { const char* name() const { return "openbus::AccessDenied"; } };
   struct AlreadyLoggedIn { const char* name() const { return "openbus::AlreadyLoggedIn"; } };
   struct CorruptedPrivateKey{ const char* name() const { return "openbus::CorruptedPrivateKey";}};
   struct WrongPrivateKey {const char* name() const { return "openbus::WrongPrivateKey"; } };
   struct WrongSecret { const char* name() const { return "openbus::WrongSecret"; } };
   struct InvalidLoginProcess{ const char* name() const { return "openbus::InvalidLoginProcess";}};
-
+  /**/
+  
   struct CallerChain;  
 
   /**
@@ -217,11 +214,11 @@ namespace openbus {
     EVP_PKEY* key() const { return _key; }
     EVP_PKEY* buskey() const { return _buskey; }
     CORBA::ORB* orb() const { return _orb; }
-    const idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
-    const idl_ac::AccessControl_var access_control() const { return _access_control; }
+    idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
+    idl_ac::AccessControl_var access_control() const { return _access_control; }
     
-    std::string _host;
-    unsigned short _port;
+    const std::string _host;
+    const unsigned short _port;
     CORBA::ORB* _orb;
     const interceptors::ORBInitializer* _orbInitializer;
     interceptors::ClientInterceptor* _clientInterceptor;

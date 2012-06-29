@@ -1,9 +1,7 @@
-#include <manager.h>
-#include <log.h>
-
-#include <connection.h>
+#include <openbus/manager.h>
+#include <openbus/log.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <util/autolock_impl.h>
+#include <openbus/util/autolock_impl.h>
 #endif
 
 namespace openbus {

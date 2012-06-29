@@ -6,8 +6,8 @@
 #include <openssl/x509.h>
 #include <openssl/sha.h>
 
-#include <connection_impl.h>
-#include <log.h>
+#include <openbus/connection_impl.h>
+#include <openbus/log.h>
 
 namespace openbus {
 LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
@@ -133,7 +133,9 @@ void RenewLogin::run() {
   _condVar.signal();
   _mutex.unlock();
 }
+
 #else
+
 RenewLogin::RenewLogin(Connection* c, idl_ac::AccessControl_ptr a, ConnectionManager* m, 
   idl_ac::ValidityTime t)
   : _conn(c), _access_control(a), _manager(m), _validityTime(t) 
