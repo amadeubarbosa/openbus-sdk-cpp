@@ -1,20 +1,37 @@
 #ifndef TECGRAF_CONNECTION_IMPL_H_
 #define TECGRAF_CONNECTION_IMPL_H_
 
-#include "connection.h"
+#include <openssl/evp.h>
 
+#include <stubs/scs.h>
+#include <stubs/core.h>
+#include <stubs/credential.h>
+#include <stubs/access_control.h>
+#include <stubs/offer_registry.h>
+namespace openbus {  
+  namespace idl = tecgraf::openbus::core::v2_0;
+  namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
+  namespace idl_accesscontrol = idl_ac;
+  namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+  namespace idl_offerregistry = idl_or;
+  namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
+  namespace idl_credential = idl_cr;
+}
+
+namespace openbus {
+  struct Login;
+  class LoginCache;
+  class RenewLogin;
+}
+
+#include <manager.h>
+#include <connection.h>
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include "util/lru_cache_impl.h"
+#include <util/lru_cache_impl.h>
 #endif
 
 #define LOGINCACHE_LRU_SIZE 128
-
-/* forward declarations */
-namespace openbus {
-  class Connection;
-  class ConnectionManager;
-}
 
 namespace openbus {
   struct Login {
@@ -40,8 +57,7 @@ namespace openbus {
 #ifdef OPENBUS_SDK_MULTITHREAD
   class RenewLogin : public MICOMT::Thread {
   public:
-    RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, 
-      idl_ac::ValidityTime validityTime);
+    RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, idl_ac::ValidityTime);
     ~RenewLogin();
     void _run(void*);
     void stop();
@@ -61,8 +77,7 @@ namespace openbus {
 #else
   class RenewLogin : public CORBA::DispatcherCallback {
   public:
-    RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, 
-      idl_ac::ValidityTime validityTime);
+    RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, idl_ac::ValidityTime);
     void callback(CORBA::Dispatcher*, Event);
   private:
     Connection* _conn;

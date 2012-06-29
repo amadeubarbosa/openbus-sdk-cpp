@@ -1,11 +1,12 @@
+#include <iostream>
+#include <openssl/sha.h>
+#include <openssl/x509.h>
+
 #include <interceptors/serverInterceptor_impl.h>
 #include <legacy/stubs/credential_v1_5.h>
 #include <util/openssl.h>
 #include <log.h>
-
-#include <iostream>
-#include <openssl/sha.h>
-#include <openssl/x509.h>
+#include <util/autolock_impl.h>
 
 namespace openbus {
 namespace interceptors {

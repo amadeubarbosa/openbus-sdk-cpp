@@ -9,24 +9,14 @@
 #include <CORBA.h>
 #include <stdexcept>
 
-#include <connection.h>
 #include <interceptors/orbInitializer_impl.h>
-
-#ifdef OPENBUS_SDK_MULTITHREAD
-#include "util/autolock_impl.h"
-#endif
-
-#define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
 
 /* forward declarations */
 namespace openbus {
   class Connection;
-  namespace interceptors {
-	class ClientInterceptor;
-	class ServerInterceptor;
-    class ORBInitializer;
-  }
 }
+
+#define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
 
 /**
 * \brief openbus

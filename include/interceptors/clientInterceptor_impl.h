@@ -2,21 +2,14 @@
 #define TECGRAF_CLIENTINTERCEPTOR_IMPL_H_
 
 #include <CORBA.h>
-#include "connection_impl.h"
-#include "../manager.h"
 
+#include <connection_impl.h>
+#include <manager.h>
+#include <connection.h>
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include "util/lru_cache_impl.h"
+#include <util/lru_cache_impl.h>
 #endif
-#include "util/autolock_impl.h"
-
-/* forward declarations */
-namespace openbus {
-  class Connection;
-  class ConnectionManager;
-  struct CallerChain;
-}
 
 namespace openbus {
 namespace interceptors {  
@@ -37,7 +30,7 @@ namespace interceptors {
       throw (CORBA::Exception, PortableInterceptor::ForwardRequest) { }
     char* name() throw (CORBA::Exception) { return CORBA::string_dup("ClientInterceptor"); }
     void destroy() { }
-    void setConnectionManager(ConnectionManager* m) { _manager = m; }
+    void connectionManager(ConnectionManager* m) { _manager = m; }
     void resetCaches();
     Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
     openbus::CallerChain* getJoinedChain(PortableInterceptor::ClientRequestInfo* r);

@@ -12,39 +12,22 @@
 #include <string>
 #include <openssl/evp.h>
 
-#include "stubs/scs.h"
-#include "stubs/core.h"
-#include "stubs/credential.h"
-#include "stubs/access_control.h"
-#include "stubs/offer_registry.h"
+#include <stubs/scs.h>
+#include <stubs/core.h>
+#include <stubs/credential.h>
+#include <stubs/access_control.h>
+#include <stubs/offer_registry.h>
 
-namespace openbus {  
-  namespace idl = tecgraf::openbus::core::v2_0;
-  namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
-  namespace idl_accesscontrol = idl_ac;
-  namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
-  namespace idl_offerregistry = idl_or;
-  namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
-  namespace idl_credential = idl_cr;
-}
-
-#include "interceptors/orbInitializer_impl.h"
-#ifdef OPENBUS_SDK_MULTITHREAD
-#include "util/autolock_impl.h"
-#endif
-
-/* forward declarations */
 namespace openbus {
-  class LoginCache;
-  class RenewLogin;
-  struct CallerChain;  
-  namespace interceptors {
-    class ClientInterceptor;
-    class ServerInterceptor;
-    class ORBInitializer;
-  }
-  class ConnectionManager;
+  class Connection;
+  struct CallerChain;
 }
+
+#include <interceptors/orbInitializer_impl.h>
+#include <interceptors/clientInterceptor_impl.h>
+#include <interceptors/serverInterceptor_impl.h>
+#include <connection_impl.h>
+#include <manager.h>
 
 /**
 * \brief openbus
@@ -56,6 +39,8 @@ namespace openbus {
   struct WrongPrivateKey {const char* name() const { return "openbus::WrongPrivateKey"; } };
   struct WrongSecret { const char* name() const { return "openbus::WrongSecret"; } };
   struct InvalidLoginProcess{ const char* name() const { return "openbus::InvalidLoginProcess";}};
+
+  struct CallerChain;  
 
   /**
   * Conexão com um barramento.

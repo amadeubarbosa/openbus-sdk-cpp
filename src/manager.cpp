@@ -1,6 +1,11 @@
 #include <manager.h>
 #include <log.h>
 
+#include <connection.h>
+#ifdef OPENBUS_SDK_MULTITHREAD
+#include <util/autolock_impl.h>
+#endif
+
 namespace openbus {
 ConnectionManager::ConnectionManager(CORBA::ORB* o, interceptors::ORBInitializer* i) 
  : _orb(o), _orbInitializer(i), _defaultConnection(0) 

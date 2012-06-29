@@ -1,8 +1,12 @@
 #include <openbus.h>
+#include <log.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <util/autolock_impl.h>
 #endif
+#include <manager.h>
 #include <interceptors/orbInitializer_impl.h>
+#include <interceptors/clientInterceptor_impl.h>
+#include <interceptors/serverInterceptor_impl.h>
 
 #include <memory>
 
@@ -37,8 +41,8 @@ CORBA::ORB* initORB(int argc, char** argv) throw(CORBA::Exception) {
     ConnectionManager* manager = new ConnectionManager(orb, orbInitializer);
     l.level_log(debug_level, "Registrando ConnectionManager");
     orb->register_initial_reference(CONNECTION_MANAGER_ID, manager);
-    orbInitializer->clientInterceptor()->setConnectionManager(manager);
-    orbInitializer->serverInterceptor()->setConnectionManager(manager);
+    orbInitializer->clientInterceptor()->connectionManager(manager);
+    orbInitializer->serverInterceptor()->connectionManager(manager);
   }
   l.log("Retornando ORB");
   return orb;

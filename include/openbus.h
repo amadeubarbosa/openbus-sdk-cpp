@@ -7,8 +7,6 @@
 #define TECGRAF_OPENBUS_H_
 
 #include <CORBA.h>
-#include <manager.h>
-#include <log.h>
 
 /**
 * \brief openbus

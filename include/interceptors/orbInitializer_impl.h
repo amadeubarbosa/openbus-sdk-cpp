@@ -3,8 +3,6 @@
 
 #include <memory>
 #include <CORBA.h>
-#include "clientInterceptor_impl.h"
-#include "serverInterceptor_impl.h"
 
 namespace openbus {
 namespace interceptors {

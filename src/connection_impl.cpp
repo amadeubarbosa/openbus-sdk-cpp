@@ -1,4 +1,3 @@
-#include <connection_impl.h>
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
@@ -6,6 +5,8 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/sha.h>
+
+#include <connection_impl.h>
 #include <log.h>
 
 namespace openbus {

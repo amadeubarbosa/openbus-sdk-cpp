@@ -1,13 +1,17 @@
-#include <connection.h>
-#include <connection_impl.h>
 #include <util/openssl.h>
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
 #include <ctime>
-#include <log.h>
 #include <openssl/x509.h>
 #include <openssl/sha.h>
+#include <CORBA.h>
+
+#include <log.h>
+#include <connection.h>
+#ifdef OPENBUS_SDK_MULTITHREAD
+#include <util/autolock_impl.h>
+#endif
 
 namespace openbus {
 

@@ -1,10 +1,11 @@
-#include <interceptors/clientInterceptor_impl.h>
-#include <legacy/stubs/credential_v1_5.h>
-#include <util/openssl.h>
-#include <log.h>
-
 #include <openssl/sha.h>
 #include <sstream>
+
+#include <interceptors/clientInterceptor_impl.h>
+#include <legacy/stubs/credential_v1_5.h>
+#include <log.h>
+#include <util/openssl.h>
+#include <util/autolock_impl.h>
 
 namespace openbus {
 namespace interceptors {    
@@ -46,8 +47,8 @@ CallerChain* ClientInterceptor::getJoinedChain(PortableInterceptor::ClientReques
     CORBA::Any_var callChainAny = _cdrCodec->decode_value(signedCallChain.encoded,
       idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
-    if (callChainAny >>= callChain) return new CallerChain(callChain.target, callChain.originators, callChain.caller,
-      signedCallChain);
+    if (callChainAny >>= callChain) return new CallerChain(callChain.target, callChain.originators, 
+      callChain.caller, signedCallChain);
     else return 0;
   } else return 0;
 }

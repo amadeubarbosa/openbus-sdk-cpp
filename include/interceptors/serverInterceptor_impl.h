@@ -2,28 +2,22 @@
 #define TECGRAF_SERVERINTERCEPTOR_IMPL_H_
 
 #include <CORBA.h>
-#include "connection.h"
-#include "manager.h"
+
+#include <connection.h>
+#include <connection_impl.h>
+#include <manager.h>
 extern "C" {
   #include <util/tickets_impl.h>
 }
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include "util/lru_cache_impl.h"
+#include <util/lru_cache_impl.h>
 #endif
-
-/* forward declarations */
-namespace openbus {
-  class Connection;
-  class ConnectionManager;
-  struct Login;
-}
 
 #define SECRET_SIZE 16
 
 namespace openbus {
 namespace interceptors {
-
   class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor {
   public:
     ServerInterceptor(
@@ -46,7 +40,7 @@ namespace interceptors {
       throw (CORBA::SystemException, PortableInterceptor::ForwardRequest) { }
     char* name() throw (CORBA::SystemException) { return CORBA::string_dup("ServerInterceptor"); }
     void destroy() { }
-    void setConnectionManager(ConnectionManager* m) { _manager = m; }
+    void connectionManager(ConnectionManager* m) { _manager = m; }
     void resetCaches();
   private:
     MICOMT::Mutex _mutex;
