@@ -52,10 +52,10 @@ namespace interceptors {
     typedef LRUCache<std::string, SecretSession*> SessionLRUCache;
     /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite 
     ** uma comunicação com o objeto CORBA que está sendo requisitado. */
-    std::auto_ptr<SessionLRUCache> _sessionLRUCache;
+    SessionLRUCache _sessionLRUCache;
     
     typedef LRUCache<std::string, const idl_cr::SignedCallChain> CallChainLRUCache;
-    std::auto_ptr<CallChainLRUCache> _callChainLRUCache;
+    CallChainLRUCache _callChainLRUCache;
   };
 
   class IgnoreInterceptor {

@@ -59,13 +59,13 @@ ClientInterceptor::ClientInterceptor(
   PortableInterceptor::SlotId slotId_ignoreInterceptor,
   IOP::Codec* cdr_codec)
   : _cdrCodec(cdr_codec), _manager(0), _slotId_connectionAddr(slotId_connectionAddr), 
-    _slotId_joinedCallChain(slotId_joinedCallChain)
+    _slotId_joinedCallChain(slotId_joinedCallChain),
+    _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE)),
+    _callChainLRUCache(CallChainLRUCache(LOGINCACHE_LRU_SIZE))
 { 
   log_scope l(log.general_logger(), info_level,
     "ClientInterceptor::ClientInterceptor");
   _slotId_ignoreInterceptor = slotId_ignoreInterceptor;
-  _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
-  _callChainLRUCache = std::auto_ptr<CallChainLRUCache>(new CallChainLRUCache(LOGINCACHE_LRU_SIZE));
 }
 
 ClientInterceptor::~ClientInterceptor() { }
@@ -99,7 +99,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
     
       SecretSession* session;
       AutoLock m(&_mutex);
-      bool b = _sessionLRUCache->fetch(sessionKey, session);
+      bool b = _sessionLRUCache.fetch(sessionKey, session);
       m.unlock();
       if (b) {
         /* recuperando uma sessão para esta requisição. */
@@ -135,15 +135,15 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
           std::string shash((const char*) hash, 32);
           idl_cr::SignedCallChain signedCallChain;
           AutoLock m(&_mutex);
-          if (_callChainLRUCache->exists(shash)) {
-            signedCallChain = _callChainLRUCache->fetch(shash);
+          if (_callChainLRUCache.exists(shash)) {
+            signedCallChain = _callChainLRUCache.fetch(shash);
             l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s",session->remoteid);
             credential.chain = signedCallChain;
           } else {
             m.unlock();
             credential.chain = *conn.access_control()->signChainFor(session->remoteid);
             m.lock();
-            _callChainLRUCache->insert(shash, credential.chain);
+            _callChainLRUCache.insert(shash, credential.chain);
           }
         } else
           if (callerChain) credential.chain = *callerChain->signedCallChain();
@@ -190,8 +190,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   throw (CORBA::Exception, PortableInterceptor::ForwardRequest)
 {
   const char* operation = r->operation();
-  log_scope l(log.general_logger(), debug_level, 
-    "ClientInterceptor::receive_exception");
+  log_scope l(log.general_logger(), debug_level, "ClientInterceptor::receive_exception");
   l.level_vlog(debug_level, "operation: %s", operation); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
 
@@ -200,17 +199,14 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     if (ex->completed() == CORBA::COMPLETED_NO) {
       l.level_vlog(debug_level, "minor: %d", ex->minor());
       Connection& conn = getCurrentConnection(r);
-      l.level_vlog(debug_level, "minor: %d", ex->minor());
       if (ex->minor() == idl_ac::InvalidCredentialCode) {
         l.level_vlog(debug_level, "creating credential session");
         IOP::ServiceContext_var sctx;
         if (sctx = r->get_request_service_context(idl_cr::CredentialContextId)) {
           /* montando CredentialReset que foi enviado por quem está respondendo a um pedido de 
           ** inicialização de uma sessão. */
-          CORBA::OctetSeq o(
-            sctx->context_data.length(), 
-            sctx->context_data.length(), 
-            sctx->context_data.get_buffer());
+          CORBA::ULong len = sctx->context_data.length();
+          CORBA::OctetSeq o(len, len, sctx->context_data.get_buffer());
           //[doubt] pegar exceção FormatMismatch ?
           CORBA::Any_var any = _cdrCodec->decode_value(o, idl_cr::_tc_CredentialReset);
           idl_cr::CredentialReset credentialReset;
@@ -225,12 +221,12 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           /* criando uma sessão. */
           SecretSession* session = new SecretSession();
           session->id = credentialReset.session;
-          session->remoteid  = CORBA::string_dup(credentialReset.login);
+          session->remoteid = CORBA::string_dup(credentialReset.login);
           session->secret = secret;
           session->ticket = 0;
           {
             AutoLock m(&_mutex);
-            _sessionLRUCache->insert(sessionKey, session);
+            _sessionLRUCache.insert(sessionKey, session);
           }
           /* retransmitindo a requisição após ter estabelecido uma sessão. */
           throw PortableInterceptor::ForwardRequest(r->target(), false);
@@ -256,8 +252,8 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
 
 void ClientInterceptor::resetCaches() { 
   AutoLock m(&_mutex);
-  _sessionLRUCache->clear();
-  _callChainLRUCache->clear(); 
+  _sessionLRUCache.clear();
+  _callChainLRUCache.clear(); 
 }
 
 }

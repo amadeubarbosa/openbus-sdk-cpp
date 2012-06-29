@@ -64,7 +64,7 @@ namespace interceptors {
     };
 
     typedef LRUCache<CORBA::ULong, Session*> SessionLRUCache;
-    std::auto_ptr<SessionLRUCache> _sessionLRUCache;
+    SessionLRUCache _sessionLRUCache;
   };
 }
 }

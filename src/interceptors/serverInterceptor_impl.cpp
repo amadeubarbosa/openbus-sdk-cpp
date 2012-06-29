@@ -19,14 +19,11 @@ ServerInterceptor::ServerInterceptor(
   PortableInterceptor::SlotId slotId_legacyCallChain,
   IOP::Codec* cdr_codec) 
   : _piCurrent(piCurrent), _slotId_connectionAddr(slotId_connectionAddr),
-    _slotId_joinedCallChain(slotId_joinedCallChain), 
-    _slotId_signedCallChain(slotId_signedCallChain),
-    _slotId_legacyCallChain(slotId_legacyCallChain),
-    _cdrCodec(cdr_codec), 
-    _manager(0) 
+    _slotId_joinedCallChain(slotId_joinedCallChain),_slotId_signedCallChain(slotId_signedCallChain),
+    _slotId_legacyCallChain(slotId_legacyCallChain), _cdrCodec(cdr_codec), _manager(0),
+    _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE))
 {
   log_scope l(log.general_logger(), debug_level,"ServerInterceptor::ServerInterceptor");
-  _sessionLRUCache = std::auto_ptr<SessionLRUCache> (new SessionLRUCache(LOGINCACHE_LRU_SIZE));
 }
 
 void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller, 
@@ -34,9 +31,9 @@ void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller,
 {
   AutoLock m(&_mutex);
   /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
-  CORBA::ULong newSessionId = _sessionLRUCache->size() + 1;
+  CORBA::ULong newSessionId = _sessionLRUCache.size() + 1;
   Session* session = new Session(newSessionId);
-  _sessionLRUCache->insert(newSessionId, session);
+  _sessionLRUCache.insert(newSessionId, session);
   m.unlock();
   
   /* cifrando o segredo com a chave pública do cliente. */
@@ -116,7 +113,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
         idl::HashValue hash;        
         Session* session;
         AutoLock m(&_mutex);
-        if (_sessionLRUCache->fetch(credential.session, session)) {
+        if (_sessionLRUCache.fetch(credential.session, session)) {
           /* montando uma hash com os dados da credencial recebida e da sessão existente. */
           size_t slenOperation = strlen(r->operation());
           int slen = 22 + slenOperation;
@@ -220,7 +217,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
 
 void ServerInterceptor::resetCaches() {
   AutoLock m(&_mutex);
-  _sessionLRUCache->clear();
+  _sessionLRUCache.clear();
 }
 
 }
