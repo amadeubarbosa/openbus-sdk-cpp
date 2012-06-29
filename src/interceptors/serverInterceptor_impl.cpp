@@ -40,7 +40,9 @@ void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller,
   unsigned char* encrypted = openssl::encrypt(caller->key, session->secret, SECRET_SIZE); 
 
   idl_cr::CredentialReset credentialReset;
+  AutoLock conn_mutex(&conn->_mutex);
   credentialReset.login = conn->login()->id;
+  conn_mutex.unlock();
   credentialReset.session = session->id;
   memcpy(credentialReset.challenge, encrypted, 256);
   OPENSSL_free(encrypted);
@@ -96,8 +98,10 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     connectionAddrAny <<= *(connectionAddrOctetSeq);
     r->set_slot(_slotId_connectionAddr, connectionAddrAny);
     _manager->setRequester(conn);
-    
+
+    AutoLock conn_mutex(&conn->_mutex);
     if (conn->login()) {
+    conn_mutex.unlock();
       Login* caller;
       /* consulta ao cache de logins para saber se este login é valido. 
       ** obtenção da estrutura Login referente a este login id. (caller) */
@@ -137,18 +141,22 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
             idl::HashValue hash;
             SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
 
+            conn_mutex.lock();
             EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->buskey(), 0);
+            conn_mutex.unlock();
             assert(ctx);
             int status = EVP_PKEY_verify_init(ctx);
             assert(status);
-            if (EVP_PKEY_verify(ctx, credential.chain.signature, 256, hash, 32) != 1) {
+            if (EVP_PKEY_verify(ctx, credential.chain.signature, 256, hash, 32) != 1)
               sendInvalidChainCode = true;
-            } else {
+            else {
               CORBA::Any_var callChainAny = _cdrCodec->decode_value(
                 credential.chain.encoded, idl_ac::_tc_CallChain);
               idl_ac::CallChain callChain;
               callChainAny >>= callChain;
+              conn_mutex.lock();
               if (strcmp(callChain.target, conn->login()->id)) { 
+                conn_mutex.unlock();
                 /* a cadeia tem como destino(target) outro login. */
                 m.unlock();
                 sendCredentialReset(conn, caller, r);
