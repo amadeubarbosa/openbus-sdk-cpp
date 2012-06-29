@@ -204,11 +204,15 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           ** inicialização de uma sessão. */
           CORBA::ULong len = sctx->context_data.length();
           CORBA::OctetSeq o(len, len, sctx->context_data.get_buffer());
-          //[doubt] pegar exceção FormatMismatch ?
-          //[todo] enviar InvalidRemoteCode caso eu não consiga obter CredentialReset.
-          CORBA::Any_var any = _cdrCodec->decode_value(o, idl_cr::_tc_CredentialReset);
+          CORBA::Any_var any;
+          try {
+            any = _cdrCodec->decode_value(o, idl_cr::_tc_CredentialReset);
+          } catch (CORBA::Exception&) {
+            throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
+          }
           idl_cr::CredentialReset credentialReset;
-          any >>= credentialReset;
+          if (!(any >>= credentialReset)) 
+            throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
         
           /* decifrar o segredo usando a chave do usuário. */
           unsigned char* secret = openssl::decrypt(conn.key(), credentialReset.challenge, 256);
@@ -229,7 +233,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           l.log("Retransmissao da requisicao...");
           /* retransmitindo a requisição após ter estabelecido uma sessão. */
           throw PortableInterceptor::ForwardRequest(r->target(), false);
-        }
+        } throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::NoCredentialCode) {
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
