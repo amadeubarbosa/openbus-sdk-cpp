@@ -21,7 +21,7 @@ namespace interceptors {
     _slotId_ignoreInterceptor = info->allocate_slot_id();
     CORBA::Object_var init_ref = info->resolve_initial_references("PICurrent");
     PortableInterceptor::Current_var piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-    assert(!CORBA::is_nil(piCurrent));
+    assert(!CORBA::is_nil(piCurrent.in()));
     _clientInterceptor = std::auto_ptr<ClientInterceptor> 
       (new ClientInterceptor(_slotId_connectionAddr, _slotId_joinedCallChain, 
       _slotId_ignoreInterceptor, _codec.in()));

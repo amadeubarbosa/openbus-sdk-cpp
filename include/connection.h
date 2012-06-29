@@ -198,13 +198,13 @@ namespace openbus {
 	  * @param[in] p Ponteiro para uma função de callback que implementa a interface de callback a ser
 	  *            chamada ou zero caso nenhum objeto deva ser chamado na ocorrência desse evento.
 	  */
-    void onInvalidLogin(InvalidLoginCallback_ptr p) { _onInvalidLogin = p; }
+    void onInvalidLogin(InvalidLoginCallback_ptr p);
     
 	  /*
 	  * Retorna um ponteiro para uma função de callback a ser chamada sempre que o login se torna 
 	  * inválido.
 	  */
-    InvalidLoginCallback_ptr onInvalidLogin() const { return _onInvalidLogin; }   
+    InvalidLoginCallback_ptr onInvalidLogin();
        
   	/** 
   	* Informações sobre o login da entidade que autenticou essa conexão. 

@@ -79,15 +79,19 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
   /* esta chamada remota precisa ser interceptada? */
   if (!IgnoreInterceptor::status(r)) {
     Connection& conn = getCurrentConnection(r);
+    AutoLock conn_mutex(&conn._mutex);
     if (conn.login()) {
+      conn_mutex.unlock();
       CallerChain* callerChain = 0;
       IOP::ServiceContext serviceContext;
       serviceContext.context_id = idl_cr::CredentialContextId;
 
       /* montando uma credencial com os dados(busid e login) da conexão. */
       idl_cr::CredentialData credential;
+      conn_mutex.lock();
       credential.bus = CORBA::string_dup(conn.busid());
       credential.login = CORBA::string_dup(conn.login()->id);
+      conn_mutex.unlock();
       
       /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
       std::string sessionKey = getSessionKey(r);
@@ -115,7 +119,9 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
           /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
           /* montando uma hash para consultar o cache de cadeias assinadas. */
           idl::HashValue hash;
-          const char* connId = conn.login()->id;
+          conn_mutex.lock();
+          CORBA::String_var connId = CORBA::string_dup(conn.login()->id);
+          conn_mutex.unlock();
           size_t sid = strlen(connId);
           size_t sremoteid = strlen(session->remoteid);
           slen = sid + sremoteid + 256;
@@ -162,8 +168,10 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r)
       IOP::ServiceContext legacyContext;
       legacyContext.context_id = 1234;
       legacy::v1_5::Credential legacyCredential;
-      legacyCredential.identifier = conn.login()->id;
-      legacyCredential.owner = conn.login()->entity;
+      conn_mutex.lock();
+      legacyCredential.identifier = CORBA::string_dup(conn.login()->id);
+      legacyCredential.owner = CORBA::string_dup(conn.login()->entity);
+      conn_mutex.unlock();
       if (callerChain && (callerChain->_originators.length() > 1))
         legacyCredential.delegate = CORBA::string_dup(callerChain->_originators[0].entity);
       else legacyCredential.delegate = "";
@@ -229,11 +237,16 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       } else if (ex->minor() == idl_ac::NoCredentialCode) {
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
+        AutoLock conn_mutex(&conn._mutex);
         idl_ac::LoginInfo oldLogin = *conn.login();
         const char* oldBusid = CORBA::string_dup(conn.busid());
+        conn_mutex.unlock();
         conn._logout(true);
-        if (conn.onInvalidLogin()) 
-          if ((conn.onInvalidLogin())(conn, oldLogin, oldBusid))
+        conn_mutex.lock();
+        Connection::InvalidLoginCallback_ptr callback = conn.onInvalidLogin();
+        conn_mutex.unlock();
+        if (callback) 
+          if ((callback)(conn, oldLogin, oldBusid))
             throw PortableInterceptor::ForwardRequest(r->target(), false);            
       }
     }

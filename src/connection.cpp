@@ -385,4 +385,14 @@ CallerChain* Connection::getJoinedChain() throw (CORBA::Exception) {
   } else return 0;
 }
 
+void Connection::onInvalidLogin(Connection::InvalidLoginCallback_ptr p) { 
+  AutoLock m(&_mutex);
+  _onInvalidLogin = p; 
+}
+
+Connection::InvalidLoginCallback_ptr Connection::onInvalidLogin() { 
+  AutoLock m(&_mutex);
+  return _onInvalidLogin; 
+}
+
 }
