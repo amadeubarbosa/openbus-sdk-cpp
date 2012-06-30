@@ -79,7 +79,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
   if (!IgnoreInterceptor::status(r)) {
     Connection& conn = getCurrentConnection(r);
     AutoLock conn_mutex(&conn._mutex);
-    if (conn.login()) {
+    if (conn._login()) {
       conn_mutex.unlock();
       CallerChain* callerChain = 0;
       IOP::ServiceContext serviceContext;
@@ -89,7 +89,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
       idl_cr::CredentialData credential;
       conn_mutex.lock();
       credential.bus = CORBA::string_dup(conn.busid());
-      credential.login = CORBA::string_dup(conn.login()->id);
+      credential.login = CORBA::string_dup(conn._login()->id);
       conn_mutex.unlock();
       
       /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
@@ -119,7 +119,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           /* montando uma hash para consultar o cache de cadeias assinadas. */
           idl::HashValue hash;
           conn_mutex.lock();
-          CORBA::String_var connId = CORBA::string_dup(conn.login()->id);
+          CORBA::String_var connId = CORBA::string_dup(conn._login()->id);
           conn_mutex.unlock();
           size_t sid = strlen(connId);
           size_t sremoteid = strlen(session->remoteid);
@@ -168,8 +168,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
       legacyContext.context_id = 1234;
       legacy::v1_5::Credential legacyCredential;
       conn_mutex.lock();
-      legacyCredential.identifier = CORBA::string_dup(conn.login()->id);
-      legacyCredential.owner = CORBA::string_dup(conn.login()->entity);
+      legacyCredential.identifier = CORBA::string_dup(conn._login()->id);
+      legacyCredential.owner = CORBA::string_dup(conn._login()->entity);
       conn_mutex.unlock();
       if (callerChain && (callerChain->_originators.length() > 1))
         legacyCredential.delegate = CORBA::string_dup(callerChain->_originators[0].entity);
@@ -238,7 +238,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
         AutoLock conn_mutex(&conn._mutex);
-        idl_ac::LoginInfo oldLogin = *conn.login();
+        idl_ac::LoginInfo oldLogin = *conn._login();
         const char* oldBusid = CORBA::string_dup(conn.busid());
         conn_mutex.unlock();
         conn._logout(true);

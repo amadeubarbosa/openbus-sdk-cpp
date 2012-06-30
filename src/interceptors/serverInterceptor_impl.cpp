@@ -41,7 +41,7 @@ void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller,
 
   idl_cr::CredentialReset credentialReset;
   AutoLock conn_mutex(&conn->_mutex);
-  credentialReset.login = conn->login()->id;
+  credentialReset.login = conn->_login()->id;
   conn_mutex.unlock();
   credentialReset.session = session->id;
   memcpy(credentialReset.challenge, encrypted, 256);
@@ -99,7 +99,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     _manager->setRequester(conn);
 
     AutoLock conn_mutex(&conn->_mutex);
-    if (conn->login()) {
+    if (conn->_login()) {
     conn_mutex.unlock();
       Login* caller;
       /* consulta ao cache de logins para saber se este login é valido. 
@@ -154,7 +154,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
               idl_ac::CallChain callChain;
               callChainAny >>= callChain;
               conn_mutex.lock();
-              if (strcmp(callChain.target, conn->login()->id)) { 
+              if (strcmp(callChain.target, conn->_login()->id)) { 
                 conn_mutex.unlock();
                 /* a cadeia tem como destino(target) outro login. */
                 m.unlock();

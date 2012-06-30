@@ -185,7 +185,7 @@ namespace openbus {
   	/** 
   	* Informações sobre o login da entidade que autenticou essa conexão. 
   	*/
-    const idl_ac::LoginInfo* login() const { return _loginInfo.get(); }
+    const idl_ac::LoginInfo login() const { return *(_loginInfo.get()); }
     
   	/** 
   	* Barramento ao qual essa conexão se refere. 
@@ -195,10 +195,14 @@ namespace openbus {
     /**
     * Obtenção do serviço de ofertas.
     */
-    const idl_or::OfferRegistry_var offers() const { return _offer_registry; }
+    idl_or::OfferRegistry_var offers() const { return _offer_registry; }
     
     ~Connection();
   private:
+    /**
+    * Connection deve ser adquirido através de:
+    *   ConnectionManager::createConnection()
+    */
     Connection(const std::string host, const unsigned short port, CORBA::ORB*, 
       const interceptors::ORBInitializer*, ConnectionManager*);
 
@@ -210,17 +214,15 @@ namespace openbus {
     CORBA::ORB* orb() const { return _orb; }
     idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     idl_ac::AccessControl_var access_control() const { return _access_control; }
+    idl_ac::LoginInfo* _login() const { return _loginInfo.get(); }
     
     const std::string _host;
     const unsigned short _port;
     CORBA::ORB* _orb;
     const interceptors::ORBInitializer* _orbInitializer;
-    std::auto_ptr<RenewLogin> _renewLogin;
-    std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
-    const char* _busid;
-    EVP_PKEY* _buskey;
     
     /* Variáveis que são modificadas somente no construtor. */
+    ConnectionManager* _manager;
     EVP_PKEY* _key;
     PortableInterceptor::Current_var _piCurrent;
     scs::core::IComponent_var _iComponent;
@@ -228,9 +230,12 @@ namespace openbus {
     idl_ac::LoginRegistry_var _login_registry;
     idl_or::OfferRegistry_var _offer_registry;
     std::auto_ptr<LoginCache> _loginCache;
-    ConnectionManager* _manager;
     /**/
     
+    std::auto_ptr<RenewLogin> _renewLogin;
+    std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
+    const char* _busid;
+    EVP_PKEY* _buskey;
     InvalidLoginCallback_ptr _onInvalidLogin;
     MICOMT::Mutex _mutex;
 

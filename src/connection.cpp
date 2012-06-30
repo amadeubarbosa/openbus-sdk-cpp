@@ -25,10 +25,10 @@ Connection::Connection(
   const std::string h,
   const unsigned short p,
   CORBA::ORB* orb,
-  const interceptors::ORBInitializer* ini,
+  const interceptors::ORBInitializer* i,
   ConnectionManager* m) 
-  : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _renewLogin(0), _loginInfo(0), _busid(0), 
-  _key(0), _manager(m), _onInvalidLogin(0)
+  : _host(h), _port(p), _orb(orb), _orbInitializer(i), _manager(m), _renewLogin(0), _loginInfo(0),
+  _busid(0), _key(0), _onInvalidLogin(0)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -74,7 +74,7 @@ Connection::~Connection() {
 void Connection::loginByPassword(const char* entity, const char* password) {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
   AutoLock m(&_mutex);
-  if (login()) throw AlreadyLoggedIn();
+  if (_login()) throw AlreadyLoggedIn();
   m.unlock();
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
@@ -117,7 +117,7 @@ void Connection::loginByPassword(const char* entity, const char* password) {
   }
 
   m.lock();
-  if (login()) throw AlreadyLoggedIn();
+  if (_login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
   _buskey = buskey;
@@ -138,7 +138,7 @@ void Connection::loginByPassword(const char* entity, const char* password) {
 void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& privKey) {
   log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
   AutoLock m(&_mutex);
-  if (login()) throw AlreadyLoggedIn();
+  if (_login()) throw AlreadyLoggedIn();
   m.unlock();
   
   idl::EncryptedBlock challenge;
@@ -197,7 +197,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   }
   
   m.lock();
-  if (login()) throw AlreadyLoggedIn();
+  if (_login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
   _buskey = buskey;
@@ -226,7 +226,7 @@ std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSharedA
 void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const unsigned char* secret){
   log_scope l(log.general_logger(), info_level, "Connection::loginBySharedAuth");
   AutoLock m(&_mutex);
-  if (login()) throw AlreadyLoggedIn();
+  if (_login()) throw AlreadyLoggedIn();
   m.unlock();
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
@@ -267,7 +267,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   }
 
   m.lock();
-  if (login()) throw AlreadyLoggedIn();
+  if (_login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
   _buskey = buskey;
@@ -288,7 +288,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
 bool Connection::_logout(bool local) {
   bool sucess = false;
   AutoLock m(&_mutex);
-  if (login()) {
+  if (_login()) {
     #ifdef OPENBUS_SDK_MULTITHREAD
     m.unlock();
     _renewLogin->pause();
