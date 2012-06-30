@@ -27,7 +27,6 @@ Connection::Connection(
   CORBA::ORB* orb,
   const interceptors::ORBInitializer* ini,
   ConnectionManager* m) 
-  throw(CORBA::Exception)
   : _host(h), _port(p), _orb(orb), _orbInitializer(ini), _renewLogin(0), _loginInfo(0), _busid(0), 
   _key(0), _manager(m), _onInvalidLogin(0)
 {
@@ -224,10 +223,7 @@ std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSharedA
   return std::make_pair(loginProcess, secret);
 }
   
-void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const unsigned char* secret)
-	throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
-	CORBA::Exception)
-{
+void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const unsigned char* secret){
   log_scope l(log.general_logger(), info_level, "Connection::loginBySharedAuth");
   AutoLock m(&_mutex);
   if (login()) throw AlreadyLoggedIn();

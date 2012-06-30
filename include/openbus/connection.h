@@ -111,9 +111,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    void loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const unsigned char* secret)
-  		throw(WrongSecret, InvalidLoginProcess, AlreadyLoggedIn, idl::services::ServiceFailure, 
-  		CORBA::Exception);
+    void loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const unsigned char* secret);
           
 	  /**
 	  * Efetua logout no barramento. Se a sua conexão for uma conexão de despacho, remove essa conexão
@@ -202,7 +200,7 @@ namespace openbus {
     ~Connection();
   private:
     Connection(const std::string host, const unsigned short port, CORBA::ORB*, 
-      const interceptors::ORBInitializer*, ConnectionManager*) throw(CORBA::Exception);
+      const interceptors::ORBInitializer*, ConnectionManager*);
 
     EVP_PKEY* fetchBusKey();
     bool _logout(bool local);
