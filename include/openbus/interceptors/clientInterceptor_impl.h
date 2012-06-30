@@ -33,12 +33,13 @@ namespace interceptors {
     openbus::CallerChain* getJoinedChain(PortableInterceptor::ClientRequestInfo* r);
     static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
   private:
-    MICOMT::Mutex _mutex;
+
+    /* Variáveis que são modificadas somente no construtor. */
     IOP::Codec* _cdrCodec;
-    ConnectionManager* _manager;
     PortableInterceptor::SlotId _slotId_connectionAddr;
     PortableInterceptor::SlotId _slotId_joinedCallChain;
-
+    /**/
+    
     struct SecretSession {
       CORBA::ULong id;
       char* remoteid;
@@ -47,12 +48,15 @@ namespace interceptors {
     };
 
     typedef LRUCache<std::string, SecretSession*> SessionLRUCache;
+    typedef LRUCache<std::string, const idl_cr::SignedCallChain> CallChainLRUCache;
+
     /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite 
     ** uma comunicação com o objeto CORBA que está sendo requisitado. */
-    SessionLRUCache _sessionLRUCache;
+    SessionLRUCache _sessionLRUCache;    
     
-    typedef LRUCache<std::string, const idl_cr::SignedCallChain> CallChainLRUCache;
     CallChainLRUCache _callChainLRUCache;
+    ConnectionManager* _manager;
+    MICOMT::Mutex _mutex;
   };
 
   class IgnoreInterceptor {

@@ -58,10 +58,12 @@ ClientInterceptor::ClientInterceptor(
   PortableInterceptor::SlotId slotId_joinedCallChain,
   PortableInterceptor::SlotId slotId_ignoreInterceptor,
   IOP::Codec* cdr_codec)
-  : _cdrCodec(cdr_codec), _manager(0), _slotId_connectionAddr(slotId_connectionAddr), 
+  : _cdrCodec(cdr_codec), 
+    _slotId_connectionAddr(slotId_connectionAddr), 
     _slotId_joinedCallChain(slotId_joinedCallChain),
     _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE)),
-    _callChainLRUCache(CallChainLRUCache(LOGINCACHE_LRU_SIZE))
+    _callChainLRUCache(CallChainLRUCache(LOGINCACHE_LRU_SIZE)),
+    _manager(0)
 { 
   log_scope l(log.general_logger(), info_level,
     "ClientInterceptor::ClientInterceptor");
@@ -100,21 +102,28 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
       bool hasSession = _sessionLRUCache.fetch(sessionKey, session);
       m.unlock();
       if (hasSession) {
+        m.lock();
         /* recuperando uma sessão para esta requisição. */
         credential.session = session->id;
         session->ticket++;
         credential.ticket = session->ticket;
+        m.unlock();
         int slen = 22 + strlen(operation);
         unsigned char* s = new unsigned char[slen];
         s[0] = idl::MajorVersion;
         s[1] = idl::MinorVersion;
+        m.lock();
         memcpy(s+2, session->secret, 16);
+        m.unlock();
         memcpy(s+18, &credential.ticket, 4);
         memcpy(s+22, operation, strlen(operation));
         SHA256(s, slen, credential.hash);
         
         callerChain = getJoinedChain(r);
-        if (strcmp(idl::BusLogin, session->remoteid)) {
+        AutoLock m(&_mutex);
+        int res = strcmp(idl::BusLogin, session->remoteid);
+        m.unlock();
+        if (res) {
           /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
           /* montando uma hash para consultar o cache de cadeias assinadas. */
           idl::HashValue hash;
@@ -122,11 +131,15 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           CORBA::String_var connId = CORBA::string_dup(conn._login()->id);
           conn_mutex.unlock();
           size_t sid = strlen(connId);
+          m.lock();
           size_t sremoteid = strlen(session->remoteid);
+          m.unlock();
           slen = sid + sremoteid + 256;
           s = new unsigned char[slen];
           memcpy(s, connId, sid);
+          m.lock();
           memcpy(s+sid, session->remoteid, sremoteid);
+          m.unlock();
           if (callerChain) memcpy(s+sid+sremoteid, callerChain->signedCallChain()->signature, 256);
           else memset(s+sid+sremoteid, '\0', 256);
           SHA256(s, slen, hash);
@@ -215,7 +228,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
             throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
         
           /* decifrar o segredo usando a chave do usuário. */
-          unsigned char* secret = openssl::decrypt(conn.key(), credentialReset.challenge, 256);
+          unsigned char* secret = openssl::decrypt(conn.__key(), credentialReset.challenge, 256);
 
           /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
           std::string sessionKey = getSessionKey(r);
@@ -242,9 +255,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         const char* oldBusid = CORBA::string_dup(conn.busid());
         conn_mutex.unlock();
         conn._logout(true);
-        conn_mutex.lock();
         Connection::InvalidLoginCallback_ptr callback = conn.onInvalidLogin();
-        conn_mutex.unlock();
         if (callback) 
           if ((callback)(conn, oldLogin, oldBusid))
             throw PortableInterceptor::ForwardRequest(r->target(), false);            

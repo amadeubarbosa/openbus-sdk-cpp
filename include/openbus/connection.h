@@ -210,8 +210,8 @@ namespace openbus {
       ConnectionManager*);
     EVP_PKEY* fetchBusKey();
     bool _logout(bool local);
-    EVP_PKEY* key() const { return _key; }
-    EVP_PKEY* buskey() const { return _buskey; }
+    EVP_PKEY* __key() const { return _key; }
+    EVP_PKEY* __buskey() const { return _buskey; }
     CORBA::ORB* orb() const { return _orb; }
     idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     idl_ac::AccessControl_var access_control() const { return _access_control; }
@@ -269,12 +269,12 @@ namespace openbus {
 	  */
     const idl_ac::LoginInfo& caller() const { return _caller; }
   private:
-    CallerChain(const char* a, const idl_ac::LoginInfoSeq& b, const idl_ac::LoginInfo& c, 
+    CallerChain(const char* busid, const idl_ac::LoginInfoSeq& b, const idl_ac::LoginInfo& c, 
       const idl_cr::SignedCallChain& d) 
-      : _busid(a), _originators(b), _caller(c), _signedCallChain(d) { }
+      : _busid(busid), _originators(b), _caller(c), _signedCallChain(d) { }
 
-    CallerChain(const char* a, const idl_ac::LoginInfoSeq& b, const idl_ac::LoginInfo& c) 
-      : _busid(a), _originators(b), _caller(c) { }
+    CallerChain(const char* busid, const idl_ac::LoginInfoSeq& b, const idl_ac::LoginInfo& c) 
+      : _busid(busid), _originators(b), _caller(c) { }
 
     const char* _busid;
     idl_ac::LoginInfoSeq _originators;

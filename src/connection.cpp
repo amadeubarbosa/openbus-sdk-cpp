@@ -124,14 +124,20 @@ void Connection::loginByPassword(const char* entity, const char* password) {
   if (_login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
+  //[todo] leak
   _buskey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
-  if (_renewLogin.get()) _renewLogin->run();
-  else {
-    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, _manager, 
-      validityTime));
+  if (_renewLogin.get()) {
+    m.unlock();
+    _renewLogin->run();
+    m.lock();
+  } else {
+    _renewLogin = std::auto_ptr<RenewLogin> 
+      (new RenewLogin(this, _access_control, _manager, validityTime));
+    m.unlock();
     _renewLogin->start();
+    m.lock();
   }
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
@@ -204,14 +210,20 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   if (_login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
+  //[todo] leak
   _buskey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
-  if (_renewLogin.get()) _renewLogin->run();
-  else {
-    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, _manager, 
-      validityTime));
+  if (_renewLogin.get()) {
+    m.unlock();
+    _renewLogin->run();
+    m.lock();
+  } else {
+    _renewLogin = std::auto_ptr<RenewLogin> 
+      (new RenewLogin(this, _access_control, _manager, validityTime));
+    m.unlock();
     _renewLogin->start();
+    m.lock();
   }
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
@@ -274,14 +286,20 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   if (_login()) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
+  //[todo] leak
   _buskey = buskey;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
-  if (_renewLogin.get()) _renewLogin->run();
-  else {
-    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, _manager, 
-      validityTime));
+  if (_renewLogin.get()) {
+    m.unlock();
+    _renewLogin->run();
+    m.lock();
+  } else {
+    _renewLogin = std::auto_ptr<RenewLogin> 
+      (new RenewLogin(this, _access_control, _manager, validityTime));
+    m.unlock();
     _renewLogin->start();
+    m.lock();
   }
   #else
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
@@ -293,13 +311,13 @@ bool Connection::_logout(bool local) {
   bool sucess = false;
   AutoLock m(&_mutex);
   if (_login()) {
-    #ifdef OPENBUS_SDK_MULTITHREAD
     m.unlock();
+    #ifdef OPENBUS_SDK_MULTITHREAD
     _renewLogin->pause();
-    m.lock();
     #else
     _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
     #endif
+    m.lock();
     _loginInfo.reset();
     m.unlock();
     if (!local) {
@@ -316,7 +334,6 @@ bool Connection::_logout(bool local) {
       }
     }
   } else sucess = false;
-  m.lock();
   CORBA::String_var busid = CORBA::string_dup(_busid);
   m.unlock();
   if (_manager->getDispatcher(busid)) _manager->clearDispatcher(busid);
@@ -342,6 +359,7 @@ CallerChain* Connection::getCallerChain() {
     CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
       idl_ac::_tc_CallChain);
     *callChainAny >>= callChain;
+    AutoLock m(&_mutex);
     callerChain = new CallerChain(_busid, callChain.originators, callChain.caller, sigCallChain);
   } else {
     CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_slotId_legacyCallChain);
@@ -370,8 +388,7 @@ CallerChain* Connection::getJoinedChain() {
   CORBA::Any_var sigCallChainAny=_piCurrent->get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain sigCallChain;
   if (*sigCallChainAny >>= sigCallChain) {
-    CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
-      idl_ac::_tc_CallChain);
+    CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded, idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
     if (callChainAny >>= callChain) return new CallerChain(callChain.target, callChain.originators, 
       callChain.caller, sigCallChain);

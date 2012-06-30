@@ -141,7 +141,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
             SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
 
             conn_mutex.lock();
-            EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->buskey(), 0);
+            EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->__buskey(), 0);
             conn_mutex.unlock();
             assert(ctx);
             int status = EVP_PKEY_verify_init(ctx);
@@ -154,8 +154,9 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
               idl_ac::CallChain callChain;
               callChainAny >>= callChain;
               conn_mutex.lock();
-              if (strcmp(callChain.target, conn->_login()->id)) { 
-                conn_mutex.unlock();
+              int res = strcmp(callChain.target, conn->_login()->id);
+              conn_mutex.unlock();
+              if (res) { 
                 /* a cadeia tem como destino(target) outro login. */
                 m.unlock();
                 sendCredentialReset(conn, caller, r);
