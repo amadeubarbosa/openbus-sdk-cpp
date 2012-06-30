@@ -43,7 +43,7 @@ namespace openbus {
 	  * @return Conexão ao barramento referenciado.
 	  */
     std::auto_ptr<Connection> createConnection(const char* host, short port);
-      
+    
     /**
  	  * Define a conexão a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
  	  * sempre que não houver uma conexão específica definida. Sempre que não houver uma conexão 
@@ -119,14 +119,22 @@ namespace openbus {
     * ConnectionManager deve ser adquirido através de:
     *   orb->resolve_initial_references(CONNECTION_MANAGER_ID)
     */
-    ConnectionManager(CORBA::ORB*, interceptors::ORBInitializer*);
+    ConnectionManager(CORBA::ORB*, IOP::Codec*, 
+      PortableInterceptor::SlotId slotId_joinedCallChain, 
+      PortableInterceptor::SlotId slotId_signedCallChain, 
+      PortableInterceptor::SlotId slotId_connectionAddr,
+      PortableInterceptor::SlotId slotId_legacyCallChain);
     ~ConnectionManager();
     void orb(CORBA::ORB* o) { _orb = o; }
     typedef std::map<std::string, Connection*> BusidConnection;
     MICOMT::Mutex _mutex;
     CORBA::ORB* _orb;
     PortableInterceptor::Current_var _piCurrent;
-    interceptors::ORBInitializer* _orbInitializer;
+    IOP::Codec* _codec;
+    PortableInterceptor::SlotId _slotId_joinedCallChain; 
+    PortableInterceptor::SlotId _slotId_signedCallChain;
+    PortableInterceptor::SlotId _slotId_legacyCallChain;
+    PortableInterceptor::SlotId _slotId_connectionAddr;
     Connection* _defaultConnection;
     BusidConnection _busidConnection;
     friend CORBA::ORB* openbus::initORB(int argc, char** argv);

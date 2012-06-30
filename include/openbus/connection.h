@@ -203,23 +203,26 @@ namespace openbus {
     * Connection deve ser adquirido através de:
     *   ConnectionManager::createConnection()
     */
-    Connection(const std::string host, const unsigned short port, CORBA::ORB*, 
-      const interceptors::ORBInitializer*, ConnectionManager*);
-
+    Connection(const std::string host, const unsigned short port, CORBA::ORB*, IOP::Codec*, 
+      PortableInterceptor::SlotId slotId_joinedCallChain, 
+      PortableInterceptor::SlotId slotId_signedCallChain, 
+      PortableInterceptor::SlotId slotId_legacyCallChain, 
+      ConnectionManager*);
     EVP_PKEY* fetchBusKey();
     bool _logout(bool local);
-
     EVP_PKEY* key() const { return _key; }
     EVP_PKEY* buskey() const { return _buskey; }
     CORBA::ORB* orb() const { return _orb; }
     idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     idl_ac::AccessControl_var access_control() const { return _access_control; }
     idl_ac::LoginInfo* _login() const { return _loginInfo.get(); }
-    
     const std::string _host;
     const unsigned short _port;
     CORBA::ORB* _orb;
-    const interceptors::ORBInitializer* _orbInitializer;
+    IOP::Codec* _codec;
+    PortableInterceptor::SlotId _slotId_joinedCallChain; 
+    PortableInterceptor::SlotId _slotId_signedCallChain;
+    PortableInterceptor::SlotId _slotId_legacyCallChain;
     
     /* Variáveis que são modificadas somente no construtor. */
     ConnectionManager* _manager;

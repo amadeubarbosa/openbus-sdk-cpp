@@ -25,10 +25,14 @@ Connection::Connection(
   const std::string h,
   const unsigned short p,
   CORBA::ORB* orb,
-  const interceptors::ORBInitializer* i,
+  IOP::Codec* c, 
+  PortableInterceptor::SlotId s1, 
+  PortableInterceptor::SlotId s2,
+  PortableInterceptor::SlotId s3,
   ConnectionManager* m) 
-  : _host(h), _port(p), _orb(orb), _orbInitializer(i), _manager(m), _renewLogin(0), _loginInfo(0),
-  _busid(0), _key(0), _onInvalidLogin(0)
+  : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
+  _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _manager(m), _key(0), _renewLogin(0), 
+  _loginInfo(0), _busid(0), _onInvalidLogin(0)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -96,7 +100,7 @@ void Connection::loginByPassword(const char* entity, const char* password) {
   /* CDR da estrura LoginAuthenticationInfo que foi montada acima. */
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orbInitializer->codec()->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _codec->encode_value(any);
 
   EVP_PKEY* buskey = fetchBusKey();
 
@@ -168,7 +172,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _orbInitializer->codec()->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
   EVP_PKEY* buskey;
   {
@@ -243,7 +247,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _orbInitializer->codec()->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
   EVP_PKEY* buskey = fetchBusKey();
 
@@ -330,17 +334,17 @@ bool Connection::logout() {
 
 CallerChain* Connection::getCallerChain() {
   log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
-  CORBA::Any* sigCallChainAny = _piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
+  CORBA::Any* sigCallChainAny = _piCurrent->get_slot(_slotId_signedCallChain);
   CallerChain* callerChain = 0;
   idl_ac::CallChain callChain;
   idl_cr::SignedCallChain sigCallChain;
   if (*sigCallChainAny >>= sigCallChain) {
-    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(sigCallChain.encoded,
+    CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
       idl_ac::_tc_CallChain);
     *callChainAny >>= callChain;
     callerChain = new CallerChain(_busid, callChain.originators, callChain.caller, sigCallChain);
   } else {
-    CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_orbInitializer->slotId_legacyCallChain());
+    CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_slotId_legacyCallChain);
     if (legacyChainAny >>= callChain)
       callerChain = new CallerChain(0, callChain.originators, callChain.caller);
     else return 0;
@@ -352,21 +356,21 @@ void Connection::joinChain(CallerChain* chain) {
   log_scope l(log.general_logger(), info_level, "Connection::joinChain");
   CORBA::Any sigCallChainAny;
   sigCallChainAny <<= *(chain->signedCallChain());
-  _piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), sigCallChainAny);
+  _piCurrent->set_slot(_slotId_joinedCallChain, sigCallChainAny);
 }
 
 void Connection::exitChain() {
   log_scope l(log.general_logger(), info_level, "Connection::exitChain");
   CORBA::Any any;
-  _piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), any);    
+  _piCurrent->set_slot(_slotId_joinedCallChain, any);    
 }
 
 CallerChain* Connection::getJoinedChain() {
   log_scope l(log.general_logger(), info_level, "Connection::getJoinedChain");
-  CORBA::Any_var sigCallChainAny=_piCurrent->get_slot(_orbInitializer->slotId_joinedCallChain());
+  CORBA::Any_var sigCallChainAny=_piCurrent->get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain sigCallChain;
   if (*sigCallChainAny >>= sigCallChain) {
-    CORBA::Any_var callChainAny = _orbInitializer->codec()->decode_value(sigCallChain.encoded,
+    CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
       idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
     if (callChainAny >>= callChain) return new CallerChain(callChain.target, callChain.originators, 

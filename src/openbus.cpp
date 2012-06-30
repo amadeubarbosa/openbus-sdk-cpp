@@ -39,7 +39,13 @@ CORBA::ORB* initORB(int argc, char** argv) {
     orb->resolve_initial_references(CONNECTION_MANAGER_ID);
     l.log("Este ORB ja foi criado.");
   } catch(CORBA::ORB_InvalidName&) {
-    ConnectionManager* manager = new ConnectionManager(orb, orbInitializer);
+    ConnectionManager* manager = new ConnectionManager(
+      orb, 
+      orbInitializer->codec(), 
+      orbInitializer->slotId_joinedCallChain(), 
+      orbInitializer->slotId_signedCallChain(), 
+      orbInitializer->slotId_legacyCallChain(), 
+      orbInitializer->slotId_connectionAddr());
     l.level_log(debug_level, "Registrando ConnectionManager");
     orb->register_initial_reference(CONNECTION_MANAGER_ID, manager);
     orbInitializer->clientInterceptor()->connectionManager(manager);

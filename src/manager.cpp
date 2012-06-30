@@ -5,8 +5,14 @@
 #endif
 
 namespace openbus {
-ConnectionManager::ConnectionManager(CORBA::ORB* o, interceptors::ORBInitializer* i) 
- : _orb(o), _orbInitializer(i), _defaultConnection(0) 
+ConnectionManager::ConnectionManager(
+  CORBA::ORB* o, IOP::Codec* c, 
+  PortableInterceptor::SlotId s1, 
+  PortableInterceptor::SlotId s2, 
+  PortableInterceptor::SlotId s3,
+  PortableInterceptor::SlotId s4) 
+  : _orb(o), _codec(c), _slotId_joinedCallChain(s1), _slotId_signedCallChain(s2), 
+  _slotId_legacyCallChain(s3), _slotId_connectionAddr(s4), _defaultConnection(0)
 {
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::ConnectionManager");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
@@ -19,7 +25,9 @@ ConnectionManager::~ConnectionManager() { }
 std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) {
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::createConnection");
   l.vlog("createConnection para host %s:%hi", host, port);
-  return std::auto_ptr<Connection> (new Connection(host, port, _orb, _orbInitializer, this));
+  return std::auto_ptr<Connection> (new Connection(host, port, _orb, _codec, 
+    _slotId_joinedCallChain, _slotId_signedCallChain, 
+    _slotId_legacyCallChain, this));
 }
 
 void ConnectionManager::setRequester(Connection* c) {
@@ -31,12 +39,12 @@ void ConnectionManager::setRequester(Connection* c) {
   idl::OctetSeq connectionAddrOctetSeq(size, size, buf);
   CORBA::Any connectionAddrAny;
   connectionAddrAny <<= connectionAddrOctetSeq;
-  _piCurrent->set_slot(_orbInitializer->slotId_connectionAddr(), connectionAddrAny);
+  _piCurrent->set_slot(_slotId_connectionAddr, connectionAddrAny);
 }
 
 Connection* ConnectionManager::getRequester() const { 
   log_scope l(log.general_logger(), info_level, "ConnectionManager::getRequester");
-  CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_orbInitializer->slotId_connectionAddr());
+  CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_slotId_connectionAddr);
   idl::OctetSeq connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) {
     assert(connectionAddrOctetSeq.length() == sizeof(Connection*));
