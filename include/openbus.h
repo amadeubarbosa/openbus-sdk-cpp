@@ -30,7 +30,7 @@ namespace openbus {
   *
   * @return O ORB inicializado.
 	*/
-  CORBA::ORB* initORB(int argc, char** argv) throw(CORBA::Exception);
+  CORBA::ORB* initORB(int argc, char** argv);
 }
 
 #endif

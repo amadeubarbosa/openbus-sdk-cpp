@@ -72,9 +72,7 @@ Connection::~Connection() {
   #endif
 }
 
-void Connection::loginByPassword(const char* entity, const char* password)
-  throw (AlreadyLoggedIn, AccessDenied, idl::services::ServiceFailure, CORBA::Exception) 
-{
+void Connection::loginByPassword(const char* entity, const char* password) {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
   AutoLock m(&_mutex);
   if (login()) throw AlreadyLoggedIn();
@@ -138,10 +136,7 @@ void Connection::loginByPassword(const char* entity, const char* password)
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& privKey)
-  throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate,
-  idl::services::ServiceFailure, CORBA::Exception)
-{
+void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& privKey) {
   log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
   AutoLock m(&_mutex);
   if (login()) throw AlreadyLoggedIn();
@@ -221,9 +216,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSharedAuth() 
-  throw (idl::services::ServiceFailure, CORBA::Exception)
-{
+std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSharedAuth() {
   log_scope l(log.general_logger(), info_level, "Connection::startSharedAuth");
   unsigned char* challenge = new unsigned char[256];
   idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySharedAuth(challenge);
@@ -334,12 +327,12 @@ bool Connection::_logout(bool local) {
   return sucess;    
 }
 
-bool Connection::logout() throw (CORBA::Exception) { 
+bool Connection::logout() { 
   log_scope l(log.general_logger(), info_level, "Connection::logout");
   return _logout(false); 
 }
 
-CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
+CallerChain* Connection::getCallerChain() {
   log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
   CORBA::Any* sigCallChainAny = _piCurrent->get_slot(_orbInitializer->slotId_signedCallChain());
   CallerChain* callerChain = 0;
@@ -359,20 +352,20 @@ CallerChain* Connection::getCallerChain() throw (CORBA::Exception) {
   return callerChain;
 }
 
-void Connection::joinChain(CallerChain* chain) throw (CORBA::Exception) {
+void Connection::joinChain(CallerChain* chain) {
   log_scope l(log.general_logger(), info_level, "Connection::joinChain");
   CORBA::Any sigCallChainAny;
   sigCallChainAny <<= *(chain->signedCallChain());
   _piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), sigCallChainAny);
 }
 
-void Connection::exitChain() throw (CORBA::Exception) {
+void Connection::exitChain() {
   log_scope l(log.general_logger(), info_level, "Connection::exitChain");
   CORBA::Any any;
   _piCurrent->set_slot(_orbInitializer->slotId_joinedCallChain(), any);    
 }
 
-CallerChain* Connection::getJoinedChain() throw (CORBA::Exception) {
+CallerChain* Connection::getJoinedChain() {
   log_scope l(log.general_logger(), info_level, "Connection::getJoinedChain");
   CORBA::Any_var sigCallChainAny=_piCurrent->get_slot(_orbInitializer->slotId_joinedCallChain());
   idl_cr::SignedCallChain sigCallChain;

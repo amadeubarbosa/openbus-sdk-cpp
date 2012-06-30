@@ -42,8 +42,7 @@ namespace openbus {
 	  *
 	  * @return Conexão ao barramento referenciado.
 	  */
-    std::auto_ptr<Connection> createConnection(const char* host, short port) 
-      throw (CORBA::Exception); 
+    std::auto_ptr<Connection> createConnection(const char* host, short port);
       
     /**
  	  * Define a conexão a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
@@ -72,7 +71,7 @@ namespace openbus {
 	  *
 	  * @param[in] Conexão a barramento a ser associada a thread corrente.
 	  */
-    void setRequester(Connection*) throw (CORBA::Exception);
+    void setRequester(Connection*);
     
     /**
 	  * Devolve a conexão com o barramento associada a thread corrente, ou zero caso não haja 
@@ -82,7 +81,7 @@ namespace openbus {
 	  *
 	  * @return Conexão a barramento associada a thread corrente.
   	*/
-    Connection* getRequester() const throw (CORBA::Exception);
+    Connection* getRequester() const;
     
 	  /**
 	  * Define que conexão deve ser utilizada para receber chamadas oriundas do barramento ao qual 
@@ -92,7 +91,7 @@ namespace openbus {
     *
 	  * @throw NotLoggedIn A conexão não está autenticada ou é nula.
   	*/
-    void setDispatcher(Connection&) throw (NotLoggedIn);
+    void setDispatcher(Connection&);
     
 	  /**
 	  * Devolve a conexão de despacho associada ao barramento indicado, se houver. dado barramento, 
@@ -130,7 +129,7 @@ namespace openbus {
     interceptors::ORBInitializer* _orbInitializer;
     Connection* _defaultConnection;
     BusidConnection _busidConnection;
-    friend CORBA::ORB* openbus::initORB(int argc, char** argv) throw(CORBA::Exception);
+    friend CORBA::ORB* openbus::initORB(int argc, char** argv);
   };
 }
 

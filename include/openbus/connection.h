@@ -65,8 +65,7 @@ namespace openbus {
 	  *        tabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    void loginByPassword(const char* entity, const char* password)
-      throw (AccessDenied, AlreadyLoggedIn, idl::services::ServiceFailure, CORBA::Exception);
+    void loginByPassword(const char* entity, const char* password);
 
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por certificado.
@@ -84,9 +83,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    void loginByCertificate(const char* entity, const idl::OctetSeq& privKey)
-      throw (CorruptedPrivateKey, WrongPrivateKey, AlreadyLoggedIn, idl_ac::MissingCertificate, 
-      idl::services::ServiceFailure, CORBA::Exception);
+    void loginByCertificate(const char* entity, const idl::OctetSeq& privKey);
 
 	  /**
 	  * Inicia o processo de login por single sign-on.
@@ -98,8 +95,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    std::pair <idl_ac::LoginProcess*, const unsigned char*> startSharedAuth() 
-      throw (idl::services::ServiceFailure, CORBA::Exception);
+    std::pair <idl_ac::LoginProcess*, const unsigned char*> startSharedAuth();
       
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por single sign-on.
@@ -128,7 +124,7 @@ namespace openbus {
 	  *
 	  * @throw CORBA::Exception
 	  */
-	  bool logout() throw (CORBA::Exception);
+    bool logout();
 	  
 	  /**
 	  * Caso a thread corrente seja a thread de execução de uma chamada remota oriunda do barramento 
@@ -139,7 +135,7 @@ namespace openbus {
 	  *
 	  * @throw CORBA::Exception
 	  */
-    CallerChain* getCallerChain() throw (CORBA::Exception);
+    CallerChain* getCallerChain();
     
 	  /**
 	  * Associa uma cadeia de chamadas do barramento a thread corrente, de forma que todas as chamadas
@@ -148,11 +144,11 @@ namespace openbus {
 	  *
 	  * @param[in] chain Cadeia de chamadas a ser associada.
 	  *
-	  * @throw CORBA::NO_PERMISSION { minor = NoLogin }
-	  * @throw CORBA::NO_PERMISSION { minor = InvalidChain }
+	  * @throw CORBA::NO_PERMISSION { minor = NoLoginCode }
+	  * @throw CORBA::NO_PERMISSION { minor = InvalidChainCode }
 	  * @throw CORBA::Exception
 	  */
-	  void joinChain(CallerChain* chain) throw (CORBA::Exception);
+	  void joinChain(CallerChain* chain);
 
     /**
     * Remove a associação da cadeia de chamadas com a thread corrente, fazendo com que todas as 
@@ -162,7 +158,7 @@ namespace openbus {
     *
 	  * @throw CORBA::Exception
     */
-    void exitChain() throw (CORBA::Exception);
+    void exitChain();
     
 	  /**
 	  * Devolve um objeto que representa a cadeia de chamadas associada a thread atual nessa conexão. 
@@ -173,7 +169,7 @@ namespace openbus {
     *
 	  * @throw CORBA::Exception
 	  */
-    CallerChain* getJoinedChain() throw (CORBA::Exception);
+    CallerChain* getJoinedChain();
     
 	  /*
 	  * Define a callback a ser chamada sempre que o login se torna inválido.

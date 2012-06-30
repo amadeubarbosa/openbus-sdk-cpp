@@ -24,7 +24,7 @@ log_type log;
 interceptors::ORBInitializer* orbInitializer;
 MICOMT::Mutex _mutex;
 
-CORBA::ORB* initORB(int argc, char** argv) throw(CORBA::Exception) {
+CORBA::ORB* initORB(int argc, char** argv) {
   AutoLock m(&_mutex);
   log_scope l(log.general_logger(), info_level, "initORB");
   if (!orbInitializer) {
