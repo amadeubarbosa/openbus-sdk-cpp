@@ -97,16 +97,17 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
       /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
       std::string sessionKey = getSessionKey(r);
     
-      SecretSession* session;
+      SecretSession session;
       AutoLock m(&_mutex);
-      bool hasSession = _sessionLRUCache.fetch(sessionKey, session);
+      bool hasSession = _sessionLRUCache.exists(sessionKey);
+      session = _sessionLRUCache.fetch(sessionKey);
       m.unlock();
       if (hasSession) {
         m.lock();
         /* recuperando uma sessão para esta requisição. */
-        credential.session = session->id;
-        session->ticket++;
-        credential.ticket = session->ticket;
+        credential.session = session.id;
+        session.ticket = ++session.ticket;
+        credential.ticket = session.ticket;
         m.unlock();
         int bufSize = 22 + strlen(operation);
         std::auto_ptr<unsigned char> buf (new unsigned char[bufSize]);
@@ -114,7 +115,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
         pBuf[0] = idl::MajorVersion;
         pBuf[1] = idl::MinorVersion;
         m.lock();
-        memcpy(pBuf+2, session->secret, 16);
+        memcpy(pBuf+2, session.secret->get_buffer(), 16);
         m.unlock();
         memcpy(pBuf+18, &credential.ticket, 4);
         memcpy(pBuf+22, operation, strlen(operation));
@@ -122,7 +123,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
         
         callerChain = getJoinedChain(r);
         AutoLock m(&_mutex);
-        int res = strcmp(idl::BusLogin, session->remoteid);
+        int res = strcmp(idl::BusLogin, session.remoteId.in());
         m.unlock();
         if (res) {
           /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
@@ -133,14 +134,14 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           conn_mutex.unlock();
           size_t idSize = strlen(connId);
           m.lock();
-          size_t remoteIdSize = strlen(session->remoteid);
+          size_t remoteIdSize = strlen(session.remoteId.in());
           m.unlock();
           bufSize = idSize + remoteIdSize + idl::EncryptedBlockSize;
           buf.reset(new unsigned char[bufSize]);
           unsigned char* pBuf = buf.get();
           memcpy(pBuf, connId, idSize);
           m.lock();
-          memcpy(pBuf+idSize, session->remoteid, remoteIdSize);
+          memcpy(pBuf+idSize, session.remoteId.in(), remoteIdSize);
           m.unlock();
           if (callerChain) memcpy(pBuf+idSize+remoteIdSize, 
             callerChain->signedCallChain()->signature, idl::EncryptedBlockSize);
@@ -151,11 +152,12 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           AutoLock m(&_mutex);
           if (_callChainLRUCache.exists(shash)) {
             signedCallChain = _callChainLRUCache.fetch(shash);
-            l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s",session->remoteid);
+            l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s", 
+              session.remoteId.in());
             credential.chain = signedCallChain;
           } else {
             m.unlock();
-            credential.chain = *conn.access_control()->signChainFor(session->remoteid);
+            credential.chain = *conn.access_control()->signChainFor(session.remoteId.in());
             m.lock();
             _callChainLRUCache.insert(shash, credential.chain);
           }
@@ -238,11 +240,11 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           std::string sessionKey = getSessionKey(r);
           
           /* criando uma sessão. */
-          SecretSession* session = new SecretSession();
-          session->id = credentialReset.session;
-          session->remoteid = CORBA::string_dup(credentialReset.login);
-          session->secret = secret;
-          session->ticket = 0;
+          SecretSession session;
+          session.id = credentialReset.session;
+          session.remoteId = CORBA::string_dup(credentialReset.login);
+          session.secret = new CORBA::OctetSeq(SECRET_SIZE, SECRET_SIZE, secret);
+          session.ticket = 0;
           {
             AutoLock m(&_mutex);
             _sessionLRUCache.insert(sessionKey, session);

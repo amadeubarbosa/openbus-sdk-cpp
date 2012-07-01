@@ -42,12 +42,12 @@ namespace interceptors {
     
     struct SecretSession {
       CORBA::ULong id;
-      char* remoteid;
-      unsigned char* secret;
+      CORBA::String_var remoteId;
+      CORBA::OctetSeq_var secret;
       CORBA::ULong ticket;
     };
 
-    typedef LRUCache<std::string, SecretSession*> SessionLRUCache;
+    typedef LRUCache<std::string, SecretSession> SessionLRUCache;
     typedef LRUCache<std::string, const idl_cr::SignedCallChain> CallChainLRUCache;
 
     /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite 
