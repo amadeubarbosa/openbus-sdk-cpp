@@ -1,6 +1,6 @@
 /**
 * API - SDK Openbus C++
-* \file openbus/manager.h
+* \file openbus/ConnectionManager.h
 */
 
 #ifndef _TECGRAF_MANAGER_H_
@@ -13,8 +13,8 @@ namespace openbus {
   class ConnectionManager;
 }
 
-#include <openbus/interceptors/orbInitializer_impl.h>
-#include <openbus/connection.h>
+#include <openbus/interceptors/ORBInitializer_impl.h>
+#include <openbus/Connection.h>
 
 #define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
 
@@ -137,7 +137,7 @@ namespace openbus {
     PortableInterceptor::SlotId _slotId_connectionAddr;
     Connection* _defaultConnection;
     BusidConnection _busidConnection;
-    friend CORBA::ORB* openbus::initORB(int argc, char** argv);
+    friend CORBA::ORB* openbus::ORBInitializer(int argc, char** argv);
   };
 }
 

@@ -1,6 +1,6 @@
-#include <openbus/interceptors/orbInitializer_impl.h>
-#include <openbus/interceptors/clientInterceptor_impl.h>
-#include <openbus/interceptors/serverInterceptor_impl.h>
+#include <openbus/interceptors/ORBInitializer_impl.h>
+#include <openbus/interceptors/ClientInterceptor_impl.h>
+#include <openbus/interceptors/ServerInterceptor_impl.h>
 #include <openbus/log.h>
 
 namespace openbus {

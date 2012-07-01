@@ -72,7 +72,6 @@ else
   LIBS+= logger-singlethread${MICO_DEBUG}
 endif
 
-
 OBJROOT=obj
 TARGETROOT=lib
 
@@ -95,15 +94,15 @@ endif
 
 USE_NODEPEND=Yes
 
-SRC=src/openbus.cpp \
-    src/manager.cpp \
-    src/connection.cpp \
-    src/connection_impl.cpp \
-    src/interceptors/orbInitializer_impl.cpp \
-    src/interceptors/clientInterceptor_impl.cpp \
-    src/interceptors/serverInterceptor_impl.cpp \
-    src/util/tickets_impl.c \
-    src/util/openssl.c \
+SRC=src/ORBInitializer.cpp \
+    src/ConnectionManager.cpp \
+    src/Connection.cpp \
+    src/Connection_impl.cpp \
+    src/interceptors/ORBInitializer_impl.cpp \
+    src/interceptors/ClientInterceptor_impl.cpp \
+    src/interceptors/ServerInterceptor_impl.cpp \
+    src/util/Ticket_impl.c \
+    src/util/OpenSSL.c \
     stubs/core.cc \
     stubs/scs.cc \
     stubs/credential.cc \

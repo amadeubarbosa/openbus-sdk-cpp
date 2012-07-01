@@ -1,14 +1,14 @@
 #include <memory>
 
-#include <openbus.h>
+#include <openbus/ORBInitializer.h>
 #include <openbus/log.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <openbus/util/autolock_impl.h>
+#include <openbus/util/AutoLock_impl.h>
 #endif
-#include <openbus/manager.h>
-#include <openbus/interceptors/orbInitializer_impl.h>
-#include <openbus/interceptors/clientInterceptor_impl.h>
-#include <openbus/interceptors/serverInterceptor_impl.h>
+#include <openbus/ConnectionManager.h>
+#include <openbus/interceptors/ORBInitializer_impl.h>
+#include <openbus/interceptors/ClientInterceptor_impl.h>
+#include <openbus/interceptors/ServerInterceptor_impl.h>
 
 
 namespace openbus {
@@ -24,9 +24,9 @@ log_type log;
 interceptors::ORBInitializer* orbInitializer;
 MICOMT::Mutex _mutex;
 
-CORBA::ORB* initORB(int argc, char** argv) {
+CORBA::ORB* ORBInitializer(int argc, char** argv) {
   AutoLock m(&_mutex);
-  log_scope l(log.general_logger(), info_level, "initORB");
+  log_scope l(log.general_logger(), info_level, "ORBInitializer");
   if (!orbInitializer) {
     orbInitializer = new interceptors::ORBInitializer();
     PortableInterceptor::register_orb_initializer(orbInitializer);

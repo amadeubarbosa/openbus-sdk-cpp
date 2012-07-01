@@ -1,6 +1,6 @@
 /**
 * API - SDK Openbus C++
-* \file openbus/manager.h
+* \file openbus/ConnectionManager.h
 */
 
 #ifndef TECGRAF_CONNECTION_H_
@@ -17,16 +17,16 @@ namespace openbus {
   struct CallerChain;
 }
 
-#include <openbus/interceptors/orbInitializer_impl.h>
-#include <openbus/interceptors/clientInterceptor_impl.h>
-#include <openbus/interceptors/serverInterceptor_impl.h>
-#include <openbus/connection_impl.h>
-#include <openbus/manager.h>
+#include <openbus/interceptors/ORBInitializer_impl.h>
+#include <openbus/interceptors/ClientInterceptor_impl.h>
+#include <openbus/interceptors/ServerInterceptor_impl.h>
+#include <openbus/Connection_impl.h>
+#include <openbus/ConnectionManager.h>
 
 /**
 * \brief openbus
 */
-namespace openbus {  
+namespace openbus {
   
   /* exceptions */
   struct AccessDenied  { const char* name() const { return "openbus::AccessDenied"; } };
@@ -37,7 +37,7 @@ namespace openbus {
   struct InvalidLoginProcess{ const char* name() const { return "openbus::InvalidLoginProcess";}};
   /**/
   
-  struct CallerChain;  
+  struct CallerChain;
 
   /**
   * Conexão com um barramento.

@@ -8,6 +8,7 @@
 #include <stubs/credential.h>
 #include <stubs/access_control.h>
 #include <stubs/offer_registry.h>
+
 namespace openbus {  
   namespace idl = tecgraf::openbus::core::v2_0;
   namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
@@ -24,11 +25,11 @@ namespace openbus {
   class RenewLogin;
 }
 
-#include <openbus/manager.h>
-#include <openbus/connection.h>
+#include <openbus/ConnectionManager.h>
+#include <openbus/Connection.h>
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include <openbus/util/lru_cache_impl.h>
+#include <openbus/util/LRUCache_impl.h>
 #endif
 
 #define LOGINCACHE_LRU_SIZE 128

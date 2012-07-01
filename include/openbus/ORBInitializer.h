@@ -1,6 +1,6 @@
 /**
 * \mainpage API - SDK Openbus C++
-* \file openbus.h
+* \file openbus/ORBInitializer.h
 */
 
 #ifndef TECGRAF_OPENBUS_H_
@@ -20,7 +20,7 @@ namespace openbus {
   * registrados. O RootPOA é ativado.
   *
   * Atenção: O Mico 2.3.13 não permite a inicialização de mais de um ORB. Após uma primeira chamada 
-  * bem sucedida de initORB(), todas as chamadas consecutivas retornarão o mesmo ORB que foi criado
+  * bem sucedida de ORBInitializer(), todas as chamadas consecutivas retornarão o mesmo ORB que foi criado
   * na primeira chamada.
   * 
   * @param[in] argc Número de parâmetros usados na inicialização do ORB.
@@ -30,7 +30,7 @@ namespace openbus {
   *
   * @return O ORB inicializado.
 	*/
-  CORBA::ORB* initORB(int argc, char** argv);
+  CORBA::ORB* ORBInitializer(int argc, char** argv);
 }
 
 #endif

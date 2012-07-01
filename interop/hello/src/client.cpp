@@ -1,5 +1,5 @@
-#include <openbus.h>
-#include <openbus/manager.h>
+#include <openbus/ORBInitializer.h>
+#include <openbus/ConnectionManager.h>
 #include <openbus/log.h>
 #include <iostream>
 #include "stubs/hello.h"
@@ -7,7 +7,7 @@
 int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
-    CORBA::ORB* orb = openbus::initORB(argc, argv);
+    CORBA::ORB* orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));

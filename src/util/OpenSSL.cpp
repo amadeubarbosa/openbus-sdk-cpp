@@ -1,6 +1,6 @@
 #include <cassert>
 
-#include <openbus/util/openssl.h>
+#include <openbus/util/OpenSSL.h>
 
 namespace openbus {
 namespace openssl {

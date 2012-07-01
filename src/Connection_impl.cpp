@@ -6,7 +6,7 @@
 #include <openssl/x509.h>
 #include <openssl/sha.h>
 
-#include <openbus/connection_impl.h>
+#include <openbus/Connection_impl.h>
 #include <openbus/log.h>
 
 namespace openbus {

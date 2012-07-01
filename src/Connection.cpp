@@ -1,4 +1,4 @@
-#include <openbus/util/openssl.h>
+#include <openbus/util/OpenSSL.h>
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
@@ -8,9 +8,9 @@
 #include <CORBA.h>
 
 #include <openbus/log.h>
-#include <openbus/connection.h>
+#include <openbus/Connection.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <openbus/util/autolock_impl.h>
+#include <openbus/util/AutoLock_impl.h>
 #endif
 
 namespace openbus {
