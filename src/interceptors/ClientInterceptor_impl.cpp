@@ -17,7 +17,7 @@ std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
   idl::HashValue profileDataHash;
   ::IOP::TaggedProfile::_profile_data_seq profile = r->effective_profile()->profile_data;
   SHA256(profile.get_buffer(), profile.length(), profileDataHash);
-  std::string sprofileDataHash((const char*) profileDataHash, 32);
+  std::string sprofileDataHash((const char*) profileDataHash, idl::HashValueSize);
   return sprofileDataHash;
 }
 
@@ -108,16 +108,17 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
         session->ticket++;
         credential.ticket = session->ticket;
         m.unlock();
-        int slen = 22 + strlen(operation);
-        unsigned char* s = new unsigned char[slen];
-        s[0] = idl::MajorVersion;
-        s[1] = idl::MinorVersion;
+        int bufSize = 22 + strlen(operation);
+        std::auto_ptr<unsigned char> buf (new unsigned char[bufSize]);
+        unsigned char* pBuf = buf.get();
+        pBuf[0] = idl::MajorVersion;
+        pBuf[1] = idl::MinorVersion;
         m.lock();
-        memcpy(s+2, session->secret, 16);
+        memcpy(pBuf+2, session->secret, 16);
         m.unlock();
-        memcpy(s+18, &credential.ticket, 4);
-        memcpy(s+22, operation, strlen(operation));
-        SHA256(s, slen, credential.hash);
+        memcpy(pBuf+18, &credential.ticket, 4);
+        memcpy(pBuf+22, operation, strlen(operation));
+        SHA256(pBuf, bufSize, credential.hash);
         
         callerChain = getJoinedChain(r);
         AutoLock m(&_mutex);
@@ -130,20 +131,22 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           conn_mutex.lock();
           CORBA::String_var connId = CORBA::string_dup(conn._login()->id);
           conn_mutex.unlock();
-          size_t sid = strlen(connId);
+          size_t idSize = strlen(connId);
           m.lock();
-          size_t sremoteid = strlen(session->remoteid);
+          size_t remoteIdSize = strlen(session->remoteid);
           m.unlock();
-          slen = sid + sremoteid + 256;
-          s = new unsigned char[slen];
-          memcpy(s, connId, sid);
+          bufSize = idSize + remoteIdSize + idl::EncryptedBlockSize;
+          buf.reset(new unsigned char[bufSize]);
+          unsigned char* pBuf = buf.get();
+          memcpy(pBuf, connId, idSize);
           m.lock();
-          memcpy(s+sid, session->remoteid, sremoteid);
+          memcpy(pBuf+idSize, session->remoteid, remoteIdSize);
           m.unlock();
-          if (callerChain) memcpy(s+sid+sremoteid, callerChain->signedCallChain()->signature, 256);
-          else memset(s+sid+sremoteid, '\0', 256);
-          SHA256(s, slen, hash);
-          std::string shash((const char*) hash, 32);
+          if (callerChain) memcpy(pBuf+idSize+remoteIdSize, 
+            callerChain->signedCallChain()->signature, idl::EncryptedBlockSize);
+          else memset(pBuf+idSize+remoteIdSize, '\0', idl::EncryptedBlockSize);
+          SHA256(pBuf, bufSize, hash);
+          std::string shash((const char*) hash, idl::HashValueSize);
           idl_cr::SignedCallChain signedCallChain;
           AutoLock m(&_mutex);
           if (_callChainLRUCache.exists(shash)) {
@@ -158,14 +161,14 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           }
         } else
           if (callerChain) credential.chain = *callerChain->signedCallChain();
-          else memset(credential.chain.signature, '\0', 256);
+          else memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       } else {
         /* montando uma credencial com o propósito de requisitar o estabelecimento de uma 
         ** nova sessão. */
         credential.ticket = 0;
         credential.session = 0;
-        memset(credential.hash, '\0', 32);
-        memset(credential.chain.signature, '\0', 256);
+        memset(credential.hash, '\0', idl::HashValueSize);
+        memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       }
       
       /* anexando a credencial a esta requisição. */
@@ -228,7 +231,8 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
             throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
         
           /* decifrar o segredo usando a chave do usuário. */
-          unsigned char* secret = openssl::decrypt(conn.__key(), credentialReset.challenge, 256);
+          unsigned char* secret = openssl::decrypt(conn.__key(), credentialReset.challenge, 
+            idl::EncryptedBlockSize);
 
           /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
           std::string sessionKey = getSessionKey(r);

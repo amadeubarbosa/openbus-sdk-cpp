@@ -44,7 +44,7 @@ void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller,
   credentialReset.login = conn->_login()->id;
   conn_mutex.unlock();
   credentialReset.session = session->id;
-  memcpy(credentialReset.challenge, encrypted, 256);
+  memcpy(credentialReset.challenge, encrypted, idl::EncryptedBlockSize);
   OPENSSL_free(encrypted);
 
   CORBA::Any any;
@@ -89,10 +89,10 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
 
     /* disponibilizando a conexão para o usuário (getRequester()) e configurando a conexão 
     ** para ser utilizada por esta thread até o término do tratamento desta requisição. */
-    size_t size = sizeof(Connection*);
-    unsigned char buf[size];
-    memcpy(buf, &conn, size);
-    idl::OctetSeq_var connectionAddrOctetSeq = new idl::OctetSeq(size, size, buf);
+    size_t bufSize = sizeof(Connection*);
+    unsigned char buf[bufSize];
+    memcpy(buf, &conn, bufSize);
+    idl::OctetSeq_var connectionAddrOctetSeq = new idl::OctetSeq(bufSize, bufSize, buf);
     CORBA::Any connectionAddrAny;
     connectionAddrAny <<= *(connectionAddrOctetSeq);
     r->set_slot(_slotId_connectionAddr, connectionAddrAny);
@@ -118,18 +118,19 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
         AutoLock m(&_mutex);
         if (_sessionLRUCache.fetch(credential.session, session)) {
           /* montando uma hash com os dados da credencial recebida e da sessão existente. */
-          size_t slenOperation = strlen(r->operation());
-          int slen = 22 + slenOperation;
-          unsigned char* s = new unsigned char[slen];
-          s[0] = idl::MajorVersion;
-          s[1] = idl::MinorVersion;
-          memcpy(s+2, session->secret, SECRET_SIZE);
-          memcpy(s+18, &credential.ticket, 4);
-          memcpy(s+22, r->operation(), slenOperation);
-          SHA256(s, slen, hash);
+          size_t operationSize = strlen(r->operation());
+          int bufSize = 22 + operationSize;
+          std::auto_ptr<unsigned char> buf(new unsigned char[bufSize]);
+          unsigned char* pBuf = buf.get();
+          pBuf[0] = idl::MajorVersion;
+          pBuf[1] = idl::MinorVersion;
+          memcpy(pBuf+2, session->secret, SECRET_SIZE);
+          memcpy(pBuf+18, &credential.ticket, 4);
+          memcpy(pBuf+22, r->operation(), operationSize);
+          SHA256(pBuf, bufSize, hash);
         }
         
-        if (session && !memcmp(hash, credential.hash, 32) && 
+        if (session && !memcmp(hash, credential.hash, idl::HashValueSize) && 
             tickets_check(&session->ticketsHistory, credential.ticket)) 
         {
           /* a credencial recebida é válida. */
@@ -146,7 +147,8 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
             assert(ctx);
             int status = EVP_PKEY_verify_init(ctx);
             assert(status);
-            if (EVP_PKEY_verify(ctx, credential.chain.signature, 256, hash, 32) != 1)
+            if (EVP_PKEY_verify(ctx, credential.chain.signature, idl::EncryptedBlockSize, hash, 
+            idl::HashValueSize) != 1)
               sendInvalidChainCode = true;
             else {
               CORBA::Any_var callChainAny = _cdrCodec->decode_value(

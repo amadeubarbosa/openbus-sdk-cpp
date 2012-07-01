@@ -83,7 +83,7 @@ INCLUDES=. \
          ${OPENBUS_INC} \
          ${OPENBUS_INC}/openssl-0.9.9 \
          ${OPENBUS_INC}/boost
- 
+
 LDIR+=${MICO_LIB} ${OPENBUS_LDIR}
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
