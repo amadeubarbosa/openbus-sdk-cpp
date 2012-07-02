@@ -99,33 +99,25 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
     
       SecretSession session;
       AutoLock m(&_mutex);
-      bool hasSession = _sessionLRUCache.exists(sessionKey);
-      session = _sessionLRUCache.fetch(sessionKey);
-      m.unlock();
-      if (hasSession) {
-        m.lock();
+      if (_sessionLRUCache.exists(sessionKey)) {
+        session = _sessionLRUCache.fetch(sessionKey);
+        m.unlock();
         /* recuperando uma sessão para esta requisição. */
         credential.session = session.id;
         session.ticket = ++session.ticket;
         credential.ticket = session.ticket;
-        m.unlock();
         int bufSize = 22 + strlen(operation);
         std::auto_ptr<unsigned char> buf (new unsigned char[bufSize]);
         unsigned char* pBuf = buf.get();
         pBuf[0] = idl::MajorVersion;
         pBuf[1] = idl::MinorVersion;
-        m.lock();
-        memcpy(pBuf+2, session.secret->get_buffer(), 16);
-        m.unlock();
+        memcpy(pBuf+2, session.secret->get_buffer(), SECRET_SIZE);
         memcpy(pBuf+18, &credential.ticket, 4);
         memcpy(pBuf+22, operation, strlen(operation));
         SHA256(pBuf, bufSize, credential.hash);
         
         callerChain = getJoinedChain(r);
-        AutoLock m(&_mutex);
-        int res = strcmp(idl::BusLogin, session.remoteId.in());
-        m.unlock();
-        if (res) {
+        if (strcmp(idl::BusLogin, session.remoteId.in())) {
           /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
           /* montando uma hash para consultar o cache de cadeias assinadas. */
           idl::HashValue hash;
@@ -133,16 +125,12 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           CORBA::String_var connId = CORBA::string_dup(conn._login()->id);
           conn_mutex.unlock();
           size_t idSize = strlen(connId);
-          m.lock();
           size_t remoteIdSize = strlen(session.remoteId.in());
-          m.unlock();
           bufSize = idSize + remoteIdSize + idl::EncryptedBlockSize;
           buf.reset(new unsigned char[bufSize]);
           unsigned char* pBuf = buf.get();
           memcpy(pBuf, connId, idSize);
-          m.lock();
           memcpy(pBuf+idSize, session.remoteId.in(), remoteIdSize);
-          m.unlock();
           if (callerChain) memcpy(pBuf+idSize+remoteIdSize, 
             callerChain->signedCallChain()->signature, idl::EncryptedBlockSize);
           else memset(pBuf+idSize+remoteIdSize, '\0', idl::EncryptedBlockSize);
@@ -152,6 +140,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           AutoLock m(&_mutex);
           if (_callChainLRUCache.exists(shash)) {
             signedCallChain = _callChainLRUCache.fetch(shash);
+            m.unlock();
             l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s", 
               session.remoteId.in());
             credential.chain = signedCallChain;
@@ -165,6 +154,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           if (callerChain) credential.chain = *callerChain->signedCallChain();
           else memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       } else {
+        m.unlock();
         /* montando uma credencial com o propósito de requisitar o estabelecimento de uma 
         ** nova sessão. */
         credential.ticket = 0;
@@ -172,6 +162,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
         memset(credential.hash, '\0', idl::HashValueSize);
         memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       }
+      m.unlock();
       
       /* anexando a credencial a esta requisição. */
       CORBA::Any any;

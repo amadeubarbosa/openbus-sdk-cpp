@@ -29,21 +29,21 @@ ServerInterceptor::ServerInterceptor(
 void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller, 
   PortableInterceptor::ServerRequestInfo* r) 
 {
-  AutoLock m(&_mutex);
   /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
-  CORBA::ULong newSessionId = _sessionLRUCache.size() + 1;
-  Session* session = new Session(newSessionId);
-  _sessionLRUCache.insert(newSessionId, session);
+  Session session;
+  AutoLock m(&_mutex);
+  session.id = _sessionLRUCache.size() + 1;
+  _sessionLRUCache.insert(session.id, session);
   m.unlock();
   
   /* cifrando o segredo com a chave pública do cliente. */
-  unsigned char* encrypted = openssl::encrypt(caller->key, session->secret, SECRET_SIZE); 
+  unsigned char* encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
 
   idl_cr::CredentialReset credentialReset;
   AutoLock conn_mutex(&conn->_mutex);
   credentialReset.login = conn->_login()->id;
+  credentialReset.session = session.id;
   conn_mutex.unlock();
-  credentialReset.session = session->id;
   memcpy(credentialReset.challenge, encrypted, idl::EncryptedBlockSize);
   OPENSSL_free(encrypted);
 
@@ -113,10 +113,12 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
       }
       /* o login do caller é valido? */
       if (caller) {
-        idl::HashValue hash;        
-        Session* session;
+        idl::HashValue hash;   
+        Session session;     
         AutoLock m(&_mutex);
-        if (_sessionLRUCache.fetch(credential.session, session)) {
+        bool hasSession = _sessionLRUCache.exists(credential.session);
+        if (hasSession) {
+          session = _sessionLRUCache.fetch(credential.session);
           /* montando uma hash com os dados da credencial recebida e da sessão existente. */
           size_t operationSize = strlen(r->operation());
           int bufSize = 22 + operationSize;
@@ -124,14 +126,14 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
           unsigned char* pBuf = buf.get();
           pBuf[0] = idl::MajorVersion;
           pBuf[1] = idl::MinorVersion;
-          memcpy(pBuf+2, session->secret, SECRET_SIZE);
+          memcpy(pBuf+2, session.secret, SECRET_SIZE);
           memcpy(pBuf+18, &credential.ticket, 4);
           memcpy(pBuf+22, r->operation(), operationSize);
           SHA256(pBuf, bufSize, hash);
         }
         
-        if (session && !memcmp(hash, credential.hash, idl::HashValueSize) && 
-            tickets_check(&session->ticketsHistory, credential.ticket)) 
+        if (hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
+            tickets_check(&session.ticketsHistory, credential.ticket)) 
         {
           /* a credencial recebida é válida. */
           l.level_vlog(debug_level, "credential is valid");

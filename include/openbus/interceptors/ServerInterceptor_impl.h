@@ -48,16 +48,16 @@ namespace interceptors {
     void sendCredentialReset(Connection *, Login*, PortableInterceptor::ServerRequestInfo*);
 
     struct Session {
+      Session() {
+        tickets_init(&ticketsHistory);
+        for (short i = 0; i < SECRET_SIZE; ++i) secret[i] = rand() % 255;
+      }
       CORBA::ULong id;
       tickets_History ticketsHistory;
       unsigned char secret[SECRET_SIZE];
-      Session(CORBA::ULong id) : id(id) {
-        tickets_init(&ticketsHistory);
-        for (short i=0;i<SECRET_SIZE;++i) secret[i] = rand() % 255;
-      }
     };
 
-    typedef LRUCache<CORBA::ULong, Session*> SessionLRUCache;
+    typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;
     SessionLRUCache _sessionLRUCache;
   };
 }
