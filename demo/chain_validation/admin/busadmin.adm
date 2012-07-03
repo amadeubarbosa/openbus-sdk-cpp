@@ -1,0 +1,37 @@
+Category {
+  id = "DemoCppChainValidationCategory",
+  name = "Categoria gerada pelo script",
+}
+
+Entity {
+  id = "demo",
+  category = "DemoCppChainValidationCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Certificate {
+  id = "demo",
+  certificate = "DemoCppChainValidation.crt",
+}
+
+Interface {
+  id = "IDL:Meeting:1.0"
+}
+
+Interface {
+  id = "IDL:Message:1.0"
+}
+
+Grant {
+  id = "demo",
+  interfaces = {
+    "IDL:Meeting:1.0",
+  }
+}
+
+Grant {
+  id = "demo",
+  interfaces = {
+    "IDL:Message:1.0",
+  }
+}

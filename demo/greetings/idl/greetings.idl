@@ -1,0 +1,3 @@
+interface Greetings {
+  string sayGreetings();
+};
