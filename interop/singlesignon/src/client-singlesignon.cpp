@@ -19,8 +19,12 @@ int main(int argc, char** argv) {
     manager->setDefaultConnection(conn.get());
     o = manager->orb()->string_to_object(argv[1]);
     openbus::idl_ac::LoginProcess_var loginProcess = openbus::idl_ac::LoginProcess::_narrow(o);
-    unsigned char* secret = (unsigned char*) argv[2];
-    conn->loginBySharedAuth(loginProcess, secret);
+    const char* secret = argv[2];
+    openbus::idl::OctetSeq_var seq = new openbus::idl::OctetSeq(
+      strlen(secret),
+      strlen(secret),
+      (CORBA::Octet*) secret);
+    conn->loginBySharedAuth(loginProcess, seq.in());
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";

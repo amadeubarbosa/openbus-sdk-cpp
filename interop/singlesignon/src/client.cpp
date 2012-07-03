@@ -18,11 +18,11 @@ int main(int argc, char** argv) {
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     manager->setDefaultConnection(conn.get());
     conn->loginByPassword("demo", "demo");
-    std::pair <openbus::idl_ac::LoginProcess*, const unsigned char*> credential = 
+    std::pair <openbus::idl_ac::LoginProcess_ptr, openbus::idl::OctetSeq_var> credential = 
       conn->startSharedAuth();
     std::cout << "[LoginProcess]: " << manager->orb()->object_to_string(credential.first) 
       << std::endl;
-    std::cout << "[secret]: " << credential.second << std::endl;
+    std::cout << "[secret]: " << credential.second->get_buffer() << std::endl;
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";

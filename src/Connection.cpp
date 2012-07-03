@@ -72,8 +72,10 @@ Connection::~Connection() {
   log_scope l(log.general_logger(), info_level, "Connection::~Connection");
   _logout(true);
   #ifdef OPENBUS_SDK_MULTITHREAD
-  _renewLogin->stop();
-  _renewLogin->wait();
+  if (_renewLogin.get()) {
+    _renewLogin->stop();
+    _renewLogin->wait();
+  }
   #endif
 }
 
@@ -236,15 +238,19 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-std::pair <idl_ac::LoginProcess*, const unsigned char*> Connection::startSharedAuth() {
+std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq_var> Connection::startSharedAuth() {
   log_scope l(log.general_logger(), info_level, "Connection::startSharedAuth");
-  idl::EncryptedBlock_var challenge;
-  idl_ac::LoginProcess* loginProcess = _access_control->startLoginBySharedAuth(challenge.out());
-  const unsigned char* secret = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
-  return std::make_pair(loginProcess, secret);
+  idl::EncryptedBlock challenge;
+  idl_ac::LoginProcess_ptr loginProcess = _access_control->startLoginBySharedAuth(challenge);
+  unsigned char* secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
+  idl::OctetSeq_var secret = new idl::OctetSeq(strlen((const char*) secretBuf), strlen((const char*) secretBuf), 
+    static_cast<CORBA::Octet*> (secretBuf));
+  return std::make_pair(loginProcess, secret._retn());
 }
   
-void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const unsigned char* secret){
+void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess, 
+  const idl::OctetSeq& secret)
+{
   log_scope l(log.general_logger(), info_level, "Connection::loginBySharedAuth");
   AutoLock m(&_mutex);
   if (_login()) throw AlreadyLoggedIn();
@@ -252,10 +258,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const uns
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
-  CORBA::ULong secretSize = static_cast<CORBA::ULong> (strlen((const char*) secret));
-  idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(secretSize, secretSize, 
-    (CORBA::Octet*) CORBA::string_dup((const char*) secret));
-  loginAuthenticationInfo.data = secretOctetSeq;
+  loginAuthenticationInfo.data = secret;
   
   /* representação da minha chave em uma cadeia de bytes. */
   size_t bufKeySize;

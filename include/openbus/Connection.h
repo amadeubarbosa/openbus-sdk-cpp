@@ -95,7 +95,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    std::pair <idl_ac::LoginProcess*, const unsigned char*> startSharedAuth();
+    std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq_var> startSharedAuth();
       
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por single sign-on.
@@ -111,7 +111,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    void loginBySharedAuth(idl_ac::LoginProcess* loginProcess, const unsigned char* secret);
+    void loginBySharedAuth(idl_ac::LoginProcess_ptr, const idl::OctetSeq& secret);
           
 	  /**
 	  * Efetua logout no barramento. Se a sua conexão for uma conexão de despacho, remove essa conexão
