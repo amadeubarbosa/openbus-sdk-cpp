@@ -3,15 +3,15 @@
 
 #include <CORBA.h>
 
-#include <openbus/Connection.h>
-#include <openbus/Connection_impl.h>
-#include <openbus/ConnectionManager.h>
+#include "openbus/Connection.h"
+#include "openbus/Connection_impl.h"
+#include "openbus/ConnectionManager.h"
 extern "C" {
-  #include <openbus/util/Ticket_impl.h>
+  #include "openbus/util/Ticket_impl.h"
 }
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include <openbus/util/LRUCache_impl.h>
+#include "openbus/util/LRUCache_impl.h"
 #endif
 
 #define SECRET_SIZE 16

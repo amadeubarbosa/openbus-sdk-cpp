@@ -1,10 +1,9 @@
-#include <openbus/util/Ticket_impl.h>
+#include "openbus/util/Ticket_impl.h"
 
 #define FLAG(B, I) (B & (1 << I))
 #define SET(B, I) (B |= (1 << I))
 #define CLEAR(B, I) (B &= ~(1 << I))
 #define ROL(B, S) ((B << S) | (B >> ((sizeof(B) * CHAR_BIT) - S)))
-
 
 static void discardBase(tickets_History *h)
 {
@@ -20,7 +19,6 @@ static void discardBase(tickets_History *h)
 		h->index = (h->index + 1) % TICKETS_SIZE;
 	}
 }
-
 
 void tickets_init(tickets_History *h)
 {
@@ -74,8 +72,6 @@ tickets_Value tickets_received(tickets_History *h)
 	for (i = 0; bits; ++i) bits >>= 1;
 	return h->base + i;
 }
-
-
 
 #include <stdio.h>
 

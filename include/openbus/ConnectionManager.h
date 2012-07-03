@@ -13,8 +13,8 @@ namespace openbus {
   class ConnectionManager;
 }
 
-#include <openbus/interceptors/ORBInitializer_impl.h>
-#include <openbus/Connection.h>
+#include "openbus/interceptors/ORBInitializer_impl.h"
+#include "openbus/Connection.h"
 
 #define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
 

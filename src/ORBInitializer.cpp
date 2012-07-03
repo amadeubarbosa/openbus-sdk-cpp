@@ -1,14 +1,14 @@
 #include <memory>
 
-#include <openbus/ORBInitializer.h>
-#include <openbus/log.h>
+#include "openbus/ORBInitializer.h"
+#include "openbus/log.h"
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <openbus/util/AutoLock_impl.h>
+#include "openbus/util/AutoLock_impl.h"
 #endif
-#include <openbus/ConnectionManager.h>
-#include <openbus/interceptors/ORBInitializer_impl.h>
-#include <openbus/interceptors/ClientInterceptor_impl.h>
-#include <openbus/interceptors/ServerInterceptor_impl.h>
+#include "openbus/ConnectionManager.h"
+#include "openbus/interceptors/ORBInitializer_impl.h"
+#include "openbus/interceptors/ClientInterceptor_impl.h"
+#include "openbus/interceptors/ServerInterceptor_impl.h"
 
 
 namespace openbus {

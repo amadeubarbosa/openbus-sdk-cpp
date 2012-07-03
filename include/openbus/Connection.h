@@ -17,11 +17,11 @@ namespace openbus {
   struct CallerChain;
 }
 
-#include <openbus/interceptors/ORBInitializer_impl.h>
-#include <openbus/interceptors/ClientInterceptor_impl.h>
-#include <openbus/interceptors/ServerInterceptor_impl.h>
-#include <openbus/Connection_impl.h>
-#include <openbus/ConnectionManager.h>
+#include "openbus/interceptors/ORBInitializer_impl.h"
+#include "openbus/interceptors/ClientInterceptor_impl.h"
+#include "openbus/interceptors/ServerInterceptor_impl.h"
+#include "openbus/Connection_impl.h"
+#include "openbus/ConnectionManager.h"
 
 /**
 * \brief openbus

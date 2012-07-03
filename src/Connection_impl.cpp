@@ -6,8 +6,8 @@
 #include <openssl/x509.h>
 #include <openssl/sha.h>
 
-#include <openbus/Connection_impl.h>
-#include <openbus/log.h>
+#include "openbus/Connection_impl.h"
+#include "openbus/log.h"
 
 namespace openbus {
 LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)

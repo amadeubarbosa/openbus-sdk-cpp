@@ -3,11 +3,11 @@
 
 #include <openssl/evp.h>
 
-#include <stubs/scs.h>
-#include <stubs/core.h>
-#include <stubs/credential.h>
-#include <stubs/access_control.h>
-#include <stubs/offer_registry.h>
+#include "stubs/scs.h"
+#include "stubs/core.h"
+#include "stubs/credential.h"
+#include "stubs/access_control.h"
+#include "stubs/offer_registry.h"
 
 namespace openbus {  
   namespace idl = tecgraf::openbus::core::v2_0;

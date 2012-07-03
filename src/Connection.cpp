@@ -7,10 +7,10 @@
 #include <openssl/sha.h>
 #include <CORBA.h>
 
-#include <openbus/log.h>
-#include <openbus/Connection.h>
+#include "openbus/log.h"
+#include "openbus/Connection.h"
 #ifdef OPENBUS_SDK_MULTITHREAD
-#include <openbus/util/AutoLock_impl.h>
+#include "openbus/util/AutoLock_impl.h"
 #endif
 
 namespace openbus {
