@@ -27,6 +27,7 @@ struct MessageImpl : POA_Message
     try
     {
       openbus::Connection& c = *manager.getRequester();
+      c.joinChain(c.getCallerChain());
       executive_message->sendMessage(message);
       std::cout << "Execution succesful" << std::endl;
     }
