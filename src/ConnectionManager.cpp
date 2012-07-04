@@ -66,7 +66,7 @@ Connection* ConnectionManager::getDispatcher(const char* busid) {
   l.vlog("getDispatcher do barramento %s", busid);
   if (!busid) return 0;
   AutoLock m(&_mutex);
-  BusidConnection::iterator it = _busidConnection.find(std::string(busid));
+  BusidConnection::const_iterator it = _busidConnection.find(std::string(busid));
   if (it != _busidConnection.end()) return it->second;
   else return 0;
 }

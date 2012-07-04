@@ -46,12 +46,13 @@ Login* LoginCache::validateLogin(char* id) {
     idl::IdentifierSeq ids(LOGINCACHE_LRU_SIZE);
     ids.length(_loginLRUCache.size());
     std::vector<std::string> keys = _loginLRUCache.get_all_keys();
-    std::vector<std::string>::iterator it;
-    int i = 0;
-    for (it=keys.begin(); it<keys.end(); ++i, ++it) ids[i] = CORBA::string_dup((*it).c_str());
+    CORBA::ULong i = 0;
+    for (std::vector<std::string>::const_iterator it=keys.begin(); it!=keys.end(); ++i, ++it) 
+      ids[i] = CORBA::string_dup((*it).c_str());
     /* validando no barramento todos os logins que estão na cache. */
     idl_ac::ValidityTimeSeq_var validity = _login_registry->getValidity(ids);
-    for (unsigned int i=0; i<validity->length(); ++i) {
+    i = 0;
+    for (; i<validity->length(); ++i) {
       Login* l = _loginLRUCache.fetch(std::string(ids[i]));
       l->time2live = validity[i];
     }

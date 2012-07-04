@@ -7,7 +7,6 @@
 #define _TECGRAF_MANAGER_H_
 
 #include <CORBA.h>
-#include <stdexcept>
 
 namespace openbus {
   class ConnectionManager;
