@@ -24,8 +24,17 @@ struct MessageImpl : POA_Message
   void sendMessage(const char* message)
   {
     std::cout << "Relaying message " << message << std::endl;
-    openbus::Connection& c = *manager.getRequester();
-    executive_message->sendMessage(message);
+    try
+    {
+      openbus::Connection& c = *manager.getRequester();
+      executive_message->sendMessage(message);
+      std::cout << "Execution succesful" << std::endl;
+    }
+    catch(::Unavailable const& e)
+    {
+      std::cout << "Unavaible was thrown" << std::endl;
+      throw;
+    }
   }
 
   Message_var executive_message;
@@ -103,7 +112,7 @@ int main(int argc, char** argv)
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     try
     {
-      conn->loginByPassword("demo", "demo");
+      conn->loginByPassword("secretary", "secretary");
     }
     catch(openbus::AccessDenied const& e)
     {
@@ -117,11 +126,9 @@ int main(int argc, char** argv)
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";
-    props[0].value = "demo";
+    props[0].value = "executive";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    props[2].name  = "owner";
-    props[2].value = "executive";
     offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     // Pegando uma oferta valida
     ::Message_var message_executive = ::get_message(offers);
@@ -142,8 +149,6 @@ int main(int argc, char** argv)
     properties.length(2);
     properties[0].name = "offer.domain";
     properties[0].value = "Demos";
-    properties[1].name = "owner";
-    properties[1].value = "secretary";
     conn->offers()->registerService(message_component.getIComponent(), properties);
 
     scs::core::ComponentId meeting_componentId = { "Meeting", '1', '0', '0', "" };

@@ -71,37 +71,33 @@ int main(int argc, char** argv)
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";
-    props[0].value = "demo";
+    props[0].value = "secretary";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    props[2].name  = "owner";
-    props[2].value = "secretary";
     offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     // Pegando uma oferta valida
-    ::Message_var message_executive = ::get_message(offers);
-    if(!CORBA::is_nil(message_executive))
+    ::Message_var message = ::get_message(offers);
+    if(!CORBA::is_nil(message))
     {
       // Chama a funcao
-      message_executive->sendMessage("Message");
+      message->sendMessage("Message");
       return 0;
     }
 
     // Recebendo oferta de executivo
     props[0].name  = "openbus.offer.entity";
-    props[0].value = "demo";
+    props[0].value = "executive";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    props[2].name  = "owner";
-    props[2].value = "executive";
     offers = conn->offers()->findServices(props);
     // Pegando uma oferta valida
-    message_executive = ::get_message(offers);
-    if(!CORBA::is_nil(message_executive))
+    message = ::get_message(offers);
+    if(!CORBA::is_nil(message))
     {
       try
       {
         // Chama a funcao
-        message_executive->sendMessage("Message");
+        message->sendMessage("Message");
         std::cout << "Chamada nao deveria ter sido aceita" << std::endl;
       }
       catch(Unavailable const&)

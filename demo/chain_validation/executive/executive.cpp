@@ -17,10 +17,28 @@ namespace services = tecgraf::openbus::core::v2_0::services;
 
 struct MessageImpl : public POA_Message
 {
+  MessageImpl(openbus::ConnectionManager& manager)
+    : manager(manager) {}
+
   void sendMessage(const char* message)
   {
-    std::cout << "Hello" << std::endl;
+    openbus::Connection* c = manager.getRequester();
+    openbus::CallerChain* chain = c->getCallerChain();
+    if(chain && !std::strcmp(chain->caller().entity, "secretary"))
+    {
+      std::cout << "Hello" << std::endl;
+    }
+    else
+    {
+      const char* name = "[unknown]";
+      if(chain)
+        name = chain->caller().entity;
+      std::cout << "I'm unavailable to " << name << std::endl;
+      throw ::Unavailable();
+    }
   }
+
+  openbus::ConnectionManager& manager;
 };
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -53,7 +71,7 @@ int main(int argc, char** argv)
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     try
     {
-      conn->loginByPassword("demo", "demo");
+      conn->loginByPassword("executive", "executive");
     }
     catch(openbus::AccessDenied const& e)
     {
@@ -66,7 +84,7 @@ int main(int argc, char** argv)
     scs::core::ComponentId componentId = { "Message", '1', '0', '0', "" };
     scs::core::ComponentContext message_component
       (manager->orb(), componentId);
-    MessageImpl message_servant;
+    MessageImpl message_servant(*manager);
     message_component.addFacet
       ("message", ::_tc_Message->id(), &message_servant);
     
@@ -74,8 +92,6 @@ int main(int argc, char** argv)
     properties.length(2);
     properties[0].name = "offer.domain";
     properties[0].value = "Demos";
-    properties[1].name = "owner";
-    properties[1].value = "executive";
     conn->offers()->registerService(message_component.getIComponent(), properties);
 
     orb_thread.join();

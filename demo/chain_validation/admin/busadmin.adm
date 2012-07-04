@@ -9,6 +9,18 @@ Entity {
   name = "Entidade gerada pelo script",
 }
 
+Entity {
+  id = "secretary",
+  category = "DemoCppChainValidationCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "executive",
+  category = "DemoCppChainValidationCategory",
+  name = "Entidade gerada pelo script",
+}
+
 Certificate {
   id = "demo",
   certificate = "DemoCppChainValidation.crt",
@@ -23,14 +35,21 @@ Interface {
 }
 
 Grant {
-  id = "demo",
+  id = "secretary",
   interfaces = {
     "IDL:Meeting:1.0",
   }
 }
 
 Grant {
-  id = "demo",
+  id = "secretary",
+  interfaces = {
+    "IDL:Message:1.0",
+  }
+}
+
+Grant {
+  id = "executive",
   interfaces = {
     "IDL:Message:1.0",
   }
