@@ -14,9 +14,9 @@ namespace interceptors {
     ~ORBInitializer();
     void pre_init(PortableInterceptor::ORBInitInfo*);
     void post_init(PortableInterceptor::ORBInitInfo*) { }
-    ClientInterceptor* clientInterceptor() const { return _clientInterceptor.get(); }
-    ServerInterceptor* serverInterceptor() const { return _serverInterceptor.get(); }
-    IOP::Codec* codec() const { return _codec; }
+    ClientInterceptor *clientInterceptor() const { return _clientInterceptor.get(); }
+    ServerInterceptor *serverInterceptor() const { return _serverInterceptor.get(); }
+    IOP::Codec *codec() const { return _codec; }
     PortableInterceptor::SlotId slotId_connectionAddr() const { return _slotId_connectionAddr; }      
     PortableInterceptor::SlotId slotId_joinedCallChain() const { return _slotId_joinedCallChain; }
     PortableInterceptor::SlotId slotId_signedCallChain() const { return _slotId_signedCallChain; }

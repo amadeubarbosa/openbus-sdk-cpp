@@ -36,9 +36,9 @@ namespace openbus {
 
 namespace openbus {
   struct Login {
-    idl_ac::LoginInfo* loginInfo;
+    idl_ac::LoginInfo *loginInfo;
     idl::OctetSeq_var encodedCallerPubKey;
-    EVP_PKEY* key;
+    EVP_PKEY *key;
     int indexSeq;
     long time2live;
   };
@@ -48,7 +48,7 @@ namespace openbus {
   class LoginCache {
   public:
     LoginCache(idl_ac::LoginRegistry_ptr);
-    Login* validateLogin(char* id);
+    Login *validateLogin(char *id);
   private:
     idl_ac::LoginRegistry_ptr _login_registry;
     LoginLRUCache _loginLRUCache;
@@ -66,9 +66,9 @@ namespace openbus {
     void run();
   private:
     MICOMT::Mutex _mutex;
-    Connection* _conn;
+    Connection *_conn;
     idl_ac::AccessControl_ptr _access_control;
-    ConnectionManager* _manager;
+    ConnectionManager *_manager;
     idl_ac::ValidityTime _validityTime;
     bool _pause;
     bool _stop;
@@ -83,9 +83,9 @@ namespace openbus {
     RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, idl_ac::ValidityTime);
     void callback(CORBA::Dispatcher*, Event);
   private:
-    Connection* _conn;
+    Connection *_conn;
     idl_ac::AccessControl_ptr _access_control;
-    ConnectionManager* _manager;
+    ConnectionManager *_manager;
     idl_ac::ValidityTime _validityTime;
     idl_ac::ValidityTime renew(CORBA::Dispatcher*);
   };

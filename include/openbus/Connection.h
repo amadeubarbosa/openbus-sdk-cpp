@@ -29,12 +29,12 @@ namespace openbus {
 namespace openbus {
   
   /* exceptions */
-  struct AccessDenied  { const char* name() const { return "openbus::AccessDenied"; } };
-  struct AlreadyLoggedIn { const char* name() const { return "openbus::AlreadyLoggedIn"; } };
-  struct CorruptedPrivateKey{ const char* name() const { return "openbus::CorruptedPrivateKey";}};
-  struct WrongPrivateKey {const char* name() const { return "openbus::WrongPrivateKey"; } };
-  struct WrongSecret { const char* name() const { return "openbus::WrongSecret"; } };
-  struct InvalidLoginProcess{ const char* name() const { return "openbus::InvalidLoginProcess";}};
+  struct AccessDenied  { const char *name() const { return "openbus::AccessDenied"; } };
+  struct AlreadyLoggedIn { const char *name() const { return "openbus::AlreadyLoggedIn"; } };
+  struct CorruptedPrivateKey{ const char *name() const { return "openbus::CorruptedPrivateKey";}};
+  struct WrongPrivateKey {const char *name() const { return "openbus::WrongPrivateKey"; } };
+  struct WrongSecret { const char *name() const { return "openbus::WrongSecret"; } };
+  struct InvalidLoginProcess{ const char *name() const { return "openbus::InvalidLoginProcess";}};
   /**/
   
   struct CallerChain;
@@ -50,7 +50,7 @@ namespace openbus {
     * @return 'true' se a chamada que recebeu a indicação que o login se tornou inválido deve ser 
     * refeita, ou 'false' caso a execção de NO_PERMISSION deve ser lançada.
     */
-    typedef bool (*InvalidLoginCallback_ptr) (Connection&, idl_ac::LoginInfo, const char* busid);
+    typedef bool (*InvalidLoginCallback_ptr) (Connection&, idl_ac::LoginInfo, const char *busid);
   
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por senha.
@@ -65,7 +65,7 @@ namespace openbus {
 	  *        tabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    void loginByPassword(const char* entity, const char* password);
+    void loginByPassword(const char *entity, const char *password);
 
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por certificado.
@@ -83,7 +83,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    void loginByCertificate(const char* entity, const idl::OctetSeq& privKey);
+    void loginByCertificate(const char *entity, const idl::OctetSeq &privKey);
 
 	  /**
 	  * Inicia o processo de login por single sign-on.
@@ -111,7 +111,7 @@ namespace openbus {
 	  *        estabelecimento da conexão.
 	  * @throw CORBA::Exception
 	  */
-    void loginBySharedAuth(idl_ac::LoginProcess_ptr, const idl::OctetSeq& secret);
+    void loginBySharedAuth(idl_ac::LoginProcess_ptr, const idl::OctetSeq &secret);
           
 	  /**
 	  * Efetua logout no barramento. Se a sua conexão for uma conexão de despacho, remove essa conexão
@@ -133,7 +133,7 @@ namespace openbus {
 	  *
 	  * @throw CORBA::Exception
 	  */
-    CallerChain* getCallerChain();
+    CallerChain *getCallerChain();
     
 	  /**
 	  * Associa uma cadeia de chamadas do barramento a thread corrente, de forma que todas as chamadas
@@ -146,7 +146,7 @@ namespace openbus {
 	  * @throw CORBA::NO_PERMISSION { minor = InvalidChainCode }
 	  * @throw CORBA::Exception
 	  */
-	  void joinChain(CallerChain* chain);
+	  void joinChain(CallerChain *chain);
 
     /**
     * Remove a associação da cadeia de chamadas com a thread corrente, fazendo com que todas as 
@@ -167,7 +167,7 @@ namespace openbus {
     *
 	  * @throw CORBA::Exception
 	  */
-    CallerChain* getJoinedChain();
+    CallerChain *getJoinedChain();
     
 	  /*
 	  * Define a callback a ser chamada sempre que o login se torna inválido.
@@ -190,7 +190,7 @@ namespace openbus {
   	/** 
   	* Barramento ao qual essa conexão se refere. 
   	*/
-    const char* busid() const { return CORBA::string_dup(_busid); }
+    const char *busid() const { return CORBA::string_dup(_busid); }
     
     /**
     * Obtenção do serviço de ofertas.
@@ -208,25 +208,25 @@ namespace openbus {
       PortableInterceptor::SlotId slotId_signedCallChain, 
       PortableInterceptor::SlotId slotId_legacyCallChain, 
       ConnectionManager*);
-    EVP_PKEY* fetchBusKey();
+    EVP_PKEY *fetchBusKey();
     bool _logout(bool local);
-    EVP_PKEY* __key() const { return _key; }
-    EVP_PKEY* __buskey() const { return _buskey; }
-    CORBA::ORB* orb() const { return _orb; }
+    EVP_PKEY *__key() const { return _key; }
+    EVP_PKEY *__buskey() const { return _buskey; }
+    CORBA::ORB *orb() const { return _orb; }
     idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     idl_ac::AccessControl_var access_control() const { return _access_control; }
-    idl_ac::LoginInfo* _login() const { return _loginInfo.get(); }
+    idl_ac::LoginInfo *_login() const { return _loginInfo.get(); }
     const std::string _host;
     const unsigned short _port;
-    CORBA::ORB* _orb;
-    IOP::Codec* _codec;
+    CORBA::ORB *_orb;
+    IOP::Codec *_codec;
     PortableInterceptor::SlotId _slotId_joinedCallChain; 
     PortableInterceptor::SlotId _slotId_signedCallChain;
     PortableInterceptor::SlotId _slotId_legacyCallChain;
     
     /* Variáveis que são modificadas somente no construtor. */
-    ConnectionManager* _manager;
-    EVP_PKEY* _key;
+    ConnectionManager *_manager;
+    EVP_PKEY *_key;
     PortableInterceptor::Current_var _piCurrent;
     scs::core::IComponent_var _iComponent;
     idl_ac::AccessControl_var _access_control;
@@ -237,8 +237,8 @@ namespace openbus {
     
     std::auto_ptr<RenewLogin> _renewLogin;
     std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
-    const char* _busid;
-    EVP_PKEY* _buskey;
+    const char *_busid;
+    EVP_PKEY *_buskey;
     InvalidLoginCallback_ptr _onInvalidLogin;
     MICOMT::Mutex _mutex;
 
@@ -254,7 +254,7 @@ namespace openbus {
 	  /**
 	  * Barramento através do qual as chamadas foram originadas.
 	  */
-    const char* busid() const { return _busid; }
+    const char *busid() const { return _busid; }
     
 	  /**
 	  * Lista de informações de login de todas as entidades que realizaram chamadas
@@ -262,25 +262,25 @@ namespace openbus {
  	  * Quando essa lista é vazia isso indica que a chamada não está inclusa numa 
 	  * cadeia de chamadas.
  	  */
-    const idl_ac::LoginInfoSeq& originators() const { return _originators; }
+    const idl_ac::LoginInfoSeq &originators() const { return _originators; }
     
 	  /**
 	  * Informação de login da entidade que iniciou a chamada
 	  */
-    const idl_ac::LoginInfo& caller() const { return _caller; }
+    const idl_ac::LoginInfo &caller() const { return _caller; }
   private:
-    CallerChain(const char* busid, const idl_ac::LoginInfoSeq& b, const idl_ac::LoginInfo& c, 
-      const idl_cr::SignedCallChain& d) 
+    CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c, 
+      const idl_cr::SignedCallChain &d) 
       : _busid(busid), _originators(b), _caller(c), _signedCallChain(d) { }
 
-    CallerChain(const char* busid, const idl_ac::LoginInfoSeq& b, const idl_ac::LoginInfo& c) 
+    CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
       : _busid(busid), _originators(b), _caller(c) { }
 
-    const char* _busid;
+    const char *_busid;
     idl_ac::LoginInfoSeq _originators;
     idl_ac::LoginInfo _caller;
     idl_cr::SignedCallChain _signedCallChain;
-    const idl_cr::SignedCallChain* signedCallChain() const { return &_signedCallChain; }
+    const idl_cr::SignedCallChain *signedCallChain() const { return &_signedCallChain; }
     void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
     friend class Connection;
     friend class openbus::interceptors::ClientInterceptor;

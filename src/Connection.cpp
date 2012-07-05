@@ -26,12 +26,12 @@ EVP_PKEY* Connection::fetchBusKey() {
 Connection::Connection(
   const std::string h,
   const unsigned short p,
-  CORBA::ORB* orb,
-  IOP::Codec* c, 
+  CORBA::ORB *orb,
+  IOP::Codec *c, 
   PortableInterceptor::SlotId s1, 
   PortableInterceptor::SlotId s2,
   PortableInterceptor::SlotId s3,
-  ConnectionManager* m) 
+  ConnectionManager *m) 
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
   _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _manager(m), _key(0), _renewLogin(0), 
   _loginInfo(0), _busid(0), _onInvalidLogin(0)
@@ -58,7 +58,7 @@ Connection::Connection(
   }
 	
   /* criando um par de chaves para esta conexão. */
-  EVP_PKEY_CTX* ctx;
+  EVP_PKEY_CTX *ctx;
   if (!((ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0)) &&
     (EVP_PKEY_keygen_init(ctx) > 0) &&
     (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, RSASize) > 0) &&
@@ -79,7 +79,7 @@ Connection::~Connection() {
   #endif
 }
 
-void Connection::loginByPassword(const char* entity, const char* password) {
+void Connection::loginByPassword(const char *entity, const char *password) {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
   AutoLock m(&_mutex);
   if (_login()) throw AlreadyLoggedIn();
@@ -96,7 +96,7 @@ void Connection::loginByPassword(const char* entity, const char* password) {
   
   /* representação da minha chave em uma cadeia de bytes. */
   size_t bufKeySize;
-  unsigned char* bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
+  unsigned char *bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
   
   /* criando uma hash da minha chave. */
   SHA256(bufKey, bufKeySize, loginAuthenticationInfo.hash);
@@ -106,10 +106,10 @@ void Connection::loginByPassword(const char* entity, const char* password) {
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _codec->encode_value(any);
 
-  EVP_PKEY* buskey = fetchBusKey();
+  EVP_PKEY *buskey = fetchBusKey();
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char *encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, idl::EncryptedBlockSize);
@@ -118,7 +118,7 @@ void Connection::loginByPassword(const char* entity, const char* password) {
   idl_ac::ValidityTime validityTime;
   idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(bufKeySize, bufKeySize,
     static_cast<CORBA::Octet*> (bufKey));
-  idl_ac::LoginInfo* loginInfo;
+  idl_ac::LoginInfo *loginInfo;
   try {
     loginInfo = _access_control->loginByPassword(entity, keyOctetSeq, encryptedBlock, validityTime);
   } catch (idl_ac::WrongEncoding&) {
@@ -150,7 +150,7 @@ void Connection::loginByPassword(const char* entity, const char* password) {
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& privKey) {
+void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &privKey) {
   log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
   AutoLock m(&_mutex);
   if (_login()) throw AlreadyLoggedIn();
@@ -163,10 +163,10 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
     loginProcess = _access_control->startLoginByCertificate(entity,challenge);
   }
   
-  EVP_PKEY* privateKey = openssl::byteSeq2PrvKey(privKey.get_buffer(), privKey.length());
+  EVP_PKEY *privateKey = openssl::byteSeq2PrvKey(privKey.get_buffer(), privKey.length());
   
   /* decifrar o desafio usando a chave privada do usuário. */
-  unsigned char* secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 
+  unsigned char *secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 
     idl::EncryptedBlockSize);
   if (!secret) throw CorruptedPrivateKey();
   
@@ -179,21 +179,21 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
 
   /* representação da minha chave em uma cadeia de bytes. */
   size_t bufKeySize;
-  unsigned char* bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
+  unsigned char *bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
   SHA256(bufKey, bufKeySize, loginAuthenticationInfo.hash);
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
-  EVP_PKEY* buskey;
+  EVP_PKEY *buskey;
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     buskey = fetchBusKey();
   }
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char *encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, idl::EncryptedBlockSize);
@@ -204,7 +204,7 @@ void Connection::loginByCertificate(const char* entity, const idl::OctetSeq& pri
 
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::ValidityTime validityTime;    
-  idl_ac::LoginInfo* loginInfo;
+  idl_ac::LoginInfo *loginInfo;
   try {
     loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
   } catch (idl_ac::AccessDenied&) {
@@ -242,14 +242,14 @@ std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq_var> Connection::startSharedA
   log_scope l(log.general_logger(), info_level, "Connection::startSharedAuth");
   idl::EncryptedBlock challenge;
   idl_ac::LoginProcess_ptr loginProcess = _access_control->startLoginBySharedAuth(challenge);
-  unsigned char* secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
+  unsigned char *secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
   idl::OctetSeq_var secret = new idl::OctetSeq(strlen((const char*) secretBuf), strlen((const char*) secretBuf), 
     static_cast<CORBA::Octet*> (secretBuf));
   return std::make_pair(loginProcess, secret._retn());
 }
   
 void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess, 
-  const idl::OctetSeq& secret)
+  const idl::OctetSeq &secret)
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginBySharedAuth");
   AutoLock m(&_mutex);
@@ -262,17 +262,17 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   
   /* representação da minha chave em uma cadeia de bytes. */
   size_t bufKeySize;
-  unsigned char* bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
+  unsigned char *bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
   SHA256(bufKey, bufKeySize, loginAuthenticationInfo.hash);
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
-  EVP_PKEY* buskey = fetchBusKey();
+  EVP_PKEY *buskey = fetchBusKey();
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char* encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  unsigned char *encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted, idl::EncryptedBlockSize);
@@ -282,7 +282,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
     static_cast<CORBA::Octet*> (bufKey));
 
   idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo* loginInfo; 
+  idl_ac::LoginInfo *loginInfo; 
   try {
     loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
   } catch (idl_ac::AccessDenied&) {
@@ -330,7 +330,7 @@ bool Connection::_logout(bool local) {
     _loginInfo.reset();
     m.unlock();
     if (!local) {
-      Connection* c = 0;
+      Connection *c = 0;
       try {
         c = _manager->getRequester();
         _manager->setRequester(this);
@@ -358,10 +358,10 @@ bool Connection::logout() {
   return _logout(false); 
 }
 
-CallerChain* Connection::getCallerChain() {
+CallerChain *Connection::getCallerChain() {
   log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
-  CORBA::Any* sigCallChainAny = _piCurrent->get_slot(_slotId_signedCallChain);
-  CallerChain* callerChain = 0;
+  CORBA::Any *sigCallChainAny = _piCurrent->get_slot(_slotId_signedCallChain);
+  CallerChain *callerChain = 0;
   idl_ac::CallChain callChain;
   idl_cr::SignedCallChain sigCallChain;
   if (*sigCallChainAny >>= sigCallChain) {
@@ -379,7 +379,7 @@ CallerChain* Connection::getCallerChain() {
   return callerChain;
 }
 
-void Connection::joinChain(CallerChain* chain) {
+void Connection::joinChain(CallerChain *chain) {
   log_scope l(log.general_logger(), info_level, "Connection::joinChain");
   CORBA::Any sigCallChainAny;
   sigCallChainAny <<= *(chain->signedCallChain());
@@ -392,7 +392,7 @@ void Connection::exitChain() {
   _piCurrent->set_slot(_slotId_joinedCallChain, any);    
 }
 
-CallerChain* Connection::getJoinedChain() {
+CallerChain *Connection::getJoinedChain() {
   log_scope l(log.general_logger(), info_level, "Connection::getJoinedChain");
   CORBA::Any_var sigCallChainAny=_piCurrent->get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain sigCallChain;

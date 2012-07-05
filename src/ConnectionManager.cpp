@@ -6,7 +6,7 @@
 
 namespace openbus {
 ConnectionManager::ConnectionManager(
-  CORBA::ORB* o, IOP::Codec* c, 
+  CORBA::ORB *o, IOP::Codec *c, 
   PortableInterceptor::SlotId s1, 
   PortableInterceptor::SlotId s2, 
   PortableInterceptor::SlotId s3,
@@ -22,7 +22,7 @@ ConnectionManager::ConnectionManager(
 
 ConnectionManager::~ConnectionManager() { }
 
-std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, short port) {
+std::auto_ptr<Connection> ConnectionManager::createConnection(const char *host, short port) {
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::createConnection");
   l.vlog("createConnection para host %s:%hi", host, port);
   return std::auto_ptr<Connection> (new Connection(host, port, _orb, _codec, 
@@ -30,7 +30,7 @@ std::auto_ptr<Connection> ConnectionManager::createConnection(const char* host, 
     _slotId_legacyCallChain, this));
 }
 
-void ConnectionManager::setRequester(Connection* c) {
+void ConnectionManager::setRequester(Connection *c) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::setRequester");
   l.vlog("connection:%p", c);
   size_t size = sizeof(Connection*);
@@ -42,26 +42,26 @@ void ConnectionManager::setRequester(Connection* c) {
   _piCurrent->set_slot(_slotId_connectionAddr, connectionAddrAny);
 }
 
-Connection* ConnectionManager::getRequester() const { 
+Connection *ConnectionManager::getRequester() const { 
   log_scope l(log.general_logger(), info_level, "ConnectionManager::getRequester");
   CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_slotId_connectionAddr);
   idl::OctetSeq connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) {
     assert(connectionAddrOctetSeq.length() == sizeof(Connection*));
-    Connection* c;
+    Connection *c;
     std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection*));
     return c;
   } else return 0;
 }
 
-void ConnectionManager::setDispatcher(Connection& c) {
+void ConnectionManager::setDispatcher(Connection &c) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::setDispatcher");
   AutoLock m(&_mutex);
   if (c.busid()) _busidConnection[std::string(c.busid())] = &c;
   else throw NotLoggedIn();
 }
 
-Connection* ConnectionManager::getDispatcher(const char* busid) {
+Connection *ConnectionManager::getDispatcher(const char *busid) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::getDispatcher");
   l.vlog("getDispatcher do barramento %s", busid);
   if (!busid) return 0;
@@ -71,14 +71,14 @@ Connection* ConnectionManager::getDispatcher(const char* busid) {
   else return 0;
 }
 
-Connection* ConnectionManager::clearDispatcher(const char* busid) {
+Connection *ConnectionManager::clearDispatcher(const char *busid) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::clearDispatcher");
   l.vlog("clearDispatcher para a conexão [busid:%s]", busid);
   if (!busid) return 0;
   AutoLock m(&_mutex);
   BusidConnection::iterator it = _busidConnection.find(std::string(busid));
   if (it != _busidConnection.end()) {
-    Connection* c = it->second;
+    Connection *c = it->second;
     _busidConnection.erase(it);
     return c;
   } else return 0;    

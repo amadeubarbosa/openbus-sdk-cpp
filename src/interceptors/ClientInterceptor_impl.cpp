@@ -13,7 +13,7 @@ namespace interceptors {
 PortableInterceptor::SlotId ClientInterceptor::_slotId_ignoreInterceptor;
 
 /* monta uma indentificador(chave) para uma requisição através de uma hash do profile. */
-std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
+std::string getSessionKey(PortableInterceptor::ClientRequestInfo *r) {
   idl::HashValue profileDataHash;
   ::IOP::TaggedProfile::_profile_data_seq profile = r->effective_profile()->profile_data;
   SHA256(profile.get_buffer(), profile.length(), profileDataHash);
@@ -21,9 +21,9 @@ std::string getSessionKey(PortableInterceptor::ClientRequestInfo* r) {
   return sprofileDataHash;
 }
 
-Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo* r) {
+Connection &ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo *r) {
   log_scope l(log.general_logger(),info_level,"ClientInterceptor::getCurrentConnection");
-  Connection* conn = 0;
+  Connection *conn = 0;
   CORBA::Any_var connectionAddrAny;
   connectionAddrAny = r->get_slot(_slotId_connectionAddr);
   idl::OctetSeq connectionAddrOctetSeq;
@@ -40,7 +40,7 @@ Connection& ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientR
   return *conn;
 }
 
-CallerChain* ClientInterceptor::getJoinedChain(PortableInterceptor::ClientRequestInfo* r) {
+CallerChain *ClientInterceptor::getJoinedChain(PortableInterceptor::ClientRequestInfo *r) {
   CORBA::Any_var signedCallChainAny= r->get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) {
@@ -57,7 +57,7 @@ ClientInterceptor::ClientInterceptor(
   PortableInterceptor::SlotId slotId_connectionAddr,
   PortableInterceptor::SlotId slotId_joinedCallChain,
   PortableInterceptor::SlotId slotId_ignoreInterceptor,
-  IOP::Codec* cdr_codec)
+  IOP::Codec *cdr_codec)
   : _cdrCodec(cdr_codec), 
     _slotId_connectionAddr(slotId_connectionAddr), 
     _slotId_joinedCallChain(slotId_joinedCallChain),
@@ -72,18 +72,18 @@ ClientInterceptor::ClientInterceptor(
 
 ClientInterceptor::~ClientInterceptor() { }
 
-void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
-  const char* operation = r->operation();
+void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
+  const char *operation = r->operation();
   log_scope l(log.general_logger(), debug_level, "ClientInterceptor::send_request");
   l.level_vlog(debug_level, "operation: %s", operation);
 
   /* esta chamada remota precisa ser interceptada? */
   if (!IgnoreInterceptor::status(r)) {
-    Connection& conn = getCurrentConnection(r);
+    Connection &conn = getCurrentConnection(r);
     AutoLock conn_mutex(&conn._mutex);
     if (conn._login()) {
       conn_mutex.unlock();
-      CallerChain* callerChain = 0;
+      CallerChain *callerChain = 0;
       IOP::ServiceContext serviceContext;
       serviceContext.context_id = idl_cr::CredentialContextId;
 
@@ -107,8 +107,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
         session.ticket = ++session.ticket;
         credential.ticket = session.ticket;
         int bufSize = 22 + strlen(operation);
-        std::auto_ptr<unsigned char> buf (new unsigned char[bufSize]);
-        unsigned char* pBuf = buf.get();
+        std::auto_ptr<unsigned char> buf (new unsigned char[bufSize]());
+        unsigned char *pBuf = buf.get();
         pBuf[0] = idl::MajorVersion;
         pBuf[1] = idl::MinorVersion;
         memcpy(pBuf+2, session.secret->get_buffer(), SECRET_SIZE);
@@ -127,8 +127,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
           size_t idSize = strlen(connId);
           size_t remoteIdSize = strlen(session.remoteId.in());
           bufSize = idSize + remoteIdSize + idl::EncryptedBlockSize;
-          buf.reset(new unsigned char[bufSize]);
-          unsigned char* pBuf = buf.get();
+          buf.reset(new unsigned char[bufSize]());
+          unsigned char *pBuf = buf.get();
           memcpy(pBuf, connId, idSize);
           memcpy(pBuf+idSize, session.remoteId.in(), remoteIdSize);
           if (callerChain) memcpy(pBuf+idSize+remoteIdSize, 
@@ -193,18 +193,18 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo* r){
   }
 }
 
-void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo* r)
+void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo *r)
 {
-  const char* operation = r->operation();
+  const char *operation = r->operation();
   log_scope l(log.general_logger(), debug_level, "ClientInterceptor::receive_exception");
   l.level_vlog(debug_level, "operation: %s", operation); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
 
   if (!strcmp(r->received_exception_id(), "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) {
-    CORBA::SystemException* ex = CORBA::SystemException::_decode(*r->received_exception());
+    CORBA::SystemException *ex = CORBA::SystemException::_decode(*r->received_exception());
     if (ex->completed() == CORBA::COMPLETED_NO) {
       l.level_vlog(debug_level, "minor: %d", ex->minor());
-      Connection& conn = getCurrentConnection(r);
+      Connection &conn = getCurrentConnection(r);
       if (ex->minor() == idl_ac::InvalidCredentialCode) {
         l.level_vlog(debug_level, "creating credential session");
         IOP::ServiceContext_var sctx;
@@ -224,7 +224,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
             throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
         
           /* decifrar o segredo usando a chave do usuário. */
-          unsigned char* secret = openssl::decrypt(conn.__key(), credentialReset.challenge, 
+          unsigned char *secret = openssl::decrypt(conn.__key(), credentialReset.challenge, 
             idl::EncryptedBlockSize);
 
           /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
@@ -249,7 +249,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
         AutoLock conn_mutex(&conn._mutex);
         idl_ac::LoginInfo oldLogin = *conn._login();
-        const char* oldBusid = CORBA::string_dup(conn.busid());
+        const char *oldBusid = CORBA::string_dup(conn.busid());
         conn_mutex.unlock();
         conn._logout(true);
         Connection::InvalidLoginCallback_ptr callback = conn.onInvalidLogin();

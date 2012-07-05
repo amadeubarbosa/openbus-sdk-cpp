@@ -13,19 +13,19 @@ namespace openbus {
 LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
   : _login_registry(p), _loginLRUCache(LOGINCACHE_LRU_SIZE) { }
 
-Login* LoginCache::validateLogin(char* id) {
+Login *LoginCache::validateLogin(char *id) {
   std::string sid(id);
 
   /* este login está no cache? */
-  Login* login = _loginLRUCache.fetch(sid);
+  Login *login = _loginLRUCache.fetch(sid);
   if (!login) {
     /* criando uma entrada no cache para o login. */
     login = new Login;
     login->time2live = -1;
     try {
       login->loginInfo = _login_registry->getLoginInfo(id, login->encodedCallerPubKey);
-    } catch (idl_ac::InvalidLogins& e) { return 0; }
-    const unsigned char* buf = login->encodedCallerPubKey->get_buffer();
+    } catch (idl_ac::InvalidLogins &e) { return 0; }
+    const unsigned char *buf = login->encodedCallerPubKey->get_buffer();
     login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
     _loginLRUCache.insert(sid, login);
   }
@@ -53,7 +53,7 @@ Login* LoginCache::validateLogin(char* id) {
     idl_ac::ValidityTimeSeq_var validity = _login_registry->getValidity(ids);
     i = 0;
     for (; i<validity->length(); ++i) {
-      Login* l = _loginLRUCache.fetch(std::string(ids[i]));
+      Login *l = _loginLRUCache.fetch(std::string(ids[i]));
       l->time2live = validity[i];
     }
     /* o login de interesse, após atualização da cache, ainda é válido? */
@@ -63,7 +63,7 @@ Login* LoginCache::validateLogin(char* id) {
 }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-RenewLogin::RenewLogin(Connection* c, idl_ac::AccessControl_ptr a, ConnectionManager* m, 
+RenewLogin::RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, ConnectionManager *m, 
   idl_ac::ValidityTime t)
   : _conn(c), _access_control(a), _manager(m), _validityTime(t), _pause(false), _stop(false), 
   _condVar(&_mutex)
@@ -93,7 +93,7 @@ void RenewLogin::_run(void*) {
   _manager->setRequester(_conn);
   _mutex.lock();
   while (!_stop) {
-    while (!_pause && _condVar.timedwait(_validityTime*1000)) {
+    while (!_pause &_condVar.timedwait(_validityTime*1000)) {
       _mutex.unlock();
       l.log("chamando RenewLogin::renew() ...");
       _validityTime = renew();
@@ -137,19 +137,19 @@ void RenewLogin::run() {
 
 #else
 
-RenewLogin::RenewLogin(Connection* c, idl_ac::AccessControl_ptr a, ConnectionManager* m, 
+RenewLogin::RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, ConnectionManager *m, 
   idl_ac::ValidityTime t)
   : _conn(c), _access_control(a), _manager(m), _validityTime(t) 
 { 
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
 }
 
-void RenewLogin::callback(CORBA::Dispatcher* dispatcher, Event event) {
+void RenewLogin::callback(CORBA::Dispatcher *dispatcher, Event event) {
   _validityTime = renew(dispatcher);
   dispatcher->tm_event(this, _validityTime*1000);
 }
 
-idl_ac::ValidityTime RenewLogin::renew(CORBA::Dispatcher* dispatcher) {
+idl_ac::ValidityTime RenewLogin::renew(CORBA::Dispatcher *dispatcher) {
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
   _manager->setRequester(_conn);
   assert(_access_control);

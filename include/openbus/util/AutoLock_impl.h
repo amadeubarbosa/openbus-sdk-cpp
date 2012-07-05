@@ -6,7 +6,7 @@
 namespace openbus {
   class AutoLock {
   public:
-    AutoLock(MICOMT::Mutex* m) : _mutex(m) { lock(); }
+    AutoLock(MICOMT::Mutex *m) : _mutex(m) { lock(); }
     ~AutoLock() { if (_locked) unlock(); }
     
     void lock() {
@@ -22,7 +22,7 @@ namespace openbus {
     bool isLocked() { return _locked; }
   private:
     bool _locked;
-    MICOMT::Mutex* _mutex;
+    MICOMT::Mutex *_mutex;
   };
 }
 

@@ -13,7 +13,7 @@ ORBInitializer::ORBInitializer() {
 
 ORBInitializer::~ORBInitializer() { }
 
-void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo* info) {
+void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo *info) {
   IOP::CodecFactory_var codec_factory = info->codec_factory();
   IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
   _codec = codec_factory->create_codec(cdr_encoding);

@@ -8,18 +8,18 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
-openbus::ConnectionManager* manager;
+openbus::ConnectionManager *manager;
 std::auto_ptr<openbus::Connection> conn;
-scs::core::ComponentContext* ctx;
+scs::core::ComponentContext *ctx;
 openbus::idl_or::ServicePropertySeq props;
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
-  HelloImpl(openbus::Connection* c) : _conn(c) { }
+  HelloImpl(openbus::Connection *c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
     std::cout << "Hello from '" <<  _conn->getCallerChain()->caller().entity << "'." << std::endl;
   }
 private:
-  openbus::Connection* _conn;
+  openbus::Connection *_conn;
 };
 
 void loginAndRegister() {
@@ -27,12 +27,12 @@ void loginAndRegister() {
   conn->offers()->registerService(ctx->getIComponent(), props);
 }
 
-bool onInvalidLogin(openbus::Connection& c, openbus::idl_ac::LoginInfo l, const char* busid) {
+bool onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l, const char *busid) {
   try {
     std::cout << "invalid login: " << l.id.in() << std::endl; 
     loginAndRegister();
     return true;
-  } catch(CORBA::Exception& e) {
+  } catch(CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;    
   }
   return false;
@@ -41,17 +41,17 @@ bool onInvalidLogin(openbus::Connection& c, openbus::idl_ac::LoginInfo l, const 
 #ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
 public:
-  RunThread(openbus::ConnectionManager* m) : _manager(m) {}
+  RunThread(openbus::ConnectionManager *m) : _manager(m) {}
   void _run(void*) { _manager->orb()->run(); }
 private:
-  openbus::ConnectionManager* _manager;
+  openbus::ConnectionManager *_manager;
 };
 #endif
 
 int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
-    CORBA::ORB* orb = openbus::ORBInitializer(argc, argv);
+    CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
     manager->setDefaultConnection(conn.get());
     conn->onInvalidLogin(&onInvalidLogin);
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread* runThread = new RunThread(manager);
+    RunThread *runThread = new RunThread(manager);
     runThread->start();
     #endif
     scs::core::ComponentId componentId;
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
     #else
     manager->orb()->run();
     #endif
-  } catch (const CORBA::Exception& e) {
+  } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   } catch (...) {

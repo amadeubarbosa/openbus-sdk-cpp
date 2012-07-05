@@ -19,23 +19,23 @@ namespace interceptors {
       PortableInterceptor::SlotId slotId_connectionAddr,
       PortableInterceptor::SlotId slotId_joinedCallChain,
       PortableInterceptor::SlotId slotId_ignoreInterceptor,
-      IOP::Codec* cdr_codec);
+      IOP::Codec *cdr_codec);
     ~ClientInterceptor();
     void send_request(PortableInterceptor::ClientRequestInfo*);
     void send_poll(PortableInterceptor::ClientRequestInfo*) { }
     void receive_reply(PortableInterceptor::ClientRequestInfo*) { }
     void receive_exception(PortableInterceptor::ClientRequestInfo*);
-    void receive_other(PortableInterceptor::ClientRequestInfo* ri) { }
-    char* name() { return CORBA::string_dup("ClientInterceptor"); }
+    void receive_other(PortableInterceptor::ClientRequestInfo *ri) { }
+    char *name() { return CORBA::string_dup("ClientInterceptor"); }
     void destroy() { }
-    void connectionManager(ConnectionManager* m) { _manager = m; }
-    Connection& getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
-    openbus::CallerChain* getJoinedChain(PortableInterceptor::ClientRequestInfo* r);
+    void connectionManager(ConnectionManager *m) { _manager = m; }
+    Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
+    openbus::CallerChain *getJoinedChain(PortableInterceptor::ClientRequestInfo *r);
     static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
   private:
 
     /* Variáveis que são modificadas somente no construtor. */
-    IOP::Codec* _cdrCodec;
+    IOP::Codec *_cdrCodec;
     PortableInterceptor::SlotId _slotId_connectionAddr;
     PortableInterceptor::SlotId _slotId_joinedCallChain;
     /**/
@@ -55,13 +55,13 @@ namespace interceptors {
     SessionLRUCache _sessionLRUCache;    
     
     CallChainLRUCache _callChainLRUCache;
-    ConnectionManager* _manager;
+    ConnectionManager *_manager;
     MICOMT::Mutex _mutex;
   };
 
   class IgnoreInterceptor {
   public:
-    IgnoreInterceptor(PortableInterceptor::Current* c) : _piCurrent(c) {
+    IgnoreInterceptor(PortableInterceptor::Current *c) : _piCurrent(c) {
       CORBA::Any ignoreInterceptorAny;
       ignoreInterceptorAny <<= CORBA::Any::from_boolean(true);
       _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, ignoreInterceptorAny);
@@ -71,14 +71,14 @@ namespace interceptors {
       ignoreInterceptorAny <<= CORBA::Any::from_boolean(false);
       _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, ignoreInterceptorAny);      
     }
-    static bool status(PortableInterceptor::ClientRequestInfo* r) {
+    static bool status(PortableInterceptor::ClientRequestInfo *r) {
       CORBA::Any_var any = r->get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
       CORBA::Boolean b = 0;
       if (*any >>= CORBA::Any::to_boolean(b)) return b;
       else return 0;
     }
   private:
-    PortableInterceptor::Current* _piCurrent;
+    PortableInterceptor::Current *_piCurrent;
   };
 }
 }

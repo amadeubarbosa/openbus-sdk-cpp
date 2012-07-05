@@ -12,12 +12,12 @@ namespace openbus {
 namespace interceptors {
 
 ServerInterceptor::ServerInterceptor(
-  PortableInterceptor::Current* piCurrent, 
+  PortableInterceptor::Current *piCurrent, 
   PortableInterceptor::SlotId slotId_connectionAddr,
   PortableInterceptor::SlotId slotId_joinedCallChain,
   PortableInterceptor::SlotId slotId_signedCallChain, 
   PortableInterceptor::SlotId slotId_legacyCallChain,
-  IOP::Codec* cdr_codec) 
+  IOP::Codec *cdr_codec) 
   : _piCurrent(piCurrent), _slotId_connectionAddr(slotId_connectionAddr),
     _slotId_joinedCallChain(slotId_joinedCallChain),_slotId_signedCallChain(slotId_signedCallChain),
     _slotId_legacyCallChain(slotId_legacyCallChain), _cdrCodec(cdr_codec), _manager(0),
@@ -26,8 +26,8 @@ ServerInterceptor::ServerInterceptor(
   log_scope l(log.general_logger(), debug_level,"ServerInterceptor::ServerInterceptor");
 }
 
-void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller, 
-  PortableInterceptor::ServerRequestInfo* r) 
+void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller, 
+  PortableInterceptor::ServerRequestInfo *r) 
 {
   /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
   Session session;
@@ -37,7 +37,7 @@ void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller,
   m.unlock();
   
   /* cifrando o segredo com a chave pública do cliente. */
-  unsigned char* encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
+  unsigned char *encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
 
   idl_cr::CredentialReset credentialReset;
   AutoLock conn_mutex(&conn->_mutex);
@@ -63,9 +63,9 @@ void ServerInterceptor::sendCredentialReset(Connection* conn, Login* caller,
 
 ServerInterceptor::~ServerInterceptor() { }
 
-void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::ServerRequestInfo* r)
+void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::ServerRequestInfo *r)
 {
-  const char* operation = r->operation();
+  const char *operation = r->operation();
   log_scope l(log.general_logger(), debug_level,
     "ServerInterceptor::receive_request_service_contexts");
   l.level_vlog(debug_level, "operation: %s", operation);
@@ -75,7 +75,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
   bool hasContext = true;
   try {
     IOP::ServiceContext_var sc = r->get_request_service_context(idl_cr::CredentialContextId);
-    IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
+    IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
     CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
     any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
   } catch (CORBA::BAD_PARAM&) {
@@ -83,7 +83,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
   }
   idl_cr::CredentialData credential;
   if (hasContext && (any >>= credential)) {
-    Connection* conn = _manager->getDispatcher(credential.bus);
+    Connection *conn = _manager->getDispatcher(credential.bus);
     if (!conn) conn = _manager->getDefaultConnection();
     if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
 
@@ -101,7 +101,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     AutoLock conn_mutex(&conn->_mutex);
     if (conn->_login()) {
     conn_mutex.unlock();
-      Login* caller;
+      Login *caller;
       /* consulta ao cache de logins para saber se este login é valido. 
       ** obtenção da estrutura Login referente a este login id. (caller) */
       try {
@@ -122,8 +122,8 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
           /* montando uma hash com os dados da credencial recebida e da sessão existente. */
           size_t operationSize = strlen(r->operation());
           int bufSize = 22 + operationSize;
-          std::auto_ptr<unsigned char> buf(new unsigned char[bufSize]);
-          unsigned char* pBuf = buf.get();
+          std::auto_ptr<unsigned char> buf(new unsigned char[bufSize]());
+          unsigned char *pBuf = buf.get();
           pBuf[0] = idl::MajorVersion;
           pBuf[1] = idl::MinorVersion;
           memcpy(pBuf+2, session.secret, SECRET_SIZE);
@@ -132,7 +132,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
           SHA256(pBuf, bufSize, hash);
         }
         
-        if (hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
+        if (hasSession &!memcmp(hash, credential.hash, idl::HashValueSize) &
             tickets_check(&session.ticketsHistory, credential.ticket)) 
         {
           /* a credencial recebida é válida. */
@@ -144,7 +144,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
             SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
 
             conn_mutex.lock();
-            EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(conn->__buskey(), 0);
+            EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(conn->__buskey(), 0);
             conn_mutex.unlock();
             assert(ctx);
             int status = EVP_PKEY_verify_init(ctx);
@@ -189,7 +189,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     CORBA::Any_var lany;
     try {
       IOP::ServiceContext_var sc = r->get_request_service_context(1234);
-      IOP::ServiceContext::_context_data_seq& cd = sc->context_data;
+      IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
       CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);    
       lany = _cdrCodec->decode_value(contextData, openbus::legacy::v1_5::_tc_Credential);
     } catch (CORBA::BAD_PARAM&) {

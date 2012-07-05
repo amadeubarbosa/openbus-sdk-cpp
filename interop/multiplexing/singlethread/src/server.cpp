@@ -9,27 +9,27 @@
 #include <CORBA.h>
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
-  HelloImpl(openbus::Connection* c) : _conn(c) { }
+  HelloImpl(openbus::Connection *c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
-    openbus::CallerChain* chain = _conn->getCallerChain();
+    openbus::CallerChain *chain = _conn->getCallerChain();
     if (chain) 
       std::cout << "Hello from " << chain->caller().entity << "@" << chain->busid() << std::endl;
     else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
   }
 private:
-  openbus::Connection* _conn;
+  openbus::Connection *_conn;
 };
 
 int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
-    CORBA::ORB* orb = openbus::ORBInitializer(argc, argv);
+    CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+    openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
     std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
@@ -64,10 +64,10 @@ int main(int argc, char** argv) {
     connBusB->offers()->registerService(ctx.getIComponent(), props);
 
     manager->orb()->run();
-  } catch (const CORBA::Exception& e) {
+  } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
-  } catch (const openbus::Connection::Exception& e) {
+  } catch (const openbus::Connection::Exception &e) {
     std::cout << "[error (Connection::Exception)] " << e.name() << std::endl;
     return -1;
   } catch (...) {

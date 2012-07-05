@@ -22,7 +22,7 @@ namespace openbus {
 */
 namespace openbus {
   /* exceptions */
-  struct NotLoggedIn  { const char* name() const { return "openbus::NotLoggedIn"; } };
+  struct NotLoggedIn  { const char *name() const { return "openbus::NotLoggedIn"; } };
   /**/
   
  /**
@@ -41,7 +41,7 @@ namespace openbus {
 	  *
 	  * @return Conexão ao barramento referenciado.
 	  */
-    std::auto_ptr<Connection> createConnection(const char* host, short port);
+    std::auto_ptr<Connection> createConnection(const char *host, short port);
     
     /**
  	  * Define a conexão a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
@@ -51,7 +51,7 @@ namespace openbus {
  	  *
  	  * @param[in] conn Conexão a ser definida como conexão default.
   	*/
-    void setDefaultConnection(Connection* conn) { _defaultConnection = conn; }
+    void setDefaultConnection(Connection *conn) { _defaultConnection = conn; }
     
     /**
 	  * Obtém a conexão a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
@@ -59,7 +59,7 @@ namespace openbus {
 	  * 
 	  * @return Conexão definida como conexão default.
 	  */
-    Connection* getDefaultConnection() const { return _defaultConnection; }
+    Connection *getDefaultConnection() const { return _defaultConnection; }
     
     /**
 	  * Define a conexão com o barramento a ser utilizada em todas as chamadas feitas pela thread 
@@ -80,7 +80,7 @@ namespace openbus {
 	  *
 	  * @return Conexão a barramento associada a thread corrente.
   	*/
-    Connection* getRequester() const;
+    Connection *getRequester() const;
     
 	  /**
 	  * Define que conexão deve ser utilizada para receber chamadas oriundas do barramento ao qual 
@@ -99,7 +99,7 @@ namespace openbus {
 	  * @param[in] busid Identificador do barramento ao qual a conexão está associada.
 	  * @return Conexão a barramento associada ao barramento.
 	  */
-    Connection* getDispatcher(const char* busid);
+    Connection *getDispatcher(const char *busid);
     
 	  /**
 	  * Remove a conexão de despacho associada ao barramento indicado, se houver.
@@ -107,12 +107,12 @@ namespace openbus {
 	  * @return Conexão a barramento associada ao barramento ou zero se não houver nenhuma conexão
 	  * associada.
 	  */
-    Connection* clearDispatcher(const char* busid);
+    Connection *clearDispatcher(const char *busid);
     
 	  /** 
 	  * ORB utilizado pela conexão. 
 	  */
-    CORBA::ORB* orb() const { return _orb; }
+    CORBA::ORB *orb() const { return _orb; }
   private:
     /**
     * ConnectionManager deve ser adquirido através de:
@@ -124,19 +124,19 @@ namespace openbus {
       PortableInterceptor::SlotId slotId_connectionAddr,
       PortableInterceptor::SlotId slotId_legacyCallChain);
     ~ConnectionManager();
-    void orb(CORBA::ORB* o) { _orb = o; }
+    void orb(CORBA::ORB *o) { _orb = o; }
     typedef std::map<std::string, Connection*> BusidConnection;
     MICOMT::Mutex _mutex;
-    CORBA::ORB* _orb;
+    CORBA::ORB *_orb;
     PortableInterceptor::Current_var _piCurrent;
-    IOP::Codec* _codec;
+    IOP::Codec *_codec;
     PortableInterceptor::SlotId _slotId_joinedCallChain; 
     PortableInterceptor::SlotId _slotId_signedCallChain;
     PortableInterceptor::SlotId _slotId_legacyCallChain;
     PortableInterceptor::SlotId _slotId_connectionAddr;
-    Connection* _defaultConnection;
+    Connection *_defaultConnection;
     BusidConnection _busidConnection;
-    friend CORBA::ORB* openbus::ORBInitializer(int argc, char** argv);
+    friend CORBA::ORB *openbus::ORBInitializer(int argc, char **argv);
   };
 }
 

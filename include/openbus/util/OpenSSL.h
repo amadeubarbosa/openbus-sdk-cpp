@@ -5,12 +5,12 @@
 
 namespace openbus {
 namespace openssl {
-  EVP_PKEY* byteSeq2PubKey(const unsigned char*, size_t len);
-  EVP_PKEY* byteSeq2PrvKey(const unsigned char*, size_t len);
-  unsigned char* PubKey2byteSeq(EVP_PKEY*, size_t& len);
-  unsigned char* PrvKey2byteSeq(EVP_PKEY* key, size_t& len);
-  unsigned char* encrypt(EVP_PKEY*, const unsigned char*, size_t l);
-  unsigned char* decrypt(EVP_PKEY*, const unsigned char*, size_t l);
+  EVP_PKEY *byteSeq2PubKey(const unsigned char*, size_t len);
+  EVP_PKEY *byteSeq2PrvKey(const unsigned char*, size_t len);
+  unsigned char *PubKey2byteSeq(EVP_PKEY*, size_t &len);
+  unsigned char *PrvKey2byteSeq(EVP_PKEY *key, size_t &len);
+  unsigned char *encrypt(EVP_PKEY*, const unsigned char*, size_t l);
+  unsigned char *decrypt(EVP_PKEY*, const unsigned char*, size_t l);
 }  
 }
 

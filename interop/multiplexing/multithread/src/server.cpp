@@ -9,29 +9,29 @@
 #include <CORBA.h>
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
-  HelloImpl(openbus::Connection* c) : _conn(c) { }
+  HelloImpl(openbus::Connection *c) : _conn(c) { }
   void sayHello() throw (CORBA::SystemException) {
-    openbus::CallerChain* chain = _conn->getCallerChain();
+    openbus::CallerChain *chain = _conn->getCallerChain();
     if (chain)
       std::cout << "Hello from " << chain->caller().entity << "@" << chain->busid() << std::endl;
     else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
   }
 private:
-  openbus::Connection* _conn;
+  openbus::Connection *_conn;
 };
 
 class RunThread : public MICOMT::Thread {
 public:
-  RunThread(openbus::ConnectionManager* m) : _manager(m) {}
+  RunThread(openbus::ConnectionManager *m) : _manager(m) {}
   void _run(void*) { _manager->orb()->run(); }
 private:
-  openbus::ConnectionManager* _manager;
+  openbus::ConnectionManager *_manager;
 };
 
 class RegisterThread : public MICOMT::Thread {
 public:
-  RegisterThread(openbus::ConnectionManager* m, scs::core::ComponentContext& ctx, 
-    openbus::Connection* c) : _manager(m), _conn(c), _ctx(ctx) {}
+  RegisterThread(openbus::ConnectionManager *m, scs::core::ComponentContext &ctx, 
+    openbus::Connection *c) : _manager(m), _conn(c), _ctx(ctx) {}
   void _run(void*) {
     try {
       openbus::idl_or::ServicePropertySeq props;
@@ -42,33 +42,33 @@ public:
       props[0] = property;
       _manager->setRequester(_conn);
       _conn->offers()->registerService(_ctx.getIComponent(), props);
-    } catch (const CORBA::Exception& e) {
+    } catch (const CORBA::Exception &e) {
       std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e 
       << std::endl;
     }
   }
 private:
-  openbus::ConnectionManager* _manager;
-  openbus::Connection* _conn;
-  scs::core::ComponentContext& _ctx;
+  openbus::ConnectionManager *_manager;
+  openbus::Connection *_conn;
+  scs::core::ComponentContext &_ctx;
 };
 
 int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
-    CORBA::ORB* orb = openbus::ORBInitializer(argc, argv);
+    CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+    openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
     std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
     manager->setDefaultConnection(connBusA.get());
 
-    RunThread* runThread = new RunThread(manager);
+    RunThread *runThread = new RunThread(manager);
     runThread->start();
 
     scs::core::ComponentId componentId;
@@ -88,12 +88,12 @@ int main(int argc, char** argv) {
     manager->setDispatcher(*connBusB.get());
     manager->setDispatcher(*connBusA.get());
 
-    RegisterThread* registerThreadA = new RegisterThread(manager, ctx, connBusA.get());
-    RegisterThread* registerThreadB = new RegisterThread(manager, ctx, connBusB.get());
+    RegisterThread *registerThreadA = new RegisterThread(manager, ctx, connBusA.get());
+    RegisterThread *registerThreadB = new RegisterThread(manager, ctx, connBusB.get());
     registerThreadA->start();
     registerThreadB->start();
     runThread->wait();
-  } catch (const CORBA::Exception& e) {
+  } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   } catch (...) {

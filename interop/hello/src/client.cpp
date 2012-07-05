@@ -7,13 +7,13 @@
 int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
-    CORBA::ORB* orb = openbus::ORBInitializer(argc, argv);
+    CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+    openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     manager->setDefaultConnection(conn.get());
@@ -30,11 +30,11 @@ int main(int argc, char** argv) {
     if (offers->length()) {
       CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName(
         "hello");
-      tecgraf::openbus::interop::simple::Hello* hello = 
+      tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       hello->sayHello();
     } else std::cout << "nenhuma oferta encontrada." << std::endl;
-  } catch (const CORBA::Exception& e) {
+  } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   } catch (...) {
