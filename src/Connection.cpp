@@ -95,11 +95,10 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   loginAuthenticationInfo.data = passOctetSeq;
   
   /* representação da minha chave em uma cadeia de bytes. */
-  size_t bufKeySize;
-  unsigned char *bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
+  CORBA::OctetSeq_var bufKey = openssl::PubKey2byteSeq(_key);
   
   /* criando uma hash da minha chave. */
-  SHA256(bufKey, bufKeySize, loginAuthenticationInfo.hash);
+  SHA256(bufKey->get_buffer(), bufKey->length(), loginAuthenticationInfo.hash);
 
   /* CDR da estrura LoginAuthenticationInfo que foi montada acima. */
   CORBA::Any any;
@@ -109,18 +108,15 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   EVP_PKEY *buskey = fetchBusKey();
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char *encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  CORBA::OctetSeq_var encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
-  memcpy(encryptedBlock, encrypted, idl::EncryptedBlockSize);
-  OPENSSL_free(encrypted);
+  memcpy(encryptedBlock, encrypted->get_buffer(), idl::EncryptedBlockSize);
     
   idl_ac::ValidityTime validityTime;
-  idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(bufKeySize, bufKeySize,
-    static_cast<CORBA::Octet*> (bufKey));
   idl_ac::LoginInfo *loginInfo;
   try {
-    loginInfo = _access_control->loginByPassword(entity, keyOctetSeq, encryptedBlock, validityTime);
+    loginInfo = _access_control->loginByPassword(entity, bufKey.in(), encryptedBlock, validityTime);
   } catch (idl_ac::WrongEncoding&) {
     throw idl::services::ServiceFailure();
   }
@@ -166,21 +162,16 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   EVP_PKEY *privateKey = openssl::byteSeq2PrvKey(privKey.get_buffer(), privKey.length());
   
   /* decifrar o desafio usando a chave privada do usuário. */
-  unsigned char *secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 
+  CORBA::OctetSeq_var secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 
     idl::EncryptedBlockSize);
   if (!secret) throw CorruptedPrivateKey();
   
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
-  CORBA::ULong secretSize = static_cast<CORBA::ULong> (strlen((const char*) secret));
-  idl::OctetSeq_var secretOctetSeq = new idl::OctetSeq(secretSize, secretSize, 
-    (CORBA::Octet*) CORBA::string_dup((const char*) secret));
-  OPENSSL_free(secret);
-  loginAuthenticationInfo.data = secretOctetSeq;
+  loginAuthenticationInfo.data = secret;
 
   /* representação da minha chave em uma cadeia de bytes. */
-  size_t bufKeySize;
-  unsigned char *bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
-  SHA256(bufKey, bufKeySize, loginAuthenticationInfo.hash);
+  CORBA::OctetSeq_var bufKey = openssl::PubKey2byteSeq(_key);
+  SHA256(bufKey->get_buffer(), bufKey->length(), loginAuthenticationInfo.hash);
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
@@ -193,20 +184,16 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   }
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char *encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  CORBA::OctetSeq_var encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
-  memcpy(encryptedBlock, encrypted, idl::EncryptedBlockSize);
-  OPENSSL_free(encrypted);
-
-  idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(bufKeySize, bufKeySize, 
-    static_cast<CORBA::Octet*> (bufKey));
+  memcpy(encryptedBlock, encrypted->get_buffer(), idl::EncryptedBlockSize);
 
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::ValidityTime validityTime;    
   idl_ac::LoginInfo *loginInfo;
   try {
-    loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
+    loginInfo = loginProcess->login(bufKey.in(), encryptedBlock, validityTime);
   } catch (idl_ac::AccessDenied&) {
     throw WrongPrivateKey();
   } catch (idl_ac::WrongEncoding&) {
@@ -242,10 +229,8 @@ std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq_var> Connection::startSharedA
   log_scope l(log.general_logger(), info_level, "Connection::startSharedAuth");
   idl::EncryptedBlock challenge;
   idl_ac::LoginProcess_ptr loginProcess = _access_control->startLoginBySharedAuth(challenge);
-  unsigned char *secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
-  idl::OctetSeq_var secret = new idl::OctetSeq(strlen((const char*) secretBuf), strlen((const char*) secretBuf), 
-    static_cast<CORBA::Octet*> (secretBuf));
-  return std::make_pair(loginProcess, secret._retn());
+  CORBA::OctetSeq_var secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
+  return std::make_pair(loginProcess, secretBuf._retn());
 }
   
 void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess, 
@@ -261,9 +246,8 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   loginAuthenticationInfo.data = secret;
   
   /* representação da minha chave em uma cadeia de bytes. */
-  size_t bufKeySize;
-  unsigned char *bufKey = openssl::PubKey2byteSeq(_key, bufKeySize);
-  SHA256(bufKey, bufKeySize, loginAuthenticationInfo.hash);
+  CORBA::OctetSeq_var bufKey = openssl::PubKey2byteSeq(_key);
+  SHA256(bufKey->get_buffer(), bufKey->length(), loginAuthenticationInfo.hash);
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
@@ -272,19 +256,15 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   EVP_PKEY *buskey = fetchBusKey();
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  unsigned char *encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  CORBA::OctetSeq_var encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
-  memcpy(encryptedBlock, encrypted, idl::EncryptedBlockSize);
-  OPENSSL_free(encrypted);
-
-  idl::OctetSeq_var keyOctetSeq = new idl::OctetSeq(bufKeySize,bufKeySize, 
-    static_cast<CORBA::Octet*> (bufKey));
+  memcpy(encryptedBlock, encrypted->get_buffer(), idl::EncryptedBlockSize);
 
   idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo; 
   try {
-    loginInfo = loginProcess->login(keyOctetSeq, encryptedBlock, validityTime);
+    loginInfo = loginProcess->login(bufKey.in(), encryptedBlock, validityTime);
   } catch (idl_ac::AccessDenied&) {
     throw WrongSecret();
   } catch (idl_ac::WrongEncoding&) {

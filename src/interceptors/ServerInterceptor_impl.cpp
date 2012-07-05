@@ -37,15 +37,14 @@ void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller,
   m.unlock();
   
   /* cifrando o segredo com a chave pública do cliente. */
-  unsigned char *encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
+  CORBA::OctetSeq_var encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
 
   idl_cr::CredentialReset credentialReset;
   AutoLock conn_mutex(&conn->_mutex);
   credentialReset.login = conn->_login()->id;
   credentialReset.session = session.id;
   conn_mutex.unlock();
-  memcpy(credentialReset.challenge, encrypted, idl::EncryptedBlockSize);
-  OPENSSL_free(encrypted);
+  memcpy(credentialReset.challenge, encrypted->get_buffer(), idl::EncryptedBlockSize);
 
   CORBA::Any any;
   any <<= credentialReset;
