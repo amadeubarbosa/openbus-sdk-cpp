@@ -1,4 +1,5 @@
-#include <openbus.h>
+#include <openbus/ConnectionManager.h>
+#include <openbus/ORBInitializer.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
 
@@ -12,10 +13,10 @@
 #endif
 
 namespace offer_registry
- = tecgraf::openbus::core::v2_00::services::offer_registry;
+ = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace demo = tecgraf::openbus::demo;
-namespace services = tecgraf::openbus::core::v2_00::services;
-namespace access_control = tecgraf::openbus::core::v2_00::services::access_control;
+namespace services = tecgraf::openbus::core::v2_0::services;
+namespace access_control = tecgraf::openbus::core::v2_0::services::access_control;
 
 struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
 {
@@ -66,7 +67,7 @@ int main(int argc, char** argv)
   try
   {
     // Inicializando CORBA e ativando o RootPOA
-    CORBA::ORB_var orb = openbus::initORB(argc, argv);
+    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
