@@ -1,4 +1,5 @@
-#include <openbus.h>
+#include <openbus/ConnectionManager.h>
+#include <openbus/ORBInitializer.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
 
@@ -35,7 +36,7 @@ int main(int argc, char** argv)
   try
   {
     // Inicializando CORBA e ativando o RootPOA
-    CORBA::ORB_var orb = openbus::initORB(argc, argv);
+    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
