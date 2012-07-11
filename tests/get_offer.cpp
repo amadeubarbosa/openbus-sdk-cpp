@@ -1,5 +1,6 @@
 
-#include <openbus.h>
+#include <openbus/ConnectionManager.h>
+#include <openbus/ORBInitializer.h>
 #include "stubs/hello.h"
 #include <scs/ComponentContext.h>
 #include <configuration.h>
@@ -36,7 +37,7 @@ void call_orb(CORBA::ORB_var orb)
 int main(int argc, char** argv)
 {
   openbus::configuration cfg(argc, argv);
-  CORBA::ORB_var orb = openbus::initORB(argc, argv);
+  CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread orb_thread(boost::bind(&call_orb, orb));

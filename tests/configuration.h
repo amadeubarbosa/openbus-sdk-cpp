@@ -3,7 +3,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <openbus.h>
+#include <openbus/log.h>
 
 namespace openbus {
 

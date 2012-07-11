@@ -1,6 +1,7 @@
 
-#include <openbus.h>
 #include <configuration.h>
+
+#include <CORBA.h>
 
 int main(int argc, char* argv[])
 {

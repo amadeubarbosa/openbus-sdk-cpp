@@ -1,6 +1,9 @@
 
-#include <openbus.h>
+#include <openbus/ConnectionManager.h>
+#include <openbus/ORBInitializer.h>
 #include <cstdlib>
+
+#include "configuration.h"
 
 int main(int argc, char* argv[])
 {
