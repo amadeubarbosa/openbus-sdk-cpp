@@ -234,7 +234,17 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
 std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq_var> Connection::startSharedAuth() {
   log_scope l(log.general_logger(), info_level, "Connection::startSharedAuth");
   idl::EncryptedBlock challenge;
-  idl_ac::LoginProcess_ptr loginProcess = _access_control->startLoginBySharedAuth(challenge);
+  Connection *c = 0;
+  idl_ac::LoginProcess_ptr loginProcess;
+  try {
+    c = _manager->getRequester();
+    _manager->setRequester(this);
+    loginProcess = _access_control->startLoginBySharedAuth(challenge);
+    _manager->setRequester(c);
+  } catch (...) {
+    _manager->setRequester(c);
+    throw;
+  }
   CORBA::OctetSeq_var secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
   return std::make_pair(loginProcess, secretBuf._retn());
 }

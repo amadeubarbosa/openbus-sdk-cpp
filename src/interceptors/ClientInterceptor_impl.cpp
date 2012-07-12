@@ -256,7 +256,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         bool callbackError = false;
         try {
           if (callback) (callback)(conn, oldLogin, oldBusid);
-        } catch(...) {
+        } catch (...) {
           callbackError = true;
         }
         if (conn._state == Connection::LOGGED)

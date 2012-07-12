@@ -99,13 +99,16 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
 
     AutoLock conn_mutex(&conn->_mutex);
     if (conn->_login()) {
-    conn_mutex.unlock();
+      conn_mutex.unlock();
       Login *caller;
       /* consulta ao cache de logins para saber se este login é valido. 
       ** obtenção da estrutura Login referente a este login id. (caller) */
       try {
         caller = conn->_loginCache->validateLogin(credential.login);
-      } catch(CORBA::Exception&) {
+      } catch (CORBA::NO_PERMISSION &e) {
+        if (e.minor() == idl_ac::NoLoginCode) 
+          throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+      } catch (CORBA::Exception&) {
         /* não há uma entrada válida no cache e o cache nõo consegui validar o login 
         ** com o barramento. */
         throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
@@ -181,7 +184,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
           sendCredentialReset(conn, caller, r);
         }
       } else throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
-    } else throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
+    } else throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
   } else {
     l.level_vlog(debug_level, "verificando se existe uma credencial legacy");
     hasContext = true;
