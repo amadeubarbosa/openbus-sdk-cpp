@@ -250,12 +250,25 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         AutoLock conn_mutex(&conn._mutex);
         idl_ac::LoginInfo oldLogin = *conn._login();
         const char *oldBusid = CORBA::string_dup(conn.busid());
+        conn._state = Connection::INVALID;
         conn_mutex.unlock();
-        conn._logout(true);
         Connection::InvalidLoginCallback_ptr callback = conn.onInvalidLogin();
-        if (callback) 
-          if ((callback)(conn, oldLogin, oldBusid))
-            throw PortableInterceptor::ForwardRequest(r->target(), false);            
+        bool callbackError = false;
+        try {
+          if (callback) (callback)(conn, oldLogin, oldBusid);
+        } catch(...) {
+          callbackError = true;
+        }
+        if (conn._state == Connection::LOGGED)
+          throw PortableInterceptor::ForwardRequest(r->target(), false);            
+        else if (conn._state == Connection::UNLOGGED) 
+          throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+        else if ((conn._state == Connection::INVALID) || callbackError) {
+          if (!strcmp(conn.login().id.in(), oldLogin.id.in())) {
+            conn._logout(true);
+            throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+          } else throw PortableInterceptor::ForwardRequest(r->target(), false);
+        }
       }
     }
   }

@@ -34,7 +34,7 @@ Connection::Connection(
   ConnectionManager *m) 
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
   _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _manager(m), _key(0), _renewLogin(0), 
-  _loginInfo(0), _busid(0), _onInvalidLogin(0)
+  _loginInfo(0), _busid(0), _onInvalidLogin(0), _state(UNLOGGED)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -82,8 +82,10 @@ Connection::~Connection() {
 void Connection::loginByPassword(const char *entity, const char *password) {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
   AutoLock m(&_mutex);
-  if (_login()) throw AlreadyLoggedIn();
+  bool state = _state;
   m.unlock();
+  if (_state == LOGGED) throw AlreadyLoggedIn();
+  else if (_state == INVALID) _logout(true);
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
@@ -127,6 +129,7 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   _busid = _access_control->busid();
   //[todo] leak
   _buskey = buskey;
+  _state = LOGGED;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) {
@@ -149,8 +152,10 @@ void Connection::loginByPassword(const char *entity, const char *password) {
 void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &privKey) {
   log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
   AutoLock m(&_mutex);
-  if (_login()) throw AlreadyLoggedIn();
+  bool state = _state;
   m.unlock();
+  if (_state == LOGGED) throw AlreadyLoggedIn();
+  else if (_state == INVALID) _logout(true);
   
   idl::EncryptedBlock challenge;
   idl_ac::LoginProcess_var loginProcess;
@@ -206,6 +211,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   _busid = _access_control->busid();
   //[todo] leak
   _buskey = buskey;
+  _state = LOGGED;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) {
@@ -238,8 +244,10 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginBySharedAuth");
   AutoLock m(&_mutex);
-  if (_login()) throw AlreadyLoggedIn();
+  bool state = _state;
   m.unlock();
+  if (_state == LOGGED) throw AlreadyLoggedIn();
+  else if (_state == INVALID) _logout(true);
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
@@ -277,6 +285,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   _busid = _access_control->busid();
   //[todo] leak
   _buskey = buskey;
+  _state = LOGGED;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) {
@@ -299,7 +308,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 bool Connection::_logout(bool local) {
   bool sucess = false;
   AutoLock m(&_mutex);
-  if (_login()) {
+  if (_state == LOGGED) {
     m.unlock();
     #ifdef OPENBUS_SDK_MULTITHREAD
     _renewLogin->pause();
@@ -308,6 +317,7 @@ bool Connection::_logout(bool local) {
     #endif
     m.lock();
     _loginInfo.reset();
+    _state = UNLOGGED;
     m.unlock();
     if (!local) {
       Connection *c = 0;
@@ -322,6 +332,10 @@ bool Connection::_logout(bool local) {
         _manager->setRequester(c);        
       }
     }
+    m.lock();
+  } else if (_state == INVALID) {
+    _loginInfo.reset();
+    _state = UNLOGGED;
   } else sucess = false;
   CORBA::String_var busid = CORBA::string_dup(_busid);
   m.unlock();

@@ -27,15 +27,13 @@ void loginAndRegister() {
   conn->offers()->registerService(ctx->getIComponent(), props);
 }
 
-bool onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l, const char *busid) {
+void onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l, const char *busid) {
   try {
     std::cout << "invalid login: " << l.id.in() << std::endl; 
     loginAndRegister();
-    return true;
   } catch(CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;    
   }
-  return false;
 }
 
 #ifdef OPENBUS_SDK_MULTITHREAD

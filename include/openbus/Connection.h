@@ -50,7 +50,7 @@ namespace openbus {
     * @return 'true' se a chamada que recebeu a indicação que o login se tornou inválido deve ser 
     * refeita, ou 'false' caso a execção de NO_PERMISSION deve ser lançada.
     */
-    typedef bool (*InvalidLoginCallback_ptr) (Connection&, idl_ac::LoginInfo, const char *busid);
+    typedef void (*InvalidLoginCallback_ptr) (Connection&, idl_ac::LoginInfo, const char *busid);
   
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por senha.
@@ -241,6 +241,12 @@ namespace openbus {
     EVP_PKEY *_buskey;
     InvalidLoginCallback_ptr _onInvalidLogin;
     MICOMT::Mutex _mutex;
+    
+    enum State {
+      LOGGED,
+      UNLOGGED,
+      INVALID
+    } _state;
 
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;
