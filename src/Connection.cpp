@@ -84,8 +84,7 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   AutoLock m(&_mutex);
   bool state = _state;
   m.unlock();
-  if (_state == LOGGED) throw AlreadyLoggedIn();
-  else if (_state == INVALID) _logout(true);
+  if (state == LOGGED) throw AlreadyLoggedIn();
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
@@ -124,7 +123,7 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   }
 
   m.lock();
-  if (_login()) throw AlreadyLoggedIn();
+  if (_state == LOGGED) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
   //[todo] leak
@@ -154,8 +153,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   AutoLock m(&_mutex);
   bool state = _state;
   m.unlock();
-  if (_state == LOGGED) throw AlreadyLoggedIn();
-  else if (_state == INVALID) _logout(true);
+  if (state == LOGGED) throw AlreadyLoggedIn();
   
   idl::EncryptedBlock challenge;
   idl_ac::LoginProcess_var loginProcess;
@@ -206,7 +204,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   }
   
   m.lock();
-  if (_login()) throw AlreadyLoggedIn();
+  if (_state == LOGGED) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
   //[todo] leak
@@ -256,8 +254,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   AutoLock m(&_mutex);
   bool state = _state;
   m.unlock();
-  if (_state == LOGGED) throw AlreadyLoggedIn();
-  else if (_state == INVALID) _logout(true);
+  if (state == LOGGED) throw AlreadyLoggedIn();
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
@@ -290,7 +287,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   }
 
   m.lock();
-  if (_login()) throw AlreadyLoggedIn();
+  if (_state == LOGGED) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _busid = _access_control->busid();
   //[todo] leak
@@ -318,8 +315,9 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 bool Connection::_logout(bool local) {
   bool sucess = false;
   AutoLock m(&_mutex);
-  if (_state == LOGGED) {
-    m.unlock();
+  bool state = _state;
+  m.unlock();
+  if (state == LOGGED) {
     #ifdef OPENBUS_SDK_MULTITHREAD
     _renewLogin->pause();
     #else
@@ -342,11 +340,13 @@ bool Connection::_logout(bool local) {
         _manager->setRequester(c);        
       }
     }
+  } else if (state == INVALID) {
     m.lock();
-  } else if (_state == INVALID) {
     _loginInfo.reset();
     _state = UNLOGGED;
-  } else sucess = false;
+    m.unlock();
+  } else return false;
+  m.lock();
   CORBA::String_var busid = CORBA::string_dup(_busid);
   m.unlock();
   if (_manager->getDispatcher(busid)) _manager->clearDispatcher(busid);
@@ -417,6 +417,18 @@ void Connection::onInvalidLogin(Connection::InvalidLoginCallback_ptr p) {
 Connection::InvalidLoginCallback_ptr Connection::onInvalidLogin() { 
   AutoLock m(&_mutex);
   return _onInvalidLogin; 
+}
+
+const idl_ac::LoginInfo *Connection::login() {
+  AutoLock m(&_mutex);
+  if (_state == INVALID) return 0;
+  else return _loginInfo.get(); 
+}
+
+const char *Connection::busid() { 
+  AutoLock m(&_mutex);
+  if (_state == INVALID) return 0;
+  else return CORBA::string_dup(_busid); 
 }
 
 }

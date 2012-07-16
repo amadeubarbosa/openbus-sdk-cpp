@@ -90,7 +90,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
       /* montando uma credencial com os dados(busid e login) da conexão. */
       idl_cr::CredentialData credential;
       conn_mutex.lock();
-      credential.bus = CORBA::string_dup(conn.busid());
+      credential.bus = CORBA::string_dup(conn._busid);
       credential.login = CORBA::string_dup(conn._login()->id);
       conn_mutex.unlock();
       
@@ -248,8 +248,8 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
         AutoLock conn_mutex(&conn._mutex);
-        idl_ac::LoginInfo oldLogin = *conn._login();
-        const char *oldBusid = CORBA::string_dup(conn.busid());
+        idl_ac::LoginInfo oldLogin = *conn._loginInfo;
+        const char *oldBusid = CORBA::string_dup(conn._busid);
         conn._state = Connection::INVALID;
         conn_mutex.unlock();
         Connection::InvalidLoginCallback_ptr callback = conn.onInvalidLogin();
@@ -264,7 +264,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         else if (conn._state == Connection::UNLOGGED) 
           throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
         else if ((conn._state == Connection::INVALID) || callbackError) {
-          if (!strcmp(conn.login().id.in(), oldLogin.id.in())) {
+          if (!strcmp(conn._login()->id.in(), oldLogin.id.in())) {
             conn._logout(true);
             throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
           } else throw PortableInterceptor::ForwardRequest(r->target(), false);

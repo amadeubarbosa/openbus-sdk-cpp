@@ -6,35 +6,55 @@
 #include <openssl/x509.h>
 #include <openssl/sha.h>
 
+#include "openbus/util/AutoLock_impl.h"
 #include "openbus/Connection_impl.h"
 #include "openbus/log.h"
 
 namespace openbus {
+bool Login::isEmpty() {
+  if (loginInfo) return false;
+  else return true;
+}
+
 LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
   : _login_registry(p), _loginLRUCache(LOGINCACHE_LRU_SIZE) { }
 
-Login *LoginCache::validateLogin(char *id) {
+Login LoginCache::validateLogin(char *id) {
   std::string sid(id);
-
+  Login login;
+  
   /* este login está no cache? */
-  Login *login = _loginLRUCache.fetch(sid);
-  if (!login) {
+  AutoLock m(&_mutex);
+  bool b = _loginLRUCache.exists(sid);
+  m.unlock();
+  if (b) {
+    m.lock();
+    login = _loginLRUCache.fetch(sid);
+    m.unlock();
+  } else {
     /* criando uma entrada no cache para o login. */
-    login = new Login;
-    login->time2live = -1;
+    login.time2live = -1;
     try {
-      login->loginInfo = _login_registry->getLoginInfo(id, login->encodedCallerPubKey);
-    } catch (idl_ac::InvalidLogins &e) { return 0; }
-    const unsigned char *buf = login->encodedCallerPubKey->get_buffer();
-    login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
+      login.loginInfo = _login_registry->getLoginInfo(id, login.encodedCallerPubKey);
+      } catch (idl_ac::InvalidLogins &e) { 
+        login.loginInfo = 0;
+        return login; 
+      }
+    const unsigned char *buf = login.encodedCallerPubKey->get_buffer();
+    login.key = d2i_PUBKEY(0, &buf, login.encodedCallerPubKey->length());
+    m.lock();
     _loginLRUCache.insert(sid, login);
+    m.unlock();
   }
-
+  
   /* se time2live é zero então o login é inválido. */
-  if (!login->time2live) return 0;
+  if (!login.time2live) {
+    login.loginInfo = 0;
+    return login;
+  }
   
   /* se time2live é maior do que o intervalo de tempo de atualização, o login é válido. */
-  if (login->time2live > (time(0) - _timeUpdated)) return login;
+  if (login.time2live > (time(0) - _timeUpdated)) return login;
   
   /* preciso consultar o barramento para validar o login. */
   else {
@@ -44,8 +64,10 @@ Login *LoginCache::validateLogin(char *id) {
     ** antes de cada chamada getValidity(). */
     _timeUpdated = time(0);
     idl::IdentifierSeq ids(LOGINCACHE_LRU_SIZE);
+    m.lock();
     ids.length(_loginLRUCache.size());
     std::vector<std::string> keys = _loginLRUCache.get_all_keys();
+    m.unlock();
     CORBA::ULong i = 0;
     for (std::vector<std::string>::const_iterator it=keys.begin(); it!=keys.end(); ++i, ++it) 
       ids[i] = CORBA::string_dup((*it).c_str());
@@ -53,13 +75,16 @@ Login *LoginCache::validateLogin(char *id) {
     idl_ac::ValidityTimeSeq_var validity = _login_registry->getValidity(ids);
     i = 0;
     for (; i<validity->length(); ++i) {
-      Login *l = _loginLRUCache.fetch(std::string(ids[i]));
-      l->time2live = validity[i];
+      m.lock();
+      Login l = _loginLRUCache.fetch(std::string(ids[i]));
+      m.unlock();
+      l.time2live = validity[i];
     }
     /* o login de interesse, após atualização da cache, ainda é válido? */
-    if (login->time2live > 0) return login;
+    if (login.time2live > 0) return login;
   }
-  return 0;
+  login.loginInfo = 0;
+  return login;
 }
 
 #ifdef OPENBUS_SDK_MULTITHREAD

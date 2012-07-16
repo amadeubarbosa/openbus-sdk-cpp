@@ -185,12 +185,12 @@ namespace openbus {
   	/** 
   	* Informações sobre o login da entidade que autenticou essa conexão. 
   	*/
-    const idl_ac::LoginInfo login() const { return *(_loginInfo.get()); }
+    const idl_ac::LoginInfo* login();
     
   	/** 
   	* Barramento ao qual essa conexão se refere. 
   	*/
-    const char *busid() const { return CORBA::string_dup(_busid); }
+    const char *busid();
     
     /**
     * Obtenção do serviço de ofertas.
@@ -215,7 +215,7 @@ namespace openbus {
     CORBA::ORB *orb() const { return _orb; }
     idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
     idl_ac::AccessControl_var access_control() const { return _access_control; }
-    idl_ac::LoginInfo *_login() const { return _loginInfo.get(); }
+    const idl_ac::LoginInfo *_login() const { return _loginInfo.get(); }
     const std::string _host;
     const unsigned short _port;
     CORBA::ORB *_orb;
