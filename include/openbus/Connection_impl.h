@@ -36,9 +36,6 @@ namespace openbus {
 
 namespace openbus {
   struct Login {
-    Login() : loginInfo(0) { }
-    bool isEmpty();
-    
     idl_ac::LoginInfo *loginInfo;
     idl::OctetSeq_var encodedCallerPubKey;
     EVP_PKEY *key;
@@ -46,12 +43,12 @@ namespace openbus {
     long time2live;
   };
   
-  typedef LRUCache<std::string, Login> LoginLRUCache;
+  typedef LRUCache<std::string, Login*> LoginLRUCache;
 
   class LoginCache {
   public:
     LoginCache(idl_ac::LoginRegistry_ptr);
-    Login validateLogin(char *id);
+    Login *validateLogin(char *id);
   private:
     idl_ac::LoginRegistry_ptr _login_registry;
     LoginLRUCache _loginLRUCache;

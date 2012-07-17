@@ -45,7 +45,7 @@ namespace interceptors {
     PortableInterceptor::SlotId _slotId_legacyCallChain;
     IOP::Codec *_cdrCodec;
     ConnectionManager *_manager;
-    void sendCredentialReset(Connection *, Login, PortableInterceptor::ServerRequestInfo*);
+    void sendCredentialReset(Connection *, Login*, PortableInterceptor::ServerRequestInfo*);
 
     struct Session {
       Session() {

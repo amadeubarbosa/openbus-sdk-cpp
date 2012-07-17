@@ -26,7 +26,7 @@ ServerInterceptor::ServerInterceptor(
   log_scope l(log.general_logger(), debug_level,"ServerInterceptor::ServerInterceptor");
 }
 
-void ServerInterceptor::sendCredentialReset(Connection *conn, Login caller, 
+void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller, 
   PortableInterceptor::ServerRequestInfo *r) 
 {
   /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
@@ -37,7 +37,7 @@ void ServerInterceptor::sendCredentialReset(Connection *conn, Login caller,
   m.unlock();
   
   /* cifrando o segredo com a chave pública do cliente. */
-  CORBA::OctetSeq_var encrypted = openssl::encrypt(caller.key, session.secret, SECRET_SIZE); 
+  CORBA::OctetSeq_var encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
 
   idl_cr::CredentialReset credentialReset;
   AutoLock conn_mutex(&conn->_mutex);
@@ -100,11 +100,11 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     AutoLock conn_mutex(&conn->_mutex);
     if (conn->_login()) {
       conn_mutex.unlock();
-      Login caller;
+      Login *caller;
       /* consulta ao cache de logins para saber se este login é valido. 
       ** obtenção da estrutura Login referente a este login id. (caller) */
       try {
-        l.log("Validando login...");
+        l.vlog("Validando login: %s", credential.login.in());
         caller = conn->_loginCache->validateLogin(credential.login);
       } catch (CORBA::NO_PERMISSION &e) {
         if (e.minor() == idl_ac::NoLoginCode) 
@@ -115,7 +115,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
         throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
       }
       /* o login do caller é valido? */
-      if (!caller.isEmpty()) {
+      if (caller) {
         l.log("Login valido.");
         idl::HashValue hash;   
         Session session;     
@@ -168,7 +168,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
                 /* a cadeia tem como destino(target) outro login. */
                 m.unlock();
                 sendCredentialReset(conn, caller, r);
-              } else if(strcmp(callChain.caller.id, caller.loginInfo->id)) {
+              } else if(strcmp(callChain.caller.id, caller->loginInfo->id)) {
                 /* o último elemento da cadeia não é quem está me chamando. */
                 sendInvalidChainCode = true;
               } else {
@@ -185,7 +185,10 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
           m.unlock();
           sendCredentialReset(conn, caller, r);
         }
-      } else throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
+      } else {
+        l.log("Lancando excecao InvalidLoginCode.");
+        throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
+      }
     } else throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
   } else {
     l.level_vlog(debug_level, "verificando se existe uma credencial legacy");
