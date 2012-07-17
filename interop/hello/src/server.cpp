@@ -27,7 +27,7 @@ void loginAndRegister() {
   conn->offers()->registerService(ctx->getIComponent(), props);
 }
 
-void onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l, const char *busid) {
+void onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l) {
   try {
     std::cout << "invalid login: " << l.id.in() << std::endl; 
     loginAndRegister();

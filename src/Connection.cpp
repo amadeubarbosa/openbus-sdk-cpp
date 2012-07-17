@@ -332,8 +332,6 @@ bool Connection::_logout(bool local) {
     _state = UNLOGGED;
     m.unlock();
   } else return false;
-  CORBA::String_var busid = CORBA::string_dup(_busid);
-  if (_manager->getDispatcher(busid)) _manager->clearDispatcher(busid);
   return sucess;    
 }
 

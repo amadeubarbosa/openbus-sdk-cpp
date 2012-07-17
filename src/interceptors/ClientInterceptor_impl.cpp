@@ -249,13 +249,12 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       } else if (ex->minor() == idl_ac::InvalidLoginCode) {
         AutoLock conn_mutex(&conn._mutex);
         idl_ac::LoginInfo oldLogin = *conn._loginInfo;
-        const char *oldBusid = CORBA::string_dup(conn._busid);
         conn._state = Connection::INVALID;
         conn_mutex.unlock();
         Connection::InvalidLoginCallback_ptr callback = conn.onInvalidLogin();
         bool callbackError = false;
         try {
-          if (callback) (callback)(conn, oldLogin, oldBusid);
+          if (callback) (callback)(conn, oldLogin);
         } catch (...) {
           callbackError = true;
         }
