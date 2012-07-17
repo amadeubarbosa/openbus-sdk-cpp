@@ -252,17 +252,16 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         conn._state = Connection::INVALID;
         conn_mutex.unlock();
         Connection::InvalidLoginCallback_ptr callback = conn.onInvalidLogin();
-        bool callbackError = false;
         try {
           if (callback) (callback)(conn, oldLogin);
         } catch (...) {
-          callbackError = true;
+      		l.level_log(warning_level, "Falha na execucao da callback OnInvalidLogin.");
         }
         if (conn._state == Connection::LOGGED)
           throw PortableInterceptor::ForwardRequest(r->target(), false);            
         else if (conn._state == Connection::UNLOGGED) 
           throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-        else if ((conn._state == Connection::INVALID) || callbackError) {
+        else if (conn._state == Connection::INVALID) {
           if (!strcmp(conn._login()->id.in(), oldLogin.id.in())) {
             conn._logout(true);
             throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
