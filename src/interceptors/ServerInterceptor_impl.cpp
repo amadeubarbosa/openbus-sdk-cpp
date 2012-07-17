@@ -147,9 +147,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
             idl::HashValue hash;
             SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
 
-            conn_mutex.lock();
             EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(conn->__buskey(), 0);
-            conn_mutex.unlock();
             assert(ctx);
             int status = EVP_PKEY_verify_init(ctx);
             assert(status);

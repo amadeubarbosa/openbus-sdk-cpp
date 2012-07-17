@@ -58,7 +58,6 @@ void ConnectionManager::setDispatcher(Connection &c) {
   log_scope l(log.general_logger(), info_level, "ConnectionManager::setDispatcher");
   AutoLock m(&_mutex);
   if (c._busid) _busidConnection[std::string(c._busid)] = &c;
-  else throw NotLoggedIn();
 }
 
 Connection *ConnectionManager::getDispatcher(const char *busid) {

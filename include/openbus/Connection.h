@@ -233,12 +233,12 @@ namespace openbus {
     idl_ac::LoginRegistry_var _login_registry;
     idl_or::OfferRegistry_var _offer_registry;
     std::auto_ptr<LoginCache> _loginCache;
+    const char *_busid;
+    EVP_PKEY *_buskey;
     /**/
     
     std::auto_ptr<RenewLogin> _renewLogin;
     std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
-    const char *_busid;
-    EVP_PKEY *_buskey;
     InvalidLoginCallback_ptr _onInvalidLogin;
     MICOMT::Mutex _mutex;
     

@@ -87,8 +87,6 @@ namespace openbus {
 	  * está conectada e autenticada, denominada conexão de despacho.
 	  * 
 	  * @param[in] Conexão a barramento a ser associada a thread corrente.
-    *
-	  * @throw NotLoggedIn A conexão não está autenticada ou é nula.
   	*/
     void setDispatcher(Connection&);
     

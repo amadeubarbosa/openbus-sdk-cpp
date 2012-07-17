@@ -31,17 +31,16 @@ Login *LoginCache::validateLogin(char *id) {
     login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
     m.lock();
     _loginLRUCache.insert(sid, login);
-    m.unlock();
   }
-
+  m.unlock();
+  
   /* se time2live é zero então o login é inválido. */
   if (!login->time2live) return 0;
   
   /* se time2live é maior do que o intervalo de tempo de atualização, o login é válido. */
   if (login->time2live > (time(0) - _timeUpdated)) return login;
-  
-  /* preciso consultar o barramento para validar o login. */
   else {
+    /* preciso consultar o barramento para validar o login. */
     /*
     ** a implementação atual da LRU não permite que o  cache  avise  ao  SDK  o  elemento 
     ** que está sendo substituído, desta forma eu preciso construir uma  IdentifierSeq  

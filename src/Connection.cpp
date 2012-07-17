@@ -66,6 +66,11 @@ Connection::Connection(
   ) assert(0);
 
   _loginCache = std::auto_ptr<LoginCache> (new LoginCache(_login_registry));
+  {
+    interceptors::IgnoreInterceptor _i(_piCurrent);
+    _busid = _access_control->busid();
+    _buskey = fetchBusKey();
+  }
 }
 
 Connection::~Connection() { 
@@ -106,10 +111,8 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _codec->encode_value(any);
 
-  EVP_PKEY *buskey = fetchBusKey();
-
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  CORBA::OctetSeq_var encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  CORBA::OctetSeq_var encrypted = openssl::encrypt(_buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted->get_buffer(), idl::EncryptedBlockSize);
@@ -125,9 +128,6 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   m.lock();
   if (_state == LOGGED) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  _busid = _access_control->busid();
-  //[todo] leak
-  _buskey = buskey;
   _state = LOGGED;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
@@ -180,14 +180,8 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
-  EVP_PKEY *buskey;
-  {
-    interceptors::IgnoreInterceptor _i(_piCurrent);
-    buskey = fetchBusKey();
-  }
-
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  CORBA::OctetSeq_var encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  CORBA::OctetSeq_var encrypted = openssl::encrypt(_buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted->get_buffer(), idl::EncryptedBlockSize);
@@ -206,9 +200,6 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   m.lock();
   if (_state == LOGGED) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  _busid = _access_control->busid();
-  //[todo] leak
-  _buskey = buskey;
   _state = LOGGED;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
@@ -268,10 +259,8 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
-  EVP_PKEY *buskey = fetchBusKey();
-
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  CORBA::OctetSeq_var encrypted = openssl::encrypt(buskey, encodedLoginAuthenticationInfo->get_buffer(), 
+  CORBA::OctetSeq_var encrypted = openssl::encrypt(_buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted->get_buffer(), idl::EncryptedBlockSize);
@@ -289,9 +278,6 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   m.lock();
   if (_state == LOGGED) throw AlreadyLoggedIn();
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
-  _busid = _access_control->busid();
-  //[todo] leak
-  _buskey = buskey;
   _state = LOGGED;
 
   #ifdef OPENBUS_SDK_MULTITHREAD
@@ -346,14 +332,8 @@ bool Connection::_logout(bool local) {
     _state = UNLOGGED;
     m.unlock();
   } else return false;
-  m.lock();
   CORBA::String_var busid = CORBA::string_dup(_busid);
-  m.unlock();
   if (_manager->getDispatcher(busid)) _manager->clearDispatcher(busid);
-  m.lock();
-  _busid = 0;
-  _buskey = 0;
-  m.unlock();
   return sucess;    
 }
 
@@ -372,7 +352,6 @@ CallerChain *Connection::getCallerChain() {
     CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
       idl_ac::_tc_CallChain);
     *callChainAny >>= callChain;
-    AutoLock m(&_mutex);
     callerChain = new CallerChain(_busid, callChain.originators, callChain.caller, sigCallChain);
   } else {
     CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_slotId_legacyCallChain);
