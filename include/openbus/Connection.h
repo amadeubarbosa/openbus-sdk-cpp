@@ -35,6 +35,7 @@ namespace openbus {
   struct WrongPrivateKey {const char *name() const { return "openbus::WrongPrivateKey"; } };
   struct WrongSecret { const char *name() const { return "openbus::WrongSecret"; } };
   struct InvalidLoginProcess{ const char *name() const { return "openbus::InvalidLoginProcess";}};
+  struct InvalidBusAddress  { const char *name() const { return "openbus::InvalidBusAddress"; } };
   /**/
   
   struct CallerChain;
@@ -223,6 +224,16 @@ namespace openbus {
     PortableInterceptor::SlotId _slotId_joinedCallChain; 
     PortableInterceptor::SlotId _slotId_signedCallChain;
     PortableInterceptor::SlotId _slotId_legacyCallChain;
+    std::auto_ptr<RenewLogin> _renewLogin;
+    std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
+    InvalidLoginCallback_ptr _onInvalidLogin;
+    MICOMT::Mutex _mutex;
+    
+    enum State {
+      LOGGED,
+      UNLOGGED,
+      INVALID
+    } _state;
     
     /* Variáveis que são modificadas somente no construtor. */
     ConnectionManager *_manager;
@@ -237,17 +248,6 @@ namespace openbus {
     EVP_PKEY *_buskey;
     /**/
     
-    std::auto_ptr<RenewLogin> _renewLogin;
-    std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
-    InvalidLoginCallback_ptr _onInvalidLogin;
-    MICOMT::Mutex _mutex;
-    
-    enum State {
-      LOGGED,
-      UNLOGGED,
-      INVALID
-    } _state;
-
     friend class openbus::interceptors::ServerInterceptor;
     friend class openbus::interceptors::ClientInterceptor;
     friend class openbus::ConnectionManager;

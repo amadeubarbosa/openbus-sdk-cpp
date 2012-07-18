@@ -33,8 +33,8 @@ Connection::Connection(
   PortableInterceptor::SlotId s3,
   ConnectionManager *m) 
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
-  _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _manager(m), _key(0), _renewLogin(0), 
-  _loginInfo(0), _busid(0), _onInvalidLogin(0), _state(UNLOGGED)
+  _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _renewLogin(0), _loginInfo(0), 
+  _onInvalidLogin(0), _state(UNLOGGED), _manager(m), _key(0), _busid(0)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -42,10 +42,16 @@ Connection::Connection(
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent.in()));
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
-  CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
+  CORBA::Object_var obj;
+  try {
+    obj = _orb->string_to_object(corbaloc.str().c_str());
+  } catch (CORBA::BAD_PARAM &){
+    throw InvalidBusAddress();
+  }
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     _iComponent = scs::core::IComponent::_narrow(obj);
+    if (CORBA::is_nil(_iComponent)) throw InvalidBusAddress();
     obj = _iComponent->getFacetByName(idl_ac::AccessControlFacet);
     _access_control = idl_ac::AccessControl::_narrow(obj);
     assert(!CORBA::is_nil(_access_control.in()));

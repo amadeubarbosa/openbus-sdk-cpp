@@ -20,11 +20,7 @@ namespace openbus {
 /**
 * \brief openbus
 */
-namespace openbus {
-  /* exceptions */
-  struct NotLoggedIn  { const char *name() const { return "openbus::NotLoggedIn"; } };
-  /**/
-  
+namespace openbus {  
  /**
  * \brief Interface com operações para gerenciar o acesso a barramentos OpenBus através de um ORB 
  *  CORBA.
@@ -38,7 +34,11 @@ namespace openbus {
 	  * @param[in] port Porta do processo do barramento no endereço indicado.
 	  * 
 	  * @throw CORBA::Exception
-	  *
+	  * @throw InvalidBusAddress
+    *   - host e porta informados não podem ser usados para gerar um corbaloc válido. 
+    *   - o 'corbaloc' gerado não referencia um 'IComponent' válido, ou seja, com o ComponentId e 
+    *     facetas esperadas.	  
+    *
 	  * @return Conexão ao barramento referenciado.
 	  */
     std::auto_ptr<Connection> createConnection(const char *host, short port);
