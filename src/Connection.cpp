@@ -31,10 +31,10 @@ Connection::Connection(
   PortableInterceptor::SlotId s1, 
   PortableInterceptor::SlotId s2,
   PortableInterceptor::SlotId s3,
-  ConnectionManager *m) 
+  ConnectionManager *m, std::vector<std::string> props) 
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
   _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _renewLogin(0), _loginInfo(0), 
-  _onInvalidLogin(0), _state(UNLOGGED), _manager(m), _key(0), _busid(0)
+  _onInvalidLogin(0), _state(UNLOGGED), _manager(m), _key(0), _busid(0), _legacyDelegate(CALLER)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -77,6 +77,12 @@ Connection::Connection(
     _busid = _access_control->busid();
     _buskey = fetchBusKey();
   }
+  
+  for (std::vector<std::string>::const_iterator it = props.begin(); it != props.end(); ++it)
+    if (*it == "legacydelegate") {
+      ++it;
+      if (it != props.end() && *it == "originator") _legacyDelegate = ORIGINATOR;
+    } 
 }
 
 Connection::~Connection() { 

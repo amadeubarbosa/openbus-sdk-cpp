@@ -10,6 +10,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include <openssl/evp.h>
 
 namespace openbus {
@@ -39,7 +40,7 @@ namespace openbus {
   /**/
   
   struct CallerChain;
-
+  
   /**
   * Conexão com um barramento.
   */
@@ -52,7 +53,7 @@ namespace openbus {
     * refeita, ou 'false' caso a execção de NO_PERMISSION deve ser lançada.
     */
     typedef void (*InvalidLoginCallback_ptr) (Connection&, idl_ac::LoginInfo);
-  
+    
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por senha.
 	  * 
@@ -67,7 +68,7 @@ namespace openbus {
 	  * @throw CORBA::Exception
 	  */
     void loginByPassword(const char *entity, const char *password);
-
+    
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por certificado.
 	  * 
@@ -85,7 +86,7 @@ namespace openbus {
 	  * @throw CORBA::Exception
 	  */
     void loginByCertificate(const char *entity, const idl::OctetSeq &privKey);
-
+    
 	  /**
 	  * Inicia o processo de login por single sign-on.
 	  * 
@@ -97,7 +98,7 @@ namespace openbus {
 	  * @throw CORBA::Exception
 	  */
     std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq_var> startSharedAuth();
-      
+    
 	  /**
 	  * Efetua login no barramento como uma entidade usando autenticação por single sign-on.
 	  * 
@@ -113,7 +114,7 @@ namespace openbus {
 	  * @throw CORBA::Exception
 	  */
     void loginBySharedAuth(idl_ac::LoginProcess_ptr, const idl::OctetSeq &secret);
-          
+    
 	  /**
 	  * Efetua logout no barramento. Se a sua conexão for uma conexão de despacho, remove essa conexão
 	  * como despachante do ConnectionManager.
@@ -148,7 +149,7 @@ namespace openbus {
 	  * @throw CORBA::Exception
 	  */
 	  void joinChain(CallerChain *chain);
-
+    
     /**
     * Remove a associação da cadeia de chamadas com a thread corrente, fazendo com que todas as 
     * chamadas seguintes da thread corrente feitas através dessa conexão	deixem de fazer parte da 
@@ -182,7 +183,7 @@ namespace openbus {
 	  * inválido.
 	  */
     InvalidLoginCallback_ptr onInvalidLogin();
-       
+    
   	/** 
   	* Informações sobre o login da entidade que autenticou essa conexão. 
   	*/
@@ -208,7 +209,7 @@ namespace openbus {
       PortableInterceptor::SlotId slotId_joinedCallChain, 
       PortableInterceptor::SlotId slotId_signedCallChain, 
       PortableInterceptor::SlotId slotId_legacyCallChain, 
-      ConnectionManager*);
+      ConnectionManager*, std::vector<std::string> props);
     EVP_PKEY *fetchBusKey();
     bool _logout(bool local);
     EVP_PKEY *__key() const { return _key; }
@@ -229,6 +230,11 @@ namespace openbus {
     InvalidLoginCallback_ptr _onInvalidLogin;
     MICOMT::Mutex _mutex;
     
+    enum LegacyDelegate {
+      CALLER,
+      ORIGINATOR
+    };
+    
     enum State {
       LOGGED,
       UNLOGGED,
@@ -246,6 +252,7 @@ namespace openbus {
     std::auto_ptr<LoginCache> _loginCache;
     const char *_busid;
     EVP_PKEY *_buskey;
+    LegacyDelegate _legacyDelegate;
     /**/
     
     friend class openbus::interceptors::ServerInterceptor;
@@ -278,10 +285,10 @@ namespace openbus {
     CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c, 
       const idl_cr::SignedCallChain &d) 
       : _busid(busid), _originators(b), _caller(c), _signedCallChain(d) { }
-
+    
     CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
       : _busid(busid), _originators(b), _caller(c) { }
-
+    
     const char *_busid;
     idl_ac::LoginInfoSeq _originators;
     idl_ac::LoginInfo _caller;

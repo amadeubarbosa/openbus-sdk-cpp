@@ -22,12 +22,13 @@ ConnectionManager::ConnectionManager(
 
 ConnectionManager::~ConnectionManager() { }
 
-std::auto_ptr<Connection> ConnectionManager::createConnection(const char *host, short port) {
+std::auto_ptr<Connection> ConnectionManager::createConnection(const char *host, short port, 
+  std::vector<std::string> props)
+{
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::createConnection");
   l.vlog("createConnection para host %s:%hi", host, port);
   return std::auto_ptr<Connection> (new Connection(host, port, _orb, _codec, 
-    _slotId_joinedCallChain, _slotId_signedCallChain, 
-    _slotId_legacyCallChain, this));
+    _slotId_joinedCallChain, _slotId_signedCallChain, _slotId_legacyCallChain, this, props));
 }
 
 void ConnectionManager::setRequester(Connection *c) {

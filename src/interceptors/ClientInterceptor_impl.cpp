@@ -180,8 +180,10 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
       legacyCredential.identifier = CORBA::string_dup(conn._login()->id);
       legacyCredential.owner = CORBA::string_dup(conn._login()->entity);
       conn_mutex.unlock();
-      if (callerChain && (callerChain->_originators.length() > 1))
-        legacyCredential.delegate = CORBA::string_dup(callerChain->_originators[0].entity);
+      if (callerChain)
+        if (conn._legacyDelegate == Connection::ORIGINATOR && callerChain->_originators.length())
+          legacyCredential.delegate = CORBA::string_dup(callerChain->_originators[0].entity);
+        else legacyCredential.delegate = CORBA::string_dup(callerChain->_caller.entity);            
       else legacyCredential.delegate = "";
       CORBA::Any lany;
       lany <<= legacyCredential;

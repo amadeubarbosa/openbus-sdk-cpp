@@ -7,6 +7,8 @@
 #define _TECGRAF_MANAGER_H_
 
 #include <CORBA.h>
+#include <string>
+#include <vector>
 
 namespace openbus {
   class ConnectionManager;
@@ -20,7 +22,8 @@ namespace openbus {
 /**
 * \brief openbus
 */
-namespace openbus {  
+namespace openbus {
+  const std::vector<std::string> propsDef;
  /**
  * \brief Interface com operações para gerenciar o acesso a barramentos OpenBus através de um ORB 
  *  CORBA.
@@ -32,7 +35,18 @@ namespace openbus {
 	  * 
 	  * @param[in] host Endereço de rede IP onde o barramento está executando.
 	  * @param[in] port Porta do processo do barramento no endereço indicado.
-	  * 
+	  * @param[in] props Lista opcional de propriedades:
+	  *   legacydelegate: Indica como o campo 'delegate' das credenciais 1.5 são preenchidos a partir 
+	  *                   de uma cadeia 2.0.
+	  *     Chave "legacydelegate" seguida por um dos seguintes valores:
+	  *       "caller"
+	  *          O campo 'delegate' deve ser preenchido com o 'chain.caller.entity'.
+	  *       "originator"
+	  *          O campo 'delegate' deve ser preenchido com o 'chain.originators[0].entity' ou 
+	  *          'chain.caller.entity' caso o campo 'chain.originators' seja uma sequência vazia.
+    *      OBS: Se esta propriedade não for definida o comportamento referente ao modo 'caller'
+    *      será adotado.
+	  *   
 	  * @throw CORBA::Exception
 	  * @throw InvalidBusAddress
     *   - host e porta informados não podem ser usados para gerar um corbaloc válido. 
@@ -41,7 +55,8 @@ namespace openbus {
     *
 	  * @return Conexão ao barramento referenciado.
 	  */
-    std::auto_ptr<Connection> createConnection(const char *host, short port);
+    std::auto_ptr<Connection> createConnection(const char *host, short port, 
+      std::vector<std::string> props = propsDef);
     
     /**
  	  * Define a conexão a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
