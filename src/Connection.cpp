@@ -23,6 +23,10 @@ EVP_PKEY* Connection::fetchBusKey() {
   return openssl::byteSeq2PubKey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
 }
 
+void Connection::checkBusid() const {
+  if (strcmp(_busid, _access_control->busid())) throw InvalidBusChanged();
+}
+
 Connection::Connection(
   const std::string h,
   const unsigned short p,
@@ -104,6 +108,7 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   if (state == LOGGED) throw AlreadyLoggedIn();
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
+  checkBusid();  
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
   /* representação do password em uma cadeia de bytes. */
@@ -171,6 +176,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   idl_ac::LoginProcess_var loginProcess;
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
+    checkBusid();  
     loginProcess = _access_control->startLoginByCertificate(entity,challenge);
   }
   
@@ -260,6 +266,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   if (state == LOGGED) throw AlreadyLoggedIn();
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
+  checkBusid();  
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
   
