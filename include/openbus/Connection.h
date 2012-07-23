@@ -37,7 +37,7 @@ struct WrongPrivateKey {const char *name() const { return "openbus::WrongPrivate
 struct WrongSecret { const char *name() const { return "openbus::WrongSecret"; } };
 struct InvalidLoginProcess{ const char *name() const { return "openbus::InvalidLoginProcess";}};
 struct InvalidBusAddress  { const char *name() const { return "openbus::InvalidBusAddress"; } };
-struct InvalidBusChanged { const char *name() const { return "openbus::InvalidBusChanged";} };
+struct BusChanged { const char *name() const { return "openbus::BusChanged";} };
 /**/
 
 struct CallerChain;
@@ -66,7 +66,7 @@ public:
   * @throw AlreadyLoggedIn A conexão já está logada.
   * @throw ServiceFailure Ocorreu uma falha interna nos serviços do barramento que impediu o 
   *        tabelecimento da conexão.
-  * @throw InvalidBusChanged O identificador do barramento (busid) foi alterado após a criação 
+  * @throw BusChanged O identificador do barramento (busid) foi alterado após a criação 
   *        desta conexão.
   * @throw CORBA::Exception
   */
@@ -86,7 +86,7 @@ public:
   *        indicado.
   * @throw ServiceFailure Ocorreu uma falha interna nos serviços do barramento que impediu o 
   *        estabelecimento da conexão.
-  * @throw InvalidBusChanged O identificador do barramento (busid) foi alterado após a criação 
+  * @throw BusChanged O identificador do barramento (busid) foi alterado após a criação 
   *        desta conexão.
   * @throw CORBA::Exception
   */
@@ -116,7 +116,7 @@ public:
   * @throw AlreadyLoggedIn A conexão já está logada.
   * @throw ServiceFailure Ocorreu uma falha interna nos serviços do barramento que impediu o 
   *        estabelecimento da conexão.
-  * @throw InvalidBusChanged O identificador do barramento (busid) foi alterado após a criação 
+  * @throw BusChanged O identificador do barramento (busid) foi alterado após a criação 
   *        desta conexão.
   * @throw CORBA::Exception
   */

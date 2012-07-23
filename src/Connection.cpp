@@ -24,7 +24,7 @@ EVP_PKEY* Connection::fetchBusKey() {
 }
 
 void Connection::checkBusid() const {
-  if (strcmp(_busid, _access_control->busid())) throw InvalidBusChanged();
+  if (strcmp(_busid, _access_control->busid())) throw BusChanged();
 }
 
 Connection::Connection(
