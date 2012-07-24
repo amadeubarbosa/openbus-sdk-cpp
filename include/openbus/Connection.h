@@ -30,17 +30,42 @@ namespace openbus {
 namespace openbus {
   
 /* exceptions */
-struct AccessDenied  { const char *name() const { return "openbus::AccessDenied"; } };
-struct AlreadyLoggedIn { const char *name() const { return "openbus::AlreadyLoggedIn"; } };
-struct CorruptedPrivateKey{ const char *name() const { return "openbus::CorruptedPrivateKey";} };
-struct WrongPrivateKey {const char *name() const { return "openbus::WrongPrivateKey"; } };
-struct WrongSecret { const char *name() const { return "openbus::WrongSecret"; } };
-struct InvalidLoginProcess{ const char *name() const { return "openbus::InvalidLoginProcess";}};
-struct InvalidBusAddress  { const char *name() const { return "openbus::InvalidBusAddress"; } };
-struct BusChanged { const char *name() const { return "openbus::BusChanged";} };
-struct InvalidPropertyValue {
+struct AccessDenied : public std::exception { 
+  const char *what() const throw() { return "openbus::AccessDenied"; } 
+};
+
+struct AlreadyLoggedIn : public std::exception { 
+  const char *what() const throw() { return "openbus::AlreadyLoggedIn"; } 
+};
+
+struct CorruptedPrivateKey : public std::exception { 
+  const char *what() const throw() { return "openbus::CorruptedPrivateKey";} 
+};
+
+struct WrongPrivateKey : public std::exception {
+  const char *what() const throw() { return "openbus::WrongPrivateKey"; } 
+};
+
+struct WrongSecret : public std::exception { 
+  const char *what() const throw() { return "openbus::WrongSecret"; } 
+};
+
+struct InvalidLoginProcess : public std::exception { 
+  const char *what() const throw() { return "openbus::InvalidLoginProcess"; }
+};
+
+struct InvalidBusAddress : public std::exception { 
+  const char *what() const throw() { return "openbus::InvalidBusAddress"; }
+};
+
+struct BusChanged : public std::exception { 
+  const char *what() const throw() { return "openbus::BusChanged"; }
+};
+
+struct InvalidPropertyValue : public std::exception {
   InvalidPropertyValue(std::string p, std::string v) : property(p), value(v) { }
-  const char *name() const { return "openbus::InvalidBusAddress"; }
+  ~InvalidPropertyValue() throw() { }
+  const char *what() const throw() { return "openbus::InvalidBusAddress"; }
   std::string property;
   std::string value;
 };

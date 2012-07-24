@@ -84,7 +84,10 @@ Connection::Connection(
   
   for (std::vector<std::string>::const_iterator it = props.begin(); it != props.end(); ++it)
     if (*it == "legacydelegate")
-      if (++it != props.end() && *it == "originator") _legacyDelegate = ORIGINATOR;
+      if (++it != props.end())
+        if (*it == "originator") _legacyDelegate = ORIGINATOR;
+        else if (*it == "caller") _legacyDelegate = CALLER;
+        else throw InvalidPropertyValue("legacydelegate", *it);
       else throw InvalidPropertyValue("legacydelegate", *it);
 }
 
