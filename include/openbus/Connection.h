@@ -38,6 +38,12 @@ struct WrongSecret { const char *name() const { return "openbus::WrongSecret"; }
 struct InvalidLoginProcess{ const char *name() const { return "openbus::InvalidLoginProcess";}};
 struct InvalidBusAddress  { const char *name() const { return "openbus::InvalidBusAddress"; } };
 struct BusChanged { const char *name() const { return "openbus::BusChanged";} };
+struct InvalidPropertyValue {
+  InvalidPropertyValue(std::string p, std::string v) : property(p), value(v) { }
+  const char *name() const { return "openbus::InvalidBusAddress"; }
+  std::string property;
+  std::string value;
+};
 /**/
 
 struct CallerChain;
