@@ -194,7 +194,7 @@ int main(int argc, char** argv)
   }
   catch(offer_registry::InvalidService const&)
   {
-    std::cout << "Barramento diz que o servico ofertado nao e um componente valido" <<::endl;
+    std::cout << "Barramento diz que o servico ofertado nao e um componente valido" << std::endl;
   }
   catch(offer_registry::InvalidProperties const&)
   {
