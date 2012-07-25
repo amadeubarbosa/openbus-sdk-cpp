@@ -13,6 +13,8 @@
 #include <vector>
 #include <openssl/evp.h>
 
+#include <boost/function.hpp>
+
 namespace openbus {
   class Connection;
   struct CallerChain;
@@ -84,7 +86,7 @@ public:
   * @return 'true' se a chamada que recebeu a indicação que o login se tornou inválido deve ser 
   * refeita, ou 'false' caso a execção de NO_PERMISSION deve ser lançada.
   */
-  typedef void (*InvalidLoginCallback_ptr) (Connection&, idl_ac::LoginInfo);
+  typedef boost::function<void (Connection&, idl_ac::LoginInfo)> InvalidLoginCallback_t;
   
   /**
   * Efetua login no barramento como uma entidade usando autenticação por senha.
@@ -214,13 +216,13 @@ public:
   * @param[in] p Ponteiro para uma função de callback que implementa a interface de callback a ser
   *            chamada ou zero caso nenhum objeto deva ser chamado na ocorrência desse evento.
   */
-  void onInvalidLogin(InvalidLoginCallback_ptr p);
+  void onInvalidLogin(InvalidLoginCallback_t p);
   
   /*
   * Retorna um ponteiro para uma função de callback a ser chamada sempre que o login se torna 
   * inválido.
   */
-  InvalidLoginCallback_ptr onInvalidLogin();
+  InvalidLoginCallback_t onInvalidLogin();
   
 	/** 
 	* Informações sobre o login da entidade que autenticou essa conexão. 
@@ -266,7 +268,7 @@ private:
   PortableInterceptor::SlotId _slotId_legacyCallChain;
   std::auto_ptr<RenewLogin> _renewLogin;
   std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
-  InvalidLoginCallback_ptr _onInvalidLogin;
+  InvalidLoginCallback_t _onInvalidLogin;
   MICOMT::Mutex _mutex;
   
   enum LegacyDelegate {

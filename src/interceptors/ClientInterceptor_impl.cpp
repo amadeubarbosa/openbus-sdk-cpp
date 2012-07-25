@@ -253,7 +253,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         idl_ac::LoginInfo oldLogin = *conn._loginInfo;
         conn._state = Connection::INVALID;
         conn_mutex.unlock();
-        Connection::InvalidLoginCallback_ptr callback = conn.onInvalidLogin();
+        Connection::InvalidLoginCallback_t callback = conn.onInvalidLogin();
         try {
           if (callback) (callback)(conn, oldLogin);
         } catch (...) {

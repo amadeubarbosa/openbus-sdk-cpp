@@ -407,12 +407,12 @@ CallerChain *Connection::getJoinedChain() {
   } else return 0;
 }
 
-void Connection::onInvalidLogin(Connection::InvalidLoginCallback_ptr p) { 
+void Connection::onInvalidLogin(Connection::InvalidLoginCallback_t p) { 
   AutoLock m(&_mutex);
   _onInvalidLogin = p; 
 }
 
-Connection::InvalidLoginCallback_ptr Connection::onInvalidLogin() { 
+Connection::InvalidLoginCallback_t Connection::onInvalidLogin() { 
   AutoLock m(&_mutex);
   return _onInvalidLogin; 
 }
