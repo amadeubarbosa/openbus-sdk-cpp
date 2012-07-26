@@ -19,17 +19,15 @@ int main(int argc, char** argv) {
     manager->setDefaultConnection(conn.get());
     conn->loginByPassword("demo", "demo");
     openbus::idl_or::ServicePropertySeq props;
-    props.length(3);
-    props[0].name  = "openbus.offer.entity";
-    props[0].value = "demo";
-    props[1].name  = "openbus.component.facet";
-    props[1].value = "hello";
-    props[2].name  = "offer.domain";
-    props[2].value = "Interoperability Tests";
+    props.length(2);
+    CORBA::ULong i = 0;
+    props[i].name  = "offer.domain";
+    props[i].value = "Interoperability Tests";
+    props[i+1].name  = "openbus.component.interface";
+    props[i+1].value = "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
     openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     if (offers->length()) {
-      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName(
-        "hello");
+      CORBA::Object_var o = offers[i].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       hello->sayHello();

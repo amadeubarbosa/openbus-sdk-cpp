@@ -178,7 +178,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   idl_ac::LoginProcess_var loginProcess;
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
-    checkBusid();  
+    checkBusid();
     loginProcess = _access_control->startLoginByCertificate(entity,challenge);
   }
   
@@ -191,21 +191,21 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
-
+  
   /* representação da minha chave em uma cadeia de bytes. */
   CORBA::OctetSeq_var bufKey = openssl::PubKey2byteSeq(_key);
   SHA256(bufKey->get_buffer(), bufKey->length(), loginAuthenticationInfo.hash);
-
+  
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
-
+  
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
   CORBA::OctetSeq_var encrypted = openssl::encrypt(_buskey, encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted->get_buffer(), idl::EncryptedBlockSize);
-
+  
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::ValidityTime validityTime;    
   idl_ac::LoginInfo *loginInfo;

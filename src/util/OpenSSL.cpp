@@ -41,7 +41,7 @@ CORBA::OctetSeq_var encrypt(EVP_PKEY *key, const unsigned char *buf, size_t len)
   size_t encryptedLen;
   if (!((ctx = EVP_PKEY_CTX_new(key, 0)) && (EVP_PKEY_encrypt_init(ctx) > 0) 
      && (EVP_PKEY_encrypt(ctx, 0, &encryptedLen, buf, len) > 0))) assert(0);
-
+  
   encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen);
   assert(encrypted);
   
