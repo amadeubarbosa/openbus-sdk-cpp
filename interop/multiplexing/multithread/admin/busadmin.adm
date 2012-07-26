@@ -4,13 +4,13 @@ Category {
 }
 
 Entity {
-  id = "demo",
+  id = "demoCpp",
   category = "DemoCppHelloCategory",
   name = "Entidade gerada pelo script",
 }
 
 Certificate {
-  id = "demo",
+  id = "demoCpp",
   certificate = "DemoCppHello.crt",
 }
 
@@ -19,7 +19,7 @@ Interface {
 }
 
 Grant {
-  id = "demo",
+  id = "demoCpp",
   interfaces = {
     "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
   }

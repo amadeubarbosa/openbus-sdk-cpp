@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
       std::auto_ptr <openbus::Connection> 
         conn (manager->createConnection((*it).host.c_str(), (*it).port));
       manager->setDefaultConnection(conn.get());
-      conn->loginByPassword("demo", "demo");
+      conn->loginByPassword("demoCpp", "demoCpp");
       openbus::idl_or::ServicePropertySeq props;
       props.length(2);
       CORBA::ULong i = 0;
@@ -48,7 +48,8 @@ int main(int argc, char** argv) {
         CORBA::Object_var o = offers[i].service_ref->getFacetByName("hello");
         tecgraf::openbus::interop::simple::Hello *hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
-        hello->sayHello();
+        char *entity = hello->sayHello();
+        assert(!strcmp(entity, "demoCpp"));
       } else std::cout << "nenhuma oferta encontrada." << std::endl;
     }
   } catch (const CORBA::Exception &e) {

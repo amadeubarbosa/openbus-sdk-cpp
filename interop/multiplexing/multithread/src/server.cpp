@@ -10,11 +10,15 @@
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(openbus::Connection *c) : _conn(c) { }
-  void sayHello() throw (CORBA::SystemException) {
+  char * sayHello() throw (CORBA::SystemException) {
     openbus::CallerChain *chain = _conn->getCallerChain();
-    if (chain)
-      std::cout << "Hello from " << chain->caller().entity << "@" << chain->busid() << std::endl;
+    const char *entity = "";
+    if (chain) {
+      entity = chain->caller().entity;
+      std::cout << "Hello from " << entity << "@" << chain->busid() << std::endl;
+    }
     else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
+    return CORBA::string_dup(entity);
   }
 private:
   openbus::Connection *_conn;
@@ -82,8 +86,8 @@ int main(int argc, char** argv) {
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
     ctx.addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
-    connBusA->loginByPassword("demo", "demo");
-    connBusB->loginByPassword("demo", "demo");
+    connBusA->loginByPassword("demoCpp", "demoCpp");
+    connBusB->loginByPassword("demoCpp", "demoCpp");
 
     manager->setDispatcher(*connBusB.get());
     manager->setDispatcher(*connBusA.get());
