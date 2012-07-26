@@ -1,15 +1,17 @@
-
+#include <openbus/ConnectionManager.h>
+#include <openbus/ORBInitializer.h>
 #include <iostream>
 
-#include <openbus.h>
 #include <dedicated_clock.h>
 
 #include <boost/thread.hpp>
 
 namespace offer_registry
- = tecgraf::openbus::core::v2_00::services::offer_registry;
+ = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace demo = tecgraf::openbus::demo;
-namespace services = tecgraf::openbus::core::v2_00::services;
+namespace services = tecgraf::openbus::core::v2_0::services;
+namespace access_control
+ = tecgraf::openbus::core::v2_0::services::access_control;
 
 demo::Clock_ptr get_clock(offer_registry::ServiceOfferDescSeq_var offers)
 {
@@ -43,68 +45,122 @@ demo::Clock_ptr get_clock(offer_registry::ServiceOfferDescSeq_var offers)
   }
 }
 
-int main(int argc, char** argv)
+struct onReloginCallback
 {
-  try
+  typedef void result_type;
+  result_type operator()(openbus::Connection& c, access_control::LoginInfo info) const
   {
-    // Inicializando CORBA e ativando o RootPOA
-    CORBA::ORB_var orb = openbus::initORB(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
     do
     {
-      boost::this_thread::sleep(boost::posix_time::seconds(30));
-
-      // Construindo e logando conexao
-      openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-        (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-      assert(manager != 0);
-      std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
       try
       {
-        conn->loginByPassword("demo", "demo");
+        c.loginByPassword("demo", "demo");
+        break;
       }
       catch(openbus::AccessDenied const& e)
       {
-        std::cout << "Falha ao tentar realizar o login por senha no barramento: a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
-        return 1;
+        std::cout << "Falha ao tentar realizar o login por senha no barramento: "
+          "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       }
-      manager->setDefaultConnection(conn.get());
-
-      // Recebendo ofertas
-      openbus::idl_or::ServicePropertySeq props;
-      props.length(2);
-      props[0].name  = "openbus.offer.entity";
-      props[0].value = "demo";
-      props[1].name  = "openbus.component.facet";
-      props[1].value = "clock";
-      offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
-      // Pegando uma oferta valida
-      demo::Clock_ptr clock = ::get_clock(offers);
-      if(!CORBA::is_nil(clock))
+      catch (services::ServiceFailure e)
       {
-        // Chama a funcao
-        std::cout << "Hora no servidor em ticks: " << clock->getTimeInTicks() << std::endl;
+        std::cout << "Falha no serviço remoto. Causa: " << std::endl;
       }
+      catch (CORBA::TRANSIENT const&)
+      {
+        std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
+          "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+      }
+      catch (CORBA::COMM_FAILURE const&)
+      {
+        std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
+          "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+      }
+      catch (CORBA::OBJECT_NOT_EXIST const&)
+      {
+        std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
+      }
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
     }
     while(true);
   }
-  catch (services::ServiceFailure e)
+};
+
+int main(int argc, char** argv)
+{
+  CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
+  CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+  PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+  assert(!CORBA::is_nil(poa));
+  PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+  poa_manager->activate();
+
+  // Construindo e logando conexao
+  openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+    (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
+  assert(manager != 0);
+  std::auto_ptr <openbus::Connection> conn;
+
+  do
   {
-    std::cout << "Falha no serviço remoto. Causa: " << std::endl;
+    try
+    {
+      conn = manager->createConnection("localhost", 2089);
+      conn->onInvalidLogin( ::onReloginCallback());
+      conn->loginByPassword("demo", "demo");
+      manager->setDefaultConnection(conn.get());
+      break;
+    }
+    catch(openbus::AccessDenied const& e)
+    {
+      std::cout << "Falha ao tentar realizar o login por senha no barramento: "
+        "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
+    }
+    catch (services::ServiceFailure e)
+    {
+      std::cout << "Falha no serviço remoto. Causa: " << std::endl;
+    }
+    catch (CORBA::TRANSIENT const&)
+    {
+      std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
+        "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+    }
+    catch (CORBA::COMM_FAILURE const&)
+    {
+      std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
+        "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+    }
+    catch (CORBA::OBJECT_NOT_EXIST const&)
+    {
+      std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
+    }
+    unsigned int t = 30u;
+    do { t = sleep(t); } while(t);
   }
-  catch (CORBA::TRANSIENT const&)
+  while(true);
+
+  // Recebendo ofertas
+  openbus::idl_or::ServicePropertySeq props;
+  props.length(2);
+  props[0].name  = "openbus.offer.entity";
+  props[0].value = "demo";
+  props[1].name  = "openbus.component.facet";
+  props[1].value = "clock";
+
+  do
   {
-    std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
-      "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+    offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    // Pegando uma oferta valida
+    demo::Clock_ptr clock = ::get_clock(offers);
+    if(!CORBA::is_nil(clock))
+    {
+      // Chama a funcao
+      std::cout << "Hora no servidor em ticks: " << clock->getTimeInTicks() << std::endl;
+    }
+
+    unsigned int t = 30u;
+    do { t = sleep(t); } while(t);
   }
-  catch (CORBA::OBJECT_NOT_EXIST const&)
-  {
-    std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
-  }
-  return 1;
+  while(true);
 }

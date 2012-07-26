@@ -24,7 +24,10 @@ void call_with_found_hello(offer_registry::ServiceOfferDescSeq_var offers, F f)
     simple::Hello_var hello = simple::Hello::_narrow
       (offers[i].service_ref->getFacetByName("hello"));
     if(!CORBA::is_nil(hello))
+    {
       f(hello);
+      return;
+    }
   }
   else
   {
@@ -38,7 +41,10 @@ void call_with_found_hello(offer_registry::ServiceOfferDescSeq_var offers, F f)
           ->getFacetByName("hello");
         simple::Hello_var hello = simple::Hello::_narrow(o);
         if(!CORBA::is_nil(hello))
+        {
           f(hello);
+          return;
+        }
       }
       catch (CORBA::TRANSIENT const&)
       {
