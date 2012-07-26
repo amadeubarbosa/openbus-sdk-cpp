@@ -4,8 +4,23 @@
 #include <iostream>
 #include "stubs/hello.h"
 
+struct Bus {
+  std::string host;
+  short port;
+};
+
+std::vector<Bus> busVec;
+
 int main(int argc, char** argv) {
   try {
+    Bus busA, busB;
+    busA.host = "localhost";
+    busA.port = 2089;
+    busVec.push_back(busA);
+    busB.host = "localhost";
+    busB.port = 3090;
+    busVec.push_back(busB);
+    
     openbus::log.set_level(openbus::debug_level);
     CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
@@ -15,39 +30,22 @@ int main(int argc, char** argv) {
     poa_manager->activate();
     openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    {
-      std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
-      manager->setDefaultConnection(connBusA.get());
-      connBusA->loginByPassword("demo", "demo");
-      openbus::idl_or::ServicePropertySeq propsA;
-      propsA.length(2);
+    
+    for (std::vector<Bus>::iterator it = busVec.begin(); it != busVec.end(); ++it) {
+      std::auto_ptr <openbus::Connection> 
+        conn (manager->createConnection((*it).host.c_str(), (*it).port));
+      manager->setDefaultConnection(conn.get());
+      conn->loginByPassword("demo", "demo");
+      openbus::idl_or::ServicePropertySeq props;
+      props.length(2);
       CORBA::ULong i = 0;
-      propsA[i].name  = "openbus.component.interface";
-      propsA[i].value = "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
-      propsA[i+1].name  = "offer.domain";
-      propsA[i+1].value = "Interoperability Tests";
-      openbus::idl_or::ServiceOfferDescSeq_var offersA = connBusA->offers()->findServices(propsA);
-      if (offersA->length()) {
-        CORBA::Object_var o = offersA[1].service_ref->getFacetByName("hello");
-        tecgraf::openbus::interop::simple::Hello *hello = 
-          tecgraf::openbus::interop::simple::Hello::_narrow(o);
-        hello->sayHello();
-      } else std::cout << "nenhuma oferta encontrada." << std::endl;
-    }
-    {
-      std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
-      manager->setDefaultConnection(connBusB.get());
-      connBusB->loginByPassword("demo", "demo");
-      openbus::idl_or::ServicePropertySeq propsB;
-      propsA.length(2);
-      CORBA::ULong i = 0;
-      propsA[i].name  = "openbus.component.interface";
-      propsA[i].value = "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
-      propsA[i+1].name  = "offer.domain";
-      propsA[i+1].value = "Interoperability Tests";
-      openbus::idl_or::ServiceOfferDescSeq_var offersA = connBusA->offers()->findServices(propsA);
-      if (offersA->length()) {
-        CORBA::Object_var o = offersA[1].service_ref->getFacetByName("hello");
+      props[i].name  = "openbus.component.interface";
+      props[i].value = "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
+      props[i+1].name  = "offer.domain";
+      props[i+1].value = "Interoperability Tests";
+      openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+      if (offers->length()) {
+        CORBA::Object_var o = offers[i].service_ref->getFacetByName("hello");
         tecgraf::openbus::interop::simple::Hello *hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
         hello->sayHello();
