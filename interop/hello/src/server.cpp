@@ -16,8 +16,12 @@ openbus::idl_or::ServicePropertySeq props;
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(openbus::Connection *c) : _conn(c) { }
-  void sayHello() throw (CORBA::SystemException) {
-    std::cout << "Hello from '" <<  _conn->getCallerChain()->caller().entity << "'." << std::endl;
+  char * sayHello() {
+    const char *entity = "";
+    openbus::CallerChain *chain = _conn->getCallerChain();
+    if (chain) entity = chain->caller().entity;
+    std::cout << "Hello from '" << entity << "'." << std::endl;
+    return CORBA::string_dup(entity);
   }
 private:
   openbus::Connection *_conn;
@@ -30,8 +34,8 @@ void loginAndRegister() {
   // fclose(privateKeyFile);
   // if (!privateKey) throw openbus::CorruptedPrivateKey();
   // 
-  // conn->loginByCertificate("demo", openbus::openssl::PrvKey2byteSeq(privateKey));
-  conn->loginByPassword("demo", "demo");
+  // conn->loginByCertificate("demoCpp", openbus::openssl::PrvKey2byteSeq(privateKey));
+  conn->loginByPassword("demoCpp", "demoCpp");
   conn->offers()->registerService(ctx->getIComponent(), props);
 }
 
