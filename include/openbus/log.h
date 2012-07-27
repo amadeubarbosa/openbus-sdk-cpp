@@ -1,6 +1,7 @@
 #ifndef TECGRAF_OPENBUS_LOG_H_
 #define TECGRAF_OPENBUS_LOG_H_
 
+#include <CORBA.h>
 #include <log/output/streambuf_output.h>
 #include <log/logger.h>
 
