@@ -4,6 +4,7 @@
 #include <openbus/util/OpenSSL.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
+#include <sstream>
 #include <typeinfo>
 
 #include "stubs/hello.h"
@@ -13,15 +14,18 @@ openbus::ConnectionManager *manager;
 std::auto_ptr<openbus::Connection> conn;
 scs::core::ComponentContext *ctx;
 openbus::idl_or::ServicePropertySeq props;
+const std::string entity("interop_hello_cpp_server");
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(openbus::Connection *c) : _conn(c) { }
   char * sayHello() {
-    const char *entity = "";
+    const char *s = "";
     openbus::CallerChain *chain = _conn->getCallerChain();
-    if (chain) entity = chain->caller().entity;
-    std::cout << "Hello from '" << entity << "'." << std::endl;
-    return CORBA::string_dup(entity);
+    if (chain) s = chain->caller().entity;
+    std::cout << "Hello from '" << s << "'." << std::endl;
+    std::stringstream r;
+    r << "Hello " << s << "!";
+    return CORBA::string_dup(r.str().c_str());
   }
 private:
   openbus::Connection *_conn;
@@ -34,8 +38,8 @@ void loginAndRegister() {
   // fclose(privateKeyFile);
   // if (!privateKey) throw openbus::CorruptedPrivateKey();
   // 
-  // conn->loginByCertificate("demoCpp", openbus::openssl::PrvKey2byteSeq(privateKey));
-  conn->loginByPassword("demoCpp", "demoCpp");
+  // conn->loginByCertificate("interop_hello_cpp_server", openbus::openssl::PrvKey2byteSeq(privateKey));
+  conn->loginByPassword(entity.c_str(), entity.c_str());
   conn->offers()->registerService(ctx->getIComponent(), props);
 }
 

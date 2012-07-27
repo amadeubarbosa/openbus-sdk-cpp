@@ -2,7 +2,10 @@
 #include <openbus/ConnectionManager.h>
 #include <openbus/log.h>
 #include <iostream>
+#include <string>
 #include "stubs/hello.h"
+
+const std::string entity("interop_hello_cpp_client");
 
 int main(int argc, char** argv) {
   try {
@@ -17,7 +20,7 @@ int main(int argc, char** argv) {
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
     manager->setDefaultConnection(conn.get());
-    conn->loginByPassword("demoCpp", "demoCpp");
+    conn->loginByPassword(entity.c_str(), entity.c_str());
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
     CORBA::ULong i = 0;
@@ -30,8 +33,10 @@ int main(int argc, char** argv) {
       CORBA::Object_var o = offers[i].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
-      char *entity = hello->sayHello();
-      assert(!strcmp(entity, "demoCpp"));
+      char *msg = hello->sayHello();
+      std::stringstream s;
+      s << "Hello " << entity << "!";
+      assert(!strcmp(msg, s.str().c_str()));
     } else std::cout << "nenhuma oferta encontrada." << std::endl;
   } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
