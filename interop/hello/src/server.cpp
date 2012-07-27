@@ -23,9 +23,10 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
     openbus::CallerChain *chain = _conn->getCallerChain();
     if (chain) s = chain->caller().entity;
     std::cout << "Hello from '" << s << "'." << std::endl;
-    std::stringstream r;
-    r << "Hello " << s << "!";
-    return CORBA::string_dup(r.str().c_str());
+    std::stringstream ss;
+    ss << "Hello " << s << "!";
+    CORBA::String_var r = CORBA::string_dup(ss.str().c_str());
+    return r._retn();
   }
 private:
   openbus::Connection *_conn;
