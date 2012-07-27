@@ -3,22 +3,25 @@
 #include <openbus/ConnectionManager.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
+#include <sstream>
 #include <typeinfo>
 
 #include "stubs/hello.h"
 #include <CORBA.h>
 
+const std::string entity("interop_multiplexing_cpp_server");
+
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(openbus::Connection *c) : _conn(c) { }
-  char * sayHello() throw (CORBA::SystemException) {
+  char * sayHello() {
     openbus::CallerChain *chain = _conn->getCallerChain();
-    const char *entity = "";
-    if (chain) {
-      entity = chain->caller().entity;
-      std::cout << "Hello from " << entity << "@" << chain->busid() << std::endl;
-    }
+    if (chain)
+      std::cout << "Hello from " << chain->caller().entity.in() << "@" << chain->busid() 
+        << std::endl;
     else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
-    return CORBA::string_dup(entity);
+    std::string msg = "Hello " + std::string(chain->caller().entity.in()) + "!";
+    CORBA::String_var r = CORBA::string_dup(msg.c_str());
+    return r._retn();
   }
 private:
   openbus::Connection *_conn;
@@ -86,8 +89,8 @@ int main(int argc, char** argv) {
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
     ctx.addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
-    connBusA->loginByPassword("demoCpp", "demoCpp");
-    connBusB->loginByPassword("demoCpp", "demoCpp");
+    connBusA->loginByPassword(entity.c_str(), entity.c_str());
+    connBusB->loginByPassword(entity.c_str(), entity.c_str());
 
     manager->setDispatcher(*connBusB.get());
     manager->setDispatcher(*connBusA.get());

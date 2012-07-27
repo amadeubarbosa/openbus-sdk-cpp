@@ -10,6 +10,7 @@ struct Bus {
 };
 
 std::vector<Bus> busVec;
+const std::string entity("interop_multiplexing_cpp_client");
 
 int main(int argc, char** argv) {
   try {
@@ -35,7 +36,7 @@ int main(int argc, char** argv) {
       std::auto_ptr <openbus::Connection> 
         conn (manager->createConnection((*it).host.c_str(), (*it).port));
       manager->setDefaultConnection(conn.get());
-      conn->loginByPassword("demoCpp", "demoCpp");
+      conn->loginByPassword(entity.c_str(), entity.c_str());
       openbus::idl_or::ServicePropertySeq props;
       props.length(2);
       CORBA::ULong i = 0;
@@ -48,8 +49,9 @@ int main(int argc, char** argv) {
         CORBA::Object_var o = offers[i].service_ref->getFacetByName("hello");
         tecgraf::openbus::interop::simple::Hello *hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
-        char *entity = hello->sayHello();
-        assert(!strcmp(entity, "demoCpp"));
+        char *msg = hello->sayHello();
+        std::string s = "Hello " + entity + "!";
+        assert(!strcmp(msg, s.c_str()));
       } else std::cout << "nenhuma oferta encontrada." << std::endl;
     }
   } catch (const CORBA::Exception &e) {
