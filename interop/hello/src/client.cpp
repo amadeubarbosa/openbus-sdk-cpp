@@ -34,9 +34,8 @@ int main(int argc, char** argv) {
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       char *msg = hello->sayHello();
-      std::stringstream s;
-      s << "Hello " << entity << "!";
-      assert(!strcmp(msg, s.str().c_str()));
+      std::string s = "Hello " + entity + "!";
+      assert(!strcmp(msg, s.c_str()));
     } else std::cout << "nenhuma oferta encontrada." << std::endl;
   } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;

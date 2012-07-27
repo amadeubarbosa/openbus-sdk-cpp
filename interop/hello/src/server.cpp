@@ -19,13 +19,13 @@ const std::string entity("interop_hello_cpp_server");
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(openbus::Connection *c) : _conn(c) { }
   char * sayHello() {
-    const char *s = "";
     openbus::CallerChain *chain = _conn->getCallerChain();
-    if (chain) s = chain->caller().entity;
-    std::cout << "Hello from '" << s << "'." << std::endl;
-    std::stringstream ss;
-    ss << "Hello " << s << "!";
-    CORBA::String_var r = CORBA::string_dup(ss.str().c_str());
+    if (chain)
+      std::cout << "Hello from " << chain->caller().entity.in() << "@" << chain->busid() 
+        << std::endl;
+    else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
+    std::string msg = "Hello " + std::string(chain->caller().entity.in()) + "!";
+    CORBA::String_var r = CORBA::string_dup(msg.c_str());
     return r._retn();
   }
 private:
