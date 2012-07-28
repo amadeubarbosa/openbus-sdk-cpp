@@ -47,7 +47,7 @@ struct onReloginCallback
         c.loginByPassword("demo", "demo");
         break;
       }
-      catch(openbus::AccessDenied const& e)
+      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -89,7 +89,7 @@ bool registerService(scs::core::IComponent_var component, offer_registry::Servic
         offers->registerService(component, properties);
         break;
       }
-      catch(openbus::AccessDenied const& e)
+      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
       manager->setDefaultConnection(conn.get());
       break;
     }
-    catch(openbus::AccessDenied const& e)
+    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: "
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;

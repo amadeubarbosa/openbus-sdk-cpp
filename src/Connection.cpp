@@ -187,7 +187,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   /* decifrar o desafio usando a chave privada do usuário. */
   CORBA::OctetSeq_var secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 
     idl::EncryptedBlockSize);
-  if (!secret) throw CorruptedPrivateKey();
+  if (!secret) throw InvalidPrivateKey();
   
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
@@ -211,10 +211,8 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   idl_ac::LoginInfo *loginInfo;
   try {
     loginInfo = loginProcess->login(bufKey.in(), encryptedBlock, validityTime);
-  } catch (idl_ac::AccessDenied&) {
-    throw WrongPrivateKey();
   } catch (idl_ac::WrongEncoding&) {
-    throw idl::services::ServiceFailure();
+    throw idl_ac::AccessDenied();
   }
   
   m.lock();
@@ -290,10 +288,8 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   idl_ac::LoginInfo *loginInfo; 
   try {
     loginInfo = loginProcess->login(bufKey.in(), encryptedBlock, validityTime);
-  } catch (idl_ac::AccessDenied&) {
-    throw WrongSecret();
   } catch (idl_ac::WrongEncoding&) {
-    throw idl::services::ServiceFailure();
+    throw idl_ac::AccessDenied();
   }
 
   m.lock();

@@ -32,36 +32,24 @@ namespace openbus {
 namespace openbus {
   
 /* exceptions */
-struct AccessDenied : public std::exception { 
-  const char *what() const throw() { return "openbus::AccessDenied"; } 
+struct BusChanged : public std::exception { 
+  const char *what() const throw() { return "openbus::BusChanged"; }
 };
 
 struct AlreadyLoggedIn : public std::exception { 
   const char *what() const throw() { return "openbus::AlreadyLoggedIn"; } 
 };
 
-struct CorruptedPrivateKey : public std::exception { 
-  const char *what() const throw() { return "openbus::CorruptedPrivateKey";} 
-};
-
-struct WrongPrivateKey : public std::exception {
-  const char *what() const throw() { return "openbus::WrongPrivateKey"; } 
-};
-
-struct WrongSecret : public std::exception { 
-  const char *what() const throw() { return "openbus::WrongSecret"; } 
-};
-
-struct InvalidLoginProcess : public std::exception { 
-  const char *what() const throw() { return "openbus::InvalidLoginProcess"; }
-};
-
 struct InvalidBusAddress : public std::exception { 
   const char *what() const throw() { return "openbus::InvalidBusAddress"; }
 };
 
-struct BusChanged : public std::exception { 
-  const char *what() const throw() { return "openbus::BusChanged"; }
+struct InvalidPrivateKey : public std::exception { 
+  const char *what() const throw() { return "openbus::InvalidPrivateKey";} 
+};
+
+struct InvalidLoginProcess : public std::exception { 
+  const char *what() const throw() { return "openbus::InvalidLoginProcess"; }
 };
 
 struct InvalidPropertyValue : public std::exception {
@@ -94,13 +82,14 @@ public:
   * @param[in] entity Identificador da entidade a ser conectada.
   * @param[in] password Senha de autenticação da entidade no barramento.
   * 
-  * @throw AccessDenied Senha fornecida para autenticação da entidade não foi validada pelo 
-  *        barramento.
   * @throw AlreadyLoggedIn A conexão já está logada.
-  * @throw ServiceFailure Ocorreu uma falha interna nos serviços do barramento que impediu o 
-  *        tabelecimento da conexão.
   * @throw BusChanged O identificador do barramento (busid) foi alterado após a criação 
   *        desta conexão.
+  * @throw tecgraf::openbus::core::v2_0::services::access_control::AccessDenied
+  *        Senha fornecida para autenticação da entidade não foi validada pelo barramento.
+  * @throw tecgraf::openbus::core::v2_0::services::ServiceFailure 
+  *        Ocorreu uma falha interna nos serviços do barramento que impediu o 
+  *        tabelecimento da conexão.
   * @throw CORBA::Exception
   */
   void loginByPassword(const char *entity, const char *password);
@@ -111,14 +100,16 @@ public:
   * @param[in] entity Identificador da entidade a ser conectada.
   * @param[in] privKey Chave privada da entidade utilizada na autenticação.
   * 
-  * @throw CorruptedPrivateKey A chave privada fornecida está corrompida.
-  * @throw WrongPrivateKey A chave privada fornecida não corresponde ao certificado da entidade 
+  * @throw InvalidPrivateKey A chave privada fornecida está corrompida.
+  * @throw tecgraf::openbus::core::v2_0::services::access_control::AccessDenied 
+  *        A chave privada fornecida não corresponde ao certificado da entidade 
   *        registrado no barramento indicado.
   * @throw AlreadyLoggedIn A conexão já está logada.
   * @throw MissingCertificate Não há certificado para essa entidade registrado no barramento 
   *        indicado.
-  * @throw ServiceFailure Ocorreu uma falha interna nos serviços do barramento que impediu o 
-  *        estabelecimento da conexão.
+  * @throw tecgraf::openbus::core::v2_0::services::ServiceFailure 
+  *        Ocorreu uma falha interna nos serviços do barramento que impediu o estabelecimento da 
+  *        conexão.
   * @throw BusChanged O identificador do barramento (busid) foi alterado após a criação 
   *        desta conexão.
   * @throw CORBA::Exception
@@ -131,7 +122,8 @@ public:
   * @return Um par composto de um objeto que representa o processo de login iniciado e de um 
   *         segredo a ser fornecido na conclusão do processo de login.
   *
-  * @throw ServiceFailure Ocorreu uma falha interna nos serviços do barramento que impediu o 
+  * @throw tecgraf::openbus::core::v2_0::services::ServiceFailure 
+  *        Ocorreu uma falha interna nos serviços do barramento que impediu o 
   *        estabelecimento da conexão.
   * @throw CORBA::Exception
   */
@@ -143,11 +135,13 @@ public:
   * @param[in] loginProcess Objeto que represeta o processo de login iniciado.
   * @param[in] secret Segredo a ser fornecido na conclusão do processo de login.
   * 
-  * @throw WrongSecret O segredo fornecido não corresponde ao esperado pelo barramento.
+  * @throw tecgraf::openbus::core::v2_0::services::access_control::AccessDenied 
+  *        O segredo fornecido não corresponde ao esperado pelo barramento.
   * @throw InvalidLoginProcess O LoginProcess informado é inválido, por exemplo depois de ser 
   *        cancelado ou ter expirado.
   * @throw AlreadyLoggedIn A conexão já está logada.
-  * @throw ServiceFailure Ocorreu uma falha interna nos serviços do barramento que impediu o 
+  * @throw tecgraf::openbus::core::v2_0::services::ServiceFailure 
+  *        Ocorreu uma falha interna nos serviços do barramento que impediu o 
   *        estabelecimento da conexão.
   * @throw BusChanged O identificador do barramento (busid) foi alterado após a criação 
   *        desta conexão.
