@@ -4,6 +4,7 @@
 #include <openbus/util/OpenSSL.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <typeinfo>
 
@@ -65,6 +66,28 @@ private:
 
 int main(int argc, char** argv) {
   try {
+    std::string host("localhost");
+    short port = 2089;
+    std::ifstream config("test.properties", std::ifstream::in);
+    if (!config) assert(0);
+    std::string s;
+    while (config >> s) {
+      if (s == std::string("bus.host.name")) {
+        char c;
+        config >> c;
+        if (c == '=') {
+          if (!(config >> host)) assert(0);
+        } else assert(0);
+      } else if (s == std::string("bus.host.port")) {
+        char c;
+        config >> c;
+        if (c == '=') {
+          if (!(config >> port)) assert(0);
+        } else assert(0);        
+      }
+    }
+    config.close();
+    
     openbus::log.set_level(openbus::debug_level);
     CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     
@@ -76,7 +99,7 @@ int main(int argc, char** argv) {
     
     manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    conn = manager->createConnection("localhost", 2089);
+    conn = manager->createConnection(host.c_str(), port);
     manager->setDefaultConnection(conn.get());
     conn->onInvalidLogin(&onInvalidLogin);
     

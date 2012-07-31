@@ -2,6 +2,7 @@
 #include <openbus/ConnectionManager.h>
 #include <openbus/log.h>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "stubs/hello.h"
 
@@ -9,6 +10,28 @@ const std::string entity("interop_hello_cpp_client");
 
 int main(int argc, char** argv) {
   try {
+    std::string host("localhost");
+    short port = 2089;
+    std::ifstream config("test.properties", std::ifstream::in);
+    if (!config) assert(0);
+    std::string s;
+    while (config >> s) {
+      if (s == std::string("bus.host.name")) {
+        char c;
+        config >> c;
+        if (c == '=') {
+          if (!(config >> host)) assert(0);
+        } else assert(0);
+      } else if (s == std::string("bus.host.port")) {
+        char c;
+        config >> c;
+        if (c == '=') {
+          if (!(config >> port)) assert(0);
+        } else assert(0);        
+      }
+    }
+    config.close();
+
     openbus::log.set_level(openbus::debug_level);
     CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
@@ -18,7 +41,7 @@ int main(int argc, char** argv) {
     poa_manager->activate();
     openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn (manager->createConnection(host.c_str(), port));
     manager->setDefaultConnection(conn.get());
     conn->loginByPassword(entity.c_str(), entity.c_str());
     openbus::idl_or::ServicePropertySeq props;
