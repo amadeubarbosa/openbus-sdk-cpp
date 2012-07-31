@@ -27,6 +27,7 @@ private:
   openbus::Connection *_conn;
 };
 
+#ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
 public:
   RunThread(openbus::ConnectionManager *m) : _manager(m) {}
@@ -34,6 +35,7 @@ public:
 private:
   openbus::ConnectionManager *_manager;
 };
+#endif
 
 class RegisterThread : public MICOMT::Thread {
 public:
@@ -75,9 +77,11 @@ int main(int argc, char** argv) {
     std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
     manager->setDefaultConnection(connBusA.get());
 
+    #ifdef OPENBUS_SDK_MULTITHREAD
     RunThread *runThread = new RunThread(manager);
     runThread->start();
-
+    #endif
+    
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
     componentId.major_version = '1';
@@ -99,7 +103,11 @@ int main(int argc, char** argv) {
     RegisterThread *registerThreadB = new RegisterThread(manager, ctx, connBusB.get());
     registerThreadA->start();
     registerThreadB->start();
+    #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
+    #else
+    manager->orb()->run();
+    #endif
   } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
