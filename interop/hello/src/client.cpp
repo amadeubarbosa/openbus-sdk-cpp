@@ -29,14 +29,14 @@ int main(int argc, char** argv) {
     props[i+1].name  = "openbus.component.interface";
     props[i+1].value = "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
     openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
-    if (offers->length()) {
-      CORBA::Object_var o = offers[i].service_ref->getFacetByName("Hello");
+    for (CORBA::ULong idx = 0; idx < offers->length(); ++idx) {
+      CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       char *msg = hello->sayHello();
       std::string s = "Hello " + entity + "!";
       assert(!strcmp(msg, s.c_str()));
-    } else std::cout << "nenhuma oferta encontrada." << std::endl;
+    }
   } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
