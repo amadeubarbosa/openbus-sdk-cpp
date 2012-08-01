@@ -19,7 +19,8 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
       std::cout << "Hello from " << chain->caller().entity.in() << "@" << chain->busid() 
         << std::endl;
     else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
-    std::string msg = "Hello " + std::string(chain->caller().entity.in()) + "!";
+    std::string msg = "Hello " + std::string(chain->caller().entity.in()) + 
+      "@" + std::string(_conn->busid()) + "!";
     CORBA::String_var r = CORBA::string_dup(msg.c_str());
     return r._retn();
   }
@@ -91,7 +92,7 @@ int main(int argc, char** argv) {
     scs::core::ComponentContext ctx(manager->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
-    ctx.addFacet("hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
+    ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
     connBusA->loginByPassword(entity.c_str(), entity.c_str());
     connBusB->loginByPassword(entity.c_str(), entity.c_str());
