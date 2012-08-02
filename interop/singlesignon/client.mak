@@ -28,13 +28,13 @@ USE_NODEPEND= Yes
 
 SRC= src/client.cpp stubs/hello.cc
 
-IDLS= ../../hello/idl/hello.idl
+IDLS= ../../simple/idl/hello.idl
 
 STUBS= stubs/hello.cc stubs/hello.h
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../../hello/idl/hello.idl
+	cd stubs ; ${MICO_BIN}/idl --poa ../../simple/idl/hello.idl
 
 genstubs: $(STUBS)
 
