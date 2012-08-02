@@ -134,8 +134,9 @@ namespace openbus {
     ConnectionManager(CORBA::ORB*, IOP::Codec*, 
       PortableInterceptor::SlotId slotId_joinedCallChain, 
       PortableInterceptor::SlotId slotId_signedCallChain, 
+      PortableInterceptor::SlotId slotId_legacyCallChain,
       PortableInterceptor::SlotId slotId_requesterConnection,
-      PortableInterceptor::SlotId slotId_legacyCallChain);
+      PortableInterceptor::SlotId slotId_receiveConnection);
     ~ConnectionManager();
     void orb(CORBA::ORB *o) { _orb = o; }
     typedef std::map<std::string, Connection*> BusidConnection;
@@ -147,6 +148,7 @@ namespace openbus {
     PortableInterceptor::SlotId _slotId_signedCallChain;
     PortableInterceptor::SlotId _slotId_legacyCallChain;
     PortableInterceptor::SlotId _slotId_requesterConnection;
+    PortableInterceptor::SlotId _slotId_receiveConnection;
     Connection *_defaultConnection;
     BusidConnection _busidConnection;
     friend CORBA::ORB *openbus::ORBInitializer(int argc, char **argv);

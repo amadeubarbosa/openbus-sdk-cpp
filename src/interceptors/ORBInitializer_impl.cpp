@@ -18,6 +18,7 @@ void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo *info) {
   IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
   _codec = codec_factory->create_codec(cdr_encoding);
   _slotId_requesterConnection = info->allocate_slot_id();
+  _slotId_receiveConnection = info->allocate_slot_id();
   _slotId_joinedCallChain = info->allocate_slot_id();
   _slotId_ignoreInterceptor = info->allocate_slot_id();
   CORBA::Object_var init_ref = info->resolve_initial_references("PICurrent");
@@ -30,8 +31,8 @@ void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo *info) {
   _slotId_signedCallChain = info->allocate_slot_id();
   _slotId_legacyCallChain = info->allocate_slot_id();
   _serverInterceptor = std::auto_ptr<ServerInterceptor> (
-    new ServerInterceptor(piCurrent.in(), _slotId_requesterConnection, _slotId_joinedCallChain,
-    _slotId_signedCallChain, _slotId_legacyCallChain, _codec.in()));
+    new ServerInterceptor(piCurrent.in(), _slotId_requesterConnection, _slotId_receiveConnection, 
+    _slotId_joinedCallChain, _slotId_signedCallChain, _slotId_legacyCallChain, _codec.in()));
   info->add_server_request_interceptor(_serverInterceptor.get());
 }
 

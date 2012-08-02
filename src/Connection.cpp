@@ -35,9 +35,11 @@ Connection::Connection(
   PortableInterceptor::SlotId s1, 
   PortableInterceptor::SlotId s2,
   PortableInterceptor::SlotId s3,
+  PortableInterceptor::SlotId s4,
   ConnectionManager *m, std::vector<std::string> props) 
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
-  _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _renewLogin(0), _loginInfo(0), 
+  _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _slotId_receiveConnection(s4), 
+  _renewLogin(0), _loginInfo(0), 
   _onInvalidLogin(0), _state(UNLOGGED), _manager(m), _key(0), _busid(0), _legacyDelegate(CALLER)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
@@ -359,6 +361,15 @@ bool Connection::logout() {
 
 CallerChain *Connection::getCallerChain() {
   log_scope l(log.general_logger(), info_level, "Connection::getCallerChain");
+  CORBA::Any_var connectionAddrAny = _piCurrent->get_slot(_slotId_receiveConnection);
+  idl::OctetSeq connectionAddrOctetSeq;
+  Connection *c = 0;
+  if (*connectionAddrAny >>= connectionAddrOctetSeq) {
+    assert(connectionAddrOctetSeq.length() == sizeof(Connection*));
+    std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection*));
+    if (c != this) return 0;
+  } else return 0;
+
   CORBA::Any *sigCallChainAny = _piCurrent->get_slot(_slotId_signedCallChain);
   CallerChain *callerChain = 0;
   idl_ac::CallChain callChain;

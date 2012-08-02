@@ -243,6 +243,7 @@ private:
     PortableInterceptor::SlotId slotId_joinedCallChain, 
     PortableInterceptor::SlotId slotId_signedCallChain, 
     PortableInterceptor::SlotId slotId_legacyCallChain, 
+    PortableInterceptor::SlotId slotId_receiveCallChain, 
     ConnectionManager*, std::vector<std::string> props);
   EVP_PKEY *fetchBusKey();
   void checkBusid() const;
@@ -260,6 +261,7 @@ private:
   PortableInterceptor::SlotId _slotId_joinedCallChain; 
   PortableInterceptor::SlotId _slotId_signedCallChain;
   PortableInterceptor::SlotId _slotId_legacyCallChain;
+  PortableInterceptor::SlotId _slotId_receiveConnection;
   std::auto_ptr<RenewLogin> _renewLogin;
   std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
   InvalidLoginCallback_t _onInvalidLogin;

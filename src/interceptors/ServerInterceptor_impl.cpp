@@ -14,11 +14,13 @@ namespace interceptors {
 ServerInterceptor::ServerInterceptor(
   PortableInterceptor::Current *piCurrent, 
   PortableInterceptor::SlotId slotId_requesterConnection,
+  PortableInterceptor::SlotId slotId_receiveConnection,
   PortableInterceptor::SlotId slotId_joinedCallChain,
   PortableInterceptor::SlotId slotId_signedCallChain, 
   PortableInterceptor::SlotId slotId_legacyCallChain,
   IOP::Codec *cdr_codec) 
   : _piCurrent(piCurrent), _slotId_requesterConnection(slotId_requesterConnection),
+    _slotId_receiveConnection(slotId_receiveConnection),
     _slotId_joinedCallChain(slotId_joinedCallChain),_slotId_signedCallChain(slotId_signedCallChain),
     _slotId_legacyCallChain(slotId_legacyCallChain), _cdrCodec(cdr_codec), _manager(0),
     _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE))
@@ -94,6 +96,10 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     CORBA::Any connectionAddrAny;
     connectionAddrAny <<= *(connectionAddrOctetSeq);
     r->set_slot(_slotId_requesterConnection, connectionAddrAny);
+
+    /* Disponibilização da conexão que está recebendo esta chamada. 
+    ** Uso em Connection::getCallerChain() */
+    r->set_slot(_slotId_receiveConnection, connectionAddrAny);
 
     /* definindo a conexão atual como a conexão a ser utilizada pelas chamadas remotas a serem 
     ** realizadas por este ponto de interceptação */
