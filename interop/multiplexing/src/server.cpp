@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <typeinfo>
+#include <vector>
 
 #include "stubs/hello.h"
 #include <CORBA.h>
@@ -12,20 +13,26 @@
 const std::string entity("interop_multiplexing_cpp_server");
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
-  HelloImpl(openbus::Connection *c) : _conn(c) { }
+  HelloImpl(std::vector<openbus::Connection *> l) : _connVec(l) { }
   char * sayHello() {
-    openbus::CallerChain *chain = _conn->getCallerChain();
-    if (chain)
-      std::cout << "Hello from " << chain->caller().entity.in() << "@" << chain->busid() 
-        << std::endl;
-    else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
-    std::string msg = "Hello " + std::string(chain->caller().entity.in()) + 
-      "@" + std::string(_conn->busid()) + "!";
+    std::string msg;
+    for (std::vector<openbus::Connection *>::iterator it = _connVec.begin(); it != _connVec.end(); 
+      ++it) 
+    {
+      openbus::CallerChain *chain = (*it)->getCallerChain();
+      if (chain) {
+        std::cout << "Hello from " << chain->caller().entity.in() << "@" << chain->busid() 
+          << std::endl;
+        msg = "Hello " + std::string(chain->caller().entity.in()) + "@" + 
+          std::string((*it)->busid()) + "!";
+        break;
+      }
+    }
     CORBA::String_var r = CORBA::string_dup(msg.c_str());
     return r._retn();
   }
 private:
-  openbus::Connection *_conn;
+  std::vector<openbus::Connection *> _connVec;
 };
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -76,6 +83,9 @@ int main(int argc, char** argv) {
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
     std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
+    std::vector<openbus::Connection *> connVec;
+    connVec.push_back(connBusA.get());
+    connVec.push_back(connBusB.get());
     manager->setDefaultConnection(connBusA.get());
 
     #ifdef OPENBUS_SDK_MULTITHREAD
@@ -91,7 +101,7 @@ int main(int argc, char** argv) {
     componentId.platform_spec = "";
     scs::core::ComponentContext ctx(manager->orb(), componentId);
     
-    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connBusA.get()));
+    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connVec));
     ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
     connBusA->loginByPassword(entity.c_str(), entity.c_str());
