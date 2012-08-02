@@ -16,7 +16,7 @@ namespace interceptors {
   class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor {
   public:
     ClientInterceptor(
-      PortableInterceptor::SlotId slotId_connectionAddr,
+      PortableInterceptor::SlotId slotId_requesterConnection,
       PortableInterceptor::SlotId slotId_joinedCallChain,
       PortableInterceptor::SlotId slotId_ignoreInterceptor,
       IOP::Codec *cdr_codec);
@@ -36,7 +36,7 @@ namespace interceptors {
 
     /* Variáveis que são modificadas somente no construtor. */
     IOP::Codec *_cdrCodec;
-    PortableInterceptor::SlotId _slotId_connectionAddr;
+    PortableInterceptor::SlotId _slotId_requesterConnection;
     PortableInterceptor::SlotId _slotId_joinedCallChain;
     /**/
     

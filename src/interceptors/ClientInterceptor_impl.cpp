@@ -25,7 +25,7 @@ Connection &ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientR
   log_scope l(log.general_logger(),info_level,"ClientInterceptor::getCurrentConnection");
   Connection *conn = 0;
   CORBA::Any_var connectionAddrAny;
-  connectionAddrAny = r->get_slot(_slotId_connectionAddr);
+  connectionAddrAny = r->get_slot(_slotId_requesterConnection);
   idl::OctetSeq connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) {
     assert(connectionAddrOctetSeq.length() == sizeof(conn));
@@ -54,12 +54,12 @@ CallerChain *ClientInterceptor::getJoinedChain(PortableInterceptor::ClientReques
 }
 
 ClientInterceptor::ClientInterceptor(
-  PortableInterceptor::SlotId slotId_connectionAddr,
+  PortableInterceptor::SlotId slotId_requesterConnection,
   PortableInterceptor::SlotId slotId_joinedCallChain,
   PortableInterceptor::SlotId slotId_ignoreInterceptor,
   IOP::Codec *cdr_codec)
   : _cdrCodec(cdr_codec), 
-    _slotId_connectionAddr(slotId_connectionAddr), 
+    _slotId_requesterConnection(slotId_requesterConnection), 
     _slotId_joinedCallChain(slotId_joinedCallChain),
     _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE)),
     _callChainLRUCache(CallChainLRUCache(LOGINCACHE_LRU_SIZE)),

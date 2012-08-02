@@ -13,12 +13,12 @@ namespace interceptors {
 
 ServerInterceptor::ServerInterceptor(
   PortableInterceptor::Current *piCurrent, 
-  PortableInterceptor::SlotId slotId_connectionAddr,
+  PortableInterceptor::SlotId slotId_requesterConnection,
   PortableInterceptor::SlotId slotId_joinedCallChain,
   PortableInterceptor::SlotId slotId_signedCallChain, 
   PortableInterceptor::SlotId slotId_legacyCallChain,
   IOP::Codec *cdr_codec) 
-  : _piCurrent(piCurrent), _slotId_connectionAddr(slotId_connectionAddr),
+  : _piCurrent(piCurrent), _slotId_requesterConnection(slotId_requesterConnection),
     _slotId_joinedCallChain(slotId_joinedCallChain),_slotId_signedCallChain(slotId_signedCallChain),
     _slotId_legacyCallChain(slotId_legacyCallChain), _cdrCodec(cdr_codec), _manager(0),
     _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE))
@@ -86,15 +86,17 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     if (!conn) conn = _manager->getDefaultConnection();
     if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
 
-    /* disponibilizando a conexão para o usuário (getRequester()) e configurando a conexão 
-    ** para ser utilizada por esta thread até o término do tratamento desta requisição. */
+    /* disponibilizando a conexão atual para ConnectionManager::getRequester() */
     size_t bufSize = sizeof(Connection*);
     unsigned char buf[bufSize];
     memcpy(buf, &conn, bufSize);
     idl::OctetSeq_var connectionAddrOctetSeq = new idl::OctetSeq(bufSize, bufSize, buf);
     CORBA::Any connectionAddrAny;
     connectionAddrAny <<= *(connectionAddrOctetSeq);
-    r->set_slot(_slotId_connectionAddr, connectionAddrAny);
+    r->set_slot(_slotId_requesterConnection, connectionAddrAny);
+
+    /* definindo a conexão atual como a conexão a ser utilizada pelas chamadas remotas a serem 
+    ** realizadas por este ponto de interceptação */
     _manager->setRequester(conn);
 
     AutoLock conn_mutex(&conn->_mutex);

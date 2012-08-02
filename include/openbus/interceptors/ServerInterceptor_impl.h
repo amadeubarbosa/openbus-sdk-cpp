@@ -22,7 +22,7 @@ namespace interceptors {
   public:
     ServerInterceptor(
       PortableInterceptor::Current *piCurrent, 
-      PortableInterceptor::SlotId slotId_connectionAddr,
+      PortableInterceptor::SlotId slotId_requesterConnection,
       PortableInterceptor::SlotId slotId_joinedCallChain,
       PortableInterceptor::SlotId slotId_signedCallChain, 
       PortableInterceptor::SlotId slotId_legacyCallChain,
@@ -39,7 +39,7 @@ namespace interceptors {
   private:
     MICOMT::Mutex _mutex;
     PortableInterceptor::Current *_piCurrent;
-    PortableInterceptor::SlotId _slotId_connectionAddr;
+    PortableInterceptor::SlotId _slotId_requesterConnection;
     PortableInterceptor::SlotId _slotId_joinedCallChain;
     PortableInterceptor::SlotId _slotId_signedCallChain;
     PortableInterceptor::SlotId _slotId_legacyCallChain;

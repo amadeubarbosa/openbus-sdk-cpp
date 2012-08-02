@@ -12,7 +12,7 @@ ConnectionManager::ConnectionManager(
   PortableInterceptor::SlotId s3,
   PortableInterceptor::SlotId s4) 
   : _orb(o), _codec(c), _slotId_joinedCallChain(s1), _slotId_signedCallChain(s2), 
-  _slotId_legacyCallChain(s3), _slotId_connectionAddr(s4), _defaultConnection(0)
+  _slotId_legacyCallChain(s3), _slotId_requesterConnection(s4), _defaultConnection(0)
 {
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::ConnectionManager");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
@@ -40,12 +40,12 @@ void ConnectionManager::setRequester(Connection *c) {
   idl::OctetSeq connectionAddrOctetSeq(size, size, buf);
   CORBA::Any connectionAddrAny;
   connectionAddrAny <<= connectionAddrOctetSeq;
-  _piCurrent->set_slot(_slotId_connectionAddr, connectionAddrAny);
+  _piCurrent->set_slot(_slotId_requesterConnection, connectionAddrAny);
 }
 
 Connection *ConnectionManager::getRequester() const { 
   log_scope l(log.general_logger(), info_level, "ConnectionManager::getRequester");
-  CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_slotId_connectionAddr);
+  CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_slotId_requesterConnection);
   idl::OctetSeq connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) {
     assert(connectionAddrOctetSeq.length() == sizeof(Connection*));

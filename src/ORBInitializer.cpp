@@ -45,7 +45,7 @@ CORBA::ORB *ORBInitializer(int argc, char* *argv) {
       orbInitializer->slotId_joinedCallChain(), 
       orbInitializer->slotId_signedCallChain(), 
       orbInitializer->slotId_legacyCallChain(), 
-      orbInitializer->slotId_connectionAddr());
+      orbInitializer->slotId_requesterConnection());
     l.level_log(debug_level, "Registrando ConnectionManager");
     orb->register_initial_reference(CONNECTION_MANAGER_ID, manager);
     orbInitializer->clientInterceptor()->connectionManager(manager);
