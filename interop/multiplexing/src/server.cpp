@@ -81,12 +81,16 @@ int main(int argc, char** argv) {
     poa_manager->activate();
     openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    std::auto_ptr <openbus::Connection> connBusA (manager->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn1BusA (manager->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn2BusA (manager->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn3BusA (manager->createConnection("localhost", 2089));
     std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
     std::vector<openbus::Connection *> connVec;
-    connVec.push_back(connBusA.get());
+    connVec.push_back(conn1BusA.get());
+    connVec.push_back(conn2BusA.get());
+    connVec.push_back(conn3BusA.get());
     connVec.push_back(connBusB.get());
-    manager->setDefaultConnection(connBusA.get());
+    manager->setDefaultConnection(conn1BusA.get());
 
     #ifdef OPENBUS_SDK_MULTITHREAD
     RunThread *runThread = new RunThread(manager);
@@ -104,16 +108,22 @@ int main(int argc, char** argv) {
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connVec));
     ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
-    connBusA->loginByPassword(entity.c_str(), entity.c_str());
+    conn1BusA->loginByPassword(entity.c_str(), entity.c_str());
+    conn2BusA->loginByPassword(entity.c_str(), entity.c_str());
+    conn3BusA->loginByPassword(entity.c_str(), entity.c_str());
     connBusB->loginByPassword(entity.c_str(), entity.c_str());
 
+    manager->setDispatcher(*conn1BusA.get());
     manager->setDispatcher(*connBusB.get());
-    manager->setDispatcher(*connBusA.get());
 
-    RegisterThread *registerThreadA = new RegisterThread(manager, ctx, connBusA.get());
-    RegisterThread *registerThreadB = new RegisterThread(manager, ctx, connBusB.get());
-    registerThreadA->start();
-    registerThreadB->start();
+    RegisterThread *registerThread1 = new RegisterThread(manager, ctx, conn1BusA.get());
+    RegisterThread *registerThread2 = new RegisterThread(manager, ctx, conn2BusA.get());
+    RegisterThread *registerThread3 = new RegisterThread(manager, ctx, conn3BusA.get());
+    RegisterThread *registerThread4 = new RegisterThread(manager, ctx, connBusB.get());
+    registerThread1->start();
+    registerThread2->start();
+    registerThread3->start();
+    registerThread4->start();
     #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
     #else
