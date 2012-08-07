@@ -33,8 +33,10 @@ Connection &ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientR
   }
   assert(_manager);
   if(!conn)
-    if (!(conn = _manager->getDefaultConnection()))
+    if (!(conn = _manager->getDefaultConnection())) {
+      l.log("throw NoLoginCode");
       throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+    }
   assert(conn);
   l.vlog("connection:%p", conn);
   return *conn;
@@ -191,7 +193,10 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
       IOP::ServiceContext::_context_data_seq ls(o->length(), o->length(), o->get_buffer(), 0);
       legacyContext.context_data = ls;
       r->add_request_service_context(legacyContext, true);
-    } else throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
+    } else {
+      l.log("throw NoLoginCode");
+      throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
+    }
   }
 }
 
@@ -261,11 +266,13 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         }
         if (conn._state == Connection::LOGGED)
           throw PortableInterceptor::ForwardRequest(r->target(), false);            
-        else if (conn._state == Connection::UNLOGGED) 
-          throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-        else if (conn._state == Connection::INVALID) {
+        else if (conn._state == Connection::UNLOGGED) {
+          l.log("Connection::UNLOGGED: throw NoLoginCode");
+          throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);          
+        } else if (conn._state == Connection::INVALID) {
           if (!strcmp(conn._login()->id.in(), oldLogin.id.in())) {
             conn._logout(true);
+            l.log("Connection::INVALID: throw NoLoginCode");
             throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
           } else throw PortableInterceptor::ForwardRequest(r->target(), false);
         }

@@ -243,7 +243,7 @@ private:
     PortableInterceptor::SlotId slotId_joinedCallChain, 
     PortableInterceptor::SlotId slotId_signedCallChain, 
     PortableInterceptor::SlotId slotId_legacyCallChain, 
-    PortableInterceptor::SlotId slotId_receiveCallChain, 
+    PortableInterceptor::SlotId slotId_receiveConnection, 
     ConnectionManager*, std::vector<std::string> props);
   EVP_PKEY *fetchBusKey();
   void checkBusid() const;

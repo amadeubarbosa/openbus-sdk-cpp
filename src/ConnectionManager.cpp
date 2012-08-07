@@ -12,9 +12,8 @@ ConnectionManager::ConnectionManager(
   PortableInterceptor::SlotId s3,
   PortableInterceptor::SlotId s4,
   PortableInterceptor::SlotId s5) 
-  : _orb(o), _codec(c), _slotId_joinedCallChain(s1), _slotId_signedCallChain(s2), 
-  _slotId_legacyCallChain(s3), _slotId_requesterConnection(s4), _slotId_receiveConnection(s5), 
-  _defaultConnection(0)
+  : _orb(o), _codec(c), _slotId_joinedCallChain(s1), _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3),
+  _slotId_requesterConnection(s4), _slotId_receiveConnection(s5), _defaultConnection(0)
 {
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::ConnectionManager");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
@@ -29,9 +28,10 @@ std::auto_ptr<Connection> ConnectionManager::createConnection(const char *host, 
 {
   log_scope l(log.general_logger(), debug_level, "ConnectionManager::createConnection");
   l.vlog("createConnection para host %s:%hi", host, port);
-  return std::auto_ptr<Connection> (new Connection(host, port, _orb, _codec, 
-    _slotId_joinedCallChain, _slotId_signedCallChain, _slotId_legacyCallChain, 
-    _slotId_receiveConnection, this, props));
+  std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, _slotId_joinedCallChain, 
+    _slotId_signedCallChain, _slotId_legacyCallChain, _slotId_receiveConnection, this, props));
+  l.vlog("connection: %p", conn.get());
+  return conn;
 }
 
 void ConnectionManager::setRequester(Connection *c) {

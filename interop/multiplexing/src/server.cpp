@@ -16,15 +16,11 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(std::vector<openbus::Connection *> l) : _connVec(l) { }
   char * sayHello() {
     std::string msg;
-    for (std::vector<openbus::Connection *>::iterator it = _connVec.begin(); it != _connVec.end(); 
-      ++it) 
-    {
+    for (std::vector<openbus::Connection *>::iterator it = _connVec.begin(); it != _connVec.end(); ++it) {
       openbus::CallerChain *chain = (*it)->getCallerChain();
       if (chain) {
-        std::cout << "Hello from " << chain->caller().entity.in() << "@" << chain->busid() 
-          << std::endl;
-        msg = "Hello " + std::string(chain->caller().entity.in()) + "@" + 
-          std::string((*it)->busid()) + "!";
+        std::cout << "Hello " << chain->caller().entity.in() << "@" << chain->busid() << std::endl;
+        msg = "Hello " + std::string(chain->caller().entity.in()) + "@" + std::string((*it)->busid()) + "!";
         break;
       }
     }
@@ -60,8 +56,7 @@ public:
       _manager->setRequester(_conn);
       _conn->offers()->registerService(_ctx.getIComponent(), props);
     } catch (const CORBA::Exception &e) {
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e 
-      << std::endl;
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e << std::endl;
     }
   }
 private:
@@ -90,8 +85,7 @@ int main(int argc, char** argv) {
     connVec.push_back(conn2BusA.get());
     connVec.push_back(conn3BusA.get());
     connVec.push_back(connBusB.get());
-    manager->setDefaultConnection(conn1BusA.get());
-
+    
     #ifdef OPENBUS_SDK_MULTITHREAD
     RunThread *runThread = new RunThread(manager);
     runThread->start();
@@ -112,10 +106,10 @@ int main(int argc, char** argv) {
     conn2BusA->loginByPassword(entity.c_str(), entity.c_str());
     conn3BusA->loginByPassword(entity.c_str(), entity.c_str());
     connBusB->loginByPassword(entity.c_str(), entity.c_str());
-
+    
     manager->setDispatcher(*conn1BusA.get());
     manager->setDispatcher(*connBusB.get());
-
+    
     RegisterThread *registerThread1 = new RegisterThread(manager, ctx, conn1BusA.get());
     RegisterThread *registerThread2 = new RegisterThread(manager, ctx, conn2BusA.get());
     RegisterThread *registerThread3 = new RegisterThread(manager, ctx, conn3BusA.get());
