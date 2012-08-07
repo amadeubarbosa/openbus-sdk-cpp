@@ -39,8 +39,8 @@ namespace openbus {
     idl_ac::LoginInfo *loginInfo;
     idl::OctetSeq_var encodedCallerPubKey;
     EVP_PKEY *key;
-    int indexSeq;
     long time2live;
+    time_t timeUpdated;
   };
   
   typedef LRUCache<std::string, Login*> LoginLRUCache;
@@ -52,7 +52,6 @@ namespace openbus {
   private:
     idl_ac::LoginRegistry_ptr _login_registry;
     LoginLRUCache _loginLRUCache;
-    time_t _timeUpdated;
     MICOMT::Mutex _mutex;
   };
   

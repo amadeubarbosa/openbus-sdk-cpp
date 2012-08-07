@@ -84,6 +84,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
     Connection &conn = getCurrentConnection(r);
     AutoLock conn_mutex(&conn._mutex);
     if (conn._login()) {
+      l.vlog("login: %s", conn._login()->id.in());
       conn_mutex.unlock();
       CallerChain *callerChain = 0;
       IOP::ServiceContext serviceContext;
