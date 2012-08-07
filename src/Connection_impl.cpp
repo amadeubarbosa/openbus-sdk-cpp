@@ -31,6 +31,8 @@ Login *LoginCache::validateLogin(char *id) {
     login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
     m.lock();
     _loginLRUCache.insert(sid, login);
+    m.unlock();
+    return login;
   }
   m.unlock();
   
