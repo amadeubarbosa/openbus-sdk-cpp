@@ -102,7 +102,10 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
     
       SecretSession session;
       AutoLock m(&_mutex);
-      if (_sessionLRUCache.exists(sessionKey)) {
+      bool b = _sessionLRUCache.exists(sessionKey);
+      m.unlock();
+      if (b) {
+        m.lock();      
         session = _sessionLRUCache.fetch(sessionKey);
         m.unlock();
         /* recuperando uma sessão para esta requisição. */
@@ -140,24 +143,25 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
           SHA256(pBuf, bufSize, hash);
           std::string shash((const char*) hash, idl::HashValueSize);
           idl_cr::SignedCallChain signedCallChain;
-          AutoLock m(&_mutex);
-          if (_callChainLRUCache.exists(shash)) {
+          m.lock();
+          bool b2 = _callChainLRUCache.exists(shash);
+          m.unlock();
+          if (b2) {
+            m.lock();
             signedCallChain = _callChainLRUCache.fetch(shash);
             m.unlock();
-            l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s", 
-              session.remoteId.in());
+            l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s", session.remoteId.in());
             credential.chain = signedCallChain;
           } else {
-            m.unlock();
             credential.chain = *conn.access_control()->signChainFor(session.remoteId.in());
             m.lock();
             _callChainLRUCache.insert(shash, credential.chain);
+            m.unlock();
           }
         } else
           if (callerChain) credential.chain = *callerChain->signedCallChain();
           else memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       } else {
-        m.unlock();
         /* montando uma credencial com o propósito de requisitar o estabelecimento de uma 
         ** nova sessão. */
         credential.ticket = 0;
@@ -165,7 +169,6 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
         memset(credential.hash, '\0', idl::HashValueSize);
         memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       }
-      m.unlock();
       
       /* anexando a credencial a esta requisição. */
       CORBA::Any any;
