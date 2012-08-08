@@ -103,11 +103,9 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
       SecretSession session;
       AutoLock m(&_mutex);
       bool b = _sessionLRUCache.exists(sessionKey);
+      if (b) session = _sessionLRUCache.fetch(sessionKey);
       m.unlock();
       if (b) {
-        m.lock();      
-        session = _sessionLRUCache.fetch(sessionKey);
-        m.unlock();
         /* recuperando uma sessão para esta requisição. */
         credential.session = session.id;
         session.ticket = ++session.ticket;
@@ -145,11 +143,9 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
           idl_cr::SignedCallChain signedCallChain;
           m.lock();
           bool b2 = _callChainLRUCache.exists(shash);
+          if (b2) signedCallChain = _callChainLRUCache.fetch(shash);
           m.unlock();
           if (b2) {
-            m.lock();
-            signedCallChain = _callChainLRUCache.fetch(shash);
-            m.unlock();
             l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s", session.remoteId.in());
             credential.chain = signedCallChain;
           } else {
