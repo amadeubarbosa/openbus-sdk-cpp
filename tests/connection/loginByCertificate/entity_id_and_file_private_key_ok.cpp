@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     std::size_t size = key_file.tellg();
     key_file.seekg(0, std::ios::beg);
     key.length(size);
-    std::copy(std::istream_iterator<char>(key_file), std::istream_iterator<char>(), key.get_buffer());
+    key_file.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(key.get_buffer())), size);
   }
   conn->loginByCertificate(cfg.certificate_user().c_str(), key);
 }

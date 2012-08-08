@@ -235,8 +235,11 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
             throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
         
           /* decifrar o segredo usando a chave do usuário. */
-          CORBA::OctetSeq_var secret = openssl::decrypt(conn.__key(), credentialReset.challenge, 
-            idl::EncryptedBlockSize);
+          CORBA::OctetSeq_var secret 
+            (new CORBA::OctetSeq (openssl::decrypt
+                                  (conn.__key()
+                                   , credentialReset.challenge
+                                   , idl::EncryptedBlockSize)));
 
           /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
           std::string sessionKey = getSessionKey(r);

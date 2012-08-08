@@ -1,78 +1,97 @@
+
 #include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 #include "openbus/util/OpenSSL.h"
+#include "openbus/Connection.h"
 
 namespace openbus {
 namespace openssl {
-    
-EVP_PKEY *byteSeq2PubKey(const unsigned char *buf, size_t len) {
-  EVP_PKEY *key = 0;
-  key = d2i_PUBKEY(0, &buf, len);
-  assert(key);
-  return key;
+
+pkey byteSeq2PubKey(const unsigned char *buf, size_t len) {
+  pkey key (d2i_PUBKEY(0, &buf, len));
+  if(!key)
+    throw InvalidPrivateKey();
+  return pkey(key);
 }
 
-CORBA::OctetSeq_var PubKey2byteSeq(EVP_PKEY *key) {
+CORBA::OctetSeq PubKey2byteSeq(pkey key) {
   unsigned char *buf = 0;
-  size_t len = i2d_PUBKEY(key, &buf);
-  assert(len > 0);
-  CORBA::OctetSeq_var seq = new CORBA::OctetSeq(len, len, buf);
-  return seq._retn();
+  size_t len = i2d_PUBKEY(key.get(), &buf);
+  if(len <= 0)
+    throw InvalidPrivateKey();
+  return CORBA::OctetSeq (len, len, buf);
 }
 
-EVP_PKEY *byteSeq2PrvKey(const unsigned char *buf, size_t len) {
-  EVP_PKEY *key = 0;
-  key = d2i_AutoPrivateKey(0, &buf, len);
-  assert(key);
-  return key;  
+pkey byteSeq2PrvKey(const unsigned char *buf, size_t len) {
+  pkey key ( d2i_AutoPrivateKey(0, &buf, len) );
+  if(!key)
+    throw InvalidPrivateKey();
+  return pkey(key);  
 }
 
-CORBA::OctetSeq_var PrvKey2byteSeq(EVP_PKEY *key) {
+CORBA::OctetSeq PrvKey2byteSeq(pkey key) {
   unsigned char *buf = 0;
-  size_t len = i2d_PrivateKey(key, &buf);
-  assert(len > 0);
-  CORBA::OctetSeq_var seq = new CORBA::OctetSeq(len, len, buf);
-  return seq._retn();
+  size_t len = i2d_PrivateKey(key.get(), &buf);
+  if(len <= 0)
+    throw InvalidPrivateKey();
+  return CORBA::OctetSeq (len, len, buf);
 }
 
-CORBA::OctetSeq_var encrypt(EVP_PKEY *key, const unsigned char *buf, size_t len) {
-  EVP_PKEY_CTX *ctx;
-  unsigned char *encrypted = 0;
+CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len) {
   size_t encryptedLen;
-  if (!((ctx = EVP_PKEY_CTX_new(key, 0)) && (EVP_PKEY_encrypt_init(ctx) > 0) 
-     && (EVP_PKEY_encrypt(ctx, 0, &encryptedLen, buf, len) > 0))) assert(0);
+  pkey_ctx ctx ( EVP_PKEY_CTX_new(key.get(), 0) );
+  if(!ctx)
+    throw InvalidPrivateKey();
+
+  int r = EVP_PKEY_encrypt_init(ctx.get());
+  if(r < 1)
+    throw InvalidPrivateKey();
+
+  r = EVP_PKEY_encrypt(ctx.get(), 0, &encryptedLen, buf, len);
+  if(r < 1)
+    throw InvalidPrivateKey();
+
+  openssl_buffer encrypted 
+    ((unsigned char*) OPENSSL_malloc(encryptedLen));
+  if(!encrypted)
+    throw std::bad_alloc();
   
-  encrypted = (unsigned char*) OPENSSL_malloc(encryptedLen);
-  assert(encrypted);
-  
-  if (EVP_PKEY_encrypt(ctx, encrypted, &encryptedLen, buf, len) <= 0) assert(0);
-  EVP_PKEY_CTX_free(ctx);
-  CORBA::OctetSeq_var seq = new CORBA::OctetSeq(encryptedLen, encryptedLen, encrypted);
-  OPENSSL_free(encrypted);
-  return seq._retn();
+  r = EVP_PKEY_encrypt(ctx.get(), encrypted.get(), &encryptedLen, buf, len);
+  if(r < 1)
+    throw InvalidPrivateKey();
+
+  return CORBA::OctetSeq (encryptedLen, encryptedLen, encrypted.get());
 }
 
-CORBA::OctetSeq_var decrypt(EVP_PKEY *key, const unsigned char *buf, size_t len) {
-  EVP_PKEY_CTX *ctx;
-  unsigned char *secret = 0;
+CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len) {
   size_t secretLen;
-  ctx = EVP_PKEY_CTX_new(key, 0);
-  if (ctx) {
-    if (!((EVP_PKEY_decrypt_init(ctx) > 0) &&(EVP_PKEY_decrypt(ctx, 0, &secretLen, buf, len) > 0))){
-      EVP_PKEY_CTX_free(ctx);
-      return 0;
-    }
-    secret = (unsigned char*) OPENSSL_malloc(secretLen);
-    assert(secret);
-    if (EVP_PKEY_decrypt(ctx, secret, &secretLen, buf, len) <= 0) {
-        EVP_PKEY_CTX_free(ctx);
-        return 0;
-    }
+  pkey_ctx ctx ( EVP_PKEY_CTX_new(key.get(), 0) );
+  if (ctx)
+  {
+    if (EVP_PKEY_decrypt_init(ctx.get()) <= 0)
+      throw InvalidPrivateKey();
+
+    if(EVP_PKEY_decrypt(ctx.get(), 0, &secretLen, buf, len) <= 0)
+      throw InvalidPrivateKey();
+
+    openssl_buffer secret
+      ((unsigned char*) OPENSSL_malloc(secretLen));
+    if(!secret)
+      throw std::bad_alloc();
+
+    if (EVP_PKEY_decrypt(ctx.get(), secret.get(), &secretLen
+                         , buf, len) <= 0)
+      throw InvalidPrivateKey();
+
     secret[secretLen] = '\0';
-    EVP_PKEY_CTX_free(ctx);
-    CORBA::OctetSeq_var seq = new CORBA::OctetSeq(len, len, secret);
-    return seq._retn();
-  } return 0;
+    const char* s = static_cast<const char*>
+      (static_cast<const void*>(secret.get()));
+    CORBA::OctetSeq seq (std::strlen(s), std::strlen(s), secret.get());
+    return seq;
+  }
+  return 0;
 }
 
 }

@@ -5,6 +5,8 @@
 #include <log/output/streambuf_output.h>
 #include <log/logger.h>
 
+#include <CORBA.h>
+
 namespace openbus {
 
 typedef logger::log_scope log_scope;

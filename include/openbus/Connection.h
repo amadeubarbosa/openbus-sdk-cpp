@@ -24,6 +24,7 @@ namespace openbus {
 #include "openbus/interceptors/ClientInterceptor_impl.h"
 #include "openbus/interceptors/ServerInterceptor_impl.h"
 #include "openbus/Connection_impl.h"
+#include "openbus/util/OpenSSL.h"
 #include "openbus/ConnectionManager.h"
 
 /**
@@ -127,7 +128,7 @@ public:
   *        estabelecimento da conexão.
   * @throw CORBA::Exception
   */
-  std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq_var> startSharedAuth();
+  std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> startSharedAuth();
   
   /**
   * Efetua login no barramento como uma entidade usando autenticação por single sign-on.
@@ -245,11 +246,11 @@ private:
     PortableInterceptor::SlotId slotId_legacyCallChain, 
     PortableInterceptor::SlotId slotId_receiveConnection, 
     ConnectionManager*, std::vector<std::string> props);
-  EVP_PKEY *fetchBusKey();
+  openssl::pkey fetchBusKey();
   void checkBusid() const;
   bool _logout(bool local);
-  EVP_PKEY *__key() const { return _key; }
-  EVP_PKEY *__buskey() const { return _buskey; }
+  openssl::pkey __key() const { return _key; }
+  openssl::pkey __buskey() const { return _buskey; }
   CORBA::ORB *orb() const { return _orb; }
   idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
   idl_ac::AccessControl_var access_control() const { return _access_control; }
@@ -280,7 +281,7 @@ private:
   
   /* Variáveis que são modificadas somente no construtor. */
   ConnectionManager *_manager;
-  EVP_PKEY *_key;
+  openssl::pkey _key;
   PortableInterceptor::Current_var _piCurrent;
   scs::core::IComponent_var _iComponent;
   idl_ac::AccessControl_var _access_control;
@@ -288,7 +289,7 @@ private:
   idl_or::OfferRegistry_var _offer_registry;
   std::auto_ptr<LoginCache> _loginCache;
   const char *_busid;
-  EVP_PKEY *_buskey;
+  openssl::pkey _buskey;
   LegacyDelegate _legacyDelegate;
   /**/
   

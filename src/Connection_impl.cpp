@@ -27,7 +27,10 @@ Login *LoginCache::validateLogin(char *id) {
       login->loginInfo = _login_registry->getLoginInfo(id, login->encodedCallerPubKey);
     } catch (idl_ac::InvalidLogins &e) { return 0; }
     const unsigned char *buf = login->encodedCallerPubKey->get_buffer();
-    login->key = d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length());
+    login->key = openssl::pkey
+      (d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length()));
+    if(!login->key)
+      throw InvalidPrivateKey();
     login->timeUpdated = time(0);
     m.lock();
     _loginLRUCache.insert(sid, login);

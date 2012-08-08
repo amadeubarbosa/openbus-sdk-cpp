@@ -39,14 +39,14 @@ void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller,
   m.unlock();
   
   /* cifrando o segredo com a chave pública do cliente. */
-  CORBA::OctetSeq_var encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
+  CORBA::OctetSeq encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
 
   idl_cr::CredentialReset credentialReset;
   AutoLock conn_mutex(&conn->_mutex);
   credentialReset.login = conn->_login()->id;
   credentialReset.session = session.id;
   conn_mutex.unlock();
-  memcpy(credentialReset.challenge, encrypted->get_buffer(), idl::EncryptedBlockSize);
+  memcpy(credentialReset.challenge, encrypted.get_buffer(), idl::EncryptedBlockSize);
 
   CORBA::Any any;
   any <<= credentialReset;
@@ -155,11 +155,15 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
             idl::HashValue hash;
             SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
 
-            EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(conn->__buskey(), 0);
-            assert(ctx);
-            int status = EVP_PKEY_verify_init(ctx);
+            openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(conn->__buskey().get(), 0));
+            if(!ctx)
+            {
+              l.level_log(info_level, "Failed creating a OpenSSL public key context (EVP_PKEY_CTX_new)");
+              return;
+            }
+            int status = EVP_PKEY_verify_init(ctx.get());
             assert(status);
-            if (EVP_PKEY_verify(ctx, credential.chain.signature, idl::EncryptedBlockSize, hash, 
+            if (EVP_PKEY_verify(ctx.get(), credential.chain.signature, idl::EncryptedBlockSize, hash, 
             idl::HashValueSize) != 1)
               sendInvalidChainCode = true;
             else {

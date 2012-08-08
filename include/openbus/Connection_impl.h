@@ -26,6 +26,7 @@ namespace openbus {
 }
 
 #include <openbus/ConnectionManager.h>
+#include <openbus/util/OpenSSL.h>
 #include <openbus/Connection.h>
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
@@ -38,7 +39,7 @@ namespace openbus {
   struct Login {
     idl_ac::LoginInfo *loginInfo;
     idl::OctetSeq_var encodedCallerPubKey;
-    EVP_PKEY *key;
+    openssl::pkey key;
     long time2live;
     time_t timeUpdated;
   };
