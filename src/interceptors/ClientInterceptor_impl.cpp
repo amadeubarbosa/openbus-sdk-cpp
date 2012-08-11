@@ -232,10 +232,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         
           /* decifrar o segredo usando a chave do usuário. */
           CORBA::OctetSeq_var secret 
-            (new CORBA::OctetSeq (openssl::decrypt
-                                  (conn.__key()
-                                   , credentialReset.challenge
-                                   , idl::EncryptedBlockSize)));
+            (new CORBA::OctetSeq (openssl::decrypt(conn.__key(), credentialReset.challenge, idl::EncryptedBlockSize)));
 
           /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
           std::string sessionKey = getSessionKey(r);
@@ -252,7 +249,8 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
           }
           l.log("Retransmissao da requisicao...");
           /* retransmitindo a requisição após ter estabelecido uma sessão. */
-          throw PortableInterceptor::ForwardRequest(r->target(), false);
+					CORBA::Object* _o = new CORBA::Object(*r->target());
+          throw PortableInterceptor::ForwardRequest(_o, false);
         } throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
       } else if (ex->minor() == idl_ac::NoCredentialCode) {
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
@@ -265,7 +263,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         try {
           if (callback) (callback)(conn, oldLogin);
         } catch (...) {
-      		l.level_log(warning_level, "Falha na execucao da callback OnInvalidLogin.");
+          l.level_log(warning_level, "Falha na execucao da callback OnInvalidLogin.");
         }
         if (conn._state == Connection::LOGGED)
           throw PortableInterceptor::ForwardRequest(r->target(), false);            

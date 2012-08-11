@@ -73,9 +73,6 @@ CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len) {
     if (EVP_PKEY_decrypt_init(ctx.get()) <= 0)
       throw InvalidPrivateKey();
 
-    if(EVP_PKEY_decrypt(ctx.get(), 0, &secretLen, buf, len) <= 0)
-      throw InvalidPrivateKey();
-
     openssl_buffer secret
       ((unsigned char*) OPENSSL_malloc(secretLen));
     if(!secret)
@@ -85,10 +82,8 @@ CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len) {
                          , buf, len) <= 0)
       throw InvalidPrivateKey();
 
-    secret[secretLen] = '\0';
-    const char* s = static_cast<const char*>
-      (static_cast<const void*>(secret.get()));
-    CORBA::OctetSeq seq (std::strlen(s), std::strlen(s), secret.get());
+    secret[SECRET_SIZE] = '\0';
+    CORBA::OctetSeq seq (SECRET_SIZE, SECRET_SIZE, secret.get());
     return seq;
   }
   return 0;

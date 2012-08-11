@@ -14,8 +14,6 @@ extern "C" {
 #include "openbus/util/LRUCache_impl.h"
 #endif
 
-#define SECRET_SIZE 16
-
 namespace openbus {
 namespace interceptors {
   class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor {

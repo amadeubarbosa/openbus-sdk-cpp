@@ -15,6 +15,8 @@
 
 #include <boost/function.hpp>
 
+#define SECRET_SIZE 16
+
 namespace openbus {
   class Connection;
   struct CallerChain;
