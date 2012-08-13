@@ -46,30 +46,30 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
 endif
 
 ifeq "$(DBG)" "Yes"
-  MICO_DEBUG=-debug
+  LIB_DEBUG=-debug
 endif
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
-  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
-  MICO_INC=${MICODIR}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
-  MICO_LIB=${MICODIR}/lib/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${LIB_DEBUG}
+  MICO_INC=${MICODIR}/include/mico-${MICOVERSION}-multithread${LIB_DEBUG}
+  MICO_LIB=${MICODIR}/lib/mico-${MICOVERSION}-multithread${LIB_DEBUG}
   DEFINES+=OPENBUS_SDK_MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
 else
-  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
-  MICO_INC=${MICODIR}/include/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
-  MICO_LIB=${MICODIR}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
+  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread${LIB_DEBUG}
+  MICO_INC=${MICODIR}/include/mico-${MICOVERSION}-singlethread${LIB_DEBUG}
+  MICO_LIB=${MICODIR}/lib/mico-${MICOVERSION}-singlethread${LIB_DEBUG}
 endif
 
 OPENBUS_INC=${OPENBUS_HOME}/include
 OPENBUS_LDIR=${OPENBUS_HOME}/lib
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   LIBS+= boost_thread
-  LIBS+= logger-multithread${MICO_DEBUG}
+  LIBS+= logger-multithread${LIB_DEBUG}
   LDIR+= ${OPENBUS_HOME}/lib/boost
 else
   DEFINES+=LOGGER_DISABLE_THREADS
-  LIBS+= logger-singlethread${MICO_DEBUG}
+  LIBS+= logger-singlethread${LIB_DEBUG}
 endif
 
 OBJROOT=obj
@@ -127,16 +127,11 @@ IDLS=${OPENBUS_HOME}/idl/v2_0/core.idl \
 $(STUBS): $(IDLS)
 	mkdir -p stubs
 	mkdir -p legacy/stubs
-	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode \
-	  ${OPENBUS_HOME}/idl/v2_0/access_control.idl
-	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode \
-	  ${OPENBUS_HOME}/idl/v2_0/credential.idl
-	cd stubs ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/v2_0/offer_registry.idl
-	cd stubs ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/v2_0/core.idl
-	cd stubs ; ${MICO_BIN}/idl --no-paths \
-	  ${OPENBUS_HOME}/idl/v2_0/scs.idl
+	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ${OPENBUS_HOME}/idl/v2_0/access_control.idl
+	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ${OPENBUS_HOME}/idl/v2_0/credential.idl
+	cd stubs ; ${MICO_BIN}/idl --no-paths ${OPENBUS_HOME}/idl/v2_0/offer_registry.idl
+	cd stubs ; ${MICO_BIN}/idl --no-paths ${OPENBUS_HOME}/idl/v2_0/core.idl
+	cd stubs ; ${MICO_BIN}/idl --no-paths ${OPENBUS_HOME}/idl/v2_0/scs.idl
 	cd legacy/stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ../idl/credential_v1_5.idl
 
 genstubs: $(STUBS)
