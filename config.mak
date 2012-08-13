@@ -51,14 +51,14 @@ endif
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
-  MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
-  MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+  MICO_INC=${MICODIR}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
+  MICO_LIB=${MICODIR}/lib/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   DEFINES+=OPENBUS_SDK_MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
 else
   MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
-  MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
-  MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
+  MICO_INC=${MICODIR}/include/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
+  MICO_LIB=${MICODIR}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
 endif
 
 OPENBUS_INC=${OPENBUS_HOME}/include
