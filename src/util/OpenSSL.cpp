@@ -82,8 +82,7 @@ CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len) {
                          , buf, len) <= 0)
       throw InvalidPrivateKey();
 
-    secret[SECRET_SIZE] = '\0';
-    CORBA::OctetSeq seq (SECRET_SIZE, SECRET_SIZE, secret.get());
+    CORBA::OctetSeq seq (secretLen, secretLen, secret.get());
     return seq;
   }
   return 0;
