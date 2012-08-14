@@ -340,10 +340,6 @@ bool Connection::_logout(bool local) {
     #else
     _orb->dispatcher()->remove(_renewLogin.get(), CORBA::Dispatcher::Timer);
     #endif
-    m.lock();
-    _loginInfo.reset();
-    _state = UNLOGGED;
-    m.unlock();
     if (!local) {
       Connection *c = 0;
       try {
@@ -357,6 +353,10 @@ bool Connection::_logout(bool local) {
         _manager->setRequester(c);        
       }
     }
+    m.lock();
+    _loginInfo.reset();
+    _state = UNLOGGED;
+    m.unlock();
   } else if (state == INVALID) {
     m.lock();
     _loginInfo.reset();
