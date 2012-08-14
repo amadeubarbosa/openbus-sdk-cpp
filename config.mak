@@ -66,7 +66,6 @@ OPENBUS_LDIR=${OPENBUS_HOME}/lib
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   LIBS+= boost_thread
   LIBS+= logger-multithread${LIB_DEBUG}
-  LDIR+= ${OPENBUS_HOME}/lib/boost
 else
   DEFINES+=LOGGER_DISABLE_THREADS
   LIBS+= logger-singlethread${LIB_DEBUG}
@@ -102,7 +101,7 @@ SRC=src/ORBInitializer.cpp \
     src/interceptors/ClientInterceptor_impl.cpp \
     src/interceptors/ServerInterceptor_impl.cpp \
     src/util/Ticket_impl.c \
-    src/util/OpenSSL.c \
+    src/util/OpenSSL.cpp \
     stubs/core.cc \
     stubs/scs.cc \
     stubs/credential.cc \
