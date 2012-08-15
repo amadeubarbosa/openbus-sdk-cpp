@@ -78,6 +78,9 @@ int main(int argc, char** argv)
     conn->offers()->registerService(ctx.getIComponent(), props);
   }
 
+  conn->logout();
+  conn.reset();
+
 #ifdef OPENBUS_SDK_MULTITHREAD
   orb->shutdown(true);
   orb_thread.join();

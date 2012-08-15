@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 
   props.length(3);
   props[0].name  = "openbus.offer.entity";
-  props[0].value = "demo";
+  props[0].value = "test";
   props[1].name  = "openbus.component.facet";
   props[1].value = "hello";
   props[2].name  = "offer.domain";
@@ -62,6 +62,9 @@ int main(int argc, char** argv)
   assert (offers->length() == 1);
   CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
   Hello* hello = Hello::_narrow(o);
+
+  conn->logout();
+  conn.reset();
 
   orb->run();
 }

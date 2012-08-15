@@ -95,6 +95,9 @@ int main(int argc, char** argv)
     assert(servant_called);
   }
 
+  conn->logout();
+  conn.reset();
+
 #ifdef OPENBUS_SDK_MULTITHREAD
   orb->shutdown(true);
   orb_thread.join();
