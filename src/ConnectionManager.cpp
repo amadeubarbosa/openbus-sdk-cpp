@@ -1,8 +1,6 @@
 #include "openbus/ConnectionManager.h"
 #include "openbus/log.h"
-#ifdef OPENBUS_SDK_MULTITHREAD
 #include "openbus/util/AutoLock_impl.h"
-#endif
 
 namespace openbus {
 ConnectionManager::ConnectionManager(

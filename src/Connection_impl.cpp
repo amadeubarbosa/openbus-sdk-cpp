@@ -61,7 +61,7 @@ Login *LoginCache::validateLogin(char *id) {
 RenewLogin::RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, ConnectionManager *m, 
   idl_ac::ValidityTime t)
   : _conn(c), _access_control(a), _manager(m), _validityTime(t), _pause(false), _stop(false), 
-  _condVar(&_mutex)
+    _condVar(_mutex.mutex())
 {
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
 }

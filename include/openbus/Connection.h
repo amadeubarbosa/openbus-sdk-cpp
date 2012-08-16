@@ -268,7 +268,7 @@ private:
   std::auto_ptr<RenewLogin> _renewLogin;
   std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
   InvalidLoginCallback_t _onInvalidLogin;
-  MICOMT::Mutex _mutex;
+  Mutex _mutex;
   
   enum LegacyDelegate {
     CALLER,

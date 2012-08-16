@@ -20,8 +20,8 @@ namespace openbus {
   * registrados. O RootPOA é ativado.
   *
   * Atenção: O Mico 2.3.13 não permite a inicialização de mais de um ORB. Após uma primeira chamada 
-  * bem sucedida de ORBInitializer(), todas as chamadas consecutivas retornarão o mesmo ORB que foi criado
-  * na primeira chamada.
+  * bem sucedida de ORBInitializer(), todas as chamadas consecutivas retornarão o mesmo ORB que foi
+  * criado na primeira chamada.
   * 
   * @param[in] argc Número de parâmetros usados na inicialização do ORB.
   * @param[in] argv Parâmetros usados na inicialização do ORB.

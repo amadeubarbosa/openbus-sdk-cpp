@@ -36,7 +36,7 @@ namespace interceptors {
     void destroy() { }
     void connectionManager(ConnectionManager *m) { _manager = m; }
   private:
-    MICOMT::Mutex _mutex;
+    Mutex _mutex;
     PortableInterceptor::Current *_piCurrent;
     PortableInterceptor::SlotId _slotId_requesterConnection;
     PortableInterceptor::SlotId _slotId_receiveConnection;

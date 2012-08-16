@@ -140,7 +140,7 @@ namespace openbus {
     ~ConnectionManager();
     void orb(CORBA::ORB *o) { _orb = o; }
     typedef std::map<std::string, Connection*> BusidConnection;
-    MICOMT::Mutex _mutex;
+    Mutex _mutex;
     CORBA::ORB *_orb;
     PortableInterceptor::Current_var _piCurrent;
     IOP::Codec *_codec;

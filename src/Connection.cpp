@@ -9,9 +9,7 @@
 
 #include "openbus/log.h"
 #include "openbus/Connection.h"
-#ifdef OPENBUS_SDK_MULTITHREAD
 #include "openbus/util/AutoLock_impl.h"
-#endif
 
 namespace openbus {
 

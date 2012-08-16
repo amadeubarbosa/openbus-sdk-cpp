@@ -2,9 +2,7 @@
 
 #include "openbus/ORBInitializer.h"
 #include "openbus/log.h"
-#ifdef OPENBUS_SDK_MULTITHREAD
 #include "openbus/util/AutoLock_impl.h"
-#endif
 #include "openbus/ConnectionManager.h"
 #include "openbus/interceptors/ORBInitializer_impl.h"
 #include "openbus/interceptors/ClientInterceptor_impl.h"
@@ -22,7 +20,7 @@ log_type log;
 ** VERIFICAR se o Mico está liberando o objeto.
 */
 interceptors::ORBInitializer *orbInitializer;
-MICOMT::Mutex _mutex;
+Mutex _mutex;
 
 CORBA::ORB *ORBInitializer(int argc, char* *argv) {
   AutoLock m(&_mutex);

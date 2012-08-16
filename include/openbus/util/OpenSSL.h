@@ -2,9 +2,9 @@
 #define _TECGRAF_OPENSSL_H_
 
 #include <openssl/pem.h>
-#include "stubs/core.h"
-
 #include <boost/shared_ptr.hpp>
+
+#include "stubs/core.h"
 
 namespace openbus {
 namespace openssl {

@@ -56,7 +56,7 @@ namespace interceptors {
     
     CallChainLRUCache _callChainLRUCache;
     ConnectionManager *_manager;
-    MICOMT::Mutex _mutex;
+    Mutex _mutex;
   };
 
   class IgnoreInterceptor {

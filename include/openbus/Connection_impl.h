@@ -2,6 +2,7 @@
 #define TECGRAF_CONNECTION_IMPL_H_
 
 #include <openssl/evp.h>
+#include <CORBA.h>
 
 #include "stubs/scs.h"
 #include "stubs/core.h"
@@ -25,6 +26,7 @@ namespace openbus {
   class RenewLogin;
 }
 
+#include <openbus/util/Mutex_impl.h>
 #include <openbus/ConnectionManager.h>
 #include <openbus/util/OpenSSL.h>
 #include <openbus/Connection.h>
@@ -53,7 +55,7 @@ namespace openbus {
   private:
     idl_ac::LoginRegistry_ptr _login_registry;
     LoginLRUCache _loginLRUCache;
-    MICOMT::Mutex _mutex;
+    Mutex _mutex;
   };
   
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -66,7 +68,7 @@ namespace openbus {
     void pause();
     void run();
   private:
-    MICOMT::Mutex _mutex;
+    Mutex _mutex;
     Connection *_conn;
     idl_ac::AccessControl_ptr _access_control;
     ConnectionManager *_manager;
