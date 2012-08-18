@@ -29,6 +29,8 @@ ifeq "$(DBG)" "Yes"
   MICO_DEBUG=-debug
 endif
 
+INCLUDES+= ../properties_reader/include
+
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}

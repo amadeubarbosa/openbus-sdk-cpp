@@ -9,6 +9,9 @@
 
 #include "stubs/messages.h"
 #include <CORBA.h>
+#include "server_login.h"
+#include "properties_reader.h"
+#include <log/output/file_output.h>
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 
@@ -29,6 +32,7 @@ struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegatio
 
   void post(const char* message)
   {
+    connection.exitChain();
     boost::unique_lock<boost::mutex> lock(mutex);
     for(std::vector<std::string>::const_iterator
           first = subscribers.begin(), last = subscribers.end()
@@ -40,8 +44,8 @@ struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegatio
 
   void subscribe()
   {
-    boost::unique_lock<boost::mutex> lock(mutex);
     std::string from(connection.getCallerChain()->caller().entity);
+    boost::unique_lock<boost::mutex> lock(mutex);
     std::vector<std::string>::iterator iterator
       = std::find(subscribers.begin(), subscribers.end(), from);
     if(iterator == subscribers.end())
@@ -67,6 +71,21 @@ struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegatio
 int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::info_level);
+
+    ::properties properties_file;
+    if(!properties_file.openbus_log_file.empty())
+    {
+      std::auto_ptr<logger::output_base> output
+        (new logger::output::file_output(properties_file.openbus_log_file.c_str()
+                                         , std::ios::out));
+      openbus::log.add_output(output);
+    }
+    
+    if(properties_file.buses.size() < 1)
+      throw std::runtime_error("No bus is configured");
+
+    ::properties::bus bus = properties_file.buses[0];
+
     CORBA::ORB* orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
@@ -75,7 +94,8 @@ int main(int argc, char** argv) {
     poa_manager->activate();
     openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn
+      (manager->createConnection(bus.host.c_str(), bus.port));
     manager->setDefaultConnection(conn.get());
     
     #ifdef OPENBUS_SDK_MULTITHREAD
@@ -83,7 +103,7 @@ int main(int argc, char** argv) {
     runThread->start();
     #endif
 
-    conn->loginByPassword("broadcaster", "broadcaster");
+    ::loginWithServerCredentials("interop_delegation_cpp_broadcaster", *conn);
 
     openbus::idl_or::ServicePropertySeq properties;
     properties.length(2);
@@ -125,6 +145,8 @@ int main(int argc, char** argv) {
       std::cout << "Couldn't find messenger" << std::endl;
       return -1;
     }
+  } catch(std::exception const& e) {
+    std::cout << "[error (std::exception)] " << e.what() << std::endl;
   } catch (const CORBA::Exception& e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
