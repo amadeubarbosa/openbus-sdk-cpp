@@ -9,7 +9,7 @@ OPENBUS_LDIR= ${OPENBUS_HOME}/lib
 TARGETROOT=bin
 OBJROOT=obj
 
-INCLUDES= . \
+INCLUDES+= . \
   stubs \
   ${MICO_INC} \
   ${OPENBUS_INC} \

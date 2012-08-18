@@ -4,25 +4,32 @@
 #include <iostream>
 #include "stubs/hello.h"
 
+#include "properties_reader.h"
+#include <log/output/file_output.h>
+
 struct Bus {
   std::string host;
   short port;
 };
 
-std::vector<Bus> busVec;
 const std::string entity("interop_multiplexing_cpp_client");
 
 int main(int argc, char** argv) {
   try {
-    Bus busA, busB;
-    busA.host = "localhost";
-    busA.port = 2089;
-    busVec.push_back(busA);
-    busB.host = "localhost";
-    busB.port = 3090;
-    busVec.push_back(busB);
-    
     openbus::log.set_level(openbus::debug_level);
+
+    ::properties properties_file;
+    if(!properties_file.openbus_log_file.empty())
+    {
+      std::auto_ptr<logger::output_base> output
+        (new logger::output::file_output(properties_file.openbus_log_file.c_str()
+                                         , std::ios::out));
+      openbus::log.add_output(output);
+    }
+    
+    if(properties_file.buses.size() < 2)
+      throw std::runtime_error("There should be 2 buses configured in properties file");
+
     CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
@@ -32,9 +39,11 @@ int main(int argc, char** argv) {
     openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
     
-    for (std::vector<Bus>::iterator it = busVec.begin(); it != busVec.end(); ++it) {
+    for (std::size_t bus_index = 0; bus_index != 2; ++bus_index)
+    {
       std::auto_ptr <openbus::Connection> 
-        conn (manager->createConnection((*it).host.c_str(), (*it).port));
+        conn (manager->createConnection(properties_file.buses[bus_index].host.c_str()
+                                        , properties_file.buses[bus_index].port));
       manager->setDefaultConnection(conn.get());
       conn->loginByPassword(entity.c_str(), entity.c_str());
       openbus::idl_or::ServicePropertySeq props;
@@ -54,6 +63,8 @@ int main(int argc, char** argv) {
         assert(!strcmp(msg, s.c_str()));
       }
     }
+  } catch(std::exception const& e) {
+    std::cout << "[error (std::exception)] " << e.what() << std::endl;
   } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;

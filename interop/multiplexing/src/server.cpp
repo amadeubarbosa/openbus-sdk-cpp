@@ -9,6 +9,8 @@
 
 #include "stubs/hello.h"
 #include <CORBA.h>
+#include "properties_reader.h"
+#include <log/output/file_output.h>
 
 const std::string entity("interop_multiplexing_cpp_server");
 
@@ -68,6 +70,21 @@ private:
 int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
+
+    ::properties properties_file;
+    if(!properties_file.openbus_log_file.empty())
+    {
+      std::auto_ptr<logger::output_base> output
+        (new logger::output::file_output(properties_file.openbus_log_file.c_str()
+                                         , std::ios::out));
+      openbus::log.add_output(output);
+    }
+    
+    if(properties_file.buses.size() < 4)
+      throw std::runtime_error("There should be 4 buses configured in properties file");
+
+    std::vector< ::properties::bus> buses = properties_file.buses;
+
     CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
@@ -76,10 +93,14 @@ int main(int argc, char** argv) {
     poa_manager->activate();
     openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    std::auto_ptr <openbus::Connection> conn1BusA (manager->createConnection("localhost", 2089));
-    std::auto_ptr <openbus::Connection> conn2BusA (manager->createConnection("localhost", 2089));
-    std::auto_ptr <openbus::Connection> conn3BusA (manager->createConnection("localhost", 2089));
-    std::auto_ptr <openbus::Connection> connBusB (manager->createConnection("localhost", 3090));
+    std::auto_ptr <openbus::Connection> connBusB
+      (manager->createConnection(buses[0].host.c_str(), buses[0].port));
+    std::auto_ptr <openbus::Connection> conn1BusA
+      (manager->createConnection(buses[1].host.c_str(), buses[1].port));
+    std::auto_ptr <openbus::Connection> conn2BusA
+      (manager->createConnection(buses[2].host.c_str(), buses[2].port));
+    std::auto_ptr <openbus::Connection> conn3BusA
+      (manager->createConnection(buses[3].host.c_str(), buses[3].port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());
@@ -123,6 +144,8 @@ int main(int argc, char** argv) {
     #else
     manager->orb()->run();
     #endif
+  } catch(std::exception const& e) {
+    std::cout << "[error (std::exception)] " << e.what() << std::endl;
   } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
