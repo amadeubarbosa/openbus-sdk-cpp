@@ -174,6 +174,9 @@ void Connection::loginByPassword(const char *entity, const char *password) {
     m.lock();
   }
   #else
+  assert(!_renewLogin.get());
+  _renewLogin = std::auto_ptr<RenewLogin> 
+    (new RenewLogin(this, _access_control, _manager, validityTime));
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
@@ -245,6 +248,9 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
     m.lock();
   }
   #else
+  assert(!_renewLogin.get());
+  _renewLogin = std::auto_ptr<RenewLogin> 
+    (new RenewLogin(this, _access_control, _manager, validityTime));
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
@@ -322,6 +328,9 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
     m.lock();
   }
   #else
+  assert(!_renewLogin.get());
+  _renewLogin = std::auto_ptr<RenewLogin> 
+    (new RenewLogin(this, _access_control, _manager, validityTime));
   _orb->dispatcher()->tm_event(_renewLogin.get(), validityTime*1000);
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
