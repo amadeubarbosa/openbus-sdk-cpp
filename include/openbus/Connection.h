@@ -30,21 +30,16 @@ namespace openbus {
 #include "openbus/util/OpenSSL.h"
 #include "openbus/ConnectionManager.h"
 
-namespace tecgraf { namespace openbus { namespace core { namespace v2_0 {
-namespace services { namespace access_control {
-
-inline bool operator==(LoginInfo const& lhs, LoginInfo const& rhs)
+inline bool operator==(openbus::idl_ac::LoginInfo const &lhs, openbus::idl_ac::LoginInfo const &rhs)
 {
-  return lhs.id.in() == rhs.id.in()
-    || (lhs.id.in() && rhs.id.in()
-        && !std::strcmp(lhs.id.in(), rhs.id.in()));
+  return lhs.id.in() == rhs.id.in() || 
+    (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
 }
-inline bool operator!=(LoginInfo const& lhs, LoginInfo const& rhs)
+
+inline bool operator!=(openbus::idl_ac::LoginInfo const &lhs, openbus::idl_ac::LoginInfo const &rhs)
 {
   return !(lhs == rhs);
 }
-
-} } } } } }
 
 /**
 * \brief openbus
@@ -105,8 +100,7 @@ struct CallerChain {
   */
   const idl_ac::LoginInfo &caller() const { return _caller; }
 
-  CallerChain()
-  {}
+  CallerChain() {}
 private:
   CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c, 
     const idl_cr::SignedCallChain &d) 
@@ -123,17 +117,13 @@ private:
   void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
   friend class Connection;
   friend class openbus::interceptors::ClientInterceptor;
-  friend inline bool operator==(CallerChain const& lhs, CallerChain const& rhs)
-  {
+  friend inline bool operator==(CallerChain const &lhs, CallerChain const &rhs) {
     return lhs._busid == rhs._busid && lhs._originators == rhs._originators
       && lhs._caller == rhs._caller;
   }
 };
 
-inline bool operator!=(CallerChain const& lhs, CallerChain const& rhs)
-{
-  return !(lhs == rhs);
-}
+inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs) { return !(lhs == rhs); }
 
 /**
 * Conexão com um barramento.
