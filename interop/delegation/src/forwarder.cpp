@@ -54,7 +54,7 @@ struct forwarding_thread
         {
           std::string from (caller_chain.caller().entity);
           std::cout << "Checking messages of " << from << std::endl;
-          connection.joinChain(&caller_chain);
+          connection.joinChain(caller_chain);
           delegation::PostDescSeq_var posts = messenger->receivePosts();
           std::cout << "Found " << posts->length() << " messages" << std::endl;
           connection.exitChain();
@@ -103,14 +103,14 @@ struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation:
   void setForward(const char* to)
   {
     boost::unique_lock<boost::mutex> lock(mutex);
-    std::string from(connection.getCallerChain()->caller().entity);
+    std::string from(connection.getCallerChain().caller().entity);
     std::cout << "setup forward to " << to << " by " << from << std::endl;
     std::map<std::string, boost::shared_ptr<forwarding_thread> >::const_iterator
       iterator = threads.find(from);
     if(iterator == threads.end())
     {
       boost::shared_ptr<forwarding_thread> t
-        (new forwarding_thread(to, *connection.getCallerChain(), messenger, connection));
+        (new forwarding_thread(to, connection.getCallerChain(), messenger, connection));
       threads.insert(std::make_pair(from, t));
       t->thread = boost::thread(boost::bind(&forwarding_thread::run, t));
     }
@@ -121,7 +121,7 @@ struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation:
   void cancelForward(const char* to)
   {
     boost::unique_lock<boost::mutex> lock(mutex);
-    std::string from(connection.getCallerChain()->caller().entity);
+    std::string from(connection.getCallerChain().caller().entity);
     std::cout << "cancel forward to " << to << " by " << from << std::endl;
     std::map<std::string, boost::shared_ptr<forwarding_thread> >::iterator
       iterator = threads.find(from);

@@ -27,12 +27,12 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
   {
     std::cout << "Hello called on proxy" << std::endl;
     openbus::Connection* c = manager.getRequester();
-    openbus::CallerChain* chain = c->getCallerChain();
+    openbus::CallerChain chain = c->getCallerChain();
     c->joinChain(chain);
-    if(chain)
+    if(chain != openbus::CallerChain())
     {
-      std::cout << "Caller: " << chain->caller().entity << std::endl;
-      access_control::LoginInfoSeq originators = chain->originators();
+      std::cout << "Caller: " << chain.caller().entity << std::endl;
+      access_control::LoginInfoSeq originators = chain.originators();
       for(std::size_t i = 0; i != originators.length(); ++i)
       {
         std::cout << "Originator: " << originators[i].entity << std::endl;

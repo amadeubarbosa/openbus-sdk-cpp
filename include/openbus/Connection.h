@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <openssl/evp.h>
+#include <cstring>
 
 #include <boost/function.hpp>
 
@@ -28,6 +29,22 @@ namespace openbus {
 #include "openbus/Connection_impl.h"
 #include "openbus/util/OpenSSL.h"
 #include "openbus/ConnectionManager.h"
+
+namespace tecgraf { namespace openbus { namespace core { namespace v2_0 {
+namespace services { namespace access_control {
+
+inline bool operator==(LoginInfo const& lhs, LoginInfo const& rhs)
+{
+  return lhs.id.in() == rhs.id.in()
+    || (lhs.id.in() && rhs.id.in()
+        && !std::strcmp(lhs.id.in(), rhs.id.in()));
+}
+inline bool operator!=(LoginInfo const& lhs, LoginInfo const& rhs)
+{
+  return !(lhs == rhs);
+}
+
+} } } } } }
 
 /**
 * \brief openbus
@@ -64,7 +81,59 @@ struct InvalidPropertyValue : public std::exception {
 };
 /**/
 
-struct CallerChain;
+class Connection;
+
+/**
+* \brief Cadeia de chamadas oriundas de um barramento.
+*/  
+struct CallerChain {
+  /**
+  * Barramento através do qual as chamadas foram originadas.
+  */
+  const char *busid() const { return _busid.c_str(); }
+  
+  /**
+  * Lista de informações de login de todas as entidades que realizaram chamadas
+  * que originaram a cadeia de chamadas da qual essa chamada está inclusa.
+	  * Quando essa lista é vazia isso indica que a chamada não está inclusa numa 
+  * cadeia de chamadas.
+	  */
+  const idl_ac::LoginInfoSeq &originators() const { return _originators; }
+  
+  /**
+  * Informação de login da entidade que iniciou a chamada
+  */
+  const idl_ac::LoginInfo &caller() const { return _caller; }
+
+  CallerChain()
+  {}
+private:
+  CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c, 
+    const idl_cr::SignedCallChain &d) 
+    : _busid(busid), _originators(b), _caller(c), _signedCallChain(d) { }
+  
+  CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
+    : _busid(busid), _originators(b), _caller(c) { }
+  
+  std::string _busid;
+  idl_ac::LoginInfoSeq _originators;
+  idl_ac::LoginInfo _caller;
+  idl_cr::SignedCallChain _signedCallChain;
+  const idl_cr::SignedCallChain *signedCallChain() const { return &_signedCallChain; }
+  void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
+  friend class Connection;
+  friend class openbus::interceptors::ClientInterceptor;
+  friend inline bool operator==(CallerChain const& lhs, CallerChain const& rhs)
+  {
+    return lhs._busid == rhs._busid && lhs._originators == rhs._originators
+      && lhs._caller == rhs._caller;
+  }
+};
+
+inline bool operator!=(CallerChain const& lhs, CallerChain const& rhs)
+{
+  return !(lhs == rhs);
+}
 
 /**
 * Conexão com um barramento.
@@ -172,7 +241,7 @@ public:
   *
   * @throw CORBA::Exception
   */
-  CallerChain *getCallerChain();
+  CallerChain getCallerChain();
   
   /**
   * Associa uma cadeia de chamadas do barramento a thread corrente, de forma que todas as chamadas
@@ -185,7 +254,7 @@ public:
   * @throw CORBA::NO_PERMISSION { minor = InvalidChainCode }
   * @throw CORBA::Exception
   */
-  void joinChain(CallerChain *chain);
+  void joinChain(CallerChain const& chain);
   
   /**
   * Remove a associação da cadeia de chamadas com a thread corrente, fazendo com que todas as 
@@ -206,7 +275,7 @@ public:
   *
   * @throw CORBA::Exception
   */
-  CallerChain *getJoinedChain();
+  CallerChain getJoinedChain();
   
   /*
   * Define a callback a ser chamada sempre que o login se torna inválido.
@@ -300,44 +369,6 @@ private:
   friend class openbus::ConnectionManager;
 };
 
-/**
-* \brief Cadeia de chamadas oriundas de um barramento.
-*/  
-struct CallerChain {
-  /**
-  * Barramento através do qual as chamadas foram originadas.
-  */
-  const char *busid() const { return _busid; }
-  
-  /**
-  * Lista de informações de login de todas as entidades que realizaram chamadas
-  * que originaram a cadeia de chamadas da qual essa chamada está inclusa.
-	  * Quando essa lista é vazia isso indica que a chamada não está inclusa numa 
-  * cadeia de chamadas.
-	  */
-  const idl_ac::LoginInfoSeq &originators() const { return _originators; }
-  
-  /**
-  * Informação de login da entidade que iniciou a chamada
-  */
-  const idl_ac::LoginInfo &caller() const { return _caller; }
-private:
-  CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c, 
-    const idl_cr::SignedCallChain &d) 
-    : _busid(busid), _originators(b), _caller(c), _signedCallChain(d) { }
-  
-  CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
-    : _busid(busid), _originators(b), _caller(c) { }
-  
-  const char *_busid;
-  idl_ac::LoginInfoSeq _originators;
-  idl_ac::LoginInfo _caller;
-  idl_cr::SignedCallChain _signedCallChain;
-  const idl_cr::SignedCallChain *signedCallChain() const { return &_signedCallChain; }
-  void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
-  friend class Connection;
-  friend class openbus::interceptors::ClientInterceptor;
-};
 }
 
 #endif

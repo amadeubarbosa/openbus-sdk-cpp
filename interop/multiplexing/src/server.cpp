@@ -19,10 +19,10 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   char * sayHello() {
     std::string msg;
     for (std::vector<openbus::Connection *>::iterator it = _connVec.begin(); it != _connVec.end(); ++it) {
-      openbus::CallerChain *chain = (*it)->getCallerChain();
-      if (chain) {
-        std::cout << "Hello " << chain->caller().entity.in() << "@" << chain->busid() << std::endl;
-        msg = "Hello " + std::string(chain->caller().entity.in()) + "@" + std::string((*it)->busid()) + "!";
+      openbus::CallerChain chain = (*it)->getCallerChain();
+      if (chain != openbus::CallerChain()) {
+        std::cout << "Hello " << chain.caller().entity.in() << "@" << chain.busid() << std::endl;
+        msg = "Hello " + std::string(chain.caller().entity.in()) + "@" + std::string((*it)->busid()) + "!";
         break;
       }
     }

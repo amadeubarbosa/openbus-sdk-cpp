@@ -23,16 +23,17 @@ struct MessageImpl : public POA_Message
   void sendMessage(const char* message)
   {
     openbus::Connection* c = manager.getRequester();
-    openbus::CallerChain* chain = c->getCallerChain();
-    if(chain && !std::strcmp(chain->caller().entity, "secretary"))
+    openbus::CallerChain chain = c->getCallerChain();
+    if(chain != openbus::CallerChain()
+       && !std::strcmp(chain.caller().entity, "secretary"))
     {
       std::cout << "Hello" << std::endl;
     }
     else
     {
       const char* name = "[unknown]";
-      if(chain)
-        name = chain->caller().entity;
+      if(chain != openbus::CallerChain())
+        name = chain.caller().entity;
       std::cout << "I'm unavailable to " << name << std::endl;
       throw ::Unavailable();
     }

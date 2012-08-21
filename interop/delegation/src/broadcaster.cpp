@@ -44,7 +44,7 @@ struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegatio
 
   void subscribe()
   {
-    std::string from(connection.getCallerChain()->caller().entity);
+    std::string from(connection.getCallerChain().caller().entity);
     boost::unique_lock<boost::mutex> lock(mutex);
     std::vector<std::string>::iterator iterator
       = std::find(subscribers.begin(), subscribers.end(), from);
@@ -55,7 +55,7 @@ struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegatio
   void unsubscribe()
   {
     boost::unique_lock<boost::mutex> lock(mutex);
-    std::string from(connection.getCallerChain()->caller().entity);
+    std::string from(connection.getCallerChain().caller().entity);
     std::vector<std::string>::iterator iterator
       = std::find(subscribers.begin(), subscribers.end(), from);
     if(iterator != subscribers.end())

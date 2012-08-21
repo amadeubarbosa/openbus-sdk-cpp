@@ -25,11 +25,11 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
   void sayHello()
   {
     openbus::Connection* c = manager.getRequester();
-    openbus::CallerChain* chain = c->getCallerChain();
-    if(chain)
+    openbus::CallerChain chain = c->getCallerChain();
+    if(chain != openbus::CallerChain())
     {
-      std::cout << "Caller: " << chain->caller().entity << std::endl;
-      access_control::LoginInfoSeq originators = chain->originators();
+      std::cout << "Caller: " << chain.caller().entity << std::endl;
+      access_control::LoginInfoSeq originators = chain.originators();
       for(std::size_t i = 0; i != originators.length(); ++i)
       {
         std::cout << "Originator: " << originators[i].entity << std::endl;
