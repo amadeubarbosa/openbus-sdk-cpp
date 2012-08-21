@@ -3,26 +3,48 @@
 #include <openbus/ConnectionManager.h>
 #include <iostream>
 #include "stubs/hello.h"
+#include "properties_reader.h"
+#include <log/output/file_output.h>
 
 int main(int argc, char** argv) {
   try {
     openbus::log.set_level(openbus::debug_level);
+
+    ::properties properties_file;
+    if(!properties_file.openbus_log_file.empty())
+    {
+      std::auto_ptr<logger::output_base> output
+        (new logger::output::file_output(properties_file.openbus_log_file.c_str()
+                                         , std::ios::out));
+      openbus::log.add_output(output);
+    }
+    
+    if(properties_file.buses.size() < 1)
+      throw std::runtime_error("No bus is configured");
+
+    ::properties::bus bus = properties_file.buses[0];
+
     CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
+
     openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
       (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn
+      (manager->createConnection(bus.host.c_str(), bus.port));
+
     manager->setDefaultConnection(conn.get());
-    conn->loginByPassword("demo", "demo");
-    std::pair <openbus::idl_ac::LoginProcess_ptr, openbus::idl::OctetSeq_var> credential = 
+    conn->loginByPassword("interop_sharedauth_cpp_client"
+                          , "interop_sharedauth_cpp_client");
+
+    std::pair <openbus::idl_ac::LoginProcess_ptr, openbus::idl::OctetSeq> credential = 
       conn->startSharedAuth();
     std::cout << "[LoginProcess]: " << manager->orb()->object_to_string(credential.first) 
       << std::endl;
-    std::cout << "[secret]: " << credential.second->get_buffer() << std::endl;
+    // std::cout << "[secret]: " << credential.second.get_buffer() << std::endl;
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.offer.entity";
