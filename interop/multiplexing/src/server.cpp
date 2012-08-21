@@ -41,13 +41,19 @@ public:
 private:
   openbus::ConnectionManager *_manager;
 };
-#endif
 
 class RegisterThread : public MICOMT::Thread {
 public:
   RegisterThread(openbus::ConnectionManager *m, scs::core::ComponentContext &ctx, 
     openbus::Connection *c) : _manager(m), _conn(c), _ctx(ctx) {}
   void _run(void*) {
+#else
+class Register {
+public:
+  Register(openbus::ConnectionManager *m, scs::core::ComponentContext &ctx,
+           openbus::Connection *c) : _manager(m), _conn(c), _ctx(ctx) 
+  {
+#endif
     try {
       openbus::idl_or::ServicePropertySeq props;
       props.length(1);
@@ -58,7 +64,11 @@ public:
       _manager->setRequester(_conn);
       _conn->offers()->registerService(_ctx.getIComponent(), props);
     } catch (const CORBA::Exception &e) {
+      #ifdef OPENBUS_SDK_MULTITHREAD
       std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e << std::endl;
+      #else
+      std::cout << "error (CORBA::Exception): " << e << std::endl;
+      #endif
     }
   }
 private:
@@ -131,6 +141,7 @@ int main(int argc, char** argv) {
     manager->setDispatcher(*conn1BusA.get());
     manager->setDispatcher(*connBusB.get());
     
+    #ifdef OPENBUS_SDK_MULTITHREAD
     RegisterThread *registerThread1 = new RegisterThread(manager, ctx, conn1BusA.get());
     RegisterThread *registerThread2 = new RegisterThread(manager, ctx, conn2BusA.get());
     RegisterThread *registerThread3 = new RegisterThread(manager, ctx, conn3BusA.get());
@@ -139,9 +150,12 @@ int main(int argc, char** argv) {
     registerThread2->start();
     registerThread3->start();
     registerThread4->start();
-    #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
     #else
+    Register(manager, ctx, conn1BusA.get());
+    Register(manager, ctx, conn2BusA.get());
+    Register(manager, ctx, conn3BusA.get());
+    Register(manager, ctx, connBusB.get());
     manager->orb()->run();
     #endif
   } catch(std::exception const& e) {
