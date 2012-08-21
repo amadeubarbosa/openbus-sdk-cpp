@@ -5,7 +5,7 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   USE_CC=Yes
   AR= CC
   
-  ifeq "$(DBG)" "YES"
+  ifeq "$(DBG)" "Yes"
     CPPFLAGS= -g
     STDLFLAGS= -g
     LFLAGS= -g
@@ -61,10 +61,10 @@ ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
 else
   SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread${MICO_DEBUG}.a \
         ${OPENBUSLIB}/libscs-micosinglethread${MICO_DEBUG}.a \
-        ${OPENBUSLIB}/liblogger$-singlethread{MICO_DEBUG}.a
+        ${OPENBUSLIB}/liblogger-singlethread${MICO_DEBUG}.a
 endif
 
-#USE_LUA51= YES
+#USE_LUA51= Yes
 
 OBJROOT= obj
 TARGETROOT= bin
