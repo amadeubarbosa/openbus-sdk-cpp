@@ -80,8 +80,8 @@ int main(int argc, char** argv) {
       openbus::log.add_output(output);
     }
     
-    if(properties_file.buses.size() < 4)
-      throw std::runtime_error("There should be 4 buses configured in properties file");
+    if(properties_file.buses.size() < 2)
+      throw std::runtime_error("There should be 2 buses configured in properties file");
 
     std::vector< ::properties::bus> buses = properties_file.buses;
 
@@ -98,9 +98,9 @@ int main(int argc, char** argv) {
     std::auto_ptr <openbus::Connection> conn1BusA
       (manager->createConnection(buses[1].host.c_str(), buses[1].port));
     std::auto_ptr <openbus::Connection> conn2BusA
-      (manager->createConnection(buses[2].host.c_str(), buses[2].port));
+      (manager->createConnection(buses[1].host.c_str(), buses[1].port));
     std::auto_ptr <openbus::Connection> conn3BusA
-      (manager->createConnection(buses[3].host.c_str(), buses[3].port));
+      (manager->createConnection(buses[1].host.c_str(), buses[1].port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());
