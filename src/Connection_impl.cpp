@@ -77,7 +77,7 @@ idl_ac::ValidityTime RenewLogin::renew() {
   try {
     l.level_log(debug_level, "access_control()->renew()");
     validityTime = _access_control->renew();
-  } catch (CORBA::Exception&) {
+  } catch (CORBA::Exception &) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
   }
   return validityTime;
@@ -146,14 +146,17 @@ void RenewLogin::callback(CORBA::Dispatcher *dispatcher, Event event) {
 
 idl_ac::ValidityTime RenewLogin::renew(CORBA::Dispatcher *dispatcher) {
   log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
-  _manager->setRequester(_conn);
   assert(_access_control);
   idl_ac::ValidityTime validityTime = _validityTime;
+  Connection *c = 0;
   try {
+    c = _manager->getRequester();
+    _manager->setRequester(_conn);
     validityTime = _access_control->renew();
-  } catch (CORBA::Exception&) {
+    _manager->setRequester(c);
+  } catch (CORBA::Exception &) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
-    dispatcher->remove(this, CORBA::Dispatcher::Timer);
+    _manager->setRequester(c);
   }
   return validityTime;
 }
