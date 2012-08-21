@@ -37,38 +37,39 @@ int main(int argc, char** argv) {
     std::auto_ptr <openbus::Connection> conn
       (manager->createConnection(bus.host.c_str(), bus.port));
 
-    manager->setDefaultConnection(conn.get());
-    conn->loginByPassword("interop_sharedauth_cpp_client"
-                          , "interop_sharedauth_cpp_client");
-
     {
-      std::pair <openbus::idl_ac::LoginProcess_ptr, openbus::idl::OctetSeq> credential
-        = conn->startSharedAuth();
       CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");
       IOP::CodecFactory_var codec_factory
         = IOP::CodecFactory::_narrow(object);
       assert(!CORBA::is_nil(codec_factory));
-      
+  
       IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
       IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
 
-      sharedauth::EncodedSharedAuth sharedauth
-        =
-        {
-          credential.first, credential.second
-        };
+      std::ifstream file(properties_file.openbus_log_file.c_str());
+      CORBA::OctetSeq secret;
+      file.seekg(0, std::ios::end);
+      secret.length(file.tellg());
+      file.seekg(0, std::ios::beg);
+      file.rdbuf()->sgetn
+        (static_cast<char*>(static_cast<void*>(secret.get_buffer()))
+         , secret.length());
 
-      CORBA::Any any;
-      any <<= sharedauth;
-      CORBA::OctetSeq_var secret_seq = codec->encode_value(any);
-
-      std::ofstream file(properties_file.openbus_log_file.c_str());
-      std::copy(secret_seq->get_buffer()
-                , secret_seq->get_buffer() + secret_seq->length()
-                , std::ostream_iterator<char>(file));
+      CORBA::Any_var any = codec->decode_value(secret, sharedauth::_tc_EncodedSharedAuth);
+      sharedauth::EncodedSharedAuth sharedauth;
+      if((*any) >>= sharedauth)
+      {
+        access_control::LoginProcess_var login
+          = access_control::LoginProcess::_narrow(sharedauth.attempt);
+        conn->loginBySharedAuth(login, sharedauth.secret);
+      }
+      else
+      {
+        std::cout << "Falhou unmarshaling os dados no arquivo de log" << std::endl;
+        return 1;
+      }
+      manager->setDefaultConnection(conn.get());
     }
-
-    std::cout << "Chamando a faceta Hello por este cliente." << std::endl;
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
@@ -76,18 +77,16 @@ int main(int argc, char** argv) {
     props[0].value = "Hello";
     props[1].name  = "offer.domain";
     props[1].value = "Interoperability Tests";
-
     openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
     if (offers->length())
     {
-      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName(
+      CORBA::ULong zero = 0u;
+      CORBA::Object_var o = offers[zero].service_ref->getFacetByName(
         "Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       hello->sayHello();
     } else std::cout << "nenhuma oferta encontrada." << std::endl;
-    std::cout << "orb.run()" << std::endl;
-    manager->orb()->run();
   } catch(std::exception const& e) {
     std::cout << "[error (std::exception)] " << e.what() << std::endl;
   } catch (const CORBA::Exception &e) {

@@ -3,38 +3,18 @@ APPNAME=${PROJNAME}
 
 include config
 
-OPENBUS_INC= ${OPENBUS_HOME}/include
-OPENBUS_LDIR= ${OPENBUS_HOME}/lib
-
-TARGETROOT=bin
-OBJROOT=obj
-
-INCLUDES= . \
-  stubs \
-  ${MICO_INC} \
-  ${OPENBUS_INC} \
-  ${OPENBUS_INC}/openbus/cpp \
-  ${OPENBUS_INC}/openbus/cpp/stubs \
-  ${OPENBUS_INC}/boost
-
-LDIR+= ${OPENBUS_LDIR} ${MICO_LDIR}
-
-LIBS+= mico${MICOVERSION} dl crypto ssl
-
-SLIB= ${OPENBUS_LDIR}/$(OPENBUS_LIB) \
-      ${OPENBUS_LDIR}/$(SCS_LIB)
-
 USE_NODEPEND= Yes
 
-SRC= src/client.cpp stubs/hello.cc
+SRC= src/client.cpp stubs/hello.cc stubs/encoding.cc
 
-IDLS= ../../simple/idl/hello.idl
+IDLS= idl/hello/hello.idl idl/sharedauth/encoding.idl
 
-STUBS= stubs/hello.cc stubs/hello.h
+STUBS= stubs/hello.cc stubs/hello.h stubs/encoding.h stubs/encoding.cc
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; ${MICO_BIN}/idl --poa ../../simple/idl/hello.idl
+	cd stubs ; ${MICO_BIN}/idl --no-paths --poa --any --typecode ../idl/hello/hello.idl
+	cd stubs ; ${MICO_BIN}/idl --no-paths --poa --any --typecode ../idl/sharedauth/encoding.idl
 
 genstubs: $(STUBS)
 

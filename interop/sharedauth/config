@@ -29,6 +29,18 @@ ifeq "$(DBG)" "Yes"
   MICO_DEBUG=-debug
 endif
 
+OPENBUS_INC= ${OPENBUS_HOME}/include
+OPENBUS_LDIR= ${OPENBUS_HOME}/lib
+
+INCLUDES+= . \
+  stubs \
+  ${MICO_INC} \
+  ${OPENBUS_INC} \
+  ${OPENBUS_INC}/openbus/cpp \
+  ${OPENBUS_INC}/openbus/cpp/stubs \
+  ${OPENBUS_INC}/boost \
+  ../properties_reader/include
+
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
   MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
@@ -53,3 +65,13 @@ else
   DEFINES+=LOGGER_DISABLE_THREADS
   LIBS+= logger-singlethread${MICO_DEBUG}
 endif
+
+TARGETROOT=bin
+OBJROOT=obj
+
+LDIR+= ${OPENBUS_LDIR} ${MICO_LDIR}
+
+LIBS+= mico${MICOVERSION} dl crypto ssl
+
+SLIB= ${OPENBUS_LDIR}/$(OPENBUS_LIB) \
+      ${OPENBUS_LDIR}/$(SCS_LIB)
