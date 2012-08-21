@@ -2,16 +2,21 @@
 #include <openbus/ORBInitializer.h>
 #include <iostream>
 #include "hello.h"
+#include "sharedauth.h"
+
+#include <fstream>
+#include <iterator>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
-namespace simple = tecgraf::openbus::interop::simple;
 namespace services = tecgraf::openbus::core::v2_0::services;
 namespace access_control
  = tecgraf::openbus::core::v2_0::services::access_control;
+namespace simple
+ = tecgraf::openbus::interop::simple;
 
 template <typename F>
-void call_with_found_hello(offer_registry::ServiceOfferDescSeq_var offers, F f)
+void try_call_with_found_reference(offer_registry::ServiceOfferDescSeq_var offers, F f)
 {
   if (offers->length() == 0)
   {
@@ -64,9 +69,9 @@ void call_with_found_hello(offer_registry::ServiceOfferDescSeq_var offers, F f)
   }
 }
 
-struct callSayHello
+struct sayHello
 {
-  callSayHello(bool& try_again)
+  sayHello(bool& try_again)
     : try_again(&try_again) {}
 
   typedef void result_type;
@@ -81,6 +86,9 @@ struct callSayHello
 
 struct onReloginCallback
 {
+  onReloginCallback(CORBA::OctetSeq secret, access_control::LoginProcess_var attempt)
+    : secret(secret), attempt(attempt) {}
+
   typedef void result_type;
   result_type operator()(openbus::Connection& c, access_control::LoginInfo info) const
   {
@@ -88,7 +96,7 @@ struct onReloginCallback
     {
       try
       {
-        c.loginByPassword("demo", "demo");
+        c.loginBySharedAuth(attempt, secret);
         break;
       }
       catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
@@ -119,10 +127,19 @@ struct onReloginCallback
     }
     while(true);
   }
+
+  CORBA::OctetSeq secret;
+  access_control::LoginProcess_var attempt;
 };
 
 int main(int argc, char** argv)
 {
+  if(argc < 2)
+  {
+    std::cout << "E necessario passar o nome do arquivo aonde esta gravado o segredo" << std::endl;
+    return 1;
+  }
+
   // Inicializando CORBA e ativando o RootPOA
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
   CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
@@ -142,8 +159,38 @@ int main(int argc, char** argv)
     try
     {
       conn = manager->createConnection("localhost", 2089);
-      conn->onInvalidLogin( ::onReloginCallback());
-      conn->loginByPassword("demo", "demo");
+
+      CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");
+      IOP::CodecFactory_var codec_factory
+        = IOP::CodecFactory::_narrow(object);
+      assert(!CORBA::is_nil(codec_factory));
+  
+      IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
+      IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
+
+      std::ifstream file(argv[1]);
+      CORBA::OctetSeq secret;
+      file.seekg(0, std::ios::end);
+      secret.length(file.tellg());
+      file.seekg(0, std::ios::beg);
+      file.rdbuf()->sgetn
+        (static_cast<char*>(static_cast<void*>(secret.get_buffer()))
+         , secret.length());
+
+      CORBA::Any_var any = codec->decode_value(secret, _tc_EncodedSharedAuth);
+      EncodedSharedAuth sharedauth;
+      if((*any) >>= sharedauth)
+      {
+        access_control::LoginProcess_var login
+          = access_control::LoginProcess::_narrow(sharedauth.attempt);
+        conn->onInvalidLogin( ::onReloginCallback(sharedauth.secret, login));
+        conn->loginBySharedAuth(login, sharedauth.secret);
+      }
+      else
+      {
+        
+      }
+
       manager->setDefaultConnection(conn.get());
       break;
     }
@@ -190,7 +237,7 @@ int main(int argc, char** argv)
     {
       offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
       // Pegando uma oferta valida
-      ::call_with_found_hello(offers, callSayHello(try_again));
+      ::try_call_with_found_reference(offers, sayHello(try_again));
       continue;
     }
     catch (services::ServiceFailure e)
@@ -215,4 +262,5 @@ int main(int argc, char** argv)
     do { t = sleep(t); } while(t);
   }
   while(try_again);
+
 }
