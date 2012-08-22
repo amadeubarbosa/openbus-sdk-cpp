@@ -132,11 +132,16 @@ void RenewLogin::run() {
 
 #else
 
-RenewLogin::RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, ConnectionManager *m, 
-  idl_ac::ValidityTime t)
-  : _conn(c), _access_control(a), _manager(m), _validityTime(t) 
+  RenewLogin::RenewLogin(CORBA::ORB_ptr o, Connection *c, idl_ac::AccessControl_ptr a, 
+                         ConnectionManager *m, idl_ac::ValidityTime t)
+    : _orb(o), _conn(c), _access_control(a), _manager(m), _validityTime(t) 
 { 
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
+  _orb->dispatcher()->tm_event(this, _validityTime*1000);
+}
+
+RenewLogin::~RenewLogin() {
+  _orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);    
 }
 
 void RenewLogin::callback(CORBA::Dispatcher *dispatcher, Event event) {
