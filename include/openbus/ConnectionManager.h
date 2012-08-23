@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1 -*-
 /**
 * API - SDK Openbus C++
 * \file openbus/ConnectionManager.h
@@ -23,112 +24,185 @@ namespace openbus {
 * \brief openbus
 */
 namespace openbus {
-  const std::vector<std::string> propsDef;
- /**
- * \brief Interface com operaÃ§Ãµes para gerenciar o acesso a barramentos OpenBus atravÃ©s de um ORB 
- *  CORBA.
- */
+  /**
+   * \brief Gerencia conexões de acesso a barramentos OpenBus através de um ORB.
+   *
+   * Conexões representam formas diferentes de acesso ao barramento. O
+   * ConnectionManager permite criar essas conexões e gerenciá-las, indicando
+   * quais são utilizadas em cada chamada. As conexões são usadas basicamente
+   * de duas formas no tratamento das chamadas:
+   * - para realizar uma chamada remota (cliente), neste caso a conexão é
+   *   denominada "Requester".
+   * - para validar uma chamada recebida (servidor), neste caso a conexão é
+   *   denominada "Dispatcher".
+   */
   class ConnectionManager : public CORBA::LocalObject {
   public:
     /**
-	  * Cria uma conexÃ£o para um barramento a partir de um endereÃ§o de rede IP e uma porta.
-	  * 
-	  * @param[in] host EndereÃ§o de rede IP onde o barramento estÃ¡ executando.
-	  * @param[in] port Porta do processo do barramento no endereÃ§o indicado.
-	  * @param[in] props Lista opcional de propriedades:
-	  *   legacydelegate: Indica como o campo 'delegate' das credenciais 1.5 sÃ£o preenchidos a partir 
-	  *                   de uma cadeia 2.0.
-	  *     Chave "legacydelegate" seguida por um dos seguintes valores:
-	  *       "caller"
-	  *          O campo 'delegate' deve ser preenchido com o 'chain.caller.entity'.
-	  *       "originator"
-	  *          O campo 'delegate' deve ser preenchido com o 'chain.originators[0].entity' ou 
-	  *          'chain.caller.entity' caso o campo 'chain.originators' seja uma sequÃªncia vazia.
-    *      OBS: Se esta propriedade nÃ£o for definida o comportamento referente ao modo 'caller'
-    *      serÃ¡ adotado.
-	  *   
-	  * @throw CORBA::Exception
-	  * @throw InvalidBusAddress
-    *   - host e porta informados nÃ£o podem ser usados para gerar um corbaloc vÃ¡lido. 
-    *   - o 'corbaloc' gerado nÃ£o referencia um 'IComponent' vÃ¡lido, ou seja, com o ComponentId e 
-    *     facetas esperadas.	  
-    *
-	  * @return ConexÃ£o ao barramento referenciado.
-	  */
-    std::auto_ptr<Connection> createConnection(const char *host, short port, 
-      std::vector<std::string> props = propsDef);
+     * \brief Cria uma conexão para um barramento.
+     * 
+     * Cria uma conexão para um barramento. O barramento é indicado por um nome
+     * ou endereço de rede e um número de porta, onde os serviços núcleo daquele
+     * barramento estão executando.
+     * 
+     * @param[in] host Endereço ou nome de rede onde os serviços
+     *        núcleo do barramento estão executando.
+     *
+     * @param[in] port Porta onde os serviços núcleo do barramento estão executando.
+     *
+     * @param[in] props Lista opcional de propriedades que definem algumas
+     *        configurações sobre a forma que as chamadas realizadas ou validadas
+     *        com essa conexão são feitas. A seguir são listadas as propriedades
+     *        válidas:
+     *        - access.key: chave de acesso a ser utiliza internamente para a
+     *          geração de credenciais que identificam as chamadas através do
+     *          barramento. A chave deve ser uma chave privada RSA de 2048 bits
+     *          (256 bytes). Quando essa propriedade não é fornecida, uma chave
+     *          de acesso é gerada automaticamente.
+     *        - legacy.disable: desabilita o suporte a chamadas usando protocolo
+     *          OpenBus 1.5. Por padrão o suporte está habilitado.
+     *        - legacy.delegate: indica como é preenchido o campo 'delegate' das
+     *          credenciais enviadas em chamadas usando protocolo OpenBus 1.5. Há
+     *          duas formas possíveis (o padrão é 'caller'):
+     *          - caller: o campo 'delegate' é preenchido sempre com a entidade
+     *            do campo 'caller' da cadeia de chamadas.
+     *          - originator: o campo 'delegate' é preenchido sempre com a
+     *            entidade que originou a cadeia de chamadas, que é o primeiro
+     *            login do campo 'originators' ou o campo 'caller' quando este
+     *            é vazio.
+     *   
+     * @throw InvalidBusAddress Os parâmetros 'host' e 'port' não são
+     * válidos.
+     *
+     * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
+     *
+     * @throw CORBA::Exception
+     *
+     * @return Conexão criada.
+     */
+    std::auto_ptr<Connection> createConnection(const char *host, short port,
+                                               std::vector<std::string> props = std::vector<std::string>());
     
     /**
- 	  * Define a conexÃ£o a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
- 	  * sempre que nÃ£o houver uma conexÃ£o especÃ­fica definida. Sempre que nÃ£o houver uma conexÃ£o 
- 	  * associada tanto as chamadas realizadas como as chamadas recebidas sÃ£o negadas com a exceÃ§Ã£o 
- 	  * CORBA::NO_PERMISSION.
- 	  *
- 	  * @param[in] conn ConexÃ£o a ser definida como conexÃ£o default.
-  	*/
+     * \brief Define a conexão padrão a ser usada nas chamadas.
+     * 
+     * Define uma conexão a ser utilizada como "Requester" e
+     * "Dispatcher" de chamadas sempre que não houver uma conexão
+     * "Requester" e "Dispatcher" específica definida para o caso
+     * específico, como é feito através das operações 'setRequester' e
+     * 'setDispatcher'.
+     * 
+     * @param[in] conn Conexão a ser definida como conexão padrão. O
+     * 'ownership' da conexão não é transferida para o
+     * ConnectionManager, e a conexão deve ser removida do
+     * ConnectionManager antes de destruida
+     */
     void setDefaultConnection(Connection *conn) { _defaultConnection = conn; }
     
     /**
-	  * ObtÃ©m a conexÃ£o a ser utilizada nas chamadas realizadas e no despacho de chamadas recebidas 
-	  * sempre que nÃ£o houver uma conexÃ£o especÃ­fica definida.
-	  * 
-	  * @return ConexÃ£o definida como conexÃ£o default.
-	  */
+     * \brief Devolve a conexão padrão.
+     * 
+     * Veja operação 'setDefaultConnection'.
+     * 
+     * \return Conexão definida como conexão padrão. ConnectionManager
+     * não possui ownership dessa conexão e o mesmo não é transferido
+     * para o código de usuário na execução desta função
+     */
     Connection *getDefaultConnection() const { return _defaultConnection; }
     
     /**
-	  * Define a conexÃ£o com o barramento a ser utilizada em todas as chamadas feitas pela thread 
-	  * corrente. Quando a conexÃ£o passada Ã© zero a thread passa a ficar sem nenhuma conexÃ£o 
-	  * associada.
-	  * 
-	  * @throw CORBA::Exception
-	  *
-	  * @param[in] ConexÃ£o a barramento a ser associada a thread corrente.
-	  */
-    void setRequester(Connection*);
+     * \brief Define a conexão "Requester" do contexto corrente.
+     * 
+     * Define a conexão "Requester" a ser utilizada em todas as
+     * chamadas feitas no contexto atual. Quando 'conn' é 'null' o
+     * contexto passa a ficar sem nenhuma conexão associada.
+     * 
+     * @param[in] conn Conexão a ser associada ao contexto corrente. O
+     * 'ownership' da conexão não é transferida para o
+     * ConnectionManager, e a conexão deve ser removida do
+     * ConnectionManager antes de destruida
+     */
+    void setRequester(Connection* conn);
     
     /**
-	  * Devolve a conexÃ£o com o barramento associada a thread corrente, ou zero caso nÃ£o haja 
-	  * nenhuma conexÃ£o associada Ã  thread.
-	  * 
-	  * @throw CORBA::Exception
-	  *
-	  * @return ConexÃ£o a barramento associada a thread corrente.
-  	*/
+     * \brief Devolve a conexão associada ao contexto corrente.
+     * 
+     * @throw CORBA::Exception
+     *
+     * @return Conexão a barramento associada a thread
+     * corrente. ConnectionManager não possui ownership dessa conexão
+     * e o mesmo não é transferido para o código de usuário na
+     * execução desta função
+     */
     Connection *getRequester() const;
     
-	  /**
-	  * Define que conexÃ£o deve ser utilizada para receber chamadas oriundas do barramento ao qual 
-	  * estÃ¡ conectada e autenticada, denominada conexÃ£o de despacho.
-	  * 
-	  * @param[in] ConexÃ£o a barramento a ser associada a thread corrente.
-  	*/
-    void setDispatcher(Connection&);
+    /**
+     * \brief Define uma a conexão como "Dispatcher" de barramento.
+     * 
+     * Define a conexão como "Dispatcher" do barramento ao qual ela está
+     * conectada, de forma que todas as chamadas originadas por entidades
+     * conectadas a este barramento serão validadas com essa conexão. Só pode
+     * haver uma conexão "Dispatcher" para cada barramento, portanto se já houver
+     * outra conexão "Dispatcher" para o mesmo barramento essa será substituída pela
+     * nova conexão.
+     * 
+     * @param[in] conn Conexão a ser definida como "Dispatcher". O
+     * 'ownership' da conexão não é transferida para o
+     * ConnectionManager, e a conexão deve ser removida do
+     * ConnectionManager antes de destruida
+     */
+    void setDispatcher(Connection& conn);
     
-	  /**
-	  * Devolve a conexÃ£o de despacho associada ao barramento indicado, se houver. dado barramento, 
-	  * ou zero caso nÃ£o haja nenhuma conexÃ£o associada ao barramento.
-	  * 
-	  * @param[in] busid Identificador do barramento ao qual a conexÃ£o estÃ¡ associada.
-	  * @return ConexÃ£o a barramento associada ao barramento.
-	  */
+    /**
+     * \brief Devolve a conexão "Dispatcher" do barramento indicado.
+     * 
+     * @param[in] busid Identificador do barramento ao qual a conexão
+     * está associada. ConnectionManager não possui ownership dessa
+     * conexão e o mesmo não é transferido para o código de usuário na
+     * execução desta função
+     * 
+     * @return Conexão "Dispatcher" do barramento indicado, ou 'null'
+     *         caso não haja nenhuma conexão "Dispatcher" associada ao
+     *         barramento indicado. ConnectionManager não possui
+     *         ownership dessa conexão e o mesmo não é transferido
+     *         para o código de usuário na execução desta função
+     */
     Connection *getDispatcher(const char *busid);
     
-	  /**
-	  * Remove a conexÃ£o de despacho associada ao barramento indicado, se houver.
-	  * 
-	  * @return ConexÃ£o a barramento associada ao barramento ou zero se nÃ£o houver nenhuma conexÃ£o
-	  * associada.
-	  */
+    /**
+     * \brief Remove a conexão "Dispatcher" associada ao barramento
+     * indicado.
+     * 
+     * \param busid Identificador do barramento ao qual a conexão está
+     * associada.
+     * 
+     * \return Conexão "Dispatcher" associada ao barramento ou 'null'
+     *         se não houver nenhuma conexão
+     *         associada. ConnectionManager não possui ownership dessa
+     *         conexão e o mesmo não é transferido para o código de
+     *         usuário na execução desta função
+     */
+    
+    /**
+     * \brief Devolve a conexão "Dispatcher" do barramento indicado.
+     * 
+     * \param busid Identificador do barramento ao qual a conexão está
+     * associada. ConnectionManager não possui ownership dessa conexão
+     * e o mesmo não é transferido para o código de usuário na
+     * execução desta função
+     * 
+     * \return Conexão "Dispatcher" do barramento indicado, ou 'null' caso não
+     *         haja nenhuma conexão "Dispatcher" associada ao barramento indicado.
+     */
     Connection *clearDispatcher(const char *busid);
     
-	  /** 
-	  * ORB utilizado pela conexÃ£o. 
-	  */
+    /** 
+     * ORB utilizado pela conexão. 
+     */
     CORBA::ORB *orb() const { return _orb; }
   private:
     /**
-    * ConnectionManager deve ser adquirido atravÃ©s de:
+    * ConnectionManager deve ser adquirido através de:
     *   orb->resolve_initial_references(CONNECTION_MANAGER_ID)
     */
     ConnectionManager(CORBA::ORB*, IOP::Codec*, 

@@ -1,3 +1,9 @@
+// -*- coding: iso-8859-1 -*-
+/**
+* API - SDK Openbus C++
+* \file openbus/log.h
+*/
+
 #ifndef TECGRAF_OPENBUS_LOG_H_
 #define TECGRAF_OPENBUS_LOG_H_
 
@@ -8,14 +14,15 @@
 #include <CORBA.h>
 
 namespace openbus {
-
+#ifndef OPENBUS_DOXYGEN
 typedef logger::log_scope log_scope;
 typedef logger::scope_token scope_token;
+#endif
 using logger::error_level;
 using logger::warning_level;
 using logger::info_level;
 using logger::debug_level;
-
+#ifndef OPENBUS_DOXYGEN
 #ifdef OPENBUS_SDK_MULTITHREAD
 namespace detail {
 
@@ -33,9 +40,15 @@ struct mico_thread_formatter : logger::formatter_base
 
 }
 #endif
+#endif
 
+/**
+ * \brief Classe que contém funções auxiliares para configuração de
+ * log do Openbus
+ */
 struct log_type
 {
+#ifndef OPENBUS_DOXYGEN
   log_type()
   {
     set_level(error_level);
@@ -46,6 +59,11 @@ struct log_type
     add_formatter(mico_thread_formatter);
 #endif
   }
+#endif
+  /**
+   * \brief Adiciona um output de log. Esses outputs podem ser
+   * construidos com as bibliotecas de log
+   */
   void add_output(std::auto_ptr<logger::output_base> output)
   {
     std::auto_ptr<logger::output_base> tmp1(output->clone());
@@ -54,6 +72,10 @@ struct log_type
     ci_log.add_output(tmp1);
     si_log.add_output(tmp2);
   }
+  /**
+   * \brief Adiciona um formatador de log. Esses formatadores podem ser
+   * construidos com as bibliotecas de log
+   */
   void add_formatter(std::auto_ptr<logger::formatter_base> formatter)
   {
     std::auto_ptr<logger::formatter_base> tmp1(formatter->clone());
@@ -62,6 +84,9 @@ struct log_type
     ci_log.add_formatter(tmp1);
     si_log.add_formatter(tmp2);
   }
+  /**
+   * \brief Modifica o nível de log para o Openbus
+   */
   void set_level(logger::level lev)
   {
     general_log.set_level(lev);
@@ -69,13 +94,19 @@ struct log_type
     si_log.set_level(lev);
   }
 
+#ifndef OPENBUS_DOXYGEN
   logger::logger& general_logger() { return general_log; }
   logger::logger& client_interceptor_logger() { return ci_log; }
   logger::logger& server_interceptor_logger() { return si_log; }
+#endif
 private:
   logger::logger general_log, ci_log, si_log;
 };
 
+/**
+ * \brief Instância global de log_type que permite acesso pelo usuário
+ * das configurações de log do Openbus
+ */
 extern log_type log;
 
 }
