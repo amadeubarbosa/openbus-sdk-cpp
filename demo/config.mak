@@ -72,7 +72,7 @@ INCLUDES=. .. \
   ../stubs \
   ../include \
 	${MICO_INC} \
-	${OPENBUSINC}/openssl-0.9.9 \
+	${OPENBUSINC}/openssl-1.0.0 \
 	${OPENBUSINC} \
   ${OPENBUSINC}/openbus/cpp \
   ${OPENBUSINC}/openbus/cpp/stubs \

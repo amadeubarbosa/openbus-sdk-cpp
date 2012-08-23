@@ -84,7 +84,7 @@ INCLUDES=. \
          include \
          ${MICO_INC} \
          ${OPENBUS_INC} \
-         ${OPENBUS_INC}/openssl-0.9.9 \
+         ${OPENBUS_INC}/openssl-1.0.0 \
          ${OPENBUS_INC}/boost \
          ${OPENBUS_INC}/openbus/cpp \
          ${OPENBUS_INC}/openbus/cpp/stubs \
