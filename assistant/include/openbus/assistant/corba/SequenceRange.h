@@ -1,11 +1,11 @@
-#ifndef OPENBUS_EXTENSION_CORBA_SEQUENCE_RANGE_H
-#define OPENBUS_EXTENSION_CORBA_SEQUENCE_RANGE_H
+#ifndef OPENBUS_ASSISTANT_CORBA_SEQUENCE_RANGE_H
+#define OPENBUS_ASSISTANT_CORBA_SEQUENCE_RANGE_H
 
 #include <boost/iterator/iterator_facade.hpp>
 
 #include <CORBA.h>
 
-namespace openbus { namespace extension { namespace corba {
+namespace openbus { namespace assistant { namespace corba {
 
 template <typename Seq, typename E>
 struct SequenceRangeIterator : boost::iterator_facade
@@ -15,7 +15,7 @@ struct SequenceRangeIterator : boost::iterator_facade
     : seq(&seq), index(i)
   {}
 private:
-#ifndef OPENBUS_EXTENSION_DOXYGEN
+#ifndef OPENBUS_ASSISTANT_DOXYGEN
   friend class boost::iterator_core_access;
 #endif
 

@@ -1,9 +1,9 @@
-#ifndef OPENBUS_EXTENSION_OPENBUS_H
-#define OPENBUS_EXTENSION_OPENBUS_H
+#ifndef OPENBUS_ASSISTANT_OPENBUS_H
+#define OPENBUS_ASSISTANT_OPENBUS_H
 
-#include <openbus/extension/reference.h>
+#include <openbus/assistant/reference.h>
 
-#ifdef EXTENSION_SDK_MULTITHREAD
+#ifdef ASSISTANT_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #endif
@@ -15,10 +15,10 @@
 
 #include <boost/variant.hpp>
 
-namespace openbus { namespace extension {
+namespace openbus { namespace assistant {
 
-#ifndef OPENBUS_EXTENSION_DOXYGEN
-namespace extension_detail {
+#ifndef OPENBUS_ASSISTANT_DOXYGEN
+namespace assistant_detail {
 
 struct password_authentication_info
 {
@@ -38,7 +38,7 @@ typedef boost::variant<password_authentication_info
 struct shared_state
 {
   CORBA::ORB_var const orb;
-  extension_detail::authentication_info const auth_info;
+  assistant_detail::authentication_info const auth_info;
   std::string const host;
   unsigned short const port;
   bool new_queued_components;
@@ -51,7 +51,7 @@ struct shared_state
   std::auto_ptr<openbus::Connection> connection;
   std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > components;
   std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > queued_components;
-#ifdef EXTENSION_SDK_MULTITHREAD
+#ifdef ASSISTANT_SDK_MULTITHREAD
   boost::thread work_thread;
   boost::thread orb_thread;
   boost::mutex mutex;
@@ -73,7 +73,7 @@ namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
 }
 #endif
 
-/** \brief Classe Openbus com API do extensions
+/** \brief Classe Openbus com API do assistants
  *
  * A classe Openbus deve ser instanciada por um de seus dois
  * named parameters startByPassword e startByCertificate. Essa
@@ -138,7 +138,7 @@ struct Openbus
   /** 
    * \brief Atribui uma funcao callback para erros fatais
    *  que impossibilitam a continuacao da execucao
-   *  do extension
+   *  do assistant
    */
   void onFatalError(boost::function<void(const char* /*error*/)> f)
   {
@@ -190,12 +190,12 @@ struct Openbus
 
   /** 
    * \brief Espera pelo termino de execucao do ORB e prove a thread atual
-   *  para uso pela API extensions
+   *  para uso pela API assistants
    */
   void wait();
 
   /** 
-   * \brief Retorna o ORB utilizado pela API extensions
+   * \brief Retorna o ORB utilizado pela API assistants
    */
   CORBA::ORB_var orb() const
   {
@@ -209,9 +209,9 @@ struct Openbus
   CallerChain getJoinedChain();
 private:
   Openbus(CORBA::ORB_var orb, const char* host, unsigned short port
-          , extension_detail::authentication_info info);
+          , assistant_detail::authentication_info info);
 
-  boost::shared_ptr<extension_detail::shared_state> state;
+  boost::shared_ptr<assistant_detail::shared_state> state;
 };
 
 } }

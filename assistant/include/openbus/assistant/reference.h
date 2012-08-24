@@ -1,7 +1,7 @@
 
 #if 0
-//#ifndef OPENBUS_EXTENSION_REFERENCE_H
-#define OPENBUS_EXTENSION_REFERENCE_H
+//#ifndef OPENBUS_ASSISTANT_REFERENCE_H
+#define OPENBUS_ASSISTANT_REFERENCE_H
 
 #include <scs/IComponent.h>
 #include <openbus/ConnectionManager.h>
@@ -10,7 +10,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace openbus { namespace extension {
+namespace openbus { namespace assistant {
 
 namespace idl = tecgraf::openbus::core::v2_0;
 namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;

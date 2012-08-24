@@ -1,13 +1,13 @@
 
-#include <openbus/extension/openbus.h>
-#include <openbus/extension/AssociativePropertySeq.h>
+#include <openbus/assistant/openbus.h>
+#include <openbus/assistant/AssociativePropertySeq.h>
 
 #include <boost/bind.hpp>
 #include <boost/utility/result_of.hpp>
 
 #include <iterator>
 
-namespace openbus { namespace extension {
+namespace openbus { namespace assistant {
 
 namespace {
 
@@ -95,17 +95,17 @@ std::auto_ptr<Connection> create_connection(CORBA::ORB_var orb, std::string cons
   return execute_with_retry(boost::bind(&create_connection_simple, orb, host, port), error_creating_connection());
 }
 
-void login_simple(Connection& c, extension_detail::authentication_info const& info)
+void login_simple(Connection& c, assistant_detail::authentication_info const& info)
 {
-  assert(boost::get<extension_detail::password_authentication_info const>(&info)
-         || boost::get<extension_detail::certificate_authentication_info const>(&info));
-  if(extension_detail::password_authentication_info const* p
-     = boost::get<extension_detail::password_authentication_info const>(&info))
+  assert(boost::get<assistant_detail::password_authentication_info const>(&info)
+         || boost::get<assistant_detail::certificate_authentication_info const>(&info));
+  if(assistant_detail::password_authentication_info const* p
+     = boost::get<assistant_detail::password_authentication_info const>(&info))
   {
     c.loginByPassword(p->username.c_str(), p->password.c_str());
   }
-  else if(extension_detail::certificate_authentication_info const* p
-          = boost::get<extension_detail::certificate_authentication_info const>(&info))
+  else if(assistant_detail::certificate_authentication_info const* p
+          = boost::get<assistant_detail::certificate_authentication_info const>(&info))
   {
     c.loginByCertificate(p->entity.c_str(), p->private_key);
   }
@@ -134,7 +134,7 @@ struct login_error
 
 std::auto_ptr<Connection> create_connection_and_login
   (CORBA::ORB_var orb, std::string const& host, unsigned short port
-   , extension_detail::authentication_info const& info
+   , assistant_detail::authentication_info const& info
    , login_error error)
 {
   std::auto_ptr<Connection> c = create_connection(orb, host, port);
@@ -146,14 +146,14 @@ std::auto_ptr<Connection> create_connection_and_login
 struct register_information
 {
   scs::core::IComponent_var component;
-  extension_detail::idl_or::ServicePropertySeq properties;
+  assistant_detail::idl_or::ServicePropertySeq properties;
   bool registered;
 };
 
 typedef std::vector<register_information> register_container;
 typedef register_container::iterator register_iterator;
 
-void register_component(extension_detail::idl_or::OfferRegistry_var offer_registry
+void register_component(assistant_detail::idl_or::OfferRegistry_var offer_registry
                         , register_iterator& reg_current, register_iterator reg_last)
 {
   while(reg_current != reg_last)
@@ -207,7 +207,7 @@ bool not_registered_predicate(register_information const& info)
   return !info.registered;
 }
 
-void work_thread_function(boost::shared_ptr<extension_detail::shared_state> state)
+void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> state)
 {
   try
   {
@@ -304,7 +304,7 @@ void work_thread_function(boost::shared_ptr<extension_detail::shared_state> stat
 }
 
 void orb_thread_function(CORBA::ORB_var orb
-                         , boost::shared_ptr<extension_detail::shared_state> state)
+                         , boost::shared_ptr<assistant_detail::shared_state> state)
 {
   orb->run();
   {
@@ -321,7 +321,7 @@ Openbus Openbus::startByPassword(const char* username, const char* password
                                  , int argc, const char** argv)
 {
   CORBA::ORB_var orb = ORBInitializer(argc, const_cast<char**>(argv));
-  extension_detail::password_authentication_info info = {username, password};
+  assistant_detail::password_authentication_info info = {username, password};
   return Openbus(orb, host, port, info);
 }
  
@@ -330,17 +330,17 @@ Openbus Openbus::startByCertificate(const char* entity, const idl::OctetSeq priv
                                     , int argc, const char** argv)
 {
   CORBA::ORB_var orb = ORBInitializer(argc, const_cast<char**>(argv));
-  extension_detail::certificate_authentication_info info = {entity, privKey};
+  assistant_detail::certificate_authentication_info info = {entity, privKey};
   return Openbus(orb, host, port, info);
 }
 
 Openbus::Openbus(CORBA::ORB_var orb, const char* host, unsigned short port
-                 , extension_detail::authentication_info info)
+                 , assistant_detail::authentication_info info)
 {
-  state.reset(new extension_detail::shared_state(orb, info, host, port));
-#ifdef EXTENSION_SDK_MULTITHREAD
-  state->orb_thread = boost::thread(boost::bind(&extension::orb_thread_function, orb, state));
-  state->work_thread = boost::thread(boost::bind(&extension::work_thread_function, state));
+  state.reset(new assistant_detail::shared_state(orb, info, host, port));
+#ifdef ASSISTANT_SDK_MULTITHREAD
+  state->orb_thread = boost::thread(boost::bind(&assistant::orb_thread_function, orb, state));
+  state->work_thread = boost::thread(boost::bind(&assistant::work_thread_function, state));
 #endif
 }
 

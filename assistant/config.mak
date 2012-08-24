@@ -101,7 +101,7 @@ endif
 
 USE_NODEPEND=Yes
 
-SRC=src/openbus.cpp
+SRC=src/assistant.cpp
 
 # STUBS=stubs/core.h stubs/core.cc \
 #       stubs/scs.h stubs/scs.cc \
