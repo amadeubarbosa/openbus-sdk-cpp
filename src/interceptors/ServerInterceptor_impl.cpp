@@ -111,6 +111,8 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
       Login *caller;
       /* consulta ao cache de logins para saber se este login é valido. 
       ** obtenção da estrutura Login referente a este login id. (caller) */
+      if (strcmp(credential.bus.in(), conn->_busid)) 
+        throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
       try {
         l.vlog("Validando login: %s", credential.login.in());
         caller = conn->_loginCache->validateLogin(credential.login);
@@ -144,7 +146,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
           SHA256(pBuf, bufSize, hash);
         }
         
-        if (hasSession &!memcmp(hash, credential.hash, idl::HashValueSize) &
+        if (hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
             tickets_check(&session.ticketsHistory, credential.ticket)) 
         {
           /* a credencial recebida é válida. */
