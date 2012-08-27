@@ -14,5 +14,5 @@ genstubs: $(STUBS)
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; $(MICO_BIN)/idl --no-paths --any --typecode ../idl/hello.idl
-
+	cd stubs
+	$(MICO_BIN)/idl --no-paths --any --typecode ../idl/hello.idl

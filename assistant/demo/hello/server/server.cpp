@@ -1,4 +1,4 @@
-#include <openbus/extension/openbus.h>
+#include <openbus/assistant.h>
 #include <openbus/ConnectionManager.h>
 #include "hello.h"
 
@@ -16,12 +16,13 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 
 int main(int argc, char** argv)
 {
-  openbus::extension::Openbus openbus
-    = openbus::extension::Openbus::startByPassword
-    ("demo", "demo", argc, argv, "localhost", 2089);
+  using namespace openbus::assistant::keywords;
+  openbus::assistant::Assistant assistant
+    ("localhost", 2089, _username = "demo", _password = "demo"
+     , _argc = argc, _argv = argv);
   
   scs::core::ComponentId componentId = { "Hello",  '1', '0', '0', "" };
-  scs::core::ComponentContext hello_component (openbus.orb(), componentId);
+  scs::core::ComponentContext hello_component (assistant.orb(), componentId);
   HelloImpl hello_servant;
   hello_component.addFacet("hello", simple::_tc_Hello->id(), &hello_servant);
     
@@ -29,8 +30,8 @@ int main(int argc, char** argv)
   properties.length(1);
   properties[0].name = "offer.domain";
   properties[0].value = "Demos";
-  openbus.addOffer(hello_component.getIComponent(), properties);
+  assistant.addOffer(hello_component.getIComponent(), properties);
 
-  openbus.wait();
+  assistant.wait();
 }
 

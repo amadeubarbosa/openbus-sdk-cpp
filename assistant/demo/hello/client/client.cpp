@@ -1,4 +1,4 @@
-#include <openbus/extension/openbus.h>
+#include <openbus/assistant.h>
 #include <iostream>
 #include "hello.h"
 
@@ -8,16 +8,17 @@ namespace simple = tecgraf::openbus::interop::simple;
 
 int main(int argc, char** argv)
 {
-  openbus::extension::Openbus
-    openbus = openbus::extension::Openbus::startByPassword
-    ("demo", "demo", "localhost", 2089, argc, const_cast<const char**>(argv));
+  using namespace openbus::assistant::keywords;
+  openbus::assistant::Assistant assistant
+    ("localhost", 2089, _username = "demo", _password = "demo"
+     , _argc = argc, _argv = argv);
 
   bool helloSaid = false;
   do
   {
     offer_registry::ServiceOfferDescSeq offers
-      = openbus.filterWorkingOffers(openbus.findOffers
-        (openbus.createFacetAndEntityProperty("hello", "demo"), -1));
+      = assistant.filterWorkingOffers(assistant.findOffers
+        (assistant.createFacetAndEntityProperty("hello", "demo"), -1));
     CORBA::ULong i = 0;
     while(i != offers.length())
     {
@@ -28,6 +29,7 @@ int main(int argc, char** argv)
         if(!CORBA::is_nil(hello))
         {
           hello->sayHello();
+          std::cout << "sayHello was called" << std::endl;
           helloSaid = true;
           break;
         }

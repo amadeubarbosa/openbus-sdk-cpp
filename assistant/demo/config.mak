@@ -15,7 +15,7 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   LIBS= nsl socket
   NO_LOCAL_LD=Yes
 
-  ifeq "$(EXTENSION_SDK_MULTITHREAD)" "Yes"
+  ifeq "$(ASSISTANT_SDK_MULTITHREAD)" "Yes"
     CPPFLAGS+= -mt
     LFLAGS+= -mt
     STDLFLAGS= -mt -m64 -xar -o
@@ -26,12 +26,12 @@ ifeq "$(DBG)" "Yes"
   MICO_DEBUG=-debug
 endif
 
-ifeq "$(EXTENSION_SDK_MULTITHREAD)" "Yes"
+ifeq "$(ASSISTANT_SDK_MULTITHREAD)" "Yes"
   MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   MICO_INC=${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread${MICO_DEBUG}
   DEFINES+=OPENBUS_SDK_MULTITHREAD
-  DEFINES+=EXTENSION_SDK_MULTITHREAD
+  DEFINES+=ASSISTANT_SDK_MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
 else
   MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
@@ -39,7 +39,7 @@ else
   MICO_LIB=${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread${MICO_DEBUG}
 endif
 
-ifeq "$(EXTENSION_SDK_MULTITHREAD)" "Yes"
+ifeq "$(ASSISTANT_SDK_MULTITHREAD)" "Yes"
 LIBS+= boost_thread
 LDIR+= ${OPENBUSLIB}/boost
 else
@@ -53,13 +53,13 @@ LDIR+= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
-ifeq "$(EXTENSION_SDK_MULTITHREAD)" "Yes"
-  SLIB= ${OPENBUSLIB}/libextension-micomultithread${MICO_DEBUG}.a \
+ifeq "$(ASSISTANT_SDK_MULTITHREAD)" "Yes"
+  SLIB= ${OPENBUSLIB}/libassistant-micomultithread${MICO_DEBUG}.a \
         ${OPENBUSLIB}/libopenbus-micomultithread${MICO_DEBUG}.a \
         ${OPENBUSLIB}/libscs-micomultithread${MICO_DEBUG}.a \
         ${OPENBUSLIB}/liblogger-multithread${MICO_DEBUG}.a
 else
-  SLIB= ${OPENBUSLIB}/libextension-micosinglethread${MICO_DEBUG}.a \
+  SLIB= ${OPENBUSLIB}/libassistant-micosinglethread${MICO_DEBUG}.a \
         ${OPENBUSLIB}/libopenbus-micosinglethread${MICO_DEBUG}.a \
         ${OPENBUSLIB}/libscs-micosinglethread${MICO_DEBUG}.a \
         ${OPENBUSLIB}/liblogger$-singlethread{MICO_DEBUG}.a

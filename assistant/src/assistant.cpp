@@ -1,9 +1,11 @@
+// -*- coding: iso-latin-1 -*-
 
-#include <openbus/assistant/openbus.h>
+#include <openbus/assistant.h>
 #include <openbus/assistant/AssociativePropertySeq.h>
 
 #include <boost/bind.hpp>
 #include <boost/utility/result_of.hpp>
+#include <log/output/streambuf_output.h>
 
 #include <iterator>
 
@@ -72,6 +74,28 @@ typename boost::result_of<F()>::type execute_with_retry(F f, E error)
   while(true);
 }
 
+struct exception_logging
+{
+  logger::log_scope& l;
+  std::string error_message;
+  exception_logging(logger::log_scope& l, std::string error_message = std::string())
+    : l(l), error_message(error_message) {}
+  ~exception_logging()
+  {
+    try
+    {
+      if(std::uncaught_exception())
+      {
+        if(error_message.empty())
+          l.level_log(logger::error_level, "A exception was thrown");
+        else
+          l.level_vlog(logger::error_level, "A exception was thrown: %s", error_message.c_str());
+      }
+    }
+    catch(std::exception const&) {}
+  }
+};
+
 struct error_creating_connection
 {
   typedef void result_type;
@@ -81,32 +105,47 @@ struct error_creating_connection
   }
 };
 
-std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::string const& host, unsigned short port)
+std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::string const& host
+                                                   , unsigned short port, logger::logger& logging)
 {
+  logger::log_scope l(logging, logger::info_level, "Criando conexão");
+  exception_logging ex_l(l, "Failed creating connection");
   openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
     (orb->resolve_initial_references("OpenbusConnectionManager"));
   assert(manager != 0);
 
-  return manager->createConnection(host.c_str(), port);
+  std::auto_ptr<openbus::Connection> c = manager->createConnection(host.c_str(), port);
+  l.log("Connection created");
+  return c;
 }
 
-std::auto_ptr<Connection> create_connection(CORBA::ORB_var orb, std::string const& host, unsigned short port)
+std::auto_ptr<Connection> create_connection(CORBA::ORB_var orb, std::string const& host, unsigned short port
+                                            , logger::logger& logging)
 {
-  return execute_with_retry(boost::bind(&create_connection_simple, orb, host, port), error_creating_connection());
+  return execute_with_retry(boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging))
+                            , error_creating_connection());
 }
 
-void login_simple(Connection& c, assistant_detail::authentication_info const& info)
+void login_simple(Connection& c, assistant_detail::authentication_info const& info
+                  , logger::logger& logging)
 {
+  logger::log_scope l (logging, logger::info_level, "Tentando logar");
+  exception_logging ex_l(l);
   assert(boost::get<assistant_detail::password_authentication_info const>(&info)
          || boost::get<assistant_detail::certificate_authentication_info const>(&info));
   if(assistant_detail::password_authentication_info const* p
      = boost::get<assistant_detail::password_authentication_info const>(&info))
   {
+    l.log("Fazendo login por password");
+    l.level_vlog(logger::debug_level
+                 , "Fazendo login por password com usuário '%s' e senha '%s'"
+                 , p->username.c_str(), p->password.c_str());
     c.loginByPassword(p->username.c_str(), p->password.c_str());
   }
   else if(assistant_detail::certificate_authentication_info const* p
           = boost::get<assistant_detail::certificate_authentication_info const>(&info))
   {
+    l.vlog("Fazendo login por chave privada para entidade %s", p->entity.c_str());
     c.loginByCertificate(p->entity.c_str(), p->private_key);
   }
 }
@@ -135,10 +174,12 @@ struct login_error
 std::auto_ptr<Connection> create_connection_and_login
   (CORBA::ORB_var orb, std::string const& host, unsigned short port
    , assistant_detail::authentication_info const& info
+   , logger::logger& logging
    , login_error error)
 {
-  std::auto_ptr<Connection> c = create_connection(orb, host, port);
-  execute_with_retry(boost::bind(&login_simple, boost::ref(*c), boost::ref(info))
+  std::auto_ptr<Connection> c = create_connection(orb, host, port, boost::ref(logging));
+  execute_with_retry(boost::bind(&login_simple, boost::ref(*c), boost::ref(info)
+                                 , boost::ref(logging))
                      , error);
   return c;
 }
@@ -154,14 +195,18 @@ typedef std::vector<register_information> register_container;
 typedef register_container::iterator register_iterator;
 
 void register_component(assistant_detail::idl_or::OfferRegistry_var offer_registry
-                        , register_iterator& reg_current, register_iterator reg_last)
+                        , register_iterator& reg_current, register_iterator reg_last
+                        , logger::logger& logging)
 {
   while(reg_current != reg_last)
   {
     register_iterator current = reg_current++;
     if(!current->registered)
     {
+      logger::log_scope l(logging, logger::info_level, "Registering one component");
+      exception_logging ex_l(l);
       offer_registry->registerService(current->component, current->properties);
+      l.level_log(logger::debug_level, "Component registered");
       current->registered = true;
     }
   }
@@ -209,6 +254,8 @@ bool not_registered_predicate(register_information const& info)
 
 void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> state)
 {
+  logger::log_scope work_thread_log(state->logging, logger::debug_level, "work_thread_function");
+  exception_logging ex_l(work_thread_log);
   try
   {
     {
@@ -218,19 +265,26 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
         login_error_callback = state->login_error;
       }
 
+      work_thread_log.level_log(logger::debug_level, "Creating connection and logging");
       std::auto_ptr<Connection> connection = create_connection_and_login
         (state->orb, state->host, state->port, state->auth_info
+         , state->logging
          , login_error(login_error_callback));
       {
+        work_thread_log.level_log(logger::debug_level, "Registering connection as default");
         openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
           (state->orb->resolve_initial_references("OpenbusConnectionManager"));
         assert(manager != 0);
-        manager->setDispatcher(*connection);
+        manager->setDefaultConnection(connection.get());
       }
       assert(!!connection.get());
       boost::unique_lock<boost::mutex> lock(state->mutex);
       assert(!state->connection.get());
       state->connection = connection;
+      state->connection_ready = true;
+      state->connection_ready_var.notify_one();
+      lock.unlock();
+      work_thread_log.level_log(logger::debug_level, "Saved connection");
     }
 
     boost::unique_lock<boost::mutex> lock(state->mutex);
@@ -253,17 +307,22 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
 
       do
       {
+        work_thread_log.level_log(logger::debug_level, "Registering some components");
         register_iterator current = components.begin();
         execute_with_retry(boost::bind(&register_component, state->connection->offers()
-                                       , boost::ref(current), components.end())
+                                       , boost::ref(current), components.end()
+                                       , boost::ref(state->logging))
                            , register_fail(register_error_callback, current));
       }
       while(std::find_if(components.begin(), components.end()
                          , &not_registered_predicate) != components.end());
+
+      work_thread_log.level_log(logger::debug_level, "All components registered");
       
       lock.lock();
       while(!state->new_queued_components && !state->work_exit)
       {
+        work_thread_log.level_log(logger::debug_level, "Waiting for newer components to be registered");
           state->work_cond_var.wait(lock);
       }
       state->new_queued_components = false;
@@ -274,9 +333,13 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
   }
   catch(std::bad_alloc const& e)
   {
+    logger::log_scope l(state->logging, logger::error_level, "Worker thread std::bad_alloc catch");
+    exception_logging ex_l(l);
   }
   catch(std::exception const& e)
   {
+    logger::log_scope l(state->logging, logger::error_level, "Worker thread std::exception catch");
+    exception_logging ex_l(l);
     try
     {
       boost::unique_lock<boost::mutex> lock(state->mutex);
@@ -290,6 +353,8 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
   }
   catch(...)
   {
+    logger::log_scope l(state->logging, logger::error_level, "Worker thread all catch");
+    exception_logging ex_l(l);
     try
     {
       boost::unique_lock<boost::mutex> lock(state->mutex);
@@ -306,7 +371,10 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
 void orb_thread_function(CORBA::ORB_var orb
                          , boost::shared_ptr<assistant_detail::shared_state> state)
 {
+  logger::log_scope l(state->logging, logger::debug_level, "ORB event thread");
+  exception_logging ex_l(l);
   orb->run();
+  l.level_log(logger::info_level, "ORB returned from run");
   {
     boost::unique_lock<boost::mutex> lock(state->mutex);
     state->work_exit = true;
@@ -314,41 +382,81 @@ void orb_thread_function(CORBA::ORB_var orb
   }
 }
 
+#ifdef ASSISTANT_SDK_MULTITHREAD
+void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  state->orb_thread = boost::thread(boost::bind(&assistant::orb_thread_function, state->orb, state));
+  state->work_thread = boost::thread(boost::bind(&assistant::work_thread_function, state));
+}
+#else
+#error SINGLE THREAD NOT IMPLEMENTED YET
+void create_threads(boost::shared_ptr<assistant_detail::shared_state>) {}
+#endif
+
+void activate_RootPOA(CORBA::ORB_var orb)
+{
+  CORBA::Object_var poa_obj = orb->resolve_initial_references("RootPOA");
+  assert(!CORBA::is_nil(poa_obj));
+  PortableServer::POA_var poa = PortableServer::POA::_narrow(poa_obj);
+  assert(!CORBA::is_nil(poa));
+  PortableServer::POAManager_var manager = poa->the_POAManager();
+  assert(!CORBA::is_nil(manager));
+  manager->activate();
 }
 
-Openbus Openbus::startByPassword(const char* username, const char* password
-                                 , const char* host, unsigned short port
-                                 , int argc, const char** argv)
+}
+
+void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short port
+                                     , std::string const& username, std::string const& password
+                                     , int& argc, char** argv
+                                     , login_error_callback_type login_error
+                                     , register_error_callback_type register_error
+                                     , fatal_error_callback_type fatal_error)
 {
-  CORBA::ORB_var orb = ORBInitializer(argc, const_cast<char**>(argv));
+  CORBA::ORB_var orb = ORBInitializer(argc, argv);
+  activate_RootPOA(orb);
+#ifndef NDEBUG
+  try
+  {
+    assert(!CORBA::is_nil(orb->resolve_initial_references("OpenbusConnectionManager")));
+  }
+  catch(...)
+  {
+    ::std::abort();
+  }
+#endif  
   assistant_detail::password_authentication_info info = {username, password};
-  return Openbus(orb, host, port, info);
+  state.reset(new assistant_detail::shared_state
+              (orb, info, hostname, port, login_error, register_error, fatal_error));
+  state->logging.set_level(logger::debug_level);
+  state->logging.add_output(logger::output::make_streambuf_output(*std::cerr.rdbuf()));
+  create_threads(state);
+}
+void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short port
+                                     , std::string const& username, std::string const& password
+                                     , login_error_callback_type login_error
+                                     , register_error_callback_type register_error
+                                     , fatal_error_callback_type fatal_error)
+{
+  int argc = 1;
+  char* argv[] = {const_cast<char*>("")};
+  CORBA::ORB_var orb = ORBInitializer(argc, argv);
+  InitWithPassword(hostname, port, username, password
+                   , argc, argv, login_error
+                   , register_error, fatal_error);
 }
  
-Openbus Openbus::startByCertificate(const char* entity, const idl::OctetSeq privKey
-                                    , const char* host, unsigned short port
-                                    , int argc, const char** argv)
-{
-  CORBA::ORB_var orb = ORBInitializer(argc, const_cast<char**>(argv));
-  assistant_detail::certificate_authentication_info info = {entity, privKey};
-  return Openbus(orb, host, port, info);
-}
+// Assistant Assistant::startByCertificate(const char* entity, const idl::OctetSeq privKey
+//                                     , const char* host, unsigned short port
+//                                     , int argc, const char** argv)
+// {
+//   CORBA::ORB_var orb = ORBInitializer(argc, const_cast<char**>(argv));
+//   assistant_detail::certificate_authentication_info info = {entity, privKey};
+//   state.reset(new assistant_detail::shared_state
+//               (orb, info, hostname, port, login_error, register_error, fatal_error));
+// }
 
-Openbus::Openbus(CORBA::ORB_var orb, const char* host, unsigned short port
-                 , assistant_detail::authentication_info info)
-{
-  state.reset(new assistant_detail::shared_state(orb, info, host, port));
-#ifdef ASSISTANT_SDK_MULTITHREAD
-  state->orb_thread = boost::thread(boost::bind(&assistant::orb_thread_function, orb, state));
-  state->work_thread = boost::thread(boost::bind(&assistant::work_thread_function, state));
-#endif
-}
-
-Openbus::~Openbus()
-{
-}
-
-void Openbus::addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
+void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
 {
   boost::unique_lock<boost::mutex> l(state->mutex);
   state->queued_components.push_back(std::make_pair(component, properties));
@@ -356,17 +464,17 @@ void Openbus::addOffer(scs::core::IComponent_var component, idl_or::ServicePrope
   state->work_cond_var.notify_one();
 }
 
-void Openbus::shutdown()
+void AssistantImpl::shutdown()
 {
   state->orb->shutdown(true);
 }
 
-void Openbus::wait()
+void AssistantImpl::wait()
 {
   state->work_thread.join();
 }
 
-idl_or::ServicePropertySeq Openbus::createFacetAndEntityProperty(const char* facet, const char* entity)
+idl_or::ServicePropertySeq AssistantImpl::createFacetAndEntityProperty(const char* facet, const char* entity)
 {
   idl_or::ServicePropertySeq properties;
   properties.length(2);
@@ -377,15 +485,22 @@ idl_or::ServicePropertySeq Openbus::createFacetAndEntityProperty(const char* fac
   return properties;
 }  
 
-idl_or::ServiceOfferDescSeq Openbus::findOffers(idl_or::ServicePropertySeq properties, int timeout) const
+idl_or::ServiceOfferDescSeq AssistantImpl::findOffers(idl_or::ServicePropertySeq properties, int timeout) const
 {
-  idl_or::ServicePropertySeq x;
-  AssociativePropertySeq s(x);
-  
-  return idl_or::ServiceOfferDescSeq();
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    while(!state->connection_ready)
+      state->connection_ready_var.wait(l);
+  }
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  idl_or::ServiceOfferDescSeq_var r = state->connection->offers()->findServices(properties);
+  return *r;
 }
 
-idl_or::ServiceOfferDescSeq Openbus::filterWorkingOffers(idl_or::ServiceOfferDescSeq offers)
+idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOfferDescSeq offers)
 {
   return offers;
 }
