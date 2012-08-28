@@ -5,8 +5,8 @@
 
 #define TICKETS_SIZE (sizeof(tickets_BitMap) * CHAR_BIT)
 
-typedef unsigned long tickets_Value;
 typedef unsigned long tickets_BitMap;
+typedef unsigned long tickets_Value;
 typedef unsigned char bitidx;
 
 struct tickets_HistoryData {
@@ -18,9 +18,7 @@ struct tickets_HistoryData {
 typedef struct tickets_HistoryData tickets_History;
 
 void tickets_init(tickets_History *h);
-tickets_Value tickets_check(tickets_History *h, tickets_Value id);
-tickets_Value tickets_expected(tickets_History *h);
-tickets_Value tickets_received(tickets_History *h);
+int tickets_check(tickets_History *h, tickets_Value id);
 
 void tickets_print(tickets_History *h);
 
