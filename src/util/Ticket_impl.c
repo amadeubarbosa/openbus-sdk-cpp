@@ -1,9 +1,11 @@
 #include "openbus/util/Ticket_impl.h"
 
-#define FLAG(B, I) (B & (1 << I))
-#define SET(B, I) (B |= (1 << I))
-#define CLEAR(B, I) (B &= ~(1 << I))
+
+#define FLAG(B, I) (B & (1UL << I))
+#define SET(B, I) (B |= (1UL << I))
+#define CLEAR(B, I) (B &= ~(1UL << I))
 #define ROL(B, S) ((B << S) | (B >> ((sizeof(B) * CHAR_BIT) - S)))
+
 
 static void discardBase(tickets_History *h)
 {
@@ -20,6 +22,7 @@ static void discardBase(tickets_History *h)
 	}
 }
 
+
 void tickets_init(tickets_History *h)
 {
 	h->bits = 0;
@@ -27,7 +30,7 @@ void tickets_init(tickets_History *h)
 	h->base = 0;
 }
 
-tickets_Value tickets_check(tickets_History *h, tickets_Value id)
+int tickets_check(tickets_History *h, tickets_Value id)
 {
 	if (id < h->base) {
 		return 0;
@@ -35,6 +38,7 @@ tickets_Value tickets_check(tickets_History *h, tickets_Value id)
 		discardBase(h);
 		return 1;
 	} else { /* id > h->base */
+		bitidx i;
 		tickets_Value shift = id - h->base - 1;
 		if (shift < TICKETS_SIZE) {
 			bitidx index = (h->index + shift) % TICKETS_SIZE;
@@ -60,31 +64,20 @@ tickets_Value tickets_check(tickets_History *h, tickets_Value id)
 	}
 }
 
-tickets_Value tickets_expected(tickets_History *h)
-{
-	return h->base;
-}
 
-tickets_Value tickets_received(tickets_History *h)
-{
-	tickets_BitMap bits = ROL(h->bits, h->index);
-	bitidx i;
-	for (i = 0; bits; ++i) bits >>= 1;
-	return h->base + i;
-}
 
 #include <stdio.h>
 
 void tickets_print(tickets_History *h)
 {
 	bitidx i;
-	printf("{ ");
+	printf(" { ");
 	for (i = 0; i < TICKETS_SIZE; ++i) {
-		if (i == h->index) printf("...%lu ", h->base);
+		if (i == h->index) printf("...%d ", (int)h->base);
 		else printf(" ");
 		if (i >= h->index)
 			if (FLAG(h->bits, i)) printf("_");
-			else printf("%d", (int)h->base + i - h->index+1);
+			else printf("%d", (int)(h->base + i - h->index+1));
 		else
 			if (FLAG(h->bits, i)) printf("_");
 			else printf("%d", (int)(h->base + TICKETS_SIZE - h->index + i + 1));
