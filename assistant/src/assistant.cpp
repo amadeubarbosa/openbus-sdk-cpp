@@ -445,16 +445,32 @@ void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short
                    , argc, argv, login_error
                    , register_error, fatal_error);
 }
+
+Assistant Assistant::createWithPassword(const char* username, const char* password
+                                        , const char* host, unsigned short port
+                                        , int& argc, char** argv
+                                        , login_error_callback_type login_error
+                                        , register_error_callback_type register_error
+                                        , fatal_error_callback_type fatal_error)
+{
+  Assistant assistant;
+  assistant.InitWithPassword(host, port, username, password, argc, argv
+                             , login_error, register_error, fatal_error);
+  return assistant;
+}
  
-// Assistant Assistant::startByCertificate(const char* entity, const idl::OctetSeq privKey
-//                                     , const char* host, unsigned short port
-//                                     , int argc, const char** argv)
-// {
-//   CORBA::ORB_var orb = ORBInitializer(argc, const_cast<char**>(argv));
-//   assistant_detail::certificate_authentication_info info = {entity, privKey};
-//   state.reset(new assistant_detail::shared_state
-//               (orb, info, hostname, port, login_error, register_error, fatal_error));
-// }
+Assistant Assistant::createWithPrivateKey(const char* entity, const idl::OctetSeq privKey
+                                          , const char* host, unsigned short port
+                                          , int& argc, char** argv
+                                          , login_error_callback_type login_error
+                                          , register_error_callback_type register_error
+                                          , fatal_error_callback_type fatal_error)
+{
+  Assistant assistant;
+  assistant.InitWithPrivateKey(host, port, entity, privKey, argc, argv
+                               , login_error, register_error, fatal_error);
+  return assistant;
+}
 
 void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
 {
