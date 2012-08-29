@@ -49,11 +49,11 @@ namespace interceptors {
 
     struct Session {
       Session() {
-        tickets_init(&ticketsHistory);
-        for (short i = 0; i < SECRET_SIZE; ++i) secret[i] = rand() % 255;
+        tickets_init(&tickets);
+        for (short i=0;i<SECRET_SIZE;++i) secret[i] = rand()%255;
       }
       CORBA::ULong id;
-      tickets_History ticketsHistory;
+      tickets_History tickets;
       unsigned char secret[SECRET_SIZE];
     };
 
