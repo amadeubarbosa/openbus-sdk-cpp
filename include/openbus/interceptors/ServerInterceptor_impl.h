@@ -16,6 +16,15 @@ extern "C" {
 
 namespace openbus {
 namespace interceptors {
+
+  struct Session {
+    Session(CORBA::ULong, const char *);
+    CORBA::ULong id;
+    tickets_History tickets;
+    unsigned char secret[SECRET_SIZE];
+    char* remoteId;
+  };
+
   class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor {
   public:
     ServerInterceptor(
@@ -46,16 +55,6 @@ namespace interceptors {
     IOP::Codec *_cdrCodec;
     ConnectionManager *_manager;
     void sendCredentialReset(Connection *, Login*, PortableInterceptor::ServerRequestInfo*);
-
-    struct Session {
-      Session() {
-        tickets_init(&tickets);
-        for (short i=0;i<SECRET_SIZE;++i) secret[i] = rand()%255;
-      }
-      CORBA::ULong id;
-      tickets_History tickets;
-      unsigned char secret[SECRET_SIZE];
-    };
 
     typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;
     SessionLRUCache _sessionLRUCache;

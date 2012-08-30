@@ -11,6 +11,13 @@
 namespace openbus {
 namespace interceptors {
 
+Session::Session(CORBA::ULong i, const char * login) 
+  : id(i), remoteId(CORBA::string_dup(login))
+{
+  tickets_init(&tickets);
+  for (short i=0;i<SECRET_SIZE;++i) secret[i] = rand()%255;
+}
+
 ServerInterceptor::ServerInterceptor(
   PortableInterceptor::Current *piCurrent, 
   PortableInterceptor::SlotId slotId_requesterConnection,
@@ -31,20 +38,19 @@ ServerInterceptor::ServerInterceptor(
 void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller, 
   PortableInterceptor::ServerRequestInfo *r) 
 {
-  /* estabelecer uma nova sessão e enviar um CredentialReset para o cliente. */
-  Session session;
-  
-  /* cifrando o segredo com a chave pública do cliente. */
-  CORBA::OctetSeq encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
-
   idl_cr::CredentialReset credentialReset;
-  AutoLock conn_mutex(&conn->_mutex);
-  credentialReset.login = conn->_login()->id;
+
   AutoLock m(&_mutex);
-  session.id = _sessionLRUCache.size() + 1;
+  Session session(_sessionLRUCache.size()+1, caller->loginInfo->id); 
   _sessionLRUCache.insert(session.id, session);
   credentialReset.session = session.id;
+
+  /* cifrando o segredo com a chave pública do cliente. */
+  CORBA::OctetSeq encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
   m.unlock();
+
+  AutoLock conn_mutex(&conn->_mutex);
+  credentialReset.login = conn->_login()->id;
   conn_mutex.unlock();
   memcpy(credentialReset.challenge, encrypted.get_buffer(), idl::EncryptedBlockSize);
 
@@ -128,11 +134,13 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
       if (caller) {
         l.log("Login valido.");
         idl::HashValue hash;   
-        Session *session;
+        Session *session = 0;
         AutoLock m(&_mutex);
         bool hasSession = _sessionLRUCache.exists(credential.session);
         if (hasSession) session = _sessionLRUCache.fetch_ptr(credential.session);
         m.unlock();
+        tickets_History *t = 0;
+        const char *remoteId = 0;
         if (hasSession) {
           /* montando uma hash com os dados da credencial recebida e da sessão existente. */
           size_t operationSize = strlen(r->operation());
@@ -147,12 +155,14 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
           memcpy(pBuf+18, &credential.ticket, 4);
           memcpy(pBuf+22, r->operation(), operationSize);
           SHA256(pBuf, bufSize, hash);
+          m.lock();
+          t = &session->tickets;
+          remoteId = session->remoteId;
+          m.unlock();
         }
-        m.lock();
-        tickets_History *t = &session->tickets;
-        m.unlock();
         if (hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
-            tickets_check(t, credential.ticket)) 
+            tickets_check(t, credential.ticket)
+            && !strcmp(remoteId, credential.login.in())) 
         {
           /* a credencial recebida é válida. */
           l.level_vlog(debug_level, "credential is valid");
