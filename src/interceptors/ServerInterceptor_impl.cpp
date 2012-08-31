@@ -119,8 +119,10 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     Login *caller;
     /* consulta ao cache de logins para saber se este login é valido. 
     ** obtenção da estrutura Login referente a este login id. (caller) */
-    if (strcmp(credential.bus.in(), conn->_busid)) 
+    if (strcmp(credential.bus.in(), conn->_busid)) {
+      l.log("Login diferente daquele que iniciou a sessão.");
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+    }
     try {
       l.vlog("Validando login: %s", credential.login.in());
       caller = conn->_loginCache->validateLogin(credential.login);
@@ -168,7 +170,8 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     }
 
     if (!(hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
-          tickets_check(t, credential.ticket) && !strcmp(remoteId, credential.login.in()))) 
+          !strcmp(remoteId, credential.login.in()) && 
+          tickets_check(t, credential.ticket))) 
     {
       l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
       sendCredentialReset(conn, caller, r);
