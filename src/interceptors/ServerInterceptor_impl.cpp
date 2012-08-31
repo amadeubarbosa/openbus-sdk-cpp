@@ -112,111 +112,108 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     _manager->setRequester(conn);
 
     AutoLock conn_mutex(&conn->_mutex);
-    if (conn->_login()) {
-      conn_mutex.unlock();
-      Login *caller;
-      /* consulta ao cache de logins para saber se este login é valido. 
-      ** obtenção da estrutura Login referente a este login id. (caller) */
-      if (strcmp(credential.bus.in(), conn->_busid)) 
+    if (!conn->_login())
+      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+    conn_mutex.unlock();
+
+    Login *caller;
+    /* consulta ao cache de logins para saber se este login é valido. 
+    ** obtenção da estrutura Login referente a este login id. (caller) */
+    if (strcmp(credential.bus.in(), conn->_busid)) 
+      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+    try {
+      l.vlog("Validando login: %s", credential.login.in());
+      caller = conn->_loginCache->validateLogin(credential.login);
+    } catch (CORBA::NO_PERMISSION &e) {
+      if (e.minor() == idl_ac::NoLoginCode) 
         throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
-      try {
-        l.vlog("Validando login: %s", credential.login.in());
-        caller = conn->_loginCache->validateLogin(credential.login);
-      } catch (CORBA::NO_PERMISSION &e) {
-        if (e.minor() == idl_ac::NoLoginCode) 
-          throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
-      } catch (CORBA::Exception&) {
-        /* não há uma entrada válida no cache e o cache nõo consegui validar o login 
-        ** com o barramento. */
-        throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
-      }
-      /* o login do caller é valido? */
-      if (caller) {
-        l.log("Login valido.");
-        idl::HashValue hash;   
-        Session *session = 0;
-        AutoLock m(&_mutex);
-        bool hasSession = _sessionLRUCache.exists(credential.session);
-        if (hasSession) session = _sessionLRUCache.fetch_ptr(credential.session);
-        m.unlock();
-        tickets_History *t = 0;
-        const char *remoteId = 0;
-        if (hasSession) {
-          /* montando uma hash com os dados da credencial recebida e da sessão existente. */
-          size_t operationSize = strlen(r->operation());
-          int bufSize = 22 + operationSize;
-          std::auto_ptr<unsigned char> buf(new unsigned char[bufSize]());
-          unsigned char *pBuf = buf.get();
-          pBuf[0] = idl::MajorVersion;
-          pBuf[1] = idl::MinorVersion;
-          m.lock();
-          memcpy(pBuf+2, session->secret, SECRET_SIZE);
-          m.unlock();
-          memcpy(pBuf+18, &credential.ticket, 4);
-          memcpy(pBuf+22, r->operation(), operationSize);
-          SHA256(pBuf, bufSize, hash);
-          m.lock();
-          t = &session->tickets;
-          remoteId = session->remoteId;
-          m.unlock();
-        }
-        if (hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
-            tickets_check(t, credential.ticket)
-            && !strcmp(remoteId, credential.login.in())) 
-        {
-          /* a credencial recebida é válida. */
-          l.level_vlog(debug_level, "credential is valid");
+    } catch (CORBA::Exception&) {
+      /* não há uma entrada válida no cache e o cache nõo consegui validar o login 
+      ** com o barramento. */
+      throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode, CORBA::COMPLETED_NO);
+    }
+    if (!caller) {
+      l.log("Lancando excecao InvalidLoginCode.");
+      throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
+    }
+    l.log("Login valido.");
+    idl::HashValue hash;   
+    Session *session = 0;
 
-          bool sendInvalidChainCode = false;
-          if (credential.chain.encoded.length()) {
-            idl::HashValue hash;
-            SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hash);
+    AutoLock m(&_mutex);
+    bool hasSession = _sessionLRUCache.exists(credential.session);
+    if (hasSession) session = _sessionLRUCache.fetch_ptr(credential.session);
+    m.unlock();
 
-            openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(conn->__buskey().get(), 0));
-            if(!ctx)
-            {
-              l.level_log(info_level, "Failed creating a OpenSSL public key context (EVP_PKEY_CTX_new)");
-              return;
-            }
-            int status = EVP_PKEY_verify_init(ctx.get());
-            assert(status);
-            if (EVP_PKEY_verify(ctx.get(), credential.chain.signature, idl::EncryptedBlockSize, hash, 
-            idl::HashValueSize) != 1)
-              sendInvalidChainCode = true;
-            else {
-              CORBA::Any_var callChainAny = _cdrCodec->decode_value(
-                credential.chain.encoded, idl_ac::_tc_CallChain);
-              idl_ac::CallChain callChain;
-              callChainAny >>= callChain;
-              conn_mutex.lock();
-              int res = strcmp(callChain.target, conn->_login()->id);
-              conn_mutex.unlock();
-              if (res) { 
-                /* a cadeia tem como destino(target) outro login. */
-                m.unlock();
-                sendCredentialReset(conn, caller, r);
-              } else if(strcmp(callChain.caller.id, caller->loginInfo->id)) {
-                /* o último elemento da cadeia não é quem está me chamando. */
-                sendInvalidChainCode = true;
-              } else {
-                CORBA::Any signedCallChainAny;
-                signedCallChainAny <<= credential.chain;
-                r->set_slot(_slotId_signedCallChain, signedCallChainAny);
-              }
-            }
-          } else sendInvalidChainCode = true;
-          if (sendInvalidChainCode) 
-            throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
-        } else {
-          l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
-          m.unlock();
-          sendCredentialReset(conn, caller, r);
-        }
+    tickets_History *t = 0;
+    const char *remoteId = 0;
+    if (hasSession) {
+      /* montando uma hash com os dados da credencial recebida e da sessão existente. */
+      size_t operationSize = strlen(r->operation());
+      int bufSize = 22 + operationSize;
+      std::auto_ptr<unsigned char> buf(new unsigned char[bufSize]());
+      unsigned char *pBuf = buf.get();
+      pBuf[0] = idl::MajorVersion;
+      pBuf[1] = idl::MinorVersion;
+      m.lock();
+      memcpy(pBuf+2, session->secret, SECRET_SIZE);
+      m.unlock();
+      memcpy(pBuf+18, &credential.ticket, 4);
+      memcpy(pBuf+22, r->operation(), operationSize);
+      SHA256(pBuf, bufSize, hash);
+      m.lock();
+      t = &session->tickets;
+      remoteId = session->remoteId;
+      m.unlock();
+    }
+
+    if (!(hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
+          tickets_check(t, credential.ticket) && !strcmp(remoteId, credential.login.in()))) 
+    {
+      l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
+      sendCredentialReset(conn, caller, r);
+    }
+
+    /* a credencial recebida é válida. */
+    l.level_vlog(debug_level, "credential is valid");
+
+    if (!credential.chain.encoded.length())
+      throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
+
+    idl::HashValue hashChain;
+    SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hashChain);
+
+    openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(conn->__buskey().get(), 0));
+    if(!ctx) {
+      l.level_log(info_level, "Failed creating a OpenSSL public key context (EVP_PKEY_CTX_new)");
+      return;
+    }
+
+    int status = EVP_PKEY_verify_init(ctx.get());
+    assert(status);
+    if (EVP_PKEY_verify(ctx.get(), credential.chain.signature, idl::EncryptedBlockSize, hashChain, 
+                        idl::HashValueSize) != 1)
+      throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
+    else {
+      CORBA::Any_var callChainAny = _cdrCodec->decode_value(credential.chain.encoded, 
+                                                            idl_ac::_tc_CallChain);
+      idl_ac::CallChain callChain;
+      callChainAny >>= callChain;
+      conn_mutex.lock();
+      int res = strcmp(callChain.target, conn->_login()->id);
+      conn_mutex.unlock();
+      if (res) { 
+        /* a cadeia tem como destino(target) outro login. */
+        sendCredentialReset(conn, caller, r);
+      } else if(strcmp(callChain.caller.id, caller->loginInfo->id)) {
+        /* o último elemento da cadeia não é quem está me chamando. */
+        throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
       } else {
-        l.log("Lancando excecao InvalidLoginCode.");
-        throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
+        CORBA::Any signedCallChainAny;
+        signedCallChainAny <<= credential.chain;
+        r->set_slot(_slotId_signedCallChain, signedCallChainAny);
       }
-    } else throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+    }
   } else {
     l.level_vlog(debug_level, "verificando se existe uma credencial legacy");
     hasContext = true;
