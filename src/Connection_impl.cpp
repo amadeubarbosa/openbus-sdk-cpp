@@ -44,12 +44,8 @@ Login *LoginCache::validateLogin(char *id) {
   if (login->time2live > (time(0) - login->timeUpdated)) return login;
   else {
     /* preciso consultar o barramento para validar o login. */
-    idl::IdentifierSeq ids(1);
-    ids.length(1);
-    ids[static_cast<CORBA::ULong> (0)] = CORBA::string_dup(id);
-    idl_ac::ValidityTimeSeq_var validity = _login_registry->getValidity(ids);
-    assert(validity->length());
-    login->time2live = validity[static_cast<CORBA::ULong> (0)];
+    idl_ac::ValidityTime validity = _login_registry->getLoginValidity(id);
+    login->time2live = validity;
     login->timeUpdated = time(0);
     /* o login de interesse, após atualização da cache, ainda é válido? */
     if (login->time2live > 0) return login;

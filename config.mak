@@ -128,7 +128,7 @@ $(STUBS): $(IDLS)
 	mkdir -p legacy/stubs
 	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ${OPENBUS_HOME}/idl/v2_0/access_control.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ${OPENBUS_HOME}/idl/v2_0/credential.idl
-	cd stubs ; ${MICO_BIN}/idl --no-paths ${OPENBUS_HOME}/idl/v2_0/offer_registry.idl
+	cd stubs ; ${MICO_BIN}/idl --no-paths --typecode ${OPENBUS_HOME}/idl/v2_0/offer_registry.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths ${OPENBUS_HOME}/idl/v2_0/core.idl
 	cd stubs ; ${MICO_BIN}/idl --no-paths ${OPENBUS_HOME}/idl/v2_0/scs.idl
 	cd legacy/stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ../idl/credential_v1_5.idl
