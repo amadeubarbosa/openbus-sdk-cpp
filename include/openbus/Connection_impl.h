@@ -26,13 +26,13 @@ namespace openbus {
   class RenewLogin;
 }
 
-#include <openbus/util/Mutex_impl.h>
-#include <openbus/ConnectionManager.h>
-#include <openbus/util/OpenSSL.h>
-#include <openbus/Connection.h>
+#include "openbus/util/Mutex_impl.h"
+#include "openbus/ConnectionManager.h"
+#include "openbus/util/OpenSSL.h"
+#include "openbus/Connection.h"
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
-#include <openbus/util/LRUCache_impl.h>
+#include "openbus/util/LRUCache_impl.h"
 #endif
 
 #define LOGINCACHE_LRU_SIZE 128
@@ -63,7 +63,7 @@ namespace openbus {
   public:
     RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, idl_ac::ValidityTime);
     ~RenewLogin();
-    void _run(void*);
+    void _run(void *);
     void stop();
     void pause();
     void run();
