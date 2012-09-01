@@ -56,13 +56,13 @@ Connection::Connection(
     interceptors::IgnoreInterceptor _i(_piCurrent);
     _iComponent = scs::core::IComponent::_narrow(obj);
     if (CORBA::is_nil(_iComponent)) throw InvalidBusAddress();
-    obj = _iComponent->getFacetByName(idl_ac::_tc_AccessControl->id());
+    obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
     _access_control = idl_ac::AccessControl::_narrow(obj);
     assert(!CORBA::is_nil(_access_control.in()));
-    obj = _iComponent->getFacetByName(idl_or::_tc_OfferRegistry->id());
+    obj = _iComponent->getFacet(idl_or::_tc_OfferRegistry->id());
     _offer_registry = idl_or::OfferRegistry::_narrow(obj);
     assert(!CORBA::is_nil(_offer_registry.in()));
-    obj = _iComponent->getFacetByName(idl_ac::_tc_LoginRegistry->id());
+    obj = _iComponent->getFacet(idl_ac::_tc_LoginRegistry->id());
     _login_registry = idl_ac::LoginRegistry::_narrow(obj);
     assert(!CORBA::is_nil(_login_registry.in()));
   }
