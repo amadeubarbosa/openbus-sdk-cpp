@@ -12,31 +12,29 @@
 namespace openbus {
 log_type log;
 
-/* [obs]
-** Eu não consegui usar um auto_ptr para segurar a referência ao orbInitializer porque 
-** tive problemas no término do programa com relação a destruição do objeto. Parece que 
-** o Mico deve ficar com o ownership por conta de uma vetor de ORBInitializer_var que 
-** ele possui em mico/pi_impl.h
-** VERIFICAR se o Mico está liberando o objeto.
+/* [obs] Eu não consegui usar um auto_ptr para segurar a referência ao orbInitializer porque tive
+ * problemas no término do programa com relação a destruição do objeto. Parece que o Mico deve ficar
+ * com o ownership por conta de uma vetor de ORBInitializer_var que ele possui em mico/pi_impl.h
+ * VERIFICAR se o Mico está liberando o objeto.
 */
 interceptors::ORBInitializer *orbInitializer;
 Mutex _mutex;
 
-CORBA::ORB *ORBInitializer(int argc, char* *argv) {
+CORBA::ORB *ORBInitializer(int argc, char **argv) {
   AutoLock m(&_mutex);
   log_scope l(log.general_logger(), info_level, "ORBInitializer");
   if (!orbInitializer) {
     orbInitializer = new interceptors::ORBInitializer();
     PortableInterceptor::register_orb_initializer(orbInitializer);
   }
-  /* [obs] Mico 2.3.13 só permite a criação de apenas *um* ORB.
-  * *CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
+  /* [obs] Mico 2.3.13 só permite a criação de apenas *um* ORB.  *CORBA garante que cada chamada a
+   * CORBA::ORB_init(argc, argv, "") retorna o mesmo ORB.
   */
   CORBA::ORB *orb = CORBA::ORB_init(argc, argv);
   try {
     orb->resolve_initial_references(CONNECTION_MANAGER_ID);
     l.log("Este ORB ja foi criado.");
-  } catch(CORBA::ORB_InvalidName&) {
+  } catch(CORBA::ORB_InvalidName &) {
     ConnectionManager *manager = new ConnectionManager(
       orb, 
       orbInitializer->codec(), 

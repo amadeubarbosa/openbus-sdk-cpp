@@ -70,20 +70,11 @@ Connection::Connection(
   /* criando um par de chaves para esta conexão. */
   {
     openssl::pkey_ctx ctx ( EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0) );
-    if (!ctx)
-      throw InvalidPrivateKey();
-    
-    if(EVP_PKEY_keygen_init(ctx.get()) <= 0)
-      throw InvalidPrivateKey();
-
-    if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), RSASize) <= 0)
-      throw InvalidPrivateKey();
-
+    if (!ctx) throw InvalidPrivateKey();
+    if(EVP_PKEY_keygen_init(ctx.get()) <= 0) throw InvalidPrivateKey();
+    if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), RSASize) <= 0) throw InvalidPrivateKey();
     EVP_PKEY* key = 0;
-    
-    if(EVP_PKEY_keygen(ctx.get(), &key) <= 0 || !key)
-      throw InvalidPrivateKey();
-
+    if(EVP_PKEY_keygen(ctx.get(), &key) <= 0 || !key) throw InvalidPrivateKey();
     _key = openssl::pkey(key);
   }
 
@@ -143,8 +134,9 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _codec->encode_value(any);
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  CORBA::OctetSeq encrypted = openssl::encrypt(_buskey, encodedLoginAuthenticationInfo->get_buffer(), 
-    encodedLoginAuthenticationInfo->length());
+  CORBA::OctetSeq encrypted = openssl::encrypt(_buskey, 
+                                               encodedLoginAuthenticationInfo->get_buffer(), 
+                                               encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
     
@@ -199,9 +191,8 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   openssl::pkey privateKey = openssl::byteSeq2PrvKey(privKey.get_buffer(), privKey.length());
   
   /* decifrar o desafio usando a chave privada do usuário. */
-  CORBA::OctetSeq secret = openssl::decrypt
-    (privateKey, (unsigned char*) challenge, 
-    idl::EncryptedBlockSize);
+  CORBA::OctetSeq secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 
+                                            idl::EncryptedBlockSize);
 
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
@@ -216,7 +207,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
   CORBA::OctetSeq encrypted = openssl::encrypt(_buskey, encodedLoginAuthenticationInfo->get_buffer(), 
-    encodedLoginAuthenticationInfo->length());
+                                               encodedLoginAuthenticationInfo->length());
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
   
@@ -240,8 +231,8 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
     _renewLogin->run();
     m.lock();
   } else {
-    _renewLogin = std::auto_ptr<RenewLogin> 
-      (new RenewLogin(this, _access_control, _manager, validityTime));
+    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, 
+                                                            _manager, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
@@ -319,16 +310,16 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
     _renewLogin->run();
     m.lock();
   } else {
-    _renewLogin = std::auto_ptr<RenewLogin> 
-      (new RenewLogin(this, _access_control, _manager, validityTime));
+    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, 
+                                                            _manager, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
   }
   #else
   assert(!_renewLogin.get());
-  _renewLogin = std::auto_ptr<RenewLogin> 
-    (new RenewLogin(_orb, this, _access_control, _manager, validityTime));
+  _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(_orb, this, _access_control, 
+                                                          _manager, validityTime));
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -354,7 +345,7 @@ bool Connection::_logout(bool local) {
         _manager->setRequester(c);
       } catch (...) { 
         sucess = false; 
-        _manager->setRequester(c);        
+        _manager->setRequester(c);
       }
     }
     m.lock();
@@ -391,7 +382,7 @@ CallerChain Connection::getCallerChain() {
   idl_cr::SignedCallChain sigCallChain;
   if (*sigCallChainAny >>= sigCallChain) {
     CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
-      idl_ac::_tc_CallChain);
+                                                       idl_ac::_tc_CallChain);
     *callChainAny >>= callChain;
     return CallerChain(_busid, callChain.originators, callChain.caller, sigCallChain);
   } else {
