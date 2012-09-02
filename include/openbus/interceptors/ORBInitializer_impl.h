@@ -12,11 +12,11 @@ namespace interceptors {
   public:
     ORBInitializer();
     ~ORBInitializer();
-    void pre_init(PortableInterceptor::ORBInitInfo*);
-    void post_init(PortableInterceptor::ORBInitInfo*) { }
-    ClientInterceptor *clientInterceptor() const { return _clientInterceptor.get(); }
-    ServerInterceptor *serverInterceptor() const { return _serverInterceptor.get(); }
-    IOP::Codec *codec() const { return _codec; }
+    void pre_init(PortableInterceptor::ORBInitInfo *);
+    void post_init(PortableInterceptor::ORBInitInfo *) { }
+    ClientInterceptor * clientInterceptor() const { return _clientInterceptor.get(); }
+    ServerInterceptor * serverInterceptor() const { return _serverInterceptor.get(); }
+    IOP::Codec * codec() const { return _codec; }
     PortableInterceptor::SlotId slotId_requesterConnection() const { return _slotId_requesterConnection; }      
     PortableInterceptor::SlotId slotId_receiveConnection() const { return _slotId_receiveConnection; }      
     PortableInterceptor::SlotId slotId_joinedCallChain() const { return _slotId_joinedCallChain; }

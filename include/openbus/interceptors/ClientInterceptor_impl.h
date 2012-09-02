@@ -26,11 +26,11 @@ namespace interceptors {
     void receive_reply(PortableInterceptor::ClientRequestInfo*) { }
     void receive_exception(PortableInterceptor::ClientRequestInfo*);
     void receive_other(PortableInterceptor::ClientRequestInfo *ri) { }
-    char *name() { return CORBA::string_dup("ClientInterceptor"); }
+    char * name() { return CORBA::string_dup("ClientInterceptor"); }
     void destroy() { }
     void connectionManager(ConnectionManager *m) { _manager = m; }
-    Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
-    openbus::CallerChain *getJoinedChain(PortableInterceptor::ClientRequestInfo *r);
+    Connection & getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
+    openbus::CallerChain * getJoinedChain(PortableInterceptor::ClientRequestInfo *r);
     static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
   private:
 
@@ -50,8 +50,9 @@ namespace interceptors {
     typedef LRUCache<std::string, SecretSession> SessionLRUCache;
     typedef LRUCache<std::string, const idl_cr::SignedCallChain> CallChainLRUCache;
 
-    /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite 
-    ** uma comunicação com o objeto CORBA que está sendo requisitado. */
+    /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite uma
+     * comunicação com o objeto CORBA que está sendo requisitado.
+     */
     SessionLRUCache _sessionLRUCache;    
     
     CallChainLRUCache _callChainLRUCache;

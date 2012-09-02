@@ -21,7 +21,7 @@ std::string getSessionKey(PortableInterceptor::ClientRequestInfo *r) {
   return sprofileDataHash;
 }
 
-Connection &ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo *r) {
+Connection & ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientRequestInfo *r) {
   log_scope l(log.general_logger(),info_level,"ClientInterceptor::getCurrentConnection");
   Connection *conn = 0;
   CORBA::Any_var connectionAddrAny;
@@ -42,15 +42,15 @@ Connection &ClientInterceptor::getCurrentConnection(PortableInterceptor::ClientR
   return *conn;
 }
 
-CallerChain *ClientInterceptor::getJoinedChain(PortableInterceptor::ClientRequestInfo *r) {
+CallerChain * ClientInterceptor::getJoinedChain(PortableInterceptor::ClientRequestInfo *r) {
   CORBA::Any_var signedCallChainAny= r->get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) {
-    CORBA::Any_var callChainAny = _cdrCodec->decode_value(signedCallChain.encoded,
-      idl_ac::_tc_CallChain);
+    CORBA::Any_var callChainAny = _cdrCodec->decode_value(signedCallChain.encoded, 
+                                                          idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
     if (callChainAny >>= callChain) return new CallerChain(callChain.target, callChain.originators, 
-      callChain.caller, signedCallChain);
+                                                           callChain.caller, signedCallChain);
     else return 0;
   } else return 0;
 }
@@ -67,8 +67,7 @@ ClientInterceptor::ClientInterceptor(
     _callChainLRUCache(CallChainLRUCache(LOGINCACHE_LRU_SIZE)),
     _manager(0)
 { 
-  log_scope l(log.general_logger(), info_level,
-    "ClientInterceptor::ClientInterceptor");
+  log_scope l(log.general_logger(), info_level, "ClientInterceptor::ClientInterceptor");
   _slotId_ignoreInterceptor = slotId_ignoreInterceptor;
 }
 
@@ -136,7 +135,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
           memcpy(pBuf, connId, idSize);
           memcpy(pBuf+idSize, session.remoteId.in(), remoteIdSize);
           if (callerChain) memcpy(pBuf+idSize+remoteIdSize, 
-            callerChain->signedCallChain()->signature, idl::EncryptedBlockSize);
+                                  callerChain->signedCallChain()->signature, 
+                                  idl::EncryptedBlockSize);
           else memset(pBuf+idSize+remoteIdSize, '\0', idl::EncryptedBlockSize);
           SHA256(pBuf, bufSize, hash);
           std::string shash((const char*) hash, idl::HashValueSize);
@@ -146,7 +146,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
           if (b2) signedCallChain = _callChainLRUCache.fetch(shash);
           m.unlock();
           if (b2) {
-            l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s", session.remoteId.in());
+            l.level_vlog(debug_level,"Recuperando signedCallChain. remoteid: %s",
+                         session.remoteId.in());
             credential.chain = signedCallChain;
           } else {
             credential.chain = *conn.access_control()->signChainFor(session.remoteId.in());
@@ -159,7 +160,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
           else memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       } else {
         /* montando uma credencial com o propósito de requisitar o estabelecimento de uma 
-        ** nova sessão. */
+         * nova sessão. 
+         */
         credential.ticket = 0;
         credential.session = 0;
         memset(credential.hash, '\0', idl::HashValueSize);
