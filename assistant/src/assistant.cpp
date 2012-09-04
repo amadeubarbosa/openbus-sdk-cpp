@@ -846,4 +846,44 @@ idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOf
   return result_offers;
 }
 
+CallerChain AssistantImpl::getCallerChain()
+{
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  while(!state->connection_ready)
+    state->connection_ready_var.wait(l);
+  assert(state->connection_ready);
+  
+  return state->connection->getCallerChain();
+}
+
+void AssistantImpl::joinChain(CallerChain chain)
+{
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  while(!state->connection_ready)
+    state->connection_ready_var.wait(l);
+  assert(state->connection_ready);
+
+  return state->connection->joinChain(chain);
+}
+
+void AssistantImpl::exitChain()
+{
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  while(!state->connection_ready)
+    state->connection_ready_var.wait(l);
+  assert(state->connection_ready);
+
+  return state->connection->exitChain();
+}
+
+CallerChain AssistantImpl::getJoinedChain()
+{
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  while(!state->connection_ready)
+    state->connection_ready_var.wait(l);
+  assert(state->connection_ready);
+
+  return state->connection->getJoinedChain();
+}
+
 } }
