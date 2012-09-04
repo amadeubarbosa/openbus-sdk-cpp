@@ -78,9 +78,9 @@ endif
 OBJROOT=obj
 TARGETROOT=lib
 
-INCLUDES=. \
-         legacy/stubs \
-         stubs \
+INCLUDES=../legacy/stubs \
+         ../stubs \
+         ../include \
          include \
          ${MICO_INC} \
          ${OPENBUS_INC} \

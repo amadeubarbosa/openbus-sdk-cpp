@@ -27,6 +27,8 @@
 
 namespace openbus { namespace assistant {
 
+unsigned int const default_retry_wait = 30u;
+
 #ifndef OPENBUS_ASSISTANT_DOXYGEN
 namespace assistant_detail {
 
@@ -70,6 +72,7 @@ struct shared_state
   std::auto_ptr<openbus::Connection> connection;
   std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > components;
   std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > queued_components;
+  boost::chrono::steady_clock::duration retry_wait;
 #ifdef ASSISTANT_SDK_MULTITHREAD
   bool new_queued_components;
   bool work_exit;
@@ -91,7 +94,10 @@ struct shared_state
     : orb(orb), auth_info(auth_info), host(host), port(port)
     , login_error(login_error), register_error(register_error)
     , fatal_error(fatal_error)
+#ifdef ASSISTANT_SDK_MULTITHREAD
     , new_queued_components(false), work_exit(false)
+    , connection_ready(false)
+#endif
   {}
 };
 
@@ -111,11 +117,13 @@ BOOST_PARAMETER_NAME(entity);
 BOOST_PARAMETER_NAME(password);
 BOOST_PARAMETER_NAME(private_key);
 BOOST_PARAMETER_NAME(private_key_filename);
+BOOST_PARAMETER_NAME(shared_auth_callback);
 BOOST_PARAMETER_NAME(argc);
 BOOST_PARAMETER_NAME(argv);
 BOOST_PARAMETER_NAME(on_login_error);
 BOOST_PARAMETER_NAME(on_register_error);
 BOOST_PARAMETER_NAME(on_fatal_error);
+BOOST_PARAMETER_NAME(retry_wait);
 }
 using namespace keywords;
 #endif
@@ -127,6 +135,7 @@ struct AssistantImpl
                                , idl_or::ServicePropertySeq
                                , std::string)> register_error_callback_type;
   typedef boost::function<void(const char*)> fatal_error_callback_type;
+  typedef boost::function<std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq>()> shared_auth_callback_type;
 
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
 protected:
@@ -158,6 +167,10 @@ protected:
     typedef mpl::not_<boost::is_same<password_type, void> > has_password;
 
     typedef typename parameter::value_type
+      <ArgumentPack, tag::shared_auth_callback, void>::type shared_auth_cb_type;
+    typedef mpl::not_<boost::is_same<shared_auth_cb_type, void> > has_shared_auth_cb;
+
+    typedef typename parameter::value_type
       <ArgumentPack, tag::argc, void>::type argc_type;
     typedef mpl::not_<boost::is_same<argc_type, void> > has_argc;
 
@@ -176,9 +189,13 @@ protected:
       has_partial_certificate_credential;
     typedef mpl::and_<has_private_key, has_private_key_file> has_private_key_and_file;
 
+    typedef has_shared_auth_cb has_shared_auth_credential;
+
     typedef mpl::and_<has_argc, has_argv> has_args;
-    typedef mpl::or_<has_password_credential, has_certificate_credential> has_credential;
+    typedef mpl::or_<has_password_credential, has_certificate_credential, has_shared_auth_credential> has_credential;
     typedef mpl::and_<has_password_credential, has_certificate_credential> has_certificate_and_password_credentials;
+    typedef mpl::and_<has_password_credential, has_shared_auth_credential> has_shared_auth_and_password_credentials;
+    typedef mpl::and_<has_certificate_credential, has_shared_auth_credential> has_shared_auth_and_certificate_credentials;
 
     // Se a compilação falhou nesta asserção, então seu código
     // preencheu ambos parâmetros _private_key e _private_key_filename.
@@ -200,18 +217,31 @@ protected:
 
     // Se a compilação falhar nesta asserção, então seu código esqueceu
     // de passar uma das credenciais para login. Você deve fazer um
-    // dos dois:
+    // dos três:
     // openbus::assistant::Assistant assistant
     //  ([...], _username = "myusername", _password = "mypassword");
     // ou:
     // openbus::assistant::Assistant assistant
     //  ([...], _entity = "entidade do serviço", _private_key = private_key_octet_seq);
+    // ou:
+    // openbus::assistant::Assistant assistant
+    //  ([..], _shared_auth_callback = my_shared_auth_callback);
     BOOST_MPL_ASSERT((has_credential));
 
     // Se a compilação falhar nesta asserção, então seu código passou credenciais
-    // de ambas as formas. Você deve escolher entre _username/_password e
+    // de duas ou mais formas. Você deve escolher entre _username/_password e
     // _entity/_private_key
     BOOST_MPL_ASSERT((mpl::not_<has_certificate_and_password_credentials>));
+
+    // Se a compilação falhar nesta asserção, então seu código passou credenciais
+    // de duas ou mais formas. Você deve escolher entre _username/_password e
+    // _shared_auth_callback
+    BOOST_MPL_ASSERT((mpl::not_<has_shared_auth_and_password_credentials>));
+
+    // Se a compilação falhar nesta asserção, então seu código passou credenciais
+    // de duas ou mais formas. Você deve escolher entre _entity/_private_key e
+    // _shared_auth_callback
+    BOOST_MPL_ASSERT((mpl::not_<has_shared_auth_and_certificate_credentials>));
 
     typedef mpl::void_ void_;
     init_function()
@@ -222,12 +252,18 @@ protected:
        , args[_entity | void_()]
        , args[_private_key | void_()]
        , args[_private_key_filename | void_()]
+       , args[_shared_auth_callback | void_()]
        , args[_argc | void_()]
        , args[_argv | void_()]
        , args[_on_login_error | login_error_callback_type()]
        , args[_on_register_error | register_error_callback_type()]
        , args[_on_fatal_error | fatal_error_callback_type()]
        );
+    
+    typedef boost::chrono::seconds seconds;
+    unsigned int retry_wait
+      = args[_retry_wait | assistant::default_retry_wait];
+    state->retry_wait = seconds(retry_wait);
   }
 
   typedef boost::mpl::void_ void_;
@@ -235,7 +271,7 @@ protected:
   {
     typedef void result_type;
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port
-                           , std::string username, std::string password, void_, void_, void_
+                           , std::string username, std::string password, void_, void_, void_, void_
                            , int& argc, char** argv
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
@@ -245,7 +281,7 @@ protected:
                              , login_error, register_error, fatal_error);
     }
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port
-                           , std::string username, std::string password, void_, void_, void_, void_, void_
+                           , std::string username, std::string password, void_, void_, void_, void_, void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
                            , fatal_error_callback_type fatal_error) const
@@ -255,7 +291,7 @@ protected:
     }
     result_type operator()(AssistantImpl* self
                            , std::string hostname, unsigned short port, void_, void_
-                           , std::string entity, CORBA::OctetSeq private_key, void_
+                           , std::string entity, CORBA::OctetSeq private_key, void_, void_
                            , int& argc, char** argv
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
@@ -265,7 +301,7 @@ protected:
                              , login_error, register_error, fatal_error);
     }
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
-                           , std::string entity, CORBA::OctetSeq private_key, void_, void_, void_
+                           , std::string entity, CORBA::OctetSeq private_key, void_, void_, void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
                            , fatal_error_callback_type fatal_error) const
@@ -273,7 +309,7 @@ protected:
       self->InitWithPrivateKey(hostname, port, entity, private_key
                                , login_error, register_error, fatal_error);
     }
-    result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
+    result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_, void_
                            , std::string entity, void_, std::string private_key_filename
                            , int& argc, char** argv
                            , login_error_callback_type login_error
@@ -284,7 +320,7 @@ protected:
                                    , login_error, register_error, fatal_error);
     }
     result_type operator()(AssistantImpl* self
-                           , std::string hostname, unsigned short port, void_, void_
+                           , std::string hostname, unsigned short port, void_, void_, void_
                            , std::string entity, void_, std::string private_key_filename, void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
@@ -432,6 +468,14 @@ protected:
 };
 #endif
 
+struct timeout_error : std::exception
+{
+  const char* what() const throw()
+  {
+    return "timeout_error";
+  }
+};
+
 /** \brief Classe Openbus com API do assistants
  *
  * A classe Openbus deve ser instanciada por um de seus dois
@@ -467,6 +511,7 @@ struct Assistant : AssistantImpl
     (private_key, (CORBA::OctetSeq))
     (in_out(argc), (int&))
     (in_out(argv), (char**))
+    (retry_wait, (unsigned int))
     (on_login_error, (boost::function<void(std::string)>))
     (on_register_error, (boost::function<void(scs::core::IComponent_var
                                               , idl_or::ServicePropertySeq
@@ -494,6 +539,17 @@ struct Assistant : AssistantImpl
    *  por certificado
    */
   static Assistant createWithPrivateKey(const char* entity, const idl::OctetSeq privKey
+                                        , const char* host, unsigned short port
+                                        , int& argc, char** argv
+                                        , login_error_callback_type login_error = login_error_callback_type()
+                                        , register_error_callback_type register_error
+                                          = register_error_callback_type()
+                                        , fatal_error_callback_type fatal_error = fatal_error_callback_type());
+
+  /** \brief Constriu um Openbus com informacao de autenticacao
+   *  por Shared Authentication
+   */
+  static Assistant createWithSharedAuth(shared_auth_callback_type shared_auth_callback
                                         , const char* host, unsigned short port
                                         , int& argc, char** argv
                                         , login_error_callback_type login_error = login_error_callback_type()

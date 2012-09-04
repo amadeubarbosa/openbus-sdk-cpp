@@ -7,6 +7,8 @@
 #include <boost/utility/result_of.hpp>
 #include <log/output/streambuf_output.h>
 
+#include <boost/chrono/include.hpp>
+
 #include <iterator>
 
 namespace openbus { namespace assistant {
@@ -38,8 +40,25 @@ const char* exception_message(idl::services::UnauthorizedOperation const&)
   return "tecgraf::openbus::core::v2_0::services::UnauthorizedOperation";
 }
 
-template <typename F, typename E>
-typename boost::result_of<F()>::type execute_with_retry(F f, E error)
+struct wait_predicate_signalled
+{
+  const char* what() const throw() { return "wait_predicate_signalled"; }
+};
+
+struct wait_until_cancelled
+{
+  template <typename Lock, typename VarCond, typename Pred, typename TimePoint>
+  void operator()(Lock& lock, VarCond& var_cond, Pred p, TimePoint time_point) const
+  {
+    while(!p() && var_cond.wait_until(lock, time_point) != boost::cv_status::timeout)
+      ;
+    if(p())
+      throw wait_predicate_signalled();
+  }
+};
+
+template <typename F, typename E, typename WaitF>
+typename boost::result_of<F()>::type execute_with_retry(F f, E error, WaitF wait_f)
 {
   do
   {
@@ -68,8 +87,57 @@ typename boost::result_of<F()>::type execute_with_retry(F f, E error)
       error(e);
     }
 
-    unsigned int t = 30;
-    do { t = sleep(t); } while(t);
+    wait_f();
+  }
+  while(true);
+}
+
+template <typename F, typename E>
+typename boost::result_of<F()>::type execute_with_retry
+  (F f, E error, boost::chrono::steady_clock::time_point timeout)
+{
+  do
+  {
+    try
+    {
+      return f();
+    }
+    catch(CORBA::TRANSIENT const& e)
+    {
+      error(e);
+    }
+    catch(CORBA::COMM_FAILURE const& e)
+    {
+      error(e);
+    }
+    catch(CORBA::OBJECT_NOT_EXIST const& e)
+    {
+      error(e);
+    }
+    catch(idl::services::ServiceFailure const& e)
+    {
+      error(e);
+    }
+    catch(idl::services::UnauthorizedOperation const& e)
+    {
+      error(e);
+    }
+
+    if(timeout <= boost::chrono::steady_clock::now())
+      throw timeout_error();
+
+    boost::chrono::steady_clock::duration 
+      sleep_time = timeout - boost::chrono::steady_clock::now();
+    boost::chrono::seconds sleep_time_in_secs
+      = boost::chrono::duration_cast<boost::chrono::seconds>(sleep_time);
+
+    if(sleep_time_in_secs.count() < 30)
+    {
+      unsigned int t = 30;
+      do { t = sleep(t); } while(t);
+    }
+    else
+      throw timeout_error();
   }
   while(true);
 }
@@ -96,12 +164,47 @@ struct exception_logging
   }
 };
 
+struct wait_until_timeout_and_signal_exit
+{
+  wait_until_timeout_and_signal_exit(boost::shared_ptr<assistant_detail::shared_state> state)
+    : state(state)
+  {}
+
+  struct predicate
+  {
+    typedef bool result_type;
+    result_type operator()(boost::shared_ptr<assistant_detail::shared_state> state) const
+    {
+      return state->work_exit;
+    }
+  };
+
+  typedef void result_type;
+  result_type operator()() const
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    boost::chrono::steady_clock::time_point time_point
+      = boost::chrono::steady_clock::now() + state->retry_wait;
+    f(l, state->work_cond_var, boost::bind(predicate(), state), time_point);
+  }
+
+  boost::shared_ptr<assistant_detail::shared_state> state;
+  wait_until_cancelled f;
+};
+
 struct error_creating_connection
 {
+  boost::function<void(std::string /*error*/)> callback;
+
+  error_creating_connection(boost::function<void(std::string /*error*/)> callback)
+    : callback(callback) {}
+
   typedef void result_type;
   template <typename Exception>
   result_type operator()(Exception const& e) const
   {
+    if(callback)
+      callback(exception_message(e));
   }
 };
 
@@ -120,10 +223,13 @@ std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::stri
 }
 
 std::auto_ptr<Connection> create_connection(CORBA::ORB_var orb, std::string const& host, unsigned short port
-                                            , logger::logger& logging)
+                                            , logger::logger& logging
+                                            , boost::shared_ptr<assistant_detail::shared_state> state
+                                            , boost::function<void(std::string)> callback)
 {
   return execute_with_retry(boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging))
-                            , error_creating_connection());
+                            , error_creating_connection(callback)
+                            , wait_until_timeout_and_signal_exit(state));
 }
 
 void login_simple(Connection& c, assistant_detail::authentication_info const& info
@@ -175,12 +281,14 @@ std::auto_ptr<Connection> create_connection_and_login
   (CORBA::ORB_var orb, std::string const& host, unsigned short port
    , assistant_detail::authentication_info const& info
    , logger::logger& logging
-   , login_error error)
+   , boost::shared_ptr<assistant_detail::shared_state> state
+   , boost::function<void(std::string)> error)
 {
-  std::auto_ptr<Connection> c = create_connection(orb, host, port, boost::ref(logging));
+  std::auto_ptr<Connection> c = create_connection(orb, host, port, boost::ref(logging), state, error);
   execute_with_retry(boost::bind(&login_simple, boost::ref(*c), boost::ref(info)
                                  , boost::ref(logging))
-                     , error);
+                     , login_error(error)
+                     , wait_until_timeout_and_signal_exit(state));
   return c;
 }
 
@@ -268,8 +376,8 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
       work_thread_log.level_log(logger::debug_level, "Creating connection and logging");
       std::auto_ptr<Connection> connection = create_connection_and_login
         (state->orb, state->host, state->port, state->auth_info
-         , state->logging
-         , login_error(login_error_callback));
+         , state->logging, state
+         , login_error_callback);
       {
         work_thread_log.level_log(logger::debug_level, "Registering connection as default");
         openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
@@ -312,7 +420,8 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
         execute_with_retry(boost::bind(&register_component, state->connection->offers()
                                        , boost::ref(current), components.end()
                                        , boost::ref(state->logging))
-                           , register_fail(register_error_callback, current));
+                           , register_fail(register_error_callback, current)
+                           , wait_until_timeout_and_signal_exit(state));
       }
       while(std::find_if(components.begin(), components.end()
                          , &not_registered_predicate) != components.end());
@@ -335,6 +444,11 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
   {
     logger::log_scope l(state->logging, logger::error_level, "Worker thread std::bad_alloc catch");
     exception_logging ex_l(l);
+  }
+  catch(wait_predicate_signalled const& e)
+  {
+    logger::log_scope l(state->logging, logger::info_level
+                        , "Worker thread was cancelled because shutdown was called");
   }
   catch(std::exception const& e)
   {
@@ -373,9 +487,19 @@ void orb_thread_function(CORBA::ORB_var orb
 {
   logger::log_scope l(state->logging, logger::debug_level, "ORB event thread");
   exception_logging ex_l(l);
-  orb->run();
-  l.level_log(logger::info_level, "ORB returned from run");
+  try
   {
+    orb->run();
+    l.level_log(logger::info_level, "ORB returned from run");
+    {
+      boost::unique_lock<boost::mutex> lock(state->mutex);
+      state->work_exit = true;
+      state->work_cond_var.notify_one();
+    }
+  }
+  catch(...)
+  {
+    l.level_log(logger::error_level, "Exception thrown in ORB thread");
     boost::unique_lock<boost::mutex> lock(state->mutex);
     state->work_exit = true;
     state->work_cond_var.notify_one();
@@ -440,10 +564,49 @@ void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short
 {
   int argc = 1;
   char* argv[] = {const_cast<char*>("")};
-  CORBA::ORB_var orb = ORBInitializer(argc, argv);
   InitWithPassword(hostname, port, username, password
                    , argc, argv, login_error
                    , register_error, fatal_error);
+}
+
+void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned short port
+                                       , std::string const& entity, CORBA::OctetSeq const& private_key
+                                       , int& argc, char** argv
+                                       , login_error_callback_type login_error
+                                       , register_error_callback_type register_error
+                                       , fatal_error_callback_type fatal_error)
+{
+  CORBA::ORB_var orb = ORBInitializer(argc, argv);
+  activate_RootPOA(orb);
+#ifndef NDEBUG
+  try
+  {
+    assert(!CORBA::is_nil(orb->resolve_initial_references("OpenbusConnectionManager")));
+  }
+  catch(...)
+  {
+    ::std::abort();
+  }
+#endif  
+  assistant_detail::certificate_authentication_info info = {entity, private_key};
+  state.reset(new assistant_detail::shared_state
+              (orb, info, hostname, port, login_error, register_error, fatal_error));
+  state->logging.set_level(logger::debug_level);
+  state->logging.add_output(logger::output::make_streambuf_output(*std::cerr.rdbuf()));
+  create_threads(state);
+}
+
+void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned short port
+                                       , std::string const& entity, CORBA::OctetSeq const& private_key
+                                       , login_error_callback_type login_error
+                                       , register_error_callback_type register_error
+                                       , fatal_error_callback_type fatal_error)
+{
+  int argc = 1;
+  char* argv[] = {const_cast<char*>("")};
+  InitWithPrivateKey(hostname, port, entity, private_key
+                     , argc, argv, login_error
+                     , register_error, fatal_error);
 }
 
 Assistant Assistant::createWithPassword(const char* username, const char* password
@@ -483,6 +646,7 @@ void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::Servic
 void AssistantImpl::shutdown()
 {
   state->orb->shutdown(true);
+  state->work_thread.join();
 }
 
 void AssistantImpl::wait()
@@ -501,13 +665,86 @@ idl_or::ServicePropertySeq AssistantImpl::createFacetAndEntityProperty(const cha
   return properties;
 }  
 
-idl_or::ServiceOfferDescSeq AssistantImpl::findOffers(idl_or::ServicePropertySeq properties, int timeout) const
+namespace {
+
+struct find_services
+{
+  typedef idl_or::ServiceOfferDescSeq_var result_type;
+  result_type operator()(boost::shared_ptr<assistant_detail::shared_state> state
+                         , idl_or::ServicePropertySeq properties) const
+  {
+    return state->connection->offers()->findServices(properties);
+  }
+};
+
+struct find_services_error
+{
+  typedef void result_type;
+  result_type operator()(CORBA::TRANSIENT const& e) const {}
+  result_type operator()(CORBA::COMM_FAILURE const& e) const {}
+  result_type operator()(CORBA::OBJECT_NOT_EXIST const& e) const {}
+  template <typename E>
+  result_type operator()(E const& e) const
+  {
+    throw e;
+  }
+};
+
+idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int timeout_secs
+                                       , boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  boost::chrono::steady_clock::time_point timeout
+    = boost::chrono::steady_clock::now()
+    + boost::chrono::seconds(timeout_secs);
+
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    while(!state->connection_ready && 
+          state->connection_ready_var.wait_until(l, timeout) != boost::cv_status::timeout)
+      ;
+    if(!state->connection_ready)
+      throw timeout_error();
+  }
+
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  idl_or::ServiceOfferDescSeq_var r
+    = execute_with_retry(boost::bind(find_services(), state, properties)
+                         , find_services_error(), timeout);
+  return *r;
+}
+
+idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
+                                       , boost::shared_ptr<assistant_detail::shared_state> state)
 {
   {
     boost::unique_lock<boost::mutex> l(state->mutex);
     while(!state->connection_ready)
       state->connection_ready_var.wait(l);
+    assert(state->connection_ready);
   }
+
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  idl_or::ServiceOfferDescSeq_var r
+    = execute_with_retry(boost::bind(find_services(), state, properties)
+                         , find_services_error(), wait_until_timeout_and_signal_exit(state));
+  return *r;
+}
+
+idl_or::ServiceOfferDescSeq findOffers_immediate
+  (idl_or::ServicePropertySeq properties, boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    if(!state->connection_ready)
+      throw timeout_error();
+  }
+
   // From here connection_ready is true, which means that state->connection is valid
   // and imutable, and a happens before has already been established between
   // state->connection and connection_ready (because of the acquire semantics of the lock
@@ -516,9 +753,50 @@ idl_or::ServiceOfferDescSeq AssistantImpl::findOffers(idl_or::ServicePropertySeq
   return *r;
 }
 
+}
+
+idl_or::ServiceOfferDescSeq AssistantImpl::findOffers
+  (idl_or::ServicePropertySeq properties, int timeout_secs) const
+{
+  if(timeout_secs < 0)
+    return assistant::findOffers(properties, state);
+  else if(timeout_secs == 0)
+    return assistant::findOffers_immediate(properties, state);
+  else
+    return assistant::findOffers(properties, timeout_secs, state);
+}
+
 idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOfferDescSeq offers)
 {
-  return offers;
+  idl_or::ServiceOfferDescSeq result_offers;
+  for(std::size_t i = 0; i != offers.length(); ++i)
+  {
+    try
+    {
+      if(!offers[i].service_ref->_non_existent())
+      {
+        result_offers.length(result_offers.length()+1);
+        result_offers[result_offers.length()-1] = offers[i];
+      }
+    }
+    catch(CORBA::TRANSIENT const& e)
+    {
+    }
+    catch(CORBA::COMM_FAILURE const& e)
+    {
+    }
+    catch(CORBA::OBJECT_NOT_EXIST const& e)
+    {
+      std::abort();
+    }
+    catch(idl::services::ServiceFailure const& e)
+    {
+    }
+    catch(idl::services::UnauthorizedOperation const& e)
+    {
+    }
+  }
+  return result_offers;
 }
 
 } }
