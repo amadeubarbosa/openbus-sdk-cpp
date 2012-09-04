@@ -15,6 +15,11 @@ namespace openbus { namespace assistant {
 
 namespace {
 
+const char* exception_message(CORBA::NO_PERMISSION const&)
+{
+  return "CORBA::NO_PERMISSION";
+}
+
 const char* exception_message(CORBA::TRANSIENT const&)
 {
   return "CORBA::TRANSIENT";
@@ -65,6 +70,10 @@ typename boost::result_of<F()>::type execute_with_retry(F f, E error, WaitF wait
     try
     {
       return f();
+    }
+    catch(CORBA::NO_PERMISSION const& e)
+    {
+      error(e);
     }
     catch(CORBA::TRANSIENT const& e)
     {
