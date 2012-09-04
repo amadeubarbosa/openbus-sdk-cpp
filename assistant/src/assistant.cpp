@@ -173,6 +173,13 @@ struct exception_logging
   }
 };
 
+struct invalid_login_callback
+{
+  typedef void result_type;
+  result_type operator()(Connection &c, idl_ac::LoginInfo old_login
+                         , boost::weak_ptr<assistant_detail::shared_state> state_weak) const;
+};
+
 struct wait_until_timeout_and_signal_exit
 {
   wait_until_timeout_and_signal_exit(boost::shared_ptr<assistant_detail::shared_state> state)
@@ -218,7 +225,8 @@ struct error_creating_connection
 };
 
 std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::string const& host
-                                                   , unsigned short port, logger::logger& logging)
+                                                   , unsigned short port, logger::logger& logging
+                                                   , boost::shared_ptr<assistant_detail::shared_state> state)
 {
   logger::log_scope l(logging, logger::info_level, "Criando conexão");
   exception_logging ex_l(l, "Failed creating connection");
@@ -228,6 +236,8 @@ std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::stri
 
   std::auto_ptr<openbus::Connection> c = manager->createConnection(host.c_str(), port);
   l.log("Connection created");
+  boost::weak_ptr<assistant_detail::shared_state> weak_state = state;
+  c->onInvalidLogin(boost::bind(invalid_login_callback(), _1, _2, weak_state));
   return c;
 }
 
@@ -236,7 +246,7 @@ std::auto_ptr<Connection> create_connection(CORBA::ORB_var orb, std::string cons
                                             , boost::shared_ptr<assistant_detail::shared_state> state
                                             , boost::function<void(std::string)> callback)
 {
-  return execute_with_retry(boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging))
+  return execute_with_retry(boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging), state)
                             , error_creating_connection(callback)
                             , wait_until_timeout_and_signal_exit(state));
 }
@@ -263,6 +273,12 @@ void login_simple(Connection& c, assistant_detail::authentication_info const& in
     l.vlog("Fazendo login por chave privada para entidade %s", p->entity.c_str());
     c.loginByCertificate(p->entity.c_str(), p->private_key);
   }
+  else if(assistant_detail::shared_auth_authentication_info const* p
+          = boost::get<assistant_detail::shared_auth_authentication_info const>(&info))
+  {
+    std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq> r = p->callback();
+    c.loginBySharedAuth(r.first, r.second);
+  }
 }
 
 struct login_error
@@ -285,6 +301,19 @@ struct login_error
     {}
   }
 };
+
+void invalid_login_callback::operator()(Connection &c, idl_ac::LoginInfo old_login
+                                        , boost::weak_ptr<assistant_detail::shared_state> state_weak) const
+{
+  boost::shared_ptr<assistant_detail::shared_state> state = state_weak.lock();
+  if(state)
+  {
+    execute_with_retry(boost::bind(&login_simple, boost::ref(c), boost::ref(state->auth_info)
+                                   , boost::ref(state->logging))
+                       , login_error(state->login_error)
+                       , wait_until_timeout_and_signal_exit(state));
+  }
+}
 
 std::auto_ptr<Connection> create_connection_and_login
   (CORBA::ORB_var orb, std::string const& host, unsigned short port
@@ -548,16 +577,6 @@ void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short
 {
   CORBA::ORB_var orb = ORBInitializer(argc, argv);
   activate_RootPOA(orb);
-#ifndef NDEBUG
-  try
-  {
-    assert(!CORBA::is_nil(orb->resolve_initial_references("OpenbusConnectionManager")));
-  }
-  catch(...)
-  {
-    ::std::abort();
-  }
-#endif  
   assistant_detail::password_authentication_info info = {username, password};
   state.reset(new assistant_detail::shared_state
               (orb, info, hostname, port, login_error, register_error, fatal_error));
@@ -587,16 +606,6 @@ void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned sho
 {
   CORBA::ORB_var orb = ORBInitializer(argc, argv);
   activate_RootPOA(orb);
-#ifndef NDEBUG
-  try
-  {
-    assert(!CORBA::is_nil(orb->resolve_initial_references("OpenbusConnectionManager")));
-  }
-  catch(...)
-  {
-    ::std::abort();
-  }
-#endif  
   assistant_detail::certificate_authentication_info info = {entity, private_key};
   state.reset(new assistant_detail::shared_state
               (orb, info, hostname, port, login_error, register_error, fatal_error));
@@ -615,6 +624,35 @@ void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned sho
   char* argv[] = {const_cast<char*>("")};
   InitWithPrivateKey(hostname, port, entity, private_key
                      , argc, argv, login_error
+                     , register_error, fatal_error);
+}
+
+void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned short port
+                                       , shared_auth_callback_type shared_auth_callback
+                                       , int& argc, char** argv
+                                       , login_error_callback_type login_error
+                                       , register_error_callback_type register_error
+                                       , fatal_error_callback_type fatal_error)
+{
+  CORBA::ORB_var orb = ORBInitializer(argc, argv);
+  activate_RootPOA(orb);
+  assistant_detail::shared_auth_authentication_info info = {shared_auth_callback};
+  state.reset(new assistant_detail::shared_state
+              (orb, info, hostname, port, login_error, register_error, fatal_error));
+  state->logging.set_level(logger::debug_level);
+  state->logging.add_output(logger::output::make_streambuf_output(*std::cerr.rdbuf()));
+  create_threads(state);
+}
+
+void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned short port
+                                       , shared_auth_callback_type shared_auth_callback
+                                       , login_error_callback_type login_error
+                                       , register_error_callback_type register_error
+                                       , fatal_error_callback_type fatal_error)
+{
+  int argc = 1;
+  char* argv[] = {const_cast<char*>("")};
+  InitWithSharedAuth(hostname, port, shared_auth_callback, argc, argv, login_error
                      , register_error, fatal_error);
 }
 

@@ -43,8 +43,14 @@ struct certificate_authentication_info
   idl::OctetSeq private_key;
 };
 
+struct shared_auth_authentication_info
+{
+  boost::function<std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq>()> callback;
+};
+
 typedef boost::variant<password_authentication_info
-                       , certificate_authentication_info>
+                       , certificate_authentication_info
+                       , shared_auth_authentication_info>
   authentication_info;
 
 struct shared_state
@@ -309,8 +315,8 @@ protected:
       self->InitWithPrivateKey(hostname, port, entity, private_key
                                , login_error, register_error, fatal_error);
     }
-    result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_, void_
-                           , std::string entity, void_, std::string private_key_filename
+    result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
+                           , std::string entity, void_, std::string private_key_filename, void_
                            , int& argc, char** argv
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
@@ -320,14 +326,37 @@ protected:
                                    , login_error, register_error, fatal_error);
     }
     result_type operator()(AssistantImpl* self
-                           , std::string hostname, unsigned short port, void_, void_, void_
-                           , std::string entity, void_, std::string private_key_filename, void_, void_
+                           , std::string hostname, unsigned short port, void_, void_
+                           , std::string entity, void_, std::string private_key_filename, void_, void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
                            , fatal_error_callback_type fatal_error) const
     {
       self->InitWithPrivateKeyFile(hostname, port, entity, private_key_filename
                                    , login_error, register_error, fatal_error);
+    }
+    result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
+                           , void_, void_, void_
+                           , shared_auth_callback_type shared_auth_callback
+                           , int& argc, char** argv
+                           , login_error_callback_type login_error
+                           , register_error_callback_type register_error
+                           , fatal_error_callback_type fatal_error) const
+    {
+      self->InitWithSharedAuth(hostname, port, shared_auth_callback, argc, argv
+                               , login_error, register_error, fatal_error);
+    }
+    result_type operator()(AssistantImpl* self
+                           , std::string hostname, unsigned short port, void_, void_, void_
+                           , void_, void_, void_
+                           , shared_auth_callback_type shared_auth_callback
+                           , void_, void_
+                           , login_error_callback_type login_error
+                           , register_error_callback_type register_error
+                           , fatal_error_callback_type fatal_error) const
+    {
+      self->InitWithSharedAuth(hostname, port, shared_auth_callback
+                               , login_error, register_error, fatal_error);
     }
   };
 public:
@@ -463,6 +492,17 @@ protected:
                               , login_error_callback_type login_error
                               , register_error_callback_type register_error
                               , fatal_error_callback_type fatal_error);
+  void InitWithSharedAuth(std::string const& hostname, unsigned short port
+                          , shared_auth_callback_type shared_auth_callback
+                          , int& argc, char** argv
+                          , login_error_callback_type login_error
+                          , register_error_callback_type register_error
+                          , fatal_error_callback_type fatal_error);
+  void InitWithSharedAuth(std::string const& hostname, unsigned short port
+                          , shared_auth_callback_type shared_auth_callback
+                          , login_error_callback_type login_error
+                          , register_error_callback_type register_error
+                          , fatal_error_callback_type fatal_error);
 
   boost::shared_ptr<assistant_detail::shared_state> state;
 };
