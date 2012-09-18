@@ -29,5 +29,6 @@ int main(int argc, char** argv)
      , _private_key = key
      , _argc = argc, _argv = argv);
 
+  assistant.waitLogin();
   assistant.shutdown();
 }

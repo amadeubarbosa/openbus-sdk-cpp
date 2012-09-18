@@ -1,0 +1,351 @@
+// -*- coding: iso-latin-1 -*-
+
+#include <openbus/assistant.h>
+#include <openbus/assistant/detail/exception_logging.h>
+#include <openbus/assistant/detail/register_information.h>
+#include <openbus/assistant/detail/execute_with_retry.h>
+#include <openbus/assistant/detail/exception_message.h>
+
+namespace openbus { namespace assistant {
+
+namespace assistant_detail {
+
+struct wait_until_cancelled
+{
+  template <typename Lock, typename VarCond, typename Pred, typename TimePoint>
+  void operator()(Lock& lock, VarCond& var_cond, Pred p, TimePoint time_point) const
+  {
+    while(!p() && var_cond.wait_until(lock, time_point) != boost::cv_status::timeout)
+      ;
+    if(p())
+      throw wait_predicate_signalled();
+  }
+};
+
+void wait_until_timeout_and_signal_exit::operator()() const
+{
+  wait_until_cancelled f;
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  boost::chrono::steady_clock::time_point time_point
+    = boost::chrono::steady_clock::now() + state->retry_wait;
+  f(l, state->work_cond_var, boost::bind(predicate(), state), time_point);
+}
+
+}
+
+typedef assistant_detail::register_information register_information;
+typedef assistant_detail::register_container register_container;
+typedef assistant_detail::register_iterator register_iterator;
+typedef assistant_detail::register_fail register_fail;
+
+std::auto_ptr<Connection> create_connection_and_login
+  (CORBA::ORB_var orb, std::string const& host, unsigned short port
+   , assistant_detail::authentication_info const& info
+   , logger::logger& logging
+   , boost::shared_ptr<assistant_detail::shared_state> state
+   , boost::function<void(std::string)> error);
+
+register_information construct_register_item(std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> const& item);
+
+void register_component(idl_or::OfferRegistry_var offer_registry
+                        , register_iterator& reg_current, register_iterator reg_last
+                        , logger::logger& logging);
+
+
+namespace {
+
+void orb_thread_function(CORBA::ORB_var orb
+                         , boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  logger::log_scope l(state->logging, logger::debug_level, "ORB event thread");
+  assistant_detail::exception_logging ex_l(l);
+  try
+  {
+    orb->run();
+    l.level_log(logger::info_level, "ORB returned from run");
+    {
+      boost::unique_lock<boost::mutex> lock(state->mutex);
+      state->work_exit = true;
+      state->work_cond_var.notify_one();
+    }
+  }
+  catch(...)
+  {
+    l.level_log(logger::error_level, "Exception thrown in ORB thread");
+    boost::unique_lock<boost::mutex> lock(state->mutex);
+    state->work_exit = true;
+    state->work_cond_var.notify_one();
+  }
+}
+
+void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  logger::log_scope work_thread_log(state->logging, logger::debug_level, "work_thread_function");
+  assistant_detail::exception_logging ex_l(work_thread_log);
+  try
+  {
+    {
+      boost::function<void(std::string /*error*/)> login_error_callback;
+      {
+        boost::unique_lock<boost::mutex> lock(state->mutex);
+        login_error_callback = state->login_error;
+      }
+
+      work_thread_log.level_log(logger::debug_level, "Creating connection and logging");
+      std::auto_ptr<Connection> connection = create_connection_and_login
+        (state->orb, state->host, state->port, state->auth_info
+         , state->logging, state
+         , login_error_callback);
+      {
+        work_thread_log.level_log(logger::debug_level, "Registering connection as default");
+        openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+          (state->orb->resolve_initial_references("OpenbusConnectionManager"));
+        assert(manager != 0);
+        manager->setDefaultConnection(connection.get());
+      }
+      assert(!!connection.get());
+      boost::unique_lock<boost::mutex> lock(state->mutex);
+      assert(!state->connection.get());
+      state->connection = connection;
+      state->connection_ready = true;
+      state->connection_ready_var.notify_one();
+      lock.unlock();
+      work_thread_log.level_log(logger::debug_level, "Saved connection");
+    }
+
+    boost::unique_lock<boost::mutex> lock(state->mutex);
+    do
+    {
+      register_container components;
+      std::transform(state->queued_components.begin()
+                     , state->queued_components.end()
+                     , std::back_inserter<register_container>(components)
+                     , &construct_register_item);
+      std::copy(state->queued_components.begin(), state->queued_components.end()
+                , std::back_inserter<std::vector<std::pair
+                <scs::core::IComponent_var, idl_or::ServicePropertySeq> > >(state->components));
+      state->queued_components.clear();
+
+      boost::function<void(scs::core::IComponent_var, idl_or::ServicePropertySeq
+                           , std::string /*error*/)> register_error_callback
+        = state->register_error;
+      lock.unlock();
+
+      do
+      {
+        work_thread_log.level_log(logger::debug_level, "Registering some components");
+        register_iterator current = components.begin();
+        assistant_detail::execute_with_retry
+          (boost::bind(&register_component, state->connection->offers()
+                       , boost::ref(current), components.end()
+                       , boost::ref(state->logging))
+           , register_fail(register_error_callback, current)
+           , assistant_detail::wait_until_timeout_and_signal_exit(state));
+      }
+      while(std::find_if(components.begin(), components.end()
+                         , &assistant_detail::not_registered_predicate) != components.end());
+
+      work_thread_log.level_log(logger::debug_level, "All components registered");
+      
+      lock.lock();
+      while(!state->new_queued_components && !state->work_exit)
+      {
+        work_thread_log.level_log(logger::debug_level, "Waiting for newer components to be registered");
+          state->work_cond_var.wait(lock);
+      }
+      state->new_queued_components = false;
+      if(state->work_exit)
+        return;
+    }
+    while(true);
+  }
+  catch(std::bad_alloc const& e)
+  {
+    logger::log_scope l(state->logging, logger::error_level, "Worker thread std::bad_alloc catch");
+    assistant_detail::exception_logging ex_l(l);
+  }
+  catch(assistant_detail::wait_predicate_signalled const& e)
+  {
+    logger::log_scope l(state->logging, logger::info_level
+                        , "Worker thread was cancelled because shutdown was called");
+  }
+  catch(std::exception const& e)
+  {
+    logger::log_scope l(state->logging, logger::error_level, "Worker thread std::exception catch");
+    assistant_detail::exception_logging ex_l(l);
+    try
+    {
+      boost::unique_lock<boost::mutex> lock(state->mutex);
+      boost::function<void(const char*)> fatal_error = state->fatal_error;
+      lock.unlock();
+      if(fatal_error)
+        fatal_error(e.what());
+    }
+    catch(...)
+    {}
+  }
+  catch(...)
+  {
+    logger::log_scope l(state->logging, logger::error_level, "Worker thread all catch");
+    assistant_detail::exception_logging ex_l(l);
+    try
+    {
+      boost::unique_lock<boost::mutex> lock(state->mutex);
+      boost::function<void(const char*)> fatal_error = state->fatal_error;
+      lock.unlock();
+      if(fatal_error)
+        fatal_error("Unknown exception was thrown");
+    }
+    catch(...)
+    {}
+  }
+}
+
+struct find_services
+{
+  typedef idl_or::ServiceOfferDescSeq_var result_type;
+  result_type operator()(boost::shared_ptr<assistant_detail::shared_state> state
+                         , idl_or::ServicePropertySeq properties) const
+  {
+    return state->connection->offers()->findServices(properties);
+  }
+};
+
+struct find_services_error
+{
+  typedef void result_type;
+  result_type operator()(CORBA::TRANSIENT const& e) const {}
+  result_type operator()(CORBA::COMM_FAILURE const& e) const {}
+  result_type operator()(CORBA::OBJECT_NOT_EXIST const& e) const {}
+  template <typename E>
+  result_type operator()(E const& e) const
+  {
+    throw e;
+  }
+};
+
+}
+
+void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  state->orb_thread = boost::thread(boost::bind(&assistant::orb_thread_function, state->orb, state));
+  state->work_thread = boost::thread(boost::bind(&assistant::work_thread_function, state));
+}
+
+void AssistantImpl::shutdown()
+{
+  state->orb->shutdown(true);
+  state->work_thread.join();
+}
+
+void AssistantImpl::wait()
+{
+  state->work_thread.join();
+}
+
+void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
+{
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  state->queued_components.push_back(std::make_pair(component, properties));
+  state->new_queued_components = true;
+  state->work_cond_var.notify_one();
+}
+
+idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int timeout_secs
+                                       , boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  boost::chrono::steady_clock::time_point timeout
+    = boost::chrono::steady_clock::now()
+    + boost::chrono::seconds(timeout_secs);
+
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    while(!state->connection_ready && 
+          state->connection_ready_var.wait_until(l, timeout) != boost::cv_status::timeout)
+      ;
+    if(!state->connection_ready)
+      throw timeout_error();
+  }
+
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  idl_or::ServiceOfferDescSeq_var r
+    = assistant_detail::execute_with_retry
+    (boost::bind(find_services(), state, properties)
+     , find_services_error(), timeout);
+  return *r;
+}
+
+idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
+                                       , boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    while(!state->connection_ready)
+      state->connection_ready_var.wait(l);
+    assert(state->connection_ready);
+  }
+
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  idl_or::ServiceOfferDescSeq_var r
+    = assistant_detail::execute_with_retry
+    (boost::bind(find_services(), state, properties)
+     , find_services_error(), assistant_detail::wait_until_timeout_and_signal_exit(state));
+  return *r;
+}
+
+idl_or::ServiceOfferDescSeq findOffers_immediate
+  (idl_or::ServicePropertySeq properties, boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    if(!state->connection_ready)
+      throw timeout_error();
+  }
+
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  idl_or::ServiceOfferDescSeq_var r = state->connection->offers()->findServices(properties);
+  return *r;
+}
+
+void wait_login(boost::shared_ptr<assitant_detail::shared_state> state)
+{
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  while(!state->connection_ready)
+    state->connection_ready_var.wait(l);
+  assert(state->connection_ready);
+}
+
+void AssistantImpl::onLoginError(boost::function<void(std::string /*error*/)> f)
+{
+  assert(!!state);
+  boost::unique_lock<boost::mutex> lock(state->mutex);
+  state->login_error = f;
+}
+
+void AssistantImpl::onRegisterError(boost::function<void(scs::core::IComponent_var
+                                                         , idl_or::ServicePropertySeq
+                                                         , std::string /*error*/)> f)
+{
+  assert(!!state);
+  boost::unique_lock<boost::mutex> lock(state->mutex);
+  state->register_error = f;
+}
+
+void AssistantImpl::onFatalError(boost::function<void(const char* /*error*/)> f)
+{
+  assert(!!state);
+  boost::unique_lock<boost::mutex> lock(state->mutex);
+  state->fatal_error = f;
+}
+
+} }
+

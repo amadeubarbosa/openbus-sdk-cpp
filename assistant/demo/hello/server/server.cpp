@@ -1,5 +1,4 @@
 #include <openbus/assistant.h>
-#include <openbus/ConnectionManager.h>
 #include "hello.h"
 
 namespace offer_registry

@@ -76,11 +76,6 @@ endif
 LDIR+= ${OPENBUS_HOME}/lib/boost
 LIBS+= boost_chrono boost_system
 
-SLIB+= ${OPENBUS_LDIR}/libassistant-micomultithread${MICO_DEBUG}.a \
-       ${OPENBUS_LDIR}/libopenbus-micomultithread${MICO_DEBUG}.a \
-       ${OPENBUS_LDIR}/libscs-micomultithread${MICO_DEBUG}.a \
-       ${OPENBUS_LDIR}/liblogger-multithread${MICO_DEBUG}.a
-
 OBJROOT=obj
 TARGETROOT=bin
 
@@ -99,8 +94,16 @@ INCLUDES=../../legacy/stubs \
 
 ifeq "$(ASSISTANT_SDK_MULTITHREAD)" "Yes"
   LIBS+=mico${MICOVERSION} crypto dl ssl
+  SLIB+= ${OPENBUS_LDIR}/libassistant-micomultithread${MICO_DEBUG}.a \
+         ${OPENBUS_LDIR}/libopenbus-micomultithread${MICO_DEBUG}.a \
+         ${OPENBUS_LDIR}/libscs-micomultithread${MICO_DEBUG}.a \
+         ${OPENBUS_LDIR}/liblogger-multithread${MICO_DEBUG}.a
 else
   LIBS+=mico${MICOVERSION} crypto dl ssl
+  SLIB+= ${OPENBUS_LDIR}/libassistant-micosinglethread${MICO_DEBUG}.a \
+         ${OPENBUS_LDIR}/libopenbus-micosinglethread${MICO_DEBUG}.a \
+         ${OPENBUS_LDIR}/libscs-micosinglethread${MICO_DEBUG}.a \
+         ${OPENBUS_LDIR}/liblogger-singlethread${MICO_DEBUG}.a
 endif
 
 USE_NODEPEND=Yes

@@ -93,7 +93,7 @@ INCLUDES=../legacy/stubs \
 
 LDIR+=${MICO_LIB} ${OPENBUS_LDIR}
 
-ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+ifeq "$(ASSISTANT_SDK_MULTITHREAD)" "Yes"
   LIBS+=mico${MICOVERSION}
 else
   LIBS+=mico${MICOVERSION} crypto dl
@@ -101,35 +101,10 @@ endif
 
 USE_NODEPEND=Yes
 
-SRC=src/assistant.cpp
+SRC=src/assistant_common.cpp
 
-# STUBS=stubs/core.h stubs/core.cc \
-#       stubs/scs.h stubs/scs.cc \
-#       stubs/credential.h stubs/credential.cc \
-#       stubs/access_control.h stubs/access_control.cc \
-#       stubs/offer_registry.h stubs/offer_registry.cc \
-#       legacy/stubs/credential_v1_5.h legacy/stubs/credential_v1_5.cc
-
-# IDLS=${OPENBUS_HOME}/idl/v2_0/core.idl \
-#      ${OPENBUS_HOME}/idl/v2_0/scs.idl \
-#      ${OPENBUS_HOME}/idl/v2_0/credential.idl \
-#      ${OPENBUS_HOME}/idl/v2_0/access_control.idl \
-#      ${OPENBUS_HOME}/idl/v2_0/offer_registry.idl \
-#      legacy/idl/credential_v1_5.idl
-
-# $(STUBS): $(IDLS)
-# 	mkdir -p stubs
-# 	mkdir -p legacy/stubs
-# 	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode \
-# 	  ${OPENBUS_HOME}/idl/v2_0/access_control.idl
-# 	cd stubs ; ${MICO_BIN}/idl --no-paths --any --typecode \
-# 	  ${OPENBUS_HOME}/idl/v2_0/credential.idl
-# 	cd stubs ; ${MICO_BIN}/idl --no-paths \
-# 	  ${OPENBUS_HOME}/idl/v2_0/offer_registry.idl
-# 	cd stubs ; ${MICO_BIN}/idl --no-paths \
-# 	  ${OPENBUS_HOME}/idl/v2_0/core.idl
-# 	cd stubs ; ${MICO_BIN}/idl --no-paths \
-# 	  ${OPENBUS_HOME}/idl/v2_0/scs.idl
-# 	cd legacy/stubs ; ${MICO_BIN}/idl --no-paths --any --typecode ../idl/credential_v1_5.idl
-
-# genstubs: $(STUBS)
+ifeq "$(ASSISTANT_SDK_MULTITHREAD)" "Yes"
+  SRC+= src/assistant_mt.cpp
+else
+  SRC+= src/assistant_st.cpp
+endif

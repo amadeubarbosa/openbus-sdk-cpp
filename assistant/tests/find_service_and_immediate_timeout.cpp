@@ -10,6 +10,10 @@ int main(int argc, char** argv)
 
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 
+  assistant.waitLogin();
+
   idl_or::ServiceOfferDescSeq offers
     = assistant.findOffers(assistant.createFacetAndEntityProperty("hello", "notexistantentity"), 0);
+
+  assistant.shutdown();
 }

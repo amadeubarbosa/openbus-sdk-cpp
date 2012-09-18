@@ -1,0 +1,5 @@
+include config.mak
+
+APPNAME= create_assistant_with_password_wo_named_parameters
+
+SRC= create_assistant_with_password_wo_named_parameters.cpp
