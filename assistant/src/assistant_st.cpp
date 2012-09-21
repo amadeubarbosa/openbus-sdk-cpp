@@ -8,6 +8,7 @@
 #include <openbus/assistant/detail/create_connection_and_login.h>
 
 #include <boost/bind.hpp>
+#include <boost/weak_ptr.hpp>
 
 namespace openbus { namespace assistant {
 
@@ -42,12 +43,6 @@ void wait_until_timeout_and_signal_exit::operator()() const
 
 }
 
-register_information construct_register_item(std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> const& item);
-
-void register_component(idl_or::OfferRegistry_var offer_registry
-                        , register_iterator& reg_current, register_iterator reg_last
-                        , logger::logger& logging);
-
 void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
 {
 }
@@ -59,6 +54,79 @@ void AssistantImpl::shutdown()
 }
 
 namespace assistant_detail {
+
+void register_queued_components(boost::shared_ptr<shared_state> state)
+{
+  typedef std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> >
+    component_container_type;
+  component_container_type& queued_components = state->queued_components;
+  std::size_t i = 0;
+  while(i != queued_components.size())
+  {
+    try
+    {
+      logger::log_scope l(state->logging, logger::info_level, "Registering one component");
+      assistant_detail::exception_logging ex_l(l);
+      state->connection->offers()
+        ->registerService(queued_components[i].first, queued_components[i].second);
+      state->components.push_back(queued_components[i]);
+      queued_components.erase(boost::next(queued_components.begin(), i));
+    }
+    catch(CORBA::TRANSIENT const& e)
+    {
+      ++i;
+    }
+    catch(CORBA::COMM_FAILURE const& e)
+    {
+      ++i;
+    }
+    catch(CORBA::OBJECT_NOT_EXIST const& e)
+    {
+      ++i;
+    }
+  }
+}
+
+class add_offers_dispatcher : public CORBA::DispatcherCallback
+{
+public:
+  add_offers_dispatcher(CORBA::ORB_var orb, boost::weak_ptr<shared_state> state)
+    : orb(orb), state_(state) {}
+  void callback(CORBA::Dispatcher*, Event)
+  {
+    if(boost::shared_ptr<shared_state> state = state_.lock())
+    {
+      register_queued_components(state);
+      if(!state->queued_components.empty())
+      {
+        boost::chrono::microseconds s = boost::chrono::duration_cast
+          <boost::chrono::microseconds>(state->retry_wait);
+        state->orb->dispatcher()->tm_event(this, s.count());
+      }
+      else
+      {
+        state->orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);
+      }
+    }
+  }
+private:
+  CORBA::ORB_var orb;
+  boost::weak_ptr<shared_state> state_;
+};
+
+void simple_add_offer_error(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties
+                            , boost::shared_ptr<shared_state> state)
+{
+  state->queued_components.push_back(std::make_pair(component, properties));
+  if(!state->asynchronous_dispatcher)
+  {
+    boost::chrono::microseconds s = boost::chrono::duration_cast
+      <boost::chrono::microseconds>(state->retry_wait);
+    std::auto_ptr<add_offers_dispatcher> dispatcher(new add_offers_dispatcher(state->orb, state));
+    state->orb->dispatcher()->tm_event(dispatcher.get(), s.count());
+    state->asynchronous_dispatcher = dispatcher.release();
+  }
+}
 
 void wait_login(boost::shared_ptr<assistant_detail::shared_state> state
                 , boost::optional<boost::chrono::steady_clock::time_point> timeout = boost::none)
@@ -81,6 +149,16 @@ void wait_login(boost::shared_ptr<assistant_detail::shared_state> state
   }
   state->connection = connection;
   state->connection_ready = true;
+  assert(!state->asynchronous_dispatcher);
+  register_queued_components(state);
+  if(!state->queued_components.empty())
+  {
+    boost::chrono::microseconds s = boost::chrono::duration_cast
+      <boost::chrono::microseconds>(state->retry_wait);
+    std::auto_ptr<add_offers_dispatcher> dispatcher(new add_offers_dispatcher(state->orb, state));
+    state->orb->dispatcher()->tm_event(dispatcher.get(), s.count());
+    state->asynchronous_dispatcher = dispatcher.release();
+  }
 }
 
 }
@@ -122,7 +200,30 @@ struct find_services_error
 
 void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
 {
-  
+  try
+  {
+    if(state->connection_ready)
+    {
+      logger::log_scope l(state->logging, logger::info_level, "Synchronous try registering one component");
+      assistant_detail::exception_logging ex_l(l);
+      state->connection->offers()->registerService(component, properties);
+      state->components.push_back(std::make_pair(component, properties));
+    }
+    else
+      state->queued_components.push_back(std::make_pair(component, properties));
+  }
+  catch(CORBA::TRANSIENT const& e)
+  {
+    simple_add_offer_error(component, properties, state);
+  }
+  catch(CORBA::COMM_FAILURE const& e)
+  {
+    simple_add_offer_error(component, properties, state);
+  }
+  catch(CORBA::OBJECT_NOT_EXIST const& e)
+  {
+    simple_add_offer_error(component, properties, state);
+  }
 }
 
 idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int timeout_secs

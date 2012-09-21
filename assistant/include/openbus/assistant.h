@@ -299,7 +299,7 @@ public:
    * \param properties Propriedades que devem ser registradas junto
    *  com a oferta
    */
-  void addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties);
+  void addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties = idl_or::ServicePropertySeq());
 
   /** 
    * \brief Constroi sequencia de propriedades para determinada faceta e entidade

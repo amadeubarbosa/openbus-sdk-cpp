@@ -15,6 +15,7 @@
 #endif
 #include <boost/variant.hpp>
 #include <boost/chrono/include.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <CORBA.h>
 
@@ -46,6 +47,8 @@ typedef boost::variant<password_authentication_info
                        , shared_auth_authentication_info>
   authentication_info;
 
+struct add_offers_dispatcher;
+
 struct shared_state
 {
   typedef boost::function<void(std::string)> login_error_callback_type;
@@ -65,12 +68,12 @@ struct shared_state
   assistant_detail::authentication_info const auth_info;
   std::string const host;
   unsigned short const port;
+  std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > components;
+  std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > queued_components;
   login_error_callback_type login_error;
   register_error_callback_type register_error;
   fatal_error_callback_type fatal_error;
   std::auto_ptr<openbus::Connection> connection;
-  std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > components;
-  std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > queued_components;
   boost::chrono::steady_clock::duration retry_wait;
   bool work_exit;
   bool connection_ready;
@@ -83,6 +86,8 @@ struct shared_state
   // consume queued components for registration
   boost::condition_variable work_cond_var;
   boost::condition_variable connection_ready_var;
+#else
+  add_offers_dispatcher* asynchronous_dispatcher;
 #endif
 
   shared_state(CORBA::ORB_var orb, authentication_info auth_info
@@ -96,6 +101,8 @@ struct shared_state
     , connection_ready(false)
 #ifdef ASSISTANT_SDK_MULTITHREAD
     , new_queued_components(false)
+#else
+    , asynchronous_dispatcher(0)
 #endif
   {}
 };
