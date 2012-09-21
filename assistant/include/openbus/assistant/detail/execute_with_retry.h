@@ -3,6 +3,8 @@
 #ifndef OPENBUS_ASSISTANT_DETAIL_EXECUTE_WITH_RETRY_H
 #define OPENBUS_ASSISTANT_DETAIL_EXECUTE_WITH_RETRY_H
 
+#include <log/logger.h>
+
 namespace openbus { namespace assistant { namespace assistant_detail {
 
 struct wait_predicate_signalled
@@ -11,8 +13,10 @@ struct wait_predicate_signalled
 };
 
 template <typename F, typename E, typename WaitF>
-typename boost::result_of<F()>::type execute_with_retry(F f, E error, WaitF wait_f)
+typename boost::result_of<F()>::type execute_with_retry(F f, E error, WaitF wait_f
+                                                        , logger::logger& logging)
 {
+  logger::log_scope log(logging, logger::debug_level, "execute_with_retry with wait function");
   do
   {
     try
@@ -51,8 +55,11 @@ typename boost::result_of<F()>::type execute_with_retry(F f, E error, WaitF wait
 
 template <typename F, typename E>
 typename boost::result_of<F()>::type execute_with_retry
-  (F f, E error, boost::chrono::steady_clock::time_point timeout)
+  (F f, E error, boost::chrono::steady_clock::time_point timeout
+  , logger::logger& logging)
 {
+  logger::log_scope log(logging, logger::debug_level, "execute_with_retry with timeout");
+  
   do
   {
     try
@@ -81,20 +88,26 @@ typename boost::result_of<F()>::type execute_with_retry
     }
 
     if(timeout <= boost::chrono::steady_clock::now())
+    {
+      log.log("Timeout exceeded");
       throw timeout_error();
+    }
 
     boost::chrono::steady_clock::duration 
       sleep_time = timeout - boost::chrono::steady_clock::now();
     boost::chrono::seconds sleep_time_in_secs
       = boost::chrono::duration_cast<boost::chrono::seconds>(sleep_time);
 
-    if(sleep_time_in_secs.count() < 30)
+    if(sleep_time_in_secs.count() >= 30)
     {
       unsigned int t = 30;
       do { t = sleep(t); } while(t);
     }
     else
+    {
+      log.log("If we wait, timeout will exceed anyway");
       throw timeout_error();
+    }
   }
   while(true);
 }

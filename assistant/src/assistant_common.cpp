@@ -6,6 +6,8 @@
 #include <openbus/assistant/detail/register_information.h>
 #include <openbus/assistant/detail/execute_with_retry.h>
 #include <openbus/assistant/detail/exception_message.h>
+#include <openbus/assistant/detail/create_connection_and_login.h>
+#include <openbus/assistant/detail/wait_login.h>
 
 #include <boost/bind.hpp>
 #include <boost/utility/result_of.hpp>
@@ -26,8 +28,6 @@ namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
 typedef assistant_detail::register_information register_information;
 typedef assistant_detail::register_container register_container;
 typedef assistant_detail::register_iterator register_iterator;
-
-void wait_login(boost::shared_ptr<assistant_detail::shared_state> state);
 
 struct invalid_login_callback
 {
@@ -72,12 +72,21 @@ std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::stri
 std::auto_ptr<Connection> create_connection(CORBA::ORB_var orb, std::string const& host, unsigned short port
                                             , logger::logger& logging
                                             , boost::shared_ptr<assistant_detail::shared_state> state
-                                            , boost::function<void(std::string)> callback)
+                                            , boost::function<void(std::string)> callback
+                                            , boost::optional<boost::chrono::steady_clock::time_point> timeout)
 {
-  return assistant_detail::execute_with_retry
-    (boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging), state)
-     , error_creating_connection(callback)
-     , assistant_detail::wait_until_timeout_and_signal_exit(state));
+  if(timeout)
+    return assistant_detail::execute_with_retry
+      (boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging), state)
+       , error_creating_connection(callback)
+       , *timeout
+       , state->logging);
+  else
+    return assistant_detail::execute_with_retry
+      (boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging), state)
+       , error_creating_connection(callback)
+       , assistant_detail::wait_until_timeout_and_signal_exit(state)
+       , state->logging);
 }
 
 void login_simple(Connection& c, assistant_detail::authentication_info const& info
@@ -141,24 +150,47 @@ void invalid_login_callback::operator()(Connection &c, idl_ac::LoginInfo old_log
       (boost::bind(&login_simple, boost::ref(c), boost::ref(state->auth_info)
                    , boost::ref(state->logging))
        , login_error(state->login_error)
-       , assistant_detail::wait_until_timeout_and_signal_exit(state));
+       , assistant_detail::wait_until_timeout_and_signal_exit(state)
+       , state->logging);
   }
 }
+
+namespace assistant_detail {
 
 std::auto_ptr<Connection> create_connection_and_login
   (CORBA::ORB_var orb, std::string const& host, unsigned short port
    , assistant_detail::authentication_info const& info
    , logger::logger& logging
    , boost::shared_ptr<assistant_detail::shared_state> state
-   , boost::function<void(std::string)> error)
+   , boost::function<void(std::string)> error
+   , boost::optional<boost::chrono::steady_clock::time_point> timeout)
 {
-  std::auto_ptr<Connection> c = create_connection(orb, host, port, boost::ref(logging), state, error);
-  assistant_detail::execute_with_retry
-    (boost::bind(&login_simple, boost::ref(*c), boost::ref(info)
-                 , boost::ref(logging))
-     , login_error(error)
-     , assistant_detail::wait_until_timeout_and_signal_exit(state));
+  logger::log_scope log(state->logging, logger::debug_level, "create_connection_and_login function");
+  log.vlog("Has timeout? %d", (int)!!timeout);
+  std::auto_ptr<Connection> c = create_connection(orb, host, port, logging, state, error
+                                                  , timeout);
+  if(timeout)
+  {
+    log.log("Calling execute_with_retry with timeout");
+    assistant_detail::execute_with_retry
+      (boost::bind(&login_simple, boost::ref(*c), boost::ref(info)
+                   , boost::ref(logging))
+       , login_error(error)
+       , *timeout, logging);
+  }
+  else
+  {
+    log.log("Calling execute_with_retry with waiting function (infinite timeout)");
+    assistant_detail::execute_with_retry
+      (boost::bind(&login_simple, boost::ref(*c), boost::ref(info)
+                   , boost::ref(logging))
+       , login_error(error)
+       , assistant_detail::wait_until_timeout_and_signal_exit(state)
+       , logging);
+  }
   return c;
+}
+
 }
 
 void register_component(idl_or::OfferRegistry_var offer_registry
@@ -376,25 +408,25 @@ idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOf
 
 CallerChain AssistantImpl::getCallerChain()
 {
-  assistant::wait_login(state);
+  assistant::assistant_detail::wait_login(state);
   return state->connection->getCallerChain();
 }
 
 void AssistantImpl::joinChain(CallerChain chain)
 {
-  assistant::wait_login(state);
+  assistant::assistant_detail::wait_login(state);
   return state->connection->joinChain(chain);
 }
 
 void AssistantImpl::exitChain()
 {
-  assistant::wait_login(state);
+  assistant::assistant_detail::wait_login(state);
   return state->connection->exitChain();
 }
 
 CallerChain AssistantImpl::getJoinedChain()
 {
-  assistant::wait_login(state);
+  assistant::assistant_detail::wait_login(state);
   return state->connection->getJoinedChain();
 }
 

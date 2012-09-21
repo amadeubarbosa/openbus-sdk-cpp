@@ -38,13 +38,6 @@ typedef assistant_detail::register_container register_container;
 typedef assistant_detail::register_iterator register_iterator;
 typedef assistant_detail::register_fail register_fail;
 
-std::auto_ptr<Connection> create_connection_and_login
-  (CORBA::ORB_var orb, std::string const& host, unsigned short port
-   , assistant_detail::authentication_info const& info
-   , logger::logger& logging
-   , boost::shared_ptr<assistant_detail::shared_state> state
-   , boost::function<void(std::string)> error);
-
 register_information construct_register_item(std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> const& item);
 
 void register_component(idl_or::OfferRegistry_var offer_registry
@@ -92,7 +85,7 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
       }
 
       work_thread_log.level_log(logger::debug_level, "Creating connection and logging");
-      std::auto_ptr<Connection> connection = create_connection_and_login
+      std::auto_ptr<Connection> connection = assistant_detail::create_connection_and_login
         (state->orb, state->host, state->port, state->auth_info
          , state->logging, state
          , login_error_callback);
@@ -316,12 +309,16 @@ idl_or::ServiceOfferDescSeq findOffers_immediate
   return *r;
 }
 
+namespace assistant_detail {
+
 void wait_login(boost::shared_ptr<assitant_detail::shared_state> state)
 {
   boost::unique_lock<boost::mutex> l(state->mutex);
   while(!state->connection_ready)
     state->connection_ready_var.wait(l);
   assert(state->connection_ready);
+}
+
 }
 
 void AssistantImpl::onLoginError(boost::function<void(std::string /*error*/)> f)

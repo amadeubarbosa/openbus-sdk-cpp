@@ -5,6 +5,7 @@
 #include <openbus/assistant/detail/register_information.h>
 #include <openbus/assistant/detail/execute_with_retry.h>
 #include <openbus/assistant/detail/exception_message.h>
+#include <openbus/assistant/detail/create_connection_and_login.h>
 
 #include <boost/bind.hpp>
 
@@ -41,13 +42,6 @@ void wait_until_timeout_and_signal_exit::operator()() const
 
 }
 
-std::auto_ptr<Connection> create_connection_and_login
-  (CORBA::ORB_var orb, std::string const& host, unsigned short port
-   , assistant_detail::authentication_info const& info
-   , logger::logger& logging
-   , boost::shared_ptr<assistant_detail::shared_state> state
-   , boost::function<void(std::string)> error);
-
 register_information construct_register_item(std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> const& item);
 
 void register_component(idl_or::OfferRegistry_var offer_registry
@@ -64,17 +58,22 @@ void AssistantImpl::shutdown()
   state->orb->shutdown(true);
 }
 
-void wait_login(boost::shared_ptr<assistant_detail::shared_state> state)
+namespace assistant_detail {
+
+void wait_login(boost::shared_ptr<assistant_detail::shared_state> state
+                , boost::optional<boost::chrono::steady_clock::time_point> timeout = boost::none)
 {
   logger::log_scope log(state->logging, logger::debug_level, "wait_login function");
   assistant_detail::exception_logging ex_l(log);
 
-  log.level_log(logger::debug_level, "Creating connection and logging");
-  std::auto_ptr<Connection> connection = create_connection_and_login
+  log.vlog("Has timeout? %d", (int)!!timeout);
+
+  log.log("Creating connection and logging");
+  std::auto_ptr<Connection> connection = assistant_detail::create_connection_and_login
     (state->orb, state->host, state->port, state->auth_info
-     , state->logging, state, state->login_error);
+     , state->logging, state, state->login_error, timeout);
   {
-    log.level_log(logger::debug_level, "Registering connection as default");
+    log.log("Registering connection as default");
     openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
       (state->orb->resolve_initial_references("OpenbusConnectionManager"));
     assert(manager != 0);
@@ -82,6 +81,8 @@ void wait_login(boost::shared_ptr<assistant_detail::shared_state> state)
   }
   state->connection = connection;
   state->connection_ready = true;
+}
+
 }
 
 void AssistantImpl::wait()
@@ -127,12 +128,26 @@ void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::Servic
 idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int timeout_secs
                                        , boost::shared_ptr<assistant_detail::shared_state> state)
 {
-  // TODO
+  logger::log_scope log(state->logging, logger::debug_level, "findOffers with timeout");
+  boost::chrono::steady_clock::time_point timeout
+    = boost::chrono::steady_clock::now()
+    + boost::chrono::seconds(timeout_secs);
+
+  if(!state->connection_ready)
+    wait_login(state, timeout);
+
+  assert(!CORBA::is_nil(state->connection->offers()));
+  idl_or::ServiceOfferDescSeq_var r
+    = assistant_detail::execute_with_retry
+    (boost::bind(find_services(), state, properties)
+     , find_services_error(), timeout, state->logging);
+  return *r;
 }
 
 idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
                                        , boost::shared_ptr<assistant_detail::shared_state> state)
 {
+  logger::log_scope log(state->logging, logger::debug_level, "findOffers with infinity timeout");
   if(!state->connection_ready)
     wait_login(state);
 
@@ -140,13 +155,15 @@ idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
   idl_or::ServiceOfferDescSeq_var r
     = assistant_detail::execute_with_retry
     (boost::bind(find_services(), state, properties)
-     , find_services_error(), assistant_detail::wait_until_timeout_and_signal_exit(state));
+     , find_services_error(), assistant_detail::wait_until_timeout_and_signal_exit(state)
+     , state->logging);
   return *r;
 }
 
 idl_or::ServiceOfferDescSeq findOffers_immediate
   (idl_or::ServicePropertySeq properties, boost::shared_ptr<assistant_detail::shared_state> state)
 {
+  logger::log_scope log(state->logging, logger::debug_level, "findOffers with immediate timeout");
   if(!state->connection_ready)
     throw timeout_error();
 
