@@ -1,25 +1,30 @@
-ifeq "$(MULTITHREAD)" "Yes"
-  PROJNAME=openbusmicoMT
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+  ifeq "$(DBG)" "Yes"
+    PROJNAME=openbus-micomultithread-debug
+  else
+    PROJNAME=openbus-micomultithread
+  endif
 else
-  PROJNAME=openbusmicoST
+  ifeq "$(DBG)" "Yes"
+    PROJNAME=openbus-micosinglethread-debug
+  else
+    PROJNAME=openbus-micosinglethread
+  endif
 endif
-LIBNAME= ${PROJNAME}
-
-# Descomente a linha abaixo para ativar o modo debug.
-#DBG=Yes
+LIBNAME=${PROJNAME}
 
 # Descomente a linha abaixo para o uso em Valgrind.
 # p.s.: O modo debug(DBG) deve estar ativado.
-#CPPFLAGS= -fno-inline
+#CPPFLAGS=-fno-inline
 
 ifeq "$(TEC_UNAME)" "SunOS510_64"
   USE_CC=Yes
-  AR= CC
+  AR=CC
   
   ifeq "$(DBG)" "Yes"
-    CPPFLAGS= -g
-    STDLFLAGS= -g
-    LFLAGS= -g
+    CPPFLAGS=-g
+    STDLFLAGS=-g
+    LFLAGS=-g
   else
     FLAGS=
     CPPFLAGS=
@@ -27,30 +32,34 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
     LFLAGS=
   endif
 
-  CPPFLAGS+= -erroff=badargtype2w -m64 -KPIC -library=stlport4
-  STDLFLAGS+= -m64 -xar -o  
-  LFLAGS+= -m64 -instances=extern -library=stlport4 
-  LIBS= nsl socket
+  CPPFLAGS+=-erroff=badargtype2w -m64 -KPIC -library=stlport4
+  STDLFLAGS+=-m64 -xar -o  
+  LFLAGS+=-m64 -instances=extern -library=stlport4 
+  LIBS=nsl socket
   NO_LOCAL_LD=Yes
 
-  ifeq "$(MULTITHREAD)" "Yes"
-    CPPFLAGS+= -mt
-    LFLAGS+= -mt
-    STDLFLAGS= -mt -m64 -xar -o
+  ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+    CPPFLAGS+=-mt
+    LFLAGS+=-mt
+    STDLFLAGS=-mt -m64 -xar -o
   endif
 endif
 
-ifeq "$(MULTITHREAD)" "Yes"
-  MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-multithread
-  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread
-  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread
-  DEFINES+=MULTITHREAD
+ifeq "$(DBG)" "Yes"
+  LIB_DEBUG=-debug
+endif
+
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-multithread${LIB_DEBUG}
+  MICO_INC=${MICODIR}/include/mico-${MICOVERSION}-multithread${LIB_DEBUG}
+  MICO_LIB=${MICODIR}/lib/mico-${MICOVERSION}-multithread${LIB_DEBUG}
+  DEFINES+=OPENBUS_SDK_MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
   DEFINES+=LOGGER_MULTITHREAD
 else
-  MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-singlethread
-  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread
-  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread
+  MICO_BIN=${MICODIR}/bin/mico-${MICOVERSION}-singlethread${LIB_DEBUG}
+  MICO_INC=${MICODIR}/include/mico-${MICOVERSION}-singlethread${LIB_DEBUG}
+  MICO_LIB=${MICODIR}/lib/mico-${MICOVERSION}-singlethread${LIB_DEBUG}
 endif
 
 OPENBUSINC = ${OPENBUS_HOME}/include
@@ -69,10 +78,10 @@ INCLUDES= . \
   
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
-ifeq "$(MULTITHREAD)" "Yes"
-  LIBS= mico${MICOVERSION} scsmicoMT crypto dl logger
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+  LIBS= mico${MICOVERSION} scs-micomultithread$(LIB_DEBUG) crypto dl logger
 else
-  LIBS= mico${MICOVERSION} scsmicoST crypto dl logger
+  LIBS= mico${MICOVERSION} scs-micosinglethread$(LIB_DEBUG) crypto dl logger
 endif
 
 USE_LUA51= YES

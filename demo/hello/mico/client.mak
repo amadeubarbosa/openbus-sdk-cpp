@@ -21,14 +21,18 @@ LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
-ifeq "$(MULTITHREAD)" "Yes"
-  SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
-        ${OPENBUSLIB}/libscsmicoMT.a \
-        ${OPENBUSLIB}/liblogger.a
+ifeq "$(DBG)" "Yes"
+  LIB_DEBUG=-debug
+endif
+
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+  SLIB= ${OPENBUSLIB}/libopenbus-micomultithread$(LIB_DEBUG).a \
+        ${OPENBUSLIB}/libscs-micomultithread$(LIB_DEBUG).a \
+        ${OPENBUSLIB}/liblogger-multithread$(LIB_DEBUG).a
 else
-  SLIB= ${OPENBUSLIB}/libopenbusmicoST.a \
-        ${OPENBUSLIB}/libscsmicoST.a \
-        ${OPENBUSLIB}/liblogger.a
+  SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread$(LIB_DEBUG).a \
+        ${OPENBUSLIB}/libscs-micosinglethread$(LIB_DEBUG).a \
+        ${OPENBUSLIB}/liblogger-singlethread$(LIB_DEBUG).a
 endif
 
 USE_LUA51= YES
