@@ -63,9 +63,9 @@ int main(int argc, char* argv[]) {
   signal(SIGINT, termination_handler);
   bus = openbus::Openbus::getInstance();
 
-  bus->init(argc, argv);
-
   commandLineParse(argc, argv);
+
+  bus->init(argc, argv);
 
   cout << "Conectando no barramento..." << endl;
 

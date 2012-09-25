@@ -194,7 +194,7 @@ namespace openbus {
     */
       access_control_service::Credential* credential;
 
-    #if (!OPENBUS_ORBIX && MULTITHREAD)
+    #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
       static MICOMT::Thread::ThreadKey threadKey;
     #endif
     
@@ -292,7 +292,7 @@ namespace openbus {
     * Thread/Callback responsável pela renovação da credencial do usuário que está logado neste 
     * barramento.
     */
-    #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
+    #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD))
       #ifdef OPENBUS_ORBIX
       IT_Thread renewLeaseIT_Thread;
       class RenewLeaseThread : public IT_ThreadBody {
@@ -329,7 +329,7 @@ namespace openbus {
     * foi utilizar uma thread dedicada ao orb->run() afim de evitar _deadlock_ distribuído.
     */
     #ifndef OPENBUS_ORBIX
-      #ifdef MULTITHREAD
+      #ifdef OPENBUS_SDK_MULTITHREAD
         class RunThread : public MICOMT::Thread {
           public:
             void _run(void*);

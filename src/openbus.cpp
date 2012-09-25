@@ -45,14 +45,14 @@ namespace openbus {
   Openbus::RenewLeaseThread* Openbus::renewLeaseThread = 0;
 #else
   MICOMT::Mutex Openbus::mutex;
-  #ifdef MULTITHREAD
+  #ifdef OPENBUS_SDK_MULTITHREAD
     Openbus::RunThread* Openbus::runThread = 0;
     Openbus::RenewLeaseThread* Openbus::renewLeaseThread = 0;
     MICOMT::Thread::ThreadKey Openbus::threadKey;
   #endif
 #endif
 
-  #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
+  #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD))
     Openbus::RenewLeaseThread::RenewLeaseThread() {
       runningLeaseExpiredCallback = false;
       sigINT = false;
@@ -161,7 +161,7 @@ namespace openbus {
     #endif
     }
     
-    #ifdef MULTITHREAD
+    #ifdef OPENBUS_SDK_MULTITHREAD
       void Openbus::RunThread::_run(void*) {
         logger->log(INFO, "[RunThread Iniciada]");
         orb->run();
@@ -291,7 +291,7 @@ namespace openbus {
     debugLevel = OFF;
     connectionState = DISCONNECTED;
     credential = 0;
-  #if (!OPENBUS_ORBIX && MULTITHREAD)    
+  #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)    
     MICOMT::Thread::set_specific(threadKey, 0);
   #endif
     lease = 0;
@@ -307,7 +307,7 @@ namespace openbus {
   #ifdef OPENBUS_ORBIX
     luaopen_IOR(luaState);
   #endif
-  #if (!OPENBUS_ORBIX && MULTITHREAD)
+  #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
     MICOMT::Thread::create_key(threadKey, 0);
   #endif
     newState();
@@ -331,13 +331,13 @@ namespace openbus {
       }
       if (!CORBA::is_nil(orb)) {
       #ifndef OPENBUS_ORBIX 
-        #ifndef MULTITHREAD
+        #ifndef OPENBUS_SDK_MULTITHREAD
           logger->log(INFO, "Removendo callback de renovação de credencial...");
           orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
         #endif
       #endif
       }
-      #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
+      #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD))
         if (renewLeaseThread) {
           bool b;
           b = renewLeaseThread->runningLeaseExpiredCallback;
@@ -365,7 +365,7 @@ namespace openbus {
           }
         }
       #endif
-      #if (!OPENBUS_ORBIX && MULTITHREAD)
+      #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
         MICOMT::Thread::delete_key(threadKey);
       #endif
       bus = 0;
@@ -436,7 +436,7 @@ namespace openbus {
       if (credentialValidationPolicy == interceptors::CACHED) {
         ini->getServerInterceptor()->registerValidationDispatcher();
       }
-      #ifdef MULTITHREAD
+      #ifdef OPENBUS_SDK_MULTITHREAD
         if (!runThread) {
           Openbus::logger->log(INFO, "Criando uma RunThread.");
           runThread = new RunThread();
@@ -526,7 +526,7 @@ namespace openbus {
   } 
 
   access_control_service::Credential* Openbus::getCredential() {
-  #if (!OPENBUS_ORBIX && MULTITHREAD)
+  #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
     access_control_service::Credential* threadCredential = 
       (access_control_service::Credential*) MICOMT::Thread::get_specific(threadKey);
     if (threadCredential) {
@@ -544,7 +544,7 @@ namespace openbus {
   }
 
   void Openbus::setThreadCredential(access_control_service::Credential* credential) {
-  #if (!OPENBUS_ORBIX && MULTITHREAD)
+  #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
     MICOMT::Thread::set_specific(threadKey, (void*) credential);
   #else
     this->credential = credential;
@@ -645,7 +645,7 @@ namespace openbus {
                 0);
             }
           #else
-            #ifdef MULTITHREAD
+            #ifdef OPENBUS_SDK_MULTITHREAD
               if (!renewLeaseThread) {
                 Openbus::logger->log(INFO, "Criando uma RenewLeaseThread.");
                 renewLeaseThread = new RenewLeaseThread();
@@ -828,7 +828,7 @@ namespace openbus {
                 0);
             }
           #else
-            #ifdef MULTITHREAD
+            #ifdef OPENBUS_SDK_MULTITHREAD
               if (!renewLeaseThread) {
                 Openbus::logger->log(INFO, "Criando uma RenewLeaseThread.");
                 renewLeaseThread = new RenewLeaseThread();
@@ -863,7 +863,7 @@ namespace openbus {
     mutex.lock();
     if (connectionState == CONNECTED) {
     #ifndef OPENBUS_ORBIX
-      #ifndef MULTITHREAD
+      #ifndef OPENBUS_SDK_MULTITHREAD
         logger->log(INFO, "Removendo callback de renovação de credencial...");
         orb->dispatcher()->remove(&renewLeaseCallback, CORBA::Dispatcher::Timer);
       #endif
@@ -881,7 +881,7 @@ namespace openbus {
         logger->log(WARNING, "Não foi possível realizar logout.");
       }
       newState();
-      #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && MULTITHREAD))
+      #if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD))
         if (renewLeaseThread) {
           bool b;
           b = renewLeaseThread->runningLeaseExpiredCallback;
@@ -925,7 +925,7 @@ namespace openbus {
     #if (OPENBUS_ORBIX)
       orb->run();
     #else
-      #if (MULTITHREAD)
+      #if (OPENBUS_SDK_MULTITHREAD)
       /* Já temos uma runThread ? */
         if (!runThread) {
           Openbus::logger->log(INFO, "Criando uma RunThread.");
@@ -946,7 +946,7 @@ namespace openbus {
 
   void Openbus::stop() {
     Openbus::logger->log(INFO, "Openbus::stop() BEGIN");
-    #if (!OPENBUS_ORBIX && !MULTITHREAD)
+    #if (!OPENBUS_ORBIX && !OPENBUS_SDK_MULTITHREAD)
       orbRunning = false;
     #endif
     Openbus::logger->log(INFO, "Openbus::stop() END");

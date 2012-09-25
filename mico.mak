@@ -79,9 +79,9 @@ INCLUDES= . \
 LDIR= ${MICO_LIB} ${OPENBUSLIB}
 
 ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
-  LIBS= mico${MICOVERSION} scs-micomultithread$(LIB_DEBUG) crypto dl logger
+  LIBS= mico${MICOVERSION} scs-micomultithread$(LIB_DEBUG) crypto dl logger-multithread$(LIB_DEBUG)
 else
-  LIBS= mico${MICOVERSION} scs-micosinglethread$(LIB_DEBUG) crypto dl logger
+  LIBS= mico${MICOVERSION} scs-micosinglethread$(LIB_DEBUG) crypto dl logger-singlethread$(LIB_DEBUG)
 endif
 
 USE_LUA51= YES
