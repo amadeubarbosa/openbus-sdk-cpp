@@ -14,23 +14,23 @@ namespace openbus {
       ServerInterceptor::credentialsCache;
   #ifdef OPENBUS_ORBIX
     ServerInterceptor::CredentialsValidationThread::CredentialsValidationThread() {
-      Openbus::logger->log(INFO,
+      Openbus::logger->log(logger::INFO,
         "CredentialsValidationThread::CredentialsValidationThread() BEGIN");
       Openbus::logger->indent();
-      Openbus::logger->dedent(INFO,
+      Openbus::logger->dedent(logger::INFO,
         "CredentialsValidationThread::CredentialsValidationThread() END");
     }
 
     ServerInterceptor::CredentialsValidationThread::~CredentialsValidationThread() {
-      Openbus::logger->log(INFO,
+      Openbus::logger->log(logger::INFO,
         "CredentialsValidationThread::~CredentialsValidationThread() BEGIN");
       Openbus::logger->indent();
-      Openbus::logger->dedent(INFO,
+      Openbus::logger->dedent(logger::INFO,
         "CredentialsValidationThread::~CredentialsValidationThread() END");
     }
 
     void* ServerInterceptor::CredentialsValidationThread::run() {
-      Openbus::logger->log(INFO,
+      Openbus::logger->log(logger::INFO,
         "CredentialsValidationThread::run() BEGIN");
       Openbus::logger->indent();
       openbus::Openbus* bus = openbus::Openbus::getInstance();
@@ -43,24 +43,24 @@ namespace openbus {
         stringstream out;
         out << "Validando a credencial: " << (const char*) ((*itCredentialsCache).identifier) 
           << " ...";
-        Openbus::logger->log(INFO, out.str());
+        Openbus::logger->log(logger::INFO, out.str());
         try {
           if (iAccessControlService->isValid(*itCredentialsCache)) {
-            Openbus::logger->log(INFO, "Credencial ainda é válida.");
+            Openbus::logger->log(logger::INFO, "Credencial ainda é válida.");
           } else {
-            Openbus::logger->log(WARNING, "Credencial NÃO é mais válida!");
+            Openbus::logger->log(logger::WARNING, "Credencial NÃO é mais válida!");
             credentialsCache.erase(itCredentialsCache++);
             continue;
           }
         } catch (CORBA::SystemException& e) {
-          Openbus::logger->log(ERROR, "Erro ao verificar validade da credencial");
+          Openbus::logger->log(logger::ERROR, "Erro ao verificar validade da credencial");
         }
         ++itCredentialsCache;
       }
       stringstream str;
       str << "Próxima validação em: " << validationTime << "ms" << endl;
-      Openbus::logger->log(INFO, str.str());
-      Openbus::logger->dedent(INFO, "CredentialsValidationThread::run() END");
+      Openbus::logger->log(logger::INFO, str.str());
+      Openbus::logger->dedent(logger::INFO, "CredentialsValidationThread::run() END");
       return 0;
     }
   #else
@@ -71,7 +71,7 @@ namespace openbus {
       CORBA::Dispatcher* dispatcher, 
       Event event)
     {
-      Openbus::logger->log(INFO, 
+      Openbus::logger->log(logger::INFO, 
         "ServerInterceptor::CredentialsValidationCallback() BEGIN");
     #ifndef _WIN32
       Openbus::logger->indent();
@@ -85,17 +85,17 @@ namespace openbus {
         stringstream out;
         out << "Validando a credencial: " << 
           (const char*) ((*itCredentialsCache).identifier) << " ...";
-        Openbus::logger->log(INFO, out.str());
+        Openbus::logger->log(logger::INFO, out.str());
         try {
           if (iAccessControlService->isValid(*itCredentialsCache)) {
-            Openbus::logger->log(INFO, "Credencial ainda é válida.");
+            Openbus::logger->log(logger::INFO, "Credencial ainda é válida.");
           } else {
-            Openbus::logger->log(WARNING, "Credencial NÃO é mais válida!");
+            Openbus::logger->log(logger::WARNING, "Credencial NÃO é mais válida!");
             credentialsCache.erase(itCredentialsCache++);
             continue;
           }
         } catch (CORBA::SystemException& e) {
-          Openbus::logger->log(ERROR, 
+          Openbus::logger->log(logger::ERROR, 
             "Erro ao verificar validade da credencial");
         }
         ++itCredentialsCache;
@@ -103,9 +103,9 @@ namespace openbus {
       dispatcher->tm_event(this, validationTime);
       stringstream str;
       str << "Próxima validação em: " << validationTime << "ms" << endl;
-      Openbus::logger->log(INFO, str.str());
+      Openbus::logger->log(logger::INFO, str.str());
     #endif
-      Openbus::logger->dedent(INFO, 
+      Openbus::logger->dedent(logger::INFO, 
         "ServerInterceptor::CredentialsValidationCallback() END");
     }
   #endif
@@ -115,7 +115,7 @@ namespace openbus {
       SlotId pslotid,
       IOP::Codec_ptr pcdr_codec)
     {
-      Openbus::logger->log(INFO, "ServerInterceptor::ServerInterceptor() BEGIN");
+      Openbus::logger->log(logger::INFO, "ServerInterceptor::ServerInterceptor() BEGIN");
       Openbus::logger->indent();
       slotid = pslotid;
       picurrent = ppicurrent;
@@ -123,7 +123,7 @@ namespace openbus {
     #ifdef OPENBUS_ORBIX
       credentialsValidationTimer = 0;
     #endif
-      Openbus::logger->dedent(INFO, "ServerInterceptor::ServerInterceptor() END");
+      Openbus::logger->dedent(logger::INFO, "ServerInterceptor::ServerInterceptor() END");
     }
 
     ServerInterceptor::~ServerInterceptor() {
@@ -142,23 +142,23 @@ namespace openbus {
 
     void ServerInterceptor::receive_request(ServerRequestInfo_ptr ri) {
       ::IOP::ServiceContext_var sc = ri->get_request_service_context(1234);
-      Openbus::logger->log(INFO, "ServerInterceptor::receive_request() BEGIN");
+      Openbus::logger->log(logger::INFO, "ServerInterceptor::receive_request() BEGIN");
       Openbus::logger->indent();
       stringstream request;
       char* repID = ri->target_most_derived_interface();
       char* operation = ri->operation();
       request << "RepID: " << repID;
-      Openbus::logger->log(INFO, request.str());
+      Openbus::logger->log(logger::INFO, request.str());
       request.str(" ");
       request << "Método: " << operation;
-      Openbus::logger->log(INFO, request.str());
+      Openbus::logger->log(logger::INFO, request.str());
       
       openbus::Openbus* bus = openbus::Openbus::getInstance();
       if (!bus->isInterceptable(repID, operation)) {
         free(repID);
         free(operation);
-        Openbus::logger->log(WARNING, "Este método não será interceptado.");
-        Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
+        Openbus::logger->log(logger::WARNING, "Este método não será interceptado.");
+        Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
       } else {
         CORBA::ULong z;
         stringstream contextData;
@@ -166,7 +166,7 @@ namespace openbus {
         for (z = 0; z < sc->context_data.length(); z++) {
           contextData << (unsigned) sc->context_data[z];
         }
-        Openbus::logger->log(INFO, contextData.str());
+        Openbus::logger->log(logger::INFO, contextData.str());
 
         IOP::ServiceContext::_context_data_seq& context_data = sc->context_data;
 
@@ -185,46 +185,46 @@ namespace openbus {
       #endif
         any >>= c;
       #ifdef OPENBUS_ORBIX
-        Openbus::logger->log(INFO, "credential->owner: " + (string) c->owner);
-        Openbus::logger->log(INFO, "credential->identifier: " + (string) c->identifier);
-        Openbus::logger->log(INFO, "credential->delegate: " + (string) c->delegate);
+        Openbus::logger->log(logger::INFO, "credential->owner: " + (string) c->owner);
+        Openbus::logger->log(logger::INFO, "credential->identifier: " + (string) c->identifier);
+        Openbus::logger->log(logger::INFO, "credential->delegate: " + (string) c->delegate);
       #else
-        Openbus::logger->log(INFO, "credential->owner: " + (string) c.owner);
-        Openbus::logger->log(INFO, "credential->identifier: " + (string) c.identifier);
-        Openbus::logger->log(INFO, "credential->delegate: " + (string) c.delegate);
+        Openbus::logger->log(logger::INFO, "credential->owner: " + (string) c.owner);
+        Openbus::logger->log(logger::INFO, "credential->identifier: " + (string) c.identifier);
+        Openbus::logger->log(logger::INFO, "credential->delegate: " + (string) c.delegate);
       #endif
         CredentialValidationPolicy policy = bus->getCredentialValidationPolicy(); 
         picurrent->set_slot(slotid, any);
         if (policy == ALWAYS) {
-          Openbus::logger->log(INFO, "Política de renovação de credenciais: " + 
+          Openbus::logger->log(logger::INFO, "Política de renovação de credenciais: " + 
             (string) + "ALWAYS");
-          Openbus::logger->log(INFO, "Validando credencial REMOTAMENTE...");
+          Openbus::logger->log(logger::INFO, "Validando credencial REMOTAMENTE...");
           try {
           #ifdef OPENBUS_ORBIX
             if (bus->getAccessControlService()->isValid(*c)) {
           #else
             if (bus->getAccessControlService()->isValid(c)) {
           #endif
-              Openbus::logger->log(INFO, "Credencial validada.");
-              Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
+              Openbus::logger->log(logger::INFO, "Credencial validada.");
+              Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
             } else {
-              Openbus::logger->log(INFO, "Falha na validação da credencial.");
-              Openbus::logger->log(ERROR, "Throwing CORBA::NO_PERMISSION...");
-              Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
+              Openbus::logger->log(logger::INFO, "Falha na validação da credencial.");
+              Openbus::logger->log(logger::ERROR, "Throwing CORBA::NO_PERMISSION...");
+              Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
               throw CORBA::NO_PERMISSION();
             }
           } catch (CORBA::SystemException& e) {
-            Openbus::logger->log(INFO, "Falha na renovação da credencial.");
-            Openbus::logger->log(ERROR, "Throwing CORBA::SystemException");
-            Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
+            Openbus::logger->log(logger::INFO, "Falha na renovação da credencial.");
+            Openbus::logger->log(logger::ERROR, "Throwing CORBA::SystemException");
+            Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
             throw;
           }
         } else if (policy == CACHED) {
-          Openbus::logger->log(INFO, "Política de renovação de credenciais: " + 
+          Openbus::logger->log(logger::INFO, "Política de renovação de credenciais: " + 
             (string) "CACHED");
           stringstream out;
           out << "Número de credenciais no cache: " << credentialsCache.size();
-          Openbus::logger->log(INFO, out.str());
+          Openbus::logger->log(logger::INFO, out.str());
         #ifdef OPENBUS_ORBIX
           if (credentialsCache.find(*c) != credentialsCache.end()
               &&
@@ -236,42 +236,42 @@ namespace openbus {
               !credentialsCache.empty()) 
           {  
         #endif
-            Openbus::logger->log(INFO, "Credencial está no cache.");
-            Openbus::logger->dedent(INFO, 
+            Openbus::logger->log(logger::INFO, "Credencial está no cache.");
+            Openbus::logger->dedent(logger::INFO, 
               "ServerInterceptor::receive_request() END");
           } else {
-            Openbus::logger->log(INFO, "Credencial NÃO está no cache.");
-            Openbus::logger->log(INFO, "Validando credencial no ACS...");
+            Openbus::logger->log(logger::INFO, "Credencial NÃO está no cache.");
+            Openbus::logger->log(logger::INFO, "Validando credencial no ACS...");
             try {
             #ifdef OPENBUS_ORBIX
               if (bus->getAccessControlService()->isValid(*c)) {
             #else
               if (bus->getAccessControlService()->isValid(c)) {
             #endif
-                Openbus::logger->log(INFO, "Credencial validada.");
+                Openbus::logger->log(logger::INFO, "Credencial validada.");
               } else {
-                Openbus::logger->log(INFO, "Falha na validação da credencial.");
-                Openbus::logger->log(ERROR, "Throwing CORBA::NO_PERMISSION...");
-                Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
+                Openbus::logger->log(logger::INFO, "Falha na validação da credencial.");
+                Openbus::logger->log(logger::ERROR, "Throwing CORBA::NO_PERMISSION...");
+                Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
                 throw CORBA::NO_PERMISSION();
               }
-              Openbus::logger->log(INFO, "Inserindo credencial no cache...");
+              Openbus::logger->log(logger::INFO, "Inserindo credencial no cache...");
             #ifdef OPENBUS_ORBIX
               credentialsCache.insert(*c);
             #else
               credentialsCache.insert(c);
             #endif  
-              Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
+              Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
             } catch (CORBA::SystemException& e) {
-              Openbus::logger->log(INFO, "Falha na validação da credencial.");
-              Openbus::logger->log(ERROR, "Throwing CORBA::SystemException");
-              Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
+              Openbus::logger->log(logger::INFO, "Falha na validação da credencial.");
+              Openbus::logger->log(logger::ERROR, "Throwing CORBA::SystemException");
+              Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
               throw;
             }
           }
         } else {
-          Openbus::logger->log(INFO, "Política de renovação de credenciais: " + (string) "NONE");
-          Openbus::logger->dedent(INFO, "ServerInterceptor::receive_request() END");
+          Openbus::logger->log(logger::INFO, "Política de renovação de credenciais: " + (string) "NONE");
+          Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
         }
       }
     }          
@@ -293,7 +293,7 @@ namespace openbus {
     void ServerInterceptor::destroy() {}
 
     access_control_service::Credential_var ServerInterceptor::getCredential() {
-      Openbus::logger->log(INFO, "ServerInterceptor::getCredential() BEGIN");
+      Openbus::logger->log(logger::INFO, "ServerInterceptor::getCredential() BEGIN");
       Openbus::logger->indent();
       CORBA::Any_var any = picurrent->get_slot(slotid);
 
@@ -301,9 +301,9 @@ namespace openbus {
       access_control_service::Credential* c = 0;
       any >>= c;
       if (c) {
-        Openbus::logger->log(INFO, "credential->owner: " + (string) c->owner);
-        Openbus::logger->log(INFO, "credential->identifier: " + (string) c->identifier);
-        Openbus::logger->log(INFO, "credential->delegate: " + (string) c->delegate);
+        Openbus::logger->log(logger::INFO, "credential->owner: " + (string) c->owner);
+        Openbus::logger->log(logger::INFO, "credential->identifier: " + (string) c->identifier);
+        Openbus::logger->log(logger::INFO, "credential->delegate: " + (string) c->delegate);
         access_control_service::Credential_var ret = new access_control_service::Credential();
         ret->owner = CORBA::string_dup(c->owner);
         ret->identifier = CORBA::string_dup(c->identifier);
@@ -311,21 +311,21 @@ namespace openbus {
     #else
       access_control_service::Credential c;
       if (any >>=c) {
-        Openbus::logger->log(INFO, "credential->owner: " + (string) c.owner);
-        Openbus::logger->log(INFO, "credential->identifier: " + (string) c.identifier);
-        Openbus::logger->log(INFO, "credential->delegate: " + (string) c.delegate);
+        Openbus::logger->log(logger::INFO, "credential->owner: " + (string) c.owner);
+        Openbus::logger->log(logger::INFO, "credential->identifier: " + (string) c.identifier);
+        Openbus::logger->log(logger::INFO, "credential->delegate: " + (string) c.delegate);
         access_control_service::Credential_var ret = new access_control_service::Credential();
         ret->owner = CORBA::string_dup(c.owner);
         ret->identifier = CORBA::string_dup(c.identifier);
         ret->delegate = CORBA::string_dup(c.delegate);
     #endif
-        Openbus::logger->dedent(INFO, "ServerInterceptor::getCredential() END");
+        Openbus::logger->dedent(logger::INFO, "ServerInterceptor::getCredential() END");
         return ret._retn();
       } else {
-        Openbus::logger->log(WARNING, "Nao foi possivel adquirir uma credencial. " + 
+        Openbus::logger->log(logger::WARNING, "Nao foi possivel adquirir uma credencial. " + 
           (string) + "Verifique se esta chamada esta sendo realizada dentro de um metodo " + 
           (string) + "disponibilizado remotamente.");
-        Openbus::logger->dedent(INFO, "ServerInterceptor::getCredential() END");
+        Openbus::logger->dedent(logger::INFO, "ServerInterceptor::getCredential() END");
         return 0;
       }
     }

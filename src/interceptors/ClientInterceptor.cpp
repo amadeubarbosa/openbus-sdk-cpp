@@ -11,19 +11,17 @@
   #include <it_ts/thread.h>
 #endif
 
-using namespace tecgraf::openbus::core::v1_05;
-
 namespace openbus {
   namespace interceptors {
     ClientInterceptor::ClientInterceptor(IOP::Codec_ptr pcdr_codec) {
-      Openbus::logger->log(INFO, "ClientInterceptor::ClientInterceptor() BEGIN");
+      Openbus::logger->log(logger::INFO, "ClientInterceptor::ClientInterceptor() BEGIN");
       Openbus::logger->indent();
       cdr_codec = pcdr_codec;
       faultToleranceManager = FaultToleranceManager::getInstance();
       if (Openbus::FTConfigFilename) {
         faultToleranceManager->loadConfig(Openbus::FTConfigFilename);
       }
-      Openbus::logger->dedent(INFO, "ClientInterceptor::ClientInterceptor() END");
+      Openbus::logger->dedent(logger::INFO, "ClientInterceptor::ClientInterceptor() END");
     }
 
     ClientInterceptor::~ClientInterceptor() {}
@@ -33,26 +31,26 @@ namespace openbus {
         CORBA::SystemException,
         PortableInterceptor::ForwardRequest)
     {
-      Openbus::logger->log(INFO, "ClientInterceptor::send_request() BEGIN");
+      Openbus::logger->log(logger::INFO, "ClientInterceptor::send_request() BEGIN");
       Openbus::logger->indent();
-      stringstream msg;
+      std::stringstream msg;
       char * operation = ri->operation();
       msg << "Method: " << operation;
-      Openbus::logger->log(INFO, msg.str());
+      Openbus::logger->log(logger::INFO, msg.str());
       free(operation);
       access_control_service::Credential* credential = Openbus::bus->getCredential();
       if (credential) {
-        stringstream msg;
-        Openbus::logger->log(INFO, "Credential:");
+        std::stringstream msg;
+        Openbus::logger->log(logger::INFO, "Credential:");
         Openbus::logger->indent();
         msg << "[identifier]: " << credential->identifier;
-        Openbus::logger->log(INFO, msg.str());
+        Openbus::logger->log(logger::INFO, msg.str());
         msg.str("");
         msg << "[owner]: " << credential->owner;
-        Openbus::logger->log(INFO, msg.str());
+        Openbus::logger->log(logger::INFO, msg.str());
         msg.str("");
         msg << "[delegate]: " << credential->delegate;
-        Openbus::logger->log(INFO, msg.str());
+        Openbus::logger->log(logger::INFO, msg.str());
         Openbus::logger->dedent();
         IOP::ServiceContext sc;
         sc.context_id = 1234;
@@ -74,11 +72,11 @@ namespace openbus {
         for ( z = 0; z < sc.context_data.length(); z++ ) {
           contextData <<  (unsigned) sc.context_data[ z ] << " ";
         }
-        Openbus::logger->log(INFO, contextData.str());
+        Openbus::logger->log(logger::INFO, contextData.str());
 
         ri->add_request_service_context(sc, true);
       }
-      Openbus::logger->dedent(INFO, "ClientInterceptor::send_request() END");
+      Openbus::logger->dedent(logger::INFO, "ClientInterceptor::send_request() END");
     }
 
     char* ClientInterceptor::name() 
@@ -99,16 +97,16 @@ namespace openbus {
         PortableInterceptor::ForwardRequest)
     {
     #if 0
-      Openbus::logger->log(INFO, "ClientInterceptor::receive_exception() BEGIN");
+      Openbus::logger->log(logger::INFO, "ClientInterceptor::receive_exception() BEGIN");
       Openbus::logger->indent();
       stringstream out;
       const char* received_exception_id = ri->received_exception_id();
       PortableInterceptor::ReplyStatus reply_status = ri->reply_status();
       out << "Exception: " << received_exception_id;
-      Openbus::logger->log(INFO, out.str());
+      Openbus::logger->log(logger::INFO, out.str());
       out.str(" ");
       out << "Reply Status: " << reply_status;
-      Openbus::logger->log(INFO, out.str());
+      Openbus::logger->log(logger::INFO, out.str());
       out.str(" ");
       if (reply_status == 1 
           && 
@@ -117,7 +115,7 @@ namespace openbus {
         Openbus::logger->log(ERROR, "TRATANDO EXCEÇÂO RECEBIDA DO SERVIDOR!");
         const char* operation = ri->operation();
         out << "Método: " << operation;
-        Openbus::logger->log(INFO, out.str());
+        Openbus::logger->log(logger::INFO, out.str());
         out.str(" ");
         
         Openbus* bus = Openbus::getInstance();
@@ -144,7 +142,7 @@ namespace openbus {
       #endif
         
         out << "ObjectKey: " << objectKey;
-        Openbus::logger->log(INFO, out.str());
+        Openbus::logger->log(logger::INFO, out.str());
         if (!strcmp(objectKey, "LP_v1_05")
             || !strcmp(objectKey, "ACS_v1_05")
             || !strcmp(objectKey, "RS_v1_05")
@@ -187,7 +185,7 @@ namespace openbus {
           }
         }
       }
-      Openbus::logger->dedent(INFO, 
+      Openbus::logger->dedent(logger::INFO, 
         "ClientInterceptor::receive_exception() END");
     #endif
     }

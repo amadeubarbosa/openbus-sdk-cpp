@@ -11,12 +11,12 @@ namespace openbus {
   FaultToleranceManager* FaultToleranceManager::faultToleranceManager = 0;
 
   FaultToleranceManager::FaultToleranceManager() {
-    Openbus::logger->log(INFO, 
+    Openbus::logger->log(logger::INFO, 
       "FaultToleranceManager::FaultToleranceManager() BEGIN");
     Openbus::logger->indent();
     trials = 1;
     currTrial = 1;
-    Openbus::logger->dedent(INFO,
+    Openbus::logger->dedent(logger::INFO,
       "FaultToleranceManager::FaultToleranceManager() END");
   }
 
@@ -24,27 +24,27 @@ namespace openbus {
   }
 
   void FaultToleranceManager::loadConfig(char* filename) {
-    Openbus::logger->log(INFO, 
+    Openbus::logger->log(logger::INFO, 
       "FaultToleranceManager::loadConfig() BEGIN");
     Openbus::logger->indent();
     if (luaL_loadfile(Openbus::luaState, filename)) {
       const char* errmsg = lua_tostring(Openbus::luaState, -1);
       lua_pop(Openbus::luaState, 1);
-      Openbus::logger->log(ERROR, errmsg);
+      Openbus::logger->log(logger::ERROR, errmsg);
     } else {
       if (lua_pcall(Openbus::luaState, 0, 0, 0)) {
         const char* errmsg = lua_tostring(Openbus::luaState, -1);
         lua_pop(Openbus::luaState, 1);
-        Openbus::logger->log(ERROR, errmsg);
+        Openbus::logger->log(logger::ERROR, errmsg);
       } else {
-        Openbus::logger->log(INFO, 
+        Openbus::logger->log(logger::INFO, 
           "Arquivo de configuracao carregado com sucesso.");
         lua_getglobal(Openbus::luaState, "ACSHosts");
         if (lua_istable(Openbus::luaState, -1)) {
           size_t numACSHosts = lua_objlen(Openbus::luaState, -1);
           stringstream out;
           out << "Numero de replicas: " << numACSHosts;
-          Openbus::logger->log(INFO, out.str());
+          Openbus::logger->log(logger::INFO, out.str());
           lua_pushnil(Openbus::luaState);
           while (lua_next(Openbus::luaState, -2)) {
             stringstream out;
@@ -70,7 +70,7 @@ namespace openbus {
             port = (unsigned short) lua_tointeger(Openbus::luaState, -1);
             out << "::" << port;
             lua_pop(Openbus::luaState, 1);
-            Openbus::logger->log(INFO, out.str());
+            Openbus::logger->log(logger::INFO, out.str());
           /* Armazenando par maquina/porta na lista de replicas.*/
             host = new Host;
             host->name = name;
@@ -81,11 +81,11 @@ namespace openbus {
           }
           itACSHosts = acsHosts.begin();
         } else {
-          Openbus::logger->log(ERROR, "Ausência da tabela ACSHosts.");
+          Openbus::logger->log(logger::ERROR, "Ausência da tabela ACSHosts.");
         }    
       }
     }
-    Openbus::logger->dedent(INFO, 
+    Openbus::logger->dedent(logger::INFO, 
       "FaultToleranceManager::loadConfig() END");
   }
 
@@ -97,13 +97,13 @@ namespace openbus {
   }
 
   Host* FaultToleranceManager::updateACSHostInUse() {
-    Openbus::logger->log(INFO, 
+    Openbus::logger->log(logger::INFO, 
       "FaultToleranceManager::updateACSHostInUse() BEGIN");
     Openbus::logger->indent();
     Openbus* bus = Openbus::getInstance();
     stringstream out;
     out << "Replica ACS em uso: [" << bus->hostBus << "::" << bus->portBus << "]";
-    Openbus::logger->log(INFO, out.str());
+    Openbus::logger->log(logger::INFO, out.str());
     out.str(" ");
     if (acsHosts.size() > 0) {  
     /*
@@ -115,16 +115,16 @@ namespace openbus {
     */
       itACSHosts++;
       if (itACSHosts == acsHosts.end()) {
-        Openbus::logger->log(INFO, "Conjunto de replicas percorrido.");
+        Openbus::logger->log(logger::INFO, "Conjunto de replicas percorrido.");
         if (currTrial > trials) {
           out << "Numero de tentativas esgotado." << endl;
-          Openbus::logger->log(WARNING, out.str());
+          Openbus::logger->log(logger::WARNING, out.str());
           out.str(" ");
           return 0;
         } else {
           out << "Número de tentativas realizadas: " << currTrial << endl;
           currTrial++;
-          Openbus::logger->log(INFO, out.str());
+          Openbus::logger->log(logger::INFO, out.str());
           out.str(" ");
           itACSHosts = acsHosts.begin();
         }
@@ -132,12 +132,12 @@ namespace openbus {
       acsHostInUse.name = (*itACSHosts)->name; 
       acsHostInUse.port = (*itACSHosts)->port; 
       out << "Nova replica ACS: [" << acsHostInUse.name  << "::" << acsHostInUse.port << "]";
-      Openbus::logger->log(INFO, out.str());
+      Openbus::logger->log(logger::INFO, out.str());
     } else {
-      Openbus::logger->log(WARNING, "Lista de replicas vazia.");
+      Openbus::logger->log(logger::WARNING, "Lista de replicas vazia.");
       return 0;
     }
-    Openbus::logger->dedent(INFO, 
+    Openbus::logger->dedent(logger::INFO, 
       "FaultToleranceManager::updateACSHostInUse() END");
     return &acsHostInUse;
   }

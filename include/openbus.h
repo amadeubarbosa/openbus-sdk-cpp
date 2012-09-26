@@ -33,10 +33,6 @@
 #include <set>
 #include <lua.hpp>
 
-using namespace tecgraf::openbus::core::v1_05;
-using namespace tecgraf::openbus::fault_tolerance::v1_05;
-using namespace logger;
-
 /**
  * \brief Stubs dos serviços básicos.
  */
@@ -90,7 +86,7 @@ public:
 
 private:
   static char* debugFile;
-  Level debugLevel;
+  logger::Level debugLevel;
 
 /**
  * Mutex. 
@@ -149,17 +145,17 @@ private:
   /**
    * Ponteiro para o stub do serviço de acesso.
    */
-  access_control_service::IAccessControlService_var iAccessControlService;
+  tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService_var iAccessControlService;
 
   /**
    * Ponteiro para o stub do serviço de registro.
    */
-  registry_service::IRegistryService *iRegistryService;
+  tecgraf::openbus::core::v1_05::registry_service::IRegistryService *iRegistryService;
 
   /**
    * Ponteiro para a faceta ILeaseProvider. 
    */
-  access_control_service::ILeaseProvider_var iLeaseProvider;
+  tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider_var iLeaseProvider;
 
   /**
    * Ponteiro para o IComponent do serviço de acesso. 
@@ -169,7 +165,7 @@ private:
   /**
    * Ponteiro para o stub do serviço de tolerância a falhas.
    */
-  IFaultTolerantService_var iFaultTolerantService;
+  tecgraf::openbus::fault_tolerance::v1_05::IFaultTolerantService_var iFaultTolerantService;
 
   /**
    * Gerenciador do POA. 
@@ -179,12 +175,12 @@ private:
   /**
    * Intervalo de tempo que determina quando a credencial expira. 
    */
-  access_control_service::Lease lease;
+  tecgraf::openbus::core::v1_05::access_control_service::Lease lease;
 
   /**
    * Credencial de identificação do usuário frente ao barramento. 
    */
-  access_control_service::Credential *credential;
+  tecgraf::openbus::core::v1_05::access_control_service::Credential *credential;
 
 #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
   static MICOMT::Thread::ThreadKey threadKey;
@@ -339,7 +335,7 @@ private:
     friend class FaultToleranceManager;
   public:
 
-    static Logger *logger;
+    static logger::Logger *logger;
 
     ~Openbus();
 
@@ -477,25 +473,25 @@ private:
      * Retorna a credencial interceptada pelo interceptador servidor. 
      * @return Credencial. \see openbusidl::acs::Credential
      */
-    access_control_service::Credential_var getInterceptedCredential();
+    tecgraf::openbus::core::v1_05::access_control_service::Credential_var getInterceptedCredential();
 
     /**
      * Retorna o serviço de acesso. 
      * @return Serviço de acesso
      */
-    access_control_service::IAccessControlService * getAccessControlService();
+    tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService * getAccessControlService();
 
     /**
      * Retorna o serviço de registro. 
      * @return Serviço de registro
      */
-    registry_service::IRegistryService * getRegistryService();
+    tecgraf::openbus::core::v1_05::registry_service::IRegistryService * getRegistryService();
 
     /**
      * Retorna a credencial de identificação do usuário frente ao barramento. 
      * @return credencial
      */
-    access_control_service::Credential * getCredential();
+    tecgraf::openbus::core::v1_05::access_control_service::Credential * getCredential();
 
     /**
      * Retorna a política de validação de credenciais.
@@ -514,7 +510,7 @@ private:
      * @param[in] credential Credencial a ser utilizada nas requisições a serem
      *   realizadas.
      */
-    void setThreadCredential(access_control_service::Credential *credential);
+    void setThreadCredential(tecgraf::openbus::core::v1_05::access_control_service::Credential *credential);
 
     /**
      * Representa uma callback para a notificação de que um lease expirou.
@@ -554,7 +550,7 @@ private:
      *  @return  Se a tentativa de conexão for bem sucedida, uma instância que representa o 
      *    serviço é retornada.
      */
-    registry_service::IRegistryService* connect(const char *user, const char *password)
+    tecgraf::openbus::core::v1_05::registry_service::IRegistryService* connect(const char *user, const char *password)
       throw (CORBA::SystemException, LOGIN_FAILURE);
 
     /**
@@ -575,8 +571,9 @@ private:
      *  @return  Se a tentativa de conexão for bem sucedida, uma instância que representa o 
      *    serviço é retornada.
      */
-    registry_service::IRegistryService* connect(const char *entity, const char *privateKeyFilename,
-                                                const char *ACSCertificateFilename)
+    tecgraf::openbus::core::v1_05::registry_service::IRegistryService* connect(const char *entity, 
+                                                                               const char *privateKeyFilename,
+                                                                               const char *ACSCertificateFilename)
       throw (CORBA::SystemException, LOGIN_FAILURE, SECURITY_EXCEPTION);
 
     /**

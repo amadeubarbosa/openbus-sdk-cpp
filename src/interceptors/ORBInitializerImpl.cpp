@@ -18,13 +18,13 @@ namespace openbus {
     ORBInitializerImpl::ORBInitializerImpl() {}
 
     ORBInitializerImpl::~ORBInitializerImpl() {
-      Openbus::logger->log(INFO, "ORBInitializerImpl::~ORBInitializerImpl() BEGIN");
+      Openbus::logger->log(logger::INFO, "ORBInitializerImpl::~ORBInitializerImpl() BEGIN");
       Openbus::logger->indent();
-      Openbus::logger->dedent(INFO, "ORBInitializerImpl::~ORBInitializerImpl() END");
+      Openbus::logger->dedent(logger::INFO, "ORBInitializerImpl::~ORBInitializerImpl() END");
     }
 
     void ORBInitializerImpl::pre_init(ORBInitInfo_ptr info) {
-      Openbus::logger->log(INFO, "ORBInitializerImpl::pre_init() BEGIN");
+      Openbus::logger->log(logger::INFO, "ORBInitializerImpl::pre_init() BEGIN");
       Openbus::logger->indent();
       _info = info;
       IOP::CodecFactory_var codec_factory = _info->codec_factory();
@@ -49,7 +49,7 @@ namespace openbus {
         serverRequestInterceptor = serverInterceptor ;
       _info->add_server_request_interceptor(serverRequestInterceptor) ;
       
-      Openbus::logger->dedent(INFO, "ORBInitializerImpl::pre_init() END");
+      Openbus::logger->dedent(logger::INFO, "ORBInitializerImpl::pre_init() END");
     }
 
     void ORBInitializerImpl::post_init(ORBInitInfo_ptr info) {}
