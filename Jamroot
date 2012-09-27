@@ -2,6 +2,8 @@
 import common ;
 import os ;
 import string ;
+import feature ;
+import modules ;
 
 local scs-path-env = [ os.environ SCS_PATH ] ;
 local openssl-lib-path-env = [ os.environ OPENSSL_LIB_PATH ] ;
@@ -17,6 +19,12 @@ path-constant openbus-idl-path : $(openbus-idl-path-env) ;
 use-project scs : $(scs-path) ;
 use-project logger : $(logger-path-env) ;
 
+local search_path = [ modules.peek : BOOST_BUILD_PATH ] ;
+search_path += $(scs-path) ;
+modules.poke : BOOST_BUILD_PATH : $(search_path) ;
+
+import mico-idl ;
+
 project openssl ;
 
 lib crypto : : <name>crypto <search>$(openssl-lib-path) ;
@@ -29,17 +37,16 @@ project openbus ;
 
 path-constant here : . ;
 
-alias legacy_idls : $(here)/legacy/idl/credential_v1_5.idl
- ;
-
-alias idls : $(openbus-idl-path)/access_control.idl
+alias core-idls : $(openbus-idl-path)/access_control.idl
  $(openbus-idl-path)/core.idl
  $(openbus-idl-path)/credential.idl
  $(openbus-idl-path)/offer_registry.idl
+ $(here)/legacy/idl/credential_v1_5.idl
  /scs//idls
  : <include>$(openbus-idl-path)
  : : <include>$(openbus-idl-path)
  ;
+explicit core-idls ;
 
 rule tag ( name : type ? : property-set )
 {
@@ -72,16 +79,26 @@ lib openbus : src/Connection.cpp src/ConnectionManager.cpp
  src/interceptors/ServerInterceptor_impl.cpp
  src/util/OpenSSL.cpp src/util/Ticket_impl.c
  /mico//mico /scs//scs /boost//headers /logger//logger
- idls legacy_idls /openssl//openssl
+ core-idls /openssl//openssl
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
    <include>include
    <threading>multi:<source>/boost//thread
-   <implicit-dependency>idls
-   <implicit-dependency>legacy_idls
+   <implicit-dependency>core-idls
    <tag>@tag
  :
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
    <include>include
  ;
+explicit openbus ;
 
-install stage : openbus ;
+install stage-libs : openbus : <location>stage ;
+explicit stage-libs ;
+
+feature.feature core-idl-dummy-feature : off on : link-incompatible ;
+mico-idl.cpp-h cpp-h-stub : core-idls : <core-idl-dummy-feature>on ;
+install stage-stubs : cpp-h-stub : <location>stage/stubs <install-dependencies>on <install-type>CPP <install-type>H
+ <link>static
+ ;
+explicit stage-stubs ;
+alias stage : stage-libs stage-stubs ;
+
