@@ -17,12 +17,9 @@
 #endif
 #include "FaultToleranceManager.h"
 
-using namespace PortableInterceptor;
-using namespace tecgraf::openbus::core::v1_05;
-
 namespace openbus {
   namespace interceptors {
-    class ClientInterceptor : public ClientRequestInterceptor 
+    class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 
     #ifdef OPENBUS_ORBIX
                               ,public IT_CORBA::RefCountedLocalObject 
     #endif
@@ -34,23 +31,23 @@ namespace openbus {
       public:
         ClientInterceptor(IOP::Codec_ptr pcdr_codec);
         ~ClientInterceptor();
-        void send_request(ClientRequestInfo_ptr ri) 
+        void send_request(PortableInterceptor::ClientRequestInfo_ptr ri) 
           throw(
             CORBA::SystemException,
             PortableInterceptor::ForwardRequest);
-        void send_poll(ClientRequestInfo_ptr ri) 
+        void send_poll(PortableInterceptor::ClientRequestInfo_ptr ri) 
           throw(CORBA::SystemException);
-        void receive_reply(ClientRequestInfo_ptr ri) 
+        void receive_reply(PortableInterceptor::ClientRequestInfo_ptr ri) 
           throw(CORBA::SystemException);
-        void receive_exception(ClientRequestInfo_ptr ri) 
+        void receive_exception(PortableInterceptor::ClientRequestInfo_ptr ri) 
           throw(
             CORBA::SystemException,
             PortableInterceptor::ForwardRequest);
-        void receive_other(ClientRequestInfo_ptr ri) 
+        void receive_other(PortableInterceptor::ClientRequestInfo_ptr ri) 
           throw(
             CORBA::SystemException,
             PortableInterceptor::ForwardRequest);
-        char* name() 
+        char* name()
           throw(CORBA::SystemException);
         void destroy();
     };

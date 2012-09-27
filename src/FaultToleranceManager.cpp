@@ -42,12 +42,12 @@ namespace openbus {
         lua_getglobal(Openbus::luaState, "ACSHosts");
         if (lua_istable(Openbus::luaState, -1)) {
           size_t numACSHosts = lua_objlen(Openbus::luaState, -1);
-          stringstream out;
+          std::stringstream out;
           out << "Numero de replicas: " << numACSHosts;
           Openbus::logger->log(logger::INFO, out.str());
           lua_pushnil(Openbus::luaState);
           while (lua_next(Openbus::luaState, -2)) {
-            stringstream out;
+            std::stringstream out;
             size_t strLen;
             char* name;
             unsigned short port;
@@ -101,7 +101,7 @@ namespace openbus {
       "FaultToleranceManager::updateACSHostInUse() BEGIN");
     Openbus::logger->indent();
     Openbus* bus = Openbus::getInstance();
-    stringstream out;
+    std::stringstream out;
     out << "Replica ACS em uso: [" << bus->hostBus << "::" << bus->portBus << "]";
     Openbus::logger->log(logger::INFO, out.str());
     out.str(" ");
@@ -117,12 +117,12 @@ namespace openbus {
       if (itACSHosts == acsHosts.end()) {
         Openbus::logger->log(logger::INFO, "Conjunto de replicas percorrido.");
         if (currTrial > trials) {
-          out << "Numero de tentativas esgotado." << endl;
+          out << "Numero de tentativas esgotado." << std::endl;
           Openbus::logger->log(logger::WARNING, out.str());
           out.str(" ");
           return 0;
         } else {
-          out << "Número de tentativas realizadas: " << currTrial << endl;
+          out << "Número de tentativas realizadas: " << currTrial << std::endl;
           currTrial++;
           Openbus::logger->log(logger::INFO, out.str());
           out.str(" ");

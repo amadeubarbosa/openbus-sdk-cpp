@@ -90,7 +90,7 @@ namespace openbus {
       logger->log(logger::INFO, "Openbus::RenewLeaseThread::run() BEGIN");
       bool interrupted = false;
       unsigned int timeRenewing = 1;
-      stringstream msg;
+      std::stringstream msg;
       bool tryExec_LeaseExpiredCallback = false;
       bus->setThreadCredential(bus->credential);
       while (true) {
@@ -185,7 +185,7 @@ namespace openbus {
           if (!bus->timeRenewingFixe) {
             bus->timeRenewing = bus->lease/3;
           }
-          stringstream msg;
+          std::stringstream msg;
           msg << "Proximo intervalo de renovacao: " << bus->timeRenewing << "s";
           logger->log(logger::INFO, msg.str());
           if (!status) {
@@ -410,7 +410,7 @@ namespace openbus {
     int argc,
     char** argv)
   {
-    stringstream msgLog;
+    std::stringstream msgLog;
     _argc = argc;
     _argv = argv;
     commandLineParse();
@@ -615,7 +615,7 @@ namespace openbus {
           createProxyToIAccessControlService();
         }
 
-        stringstream iACSMSG;
+        std::stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
         logger->log(logger::INFO, iACSMSG.str());
         if (!iAccessControlService->loginByPassword(user, password, credential,
@@ -626,7 +626,7 @@ namespace openbus {
           mutex.unlock();
           throw LOGIN_FAILURE();
         } else {
-          stringstream msg;
+          std::stringstream msg;
           msg << "Associando credencial " << credential << " ao ORB.";
           logger->log(logger::INFO, msg.str());
           connectionState = CONNECTED;
@@ -720,7 +720,7 @@ namespace openbus {
       /* Leitura da chave privada da entidade. */
         BIO* bio = BIO_new( BIO_s_file() );
         if (BIO_read_filename( bio, privateKeyFilename ) <= 0) {
-          stringstream filename;
+          std::stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             privateKeyFilename;
           logger->log(logger::WARNING, filename.str());
@@ -753,7 +753,7 @@ namespace openbus {
 
         bio = BIO_new( BIO_s_file() );
         if (BIO_read_filename( bio, ACSCertificateFilename ) <= 0) {
-          stringstream filename;
+          std::stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             ACSCertificateFilename;
           logger->log(logger::WARNING, filename.str());
@@ -798,7 +798,7 @@ namespace openbus {
         EVP_PKEY_free(ACSPublicKey);
         X509_free(x509);
 
-        stringstream iACSMSG;
+        std::stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
         logger->log(logger::INFO, iACSMSG.str());
         if (!iAccessControlService->loginByCertificate(entity, answerOctetSeq,
@@ -809,7 +809,7 @@ namespace openbus {
           throw LOGIN_FAILURE();
         } else {
           free(answer);
-          stringstream msg;
+          std::stringstream msg;
           msg << "Associando credencial " << credential << " ao ORB."; 
           logger->log(logger::INFO, msg.str());
           connectionState = CONNECTED;
@@ -955,7 +955,7 @@ namespace openbus {
   void Openbus::finish(bool force) {
     logger->log(logger::INFO, "Openbus::finish() BEGIN");
     logger->indent();
-    stringstream msg;
+    std::stringstream msg;
     msg << "Desligando orb com force = " << force; 
     logger->log(logger::INFO, msg.str());
     orb->shutdown(force);
@@ -964,7 +964,7 @@ namespace openbus {
     logger->dedent(logger::INFO, "Openbus::finish() END");
   }
 
-  void Openbus::setInterceptable(string interfaceRepID, string method,
+  void Openbus::setInterceptable(std::string interfaceRepID, std::string method,
     bool isInterceptable)
   {
     MethodSet *methods;
@@ -993,7 +993,7 @@ namespace openbus {
     }
   }
 
-  bool Openbus::isInterceptable(string interfaceRepID, string method)
+  bool Openbus::isInterceptable(std::string interfaceRepID, std::string method)
   {
     MethodsNotInterceptable::iterator iter = methodsNotInterceptable.find(interfaceRepID);
     if (iter != methodsNotInterceptable.end()) {

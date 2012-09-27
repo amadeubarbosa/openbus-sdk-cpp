@@ -40,7 +40,7 @@ namespace openbus {
     };
 
         
-    class ORBInitializerImpl : public ORBInitializer
+    class ORBInitializerImpl : public PortableInterceptor::ORBInitializer
     #ifdef OPENBUS_ORBIX
                               ,public IT_CORBA::RefCountedLocalObject 
     #endif

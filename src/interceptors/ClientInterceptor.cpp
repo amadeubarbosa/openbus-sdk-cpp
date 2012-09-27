@@ -67,7 +67,7 @@ namespace openbus {
         sc.context_data = seq;
 
         CORBA::ULong z;
-        stringstream contextData;
+        std::stringstream contextData;
         contextData << "Context data: ";
         for ( z = 0; z < sc.context_data.length(); z++ ) {
           contextData <<  (unsigned) sc.context_data[ z ] << " ";

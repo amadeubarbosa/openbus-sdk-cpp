@@ -62,8 +62,8 @@ typedef std::map<std::string, MethodSet*> MethodsNotInterceptable;
 /**
  * \brief Falha no processo de login, ou seja, o par nome de usuário e senha não foi validado.
  */
-struct LOGIN_FAILURE : public runtime_error {
-  LOGIN_FAILURE(const std::string& msg = "") : runtime_error(msg) {}
+ struct LOGIN_FAILURE : public std::runtime_error {
+  LOGIN_FAILURE(const std::string &msg = "") : runtime_error(msg) {}
 };
 
 /**
@@ -73,8 +73,8 @@ struct LOGIN_FAILURE : public runtime_error {
  *  + Falha na manipulação de uma chave privada ou pública.
  *  + Falha na manipulação de um certificado.
  */
-struct SECURITY_EXCEPTION : public runtime_error {
-  SECURITY_EXCEPTION(const std::string& msg = "") : runtime_error(msg) {}
+struct SECURITY_EXCEPTION : public std::runtime_error {
+  SECURITY_EXCEPTION(const std::string &msg = "") : runtime_error(msg) {}
 };
 
 /**

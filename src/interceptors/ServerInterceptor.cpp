@@ -9,8 +9,8 @@
 namespace openbus {
   namespace interceptors {
     unsigned long ServerInterceptor::validationTime = 30000; /* ms */
-    set<access_control_service::Credential, ServerInterceptor::setCredentialCompare>::iterator ServerInterceptor::itCredentialsCache;
-    set<access_control_service::Credential, ServerInterceptor::setCredentialCompare> 
+    std::set<access_control_service::Credential, ServerInterceptor::setCredentialCompare>::iterator ServerInterceptor::itCredentialsCache;
+    std::set<access_control_service::Credential, ServerInterceptor::setCredentialCompare> 
       ServerInterceptor::credentialsCache;
   #ifdef OPENBUS_ORBIX
     ServerInterceptor::CredentialsValidationThread::CredentialsValidationThread() {
@@ -40,7 +40,7 @@ namespace openbus {
            itCredentialsCache != credentialsCache.end();
           )
       {
-        stringstream out;
+        std::stringstream out;
         out << "Validando a credencial: " << (const char*) ((*itCredentialsCache).identifier) 
           << " ...";
         Openbus::logger->log(logger::INFO, out.str());
@@ -57,7 +57,7 @@ namespace openbus {
         }
         ++itCredentialsCache;
       }
-      stringstream str;
+      std::stringstream str;
       str << "Próxima validação em: " << validationTime << "ms" << endl;
       Openbus::logger->log(logger::INFO, str.str());
       Openbus::logger->dedent(logger::INFO, "CredentialsValidationThread::run() END");
@@ -82,7 +82,7 @@ namespace openbus {
            itCredentialsCache != credentialsCache.end(); 
           )
       {
-        stringstream out;
+        std::stringstream out;
         out << "Validando a credencial: " << 
           (const char*) ((*itCredentialsCache).identifier) << " ...";
         Openbus::logger->log(logger::INFO, out.str());
@@ -101,8 +101,8 @@ namespace openbus {
         ++itCredentialsCache;
       }
       dispatcher->tm_event(this, validationTime);
-      stringstream str;
-      str << "Próxima validação em: " << validationTime << "ms" << endl;
+      std::stringstream str;
+      str << "Próxima validação em: " << validationTime << "ms" << std::endl;
       Openbus::logger->log(logger::INFO, str.str());
     #endif
       Openbus::logger->dedent(logger::INFO, 
@@ -144,7 +144,7 @@ namespace openbus {
       ::IOP::ServiceContext_var sc = ri->get_request_service_context(1234);
       Openbus::logger->log(logger::INFO, "ServerInterceptor::receive_request() BEGIN");
       Openbus::logger->indent();
-      stringstream request;
+      std::stringstream request;
       char* repID = ri->target_most_derived_interface();
       char* operation = ri->operation();
       request << "RepID: " << repID;
@@ -161,7 +161,7 @@ namespace openbus {
         Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
       } else {
         CORBA::ULong z;
-        stringstream contextData;
+        std::stringstream contextData;
         contextData << "Context Data: ";
         for (z = 0; z < sc->context_data.length(); z++) {
           contextData << (unsigned) sc->context_data[z];
@@ -185,19 +185,19 @@ namespace openbus {
       #endif
         any >>= c;
       #ifdef OPENBUS_ORBIX
-        Openbus::logger->log(logger::INFO, "credential->owner: " + (string) c->owner);
-        Openbus::logger->log(logger::INFO, "credential->identifier: " + (string) c->identifier);
-        Openbus::logger->log(logger::INFO, "credential->delegate: " + (string) c->delegate);
+        Openbus::logger->log(logger::INFO, "credential->owner: " + (std::string) c->owner);
+        Openbus::logger->log(logger::INFO, "credential->identifier: " + (std::string) c->identifier);
+        Openbus::logger->log(logger::INFO, "credential->delegate: " + (std::string) c->delegate);
       #else
-        Openbus::logger->log(logger::INFO, "credential->owner: " + (string) c.owner);
-        Openbus::logger->log(logger::INFO, "credential->identifier: " + (string) c.identifier);
-        Openbus::logger->log(logger::INFO, "credential->delegate: " + (string) c.delegate);
+        Openbus::logger->log(logger::INFO, "credential->owner: " + (std::string) c.owner);
+        Openbus::logger->log(logger::INFO, "credential->identifier: " + (std::string) c.identifier);
+        Openbus::logger->log(logger::INFO, "credential->delegate: " + (std::string) c.delegate);
       #endif
         CredentialValidationPolicy policy = bus->getCredentialValidationPolicy(); 
         picurrent->set_slot(slotid, any);
         if (policy == ALWAYS) {
           Openbus::logger->log(logger::INFO, "Política de renovação de credenciais: " + 
-            (string) + "ALWAYS");
+                               (std::string) + "ALWAYS");
           Openbus::logger->log(logger::INFO, "Validando credencial REMOTAMENTE...");
           try {
           #ifdef OPENBUS_ORBIX
@@ -221,8 +221,8 @@ namespace openbus {
           }
         } else if (policy == CACHED) {
           Openbus::logger->log(logger::INFO, "Política de renovação de credenciais: " + 
-            (string) "CACHED");
-          stringstream out;
+                               (std::string) "CACHED");
+          std::stringstream out;
           out << "Número de credenciais no cache: " << credentialsCache.size();
           Openbus::logger->log(logger::INFO, out.str());
         #ifdef OPENBUS_ORBIX
@@ -270,7 +270,7 @@ namespace openbus {
             }
           }
         } else {
-          Openbus::logger->log(logger::INFO, "Política de renovação de credenciais: " + (string) "NONE");
+            Openbus::logger->log(logger::INFO, "Política de renovação de credenciais: " + (std::string) "NONE");
           Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
         }
       }
@@ -301,9 +301,9 @@ namespace openbus {
       access_control_service::Credential* c = 0;
       any >>= c;
       if (c) {
-        Openbus::logger->log(logger::INFO, "credential->owner: " + (string) c->owner);
-        Openbus::logger->log(logger::INFO, "credential->identifier: " + (string) c->identifier);
-        Openbus::logger->log(logger::INFO, "credential->delegate: " + (string) c->delegate);
+        Openbus::logger->log(logger::INFO, "credential->owner: " + (std::string) c->owner);
+        Openbus::logger->log(logger::INFO, "credential->identifier: " + (std::string) c->identifier);
+        Openbus::logger->log(logger::INFO, "credential->delegate: " + (std::string) c->delegate);
         access_control_service::Credential_var ret = new access_control_service::Credential();
         ret->owner = CORBA::string_dup(c->owner);
         ret->identifier = CORBA::string_dup(c->identifier);
@@ -311,9 +311,9 @@ namespace openbus {
     #else
       access_control_service::Credential c;
       if (any >>=c) {
-        Openbus::logger->log(logger::INFO, "credential->owner: " + (string) c.owner);
-        Openbus::logger->log(logger::INFO, "credential->identifier: " + (string) c.identifier);
-        Openbus::logger->log(logger::INFO, "credential->delegate: " + (string) c.delegate);
+        Openbus::logger->log(logger::INFO, "credential->owner: " + (std::string) c.owner);
+        Openbus::logger->log(logger::INFO, "credential->identifier: " + (std::string) c.identifier);
+        Openbus::logger->log(logger::INFO, "credential->delegate: " + (std::string) c.delegate);
         access_control_service::Credential_var ret = new access_control_service::Credential();
         ret->owner = CORBA::string_dup(c.owner);
         ret->identifier = CORBA::string_dup(c.identifier);
@@ -323,8 +323,8 @@ namespace openbus {
         return ret._retn();
       } else {
         Openbus::logger->log(logger::WARNING, "Nao foi possivel adquirir uma credencial. " + 
-          (string) + "Verifique se esta chamada esta sendo realizada dentro de um metodo " + 
-          (string) + "disponibilizado remotamente.");
+                             (std::string) + "Verifique se esta chamada esta sendo realizada dentro de um metodo " + 
+                             (std::string) + "disponibilizado remotamente.");
         Openbus::logger->dedent(logger::INFO, "ServerInterceptor::getCredential() END");
         return 0;
       }

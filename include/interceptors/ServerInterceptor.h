@@ -19,18 +19,17 @@
 
 using namespace tecgraf::openbus::core::v1_05;
 using namespace PortableInterceptor;
-using namespace std;
 
 namespace openbus {
   namespace interceptors {
 
-    class ServerInterceptor : public ServerRequestInterceptor
+    class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor
     #ifdef OPENBUS_ORBIX
                               ,public IT_CORBA::RefCountedLocalObject 
     #endif
     {
       private:
-        Current* picurrent;
+      PortableInterceptor::Current* picurrent;
         SlotId slotid;
         IOP::Codec_ptr cdr_codec;
 
@@ -48,9 +47,9 @@ namespace openbus {
           }
         };
 
-        static set<access_control_service::Credential, setCredentialCompare> 
+        static std::set<tecgraf::openbus::core::v1_05::access_control_service::Credential, setCredentialCompare> 
           credentialsCache;
-        static set<access_control_service::Credential, setCredentialCompare>::iterator 
+        static std::set<tecgraf::openbus::core::v1_05::access_control_service::Credential, setCredentialCompare>::iterator 
           itCredentialsCache;
 
       #ifdef OPENBUS_ORBIX
@@ -92,7 +91,7 @@ namespace openbus {
         void send_other(ServerRequestInfo*);
         char* name();
         void destroy();
-        access_control_service::Credential_var getCredential();
+        tecgraf::openbus::core::v1_05::access_control_service::Credential_var getCredential();
       #ifdef OPENBUS_ORBIX
         void registerValidationTimer();
       #else
