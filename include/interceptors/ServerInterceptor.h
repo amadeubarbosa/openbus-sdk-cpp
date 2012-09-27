@@ -17,9 +17,6 @@
 
 #include <set>
 
-using namespace tecgraf::openbus::core::v1_05;
-using namespace PortableInterceptor;
-
 namespace openbus {
   namespace interceptors {
 
@@ -30,7 +27,7 @@ namespace openbus {
     {
       private:
       PortableInterceptor::Current* picurrent;
-        SlotId slotid;
+      PortableInterceptor::SlotId slotid;
         IOP::Codec_ptr cdr_codec;
 
       /*
@@ -39,9 +36,8 @@ namespace openbus {
         static unsigned long validationTime;
 
         struct setCredentialCompare {
-          bool operator() (
-            const access_control_service::Credential& c1,
-            const access_control_service::Credential& c2) const
+          bool operator() (const tecgraf::openbus::core::v1_05::access_control_service::Credential& c1,
+                           const tecgraf::openbus::core::v1_05::access_control_service::Credential& c2) const
           {
             return (strcmp(c1.identifier, c2.identifier) < 0);
           }
@@ -80,15 +76,15 @@ namespace openbus {
       #endif
 
       public:
-        ServerInterceptor(Current* ppicurrent, 
-          SlotId pslotid, 
-          IOP::Codec_ptr pcdr_codec);
+        ServerInterceptor(PortableInterceptor::Current* ppicurrent, 
+                          PortableInterceptor::SlotId pslotid, 
+                          IOP::Codec_ptr pcdr_codec);
         ~ServerInterceptor();
-        void receive_request_service_contexts(ServerRequestInfo*);
-        void receive_request(ServerRequestInfo_ptr ri);
-        void send_reply(ServerRequestInfo*);
-        void send_exception(ServerRequestInfo*);
-        void send_other(ServerRequestInfo*);
+        void receive_request_service_contexts(PortableInterceptor::ServerRequestInfo*);
+        void receive_request(PortableInterceptor::ServerRequestInfo_ptr ri);
+        void send_reply(PortableInterceptor::ServerRequestInfo*);
+        void send_exception(PortableInterceptor::ServerRequestInfo*);
+        void send_other(PortableInterceptor::ServerRequestInfo*);
         char* name();
         void destroy();
         tecgraf::openbus::core::v1_05::access_control_service::Credential_var getCredential();

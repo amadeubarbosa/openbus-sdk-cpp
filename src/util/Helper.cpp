@@ -13,7 +13,7 @@ namespace openbus {
   namespace util {
 
     FacetListHelper::FacetListHelper() {
-      facetList = new registry_service::FacetList();
+      facetList = new tecgraf::openbus::core::v1_05::registry_service::FacetList();
       numElements = 0;
     }
 
@@ -28,12 +28,12 @@ namespace openbus {
       }
     }
 
-    registry_service::FacetList_var FacetListHelper::getFacetList() {
+    tecgraf::openbus::core::v1_05::registry_service::FacetList_var FacetListHelper::getFacetList() {
       return facetList;
     }
 
     PropertyListHelper::PropertyListHelper() {
-      propertyList = new registry_service::PropertyList();
+      propertyList = new tecgraf::openbus::core::v1_05::registry_service::PropertyList();
       numElements = 0;
     }
 
@@ -45,10 +45,10 @@ namespace openbus {
       const char* value)
     {
       propertyList->length(numElements + 1);
-      registry_service::Property_var property = new registry_service::Property;
+      tecgraf::openbus::core::v1_05::registry_service::Property_var property = new tecgraf::openbus::core::v1_05::registry_service::Property;
       property->name = key;
-      registry_service::PropertyValue_var propertyValue = \
-        new registry_service::PropertyValue(1);
+      tecgraf::openbus::core::v1_05::registry_service::PropertyValue_var propertyValue = \
+        new tecgraf::openbus::core::v1_05::registry_service::PropertyValue(1);
       propertyValue->length(1);
       propertyValue[(CORBA::ULong) 0] = value;
       property->value = propertyValue;
@@ -56,7 +56,7 @@ namespace openbus {
       numElements++;
     }
 
-    registry_service::PropertyList_var PropertyListHelper::getPropertyList() {
+    tecgraf::openbus::core::v1_05::registry_service::PropertyList_var PropertyListHelper::getPropertyList() {
       return propertyList;
     }
   }

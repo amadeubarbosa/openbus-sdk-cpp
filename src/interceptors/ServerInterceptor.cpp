@@ -9,8 +9,8 @@
 namespace openbus {
   namespace interceptors {
     unsigned long ServerInterceptor::validationTime = 30000; /* ms */
-    std::set<access_control_service::Credential, ServerInterceptor::setCredentialCompare>::iterator ServerInterceptor::itCredentialsCache;
-    std::set<access_control_service::Credential, ServerInterceptor::setCredentialCompare> 
+    std::set<tecgraf::openbus::core::v1_05::access_control_service::Credential, ServerInterceptor::setCredentialCompare>::iterator ServerInterceptor::itCredentialsCache;
+    std::set<tecgraf::openbus::core::v1_05::access_control_service::Credential, ServerInterceptor::setCredentialCompare> 
       ServerInterceptor::credentialsCache;
   #ifdef OPENBUS_ORBIX
     ServerInterceptor::CredentialsValidationThread::CredentialsValidationThread() {
@@ -76,7 +76,7 @@ namespace openbus {
     #ifndef _WIN32
       Openbus::logger->indent();
       openbus::Openbus* bus = openbus::Openbus::getInstance();
-      access_control_service::IAccessControlService* iAccessControlService = 
+      tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService* iAccessControlService = 
         bus->getAccessControlService();
       for (itCredentialsCache = credentialsCache.begin();
            itCredentialsCache != credentialsCache.end(); 
@@ -111,8 +111,8 @@ namespace openbus {
   #endif
 
     ServerInterceptor::ServerInterceptor(
-      Current* ppicurrent,
-      SlotId pslotid,
+                                         PortableInterceptor::Current* ppicurrent,
+                                         PortableInterceptor::SlotId pslotid,
       IOP::Codec_ptr pcdr_codec)
     {
       Openbus::logger->log(logger::INFO, "ServerInterceptor::ServerInterceptor() BEGIN");
@@ -140,7 +140,7 @@ namespace openbus {
     #endif
     }
 
-    void ServerInterceptor::receive_request(ServerRequestInfo_ptr ri) {
+    void ServerInterceptor::receive_request(PortableInterceptor::ServerRequestInfo_ptr ri) {
       ::IOP::ServiceContext_var sc = ri->get_request_service_context(1234);
       Openbus::logger->log(logger::INFO, "ServerInterceptor::receive_request() BEGIN");
       Openbus::logger->indent();
@@ -177,11 +177,11 @@ namespace openbus {
 
         CORBA::Any_var any = cdr_codec->decode_value(
           octets, 
-          access_control_service::_tc_Credential);
+          tecgraf::openbus::core::v1_05::access_control_service::_tc_Credential);
       #ifdef OPENBUS_ORBIX
-        access_control_service::Credential* c;
+        tecgraf::openbus::core::v1_05::access_control_service::Credential* c;
       #else
-        access_control_service::Credential c;
+        tecgraf::openbus::core::v1_05::access_control_service::Credential c;
       #endif
         any >>= c;
       #ifdef OPENBUS_ORBIX
@@ -277,14 +277,14 @@ namespace openbus {
     }          
       
     void ServerInterceptor::receive_request_service_contexts(
-      ServerRequestInfo*) {
+                                                             PortableInterceptor::ServerRequestInfo*) {
     }
 
-    void ServerInterceptor::send_reply(ServerRequestInfo*) {}
+    void ServerInterceptor::send_reply(PortableInterceptor::ServerRequestInfo*) {}
 
-    void ServerInterceptor::send_exception(ServerRequestInfo*) {}
+    void ServerInterceptor::send_exception(PortableInterceptor::ServerRequestInfo*) {}
 
-    void ServerInterceptor::send_other(ServerRequestInfo*) {}
+    void ServerInterceptor::send_other(PortableInterceptor::ServerRequestInfo*) {}
 
     char* ServerInterceptor::name() {
       return CORBA::string_dup("AccessControl");
@@ -292,29 +292,29 @@ namespace openbus {
 
     void ServerInterceptor::destroy() {}
 
-    access_control_service::Credential_var ServerInterceptor::getCredential() {
+    tecgraf::openbus::core::v1_05::access_control_service::Credential_var ServerInterceptor::getCredential() {
       Openbus::logger->log(logger::INFO, "ServerInterceptor::getCredential() BEGIN");
       Openbus::logger->indent();
       CORBA::Any_var any = picurrent->get_slot(slotid);
 
     #ifdef OPENBUS_ORBIX
-      access_control_service::Credential* c = 0;
+      tecgraf::openbus::core::v1_05::access_control_service::Credential* c = 0;
       any >>= c;
       if (c) {
         Openbus::logger->log(logger::INFO, "credential->owner: " + (std::string) c->owner);
         Openbus::logger->log(logger::INFO, "credential->identifier: " + (std::string) c->identifier);
         Openbus::logger->log(logger::INFO, "credential->delegate: " + (std::string) c->delegate);
-        access_control_service::Credential_var ret = new access_control_service::Credential();
+        tecgraf::openbus::core::v1_05::access_control_service::Credential_var ret = new tecgraf::openbus::core::v1_05::access_control_service::Credential();
         ret->owner = CORBA::string_dup(c->owner);
         ret->identifier = CORBA::string_dup(c->identifier);
         ret->delegate = CORBA::string_dup(c->delegate);
     #else
-      access_control_service::Credential c;
+        tecgraf::openbus::core::v1_05::access_control_service::Credential c;
       if (any >>=c) {
         Openbus::logger->log(logger::INFO, "credential->owner: " + (std::string) c.owner);
         Openbus::logger->log(logger::INFO, "credential->identifier: " + (std::string) c.identifier);
         Openbus::logger->log(logger::INFO, "credential->delegate: " + (std::string) c.delegate);
-        access_control_service::Credential_var ret = new access_control_service::Credential();
+        tecgraf::openbus::core::v1_05::access_control_service::Credential_var ret = new tecgraf::openbus::core::v1_05::access_control_service::Credential();
         ret->owner = CORBA::string_dup(c.owner);
         ret->identifier = CORBA::string_dup(c.identifier);
         ret->delegate = CORBA::string_dup(c.delegate);

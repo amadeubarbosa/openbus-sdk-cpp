@@ -15,8 +15,6 @@
   #include "stubs/mico/registry_service.h"
 #endif
 
-using namespace tecgraf::openbus::core::v1_05;
-
 /**
 * \brief openbus
 */
@@ -27,24 +25,24 @@ namespace openbus {
 */
   namespace util {
 
-    typedef registry_service::FacetList FacetList;
-    typedef registry_service::PropertyList PropertyList;
-    typedef registry_service::ServiceOffer ServiceOffer;
-    typedef registry_service::ServiceOfferList ServiceOfferList;
-    typedef registry_service::ServiceOfferList_var ServiceOfferList_var;
+    typedef tecgraf::openbus::core::v1_05::registry_service::FacetList FacetList;
+    typedef tecgraf::openbus::core::v1_05::registry_service::PropertyList PropertyList;
+    typedef tecgraf::openbus::core::v1_05::registry_service::ServiceOffer ServiceOffer;
+    typedef tecgraf::openbus::core::v1_05::registry_service::ServiceOfferList ServiceOfferList;
+    typedef tecgraf::openbus::core::v1_05::registry_service::ServiceOfferList_var ServiceOfferList_var;
 
   /**
   * \brief Auxilia na construção de uma lista de facetas.
   */
     class FacetListHelper {
       private:
-        registry_service::FacetList_var facetList;
+      tecgraf::openbus::core::v1_05::registry_service::FacetList_var facetList;
         CORBA::ULong numElements;
       public:
         FacetListHelper();
         ~FacetListHelper();
         void add(const char* facet);
-        registry_service::FacetList_var getFacetList();
+        tecgraf::openbus::core::v1_05::registry_service::FacetList_var getFacetList();
     };
 
   /**
@@ -52,7 +50,7 @@ namespace openbus {
   */
     class PropertyListHelper {
       private:
-        registry_service::PropertyList_var propertyList;
+      tecgraf::openbus::core::v1_05::registry_service::PropertyList_var propertyList;
         CORBA::ULong numElements;
       public:
         PropertyListHelper();
@@ -60,7 +58,7 @@ namespace openbus {
         void add(
           const char* key,
           const char* value);
-        registry_service::PropertyList_var getPropertyList();
+        tecgraf::openbus::core::v1_05::registry_service::PropertyList_var getPropertyList();
     };
   }
 }

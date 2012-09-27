@@ -12,8 +12,6 @@
 #include "ClientInterceptor.h"
 #include "ServerInterceptor.h"
 
-using namespace PortableInterceptor;
-
 namespace openbus {
   namespace interceptors {
 
@@ -49,14 +47,14 @@ namespace openbus {
         IOP::Codec_var codec;
         ServerInterceptor* serverInterceptor;
         ClientInterceptor* clientInterceptor;
-        SlotId slotid;
+        PortableInterceptor::SlotId slotid;
       public:
-        ORBInitInfo* _info;
+        PortableInterceptor::ORBInitInfo* _info;
         ORBInitializerImpl();
         ~ORBInitializerImpl();
 
-        void pre_init(ORBInitInfo_ptr info);
-        void post_init(ORBInitInfo_ptr info);
+        void pre_init(PortableInterceptor::ORBInitInfo_ptr info);
+        void post_init(PortableInterceptor::ORBInitInfo_ptr info);
 
         ServerInterceptor* getServerInterceptor();
     };

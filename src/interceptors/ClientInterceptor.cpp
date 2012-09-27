@@ -26,7 +26,7 @@ namespace openbus {
 
     ClientInterceptor::~ClientInterceptor() {}
 
-    void ClientInterceptor::send_request(ClientRequestInfo_ptr ri) 
+    void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr ri) 
       throw(
         CORBA::SystemException,
         PortableInterceptor::ForwardRequest)
@@ -38,7 +38,7 @@ namespace openbus {
       msg << "Method: " << operation;
       Openbus::logger->log(logger::INFO, msg.str());
       free(operation);
-      access_control_service::Credential* credential = Openbus::bus->getCredential();
+      tecgraf::openbus::core::v1_05::access_control_service::Credential* credential = Openbus::bus->getCredential();
       if (credential) {
         std::stringstream msg;
         Openbus::logger->log(logger::INFO, "Credential:");
@@ -85,13 +85,13 @@ namespace openbus {
       return CORBA::string_dup("AccessControl");
     }
     
-    void ClientInterceptor::send_poll( ClientRequestInfo_ptr ri ) 
+    void ClientInterceptor::send_poll( PortableInterceptor::ClientRequestInfo_ptr ri ) 
       throw(CORBA::SystemException) {}
     
-    void ClientInterceptor::receive_reply( ClientRequestInfo_ptr ri ) 
+    void ClientInterceptor::receive_reply( PortableInterceptor::ClientRequestInfo_ptr ri ) 
       throw(CORBA::SystemException) {}
 
-    void ClientInterceptor::receive_exception( ClientRequestInfo_ptr ri ) 
+    void ClientInterceptor::receive_exception( PortableInterceptor::ClientRequestInfo_ptr ri ) 
       throw(
         CORBA::SystemException,
         PortableInterceptor::ForwardRequest)
@@ -190,7 +190,7 @@ namespace openbus {
     #endif
     }
 
-    void ClientInterceptor::receive_other( ClientRequestInfo_ptr ri ) 
+    void ClientInterceptor::receive_other( PortableInterceptor::ClientRequestInfo_ptr ri ) 
       throw(
         CORBA::SystemException,
         PortableInterceptor::ForwardRequest) {}

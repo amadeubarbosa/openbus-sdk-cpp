@@ -10,8 +10,6 @@
 #include "interceptors/ORBInitializerImpl.h"
 #include "openbus.h"
 
-using namespace std;
-
 namespace openbus {
   namespace interceptors {
     bool ORBInitializerImpl::singleInstance = false;
@@ -23,7 +21,7 @@ namespace openbus {
       Openbus::logger->dedent(logger::INFO, "ORBInitializerImpl::~ORBInitializerImpl() END");
     }
 
-    void ORBInitializerImpl::pre_init(ORBInitInfo_ptr info) {
+    void ORBInitializerImpl::pre_init(PortableInterceptor::ORBInitInfo_ptr info) {
       Openbus::logger->log(logger::INFO, "ORBInitializerImpl::pre_init() BEGIN");
       Openbus::logger->indent();
       _info = info;
@@ -38,7 +36,7 @@ namespace openbus {
       slotid = _info->allocate_slot_id();
 
       CORBA::Object_var init_ref = _info->resolve_initial_references("PICurrent");
-      Current_var pi_current = PortableInterceptor::Current::_narrow(init_ref);
+      PortableInterceptor::Current_var pi_current = PortableInterceptor::Current::_narrow(init_ref);
 
       serverInterceptor = new ServerInterceptor(
         pi_current, 
@@ -52,7 +50,7 @@ namespace openbus {
       Openbus::logger->dedent(logger::INFO, "ORBInitializerImpl::pre_init() END");
     }
 
-    void ORBInitializerImpl::post_init(ORBInitInfo_ptr info) {}
+    void ORBInitializerImpl::post_init(PortableInterceptor::ORBInitInfo_ptr info) {}
 
     ServerInterceptor* ORBInitializerImpl::getServerInterceptor() {
       return serverInterceptor;

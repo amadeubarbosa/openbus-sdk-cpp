@@ -295,9 +295,9 @@ namespace openbus {
     MICOMT::Thread::set_specific(threadKey, 0);
   #endif
     lease = 0;
-    iAccessControlService = access_control_service::IAccessControlService::_nil();
+    iAccessControlService = tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService::_nil();
     iRegistryService = 0;
-    iLeaseProvider = access_control_service::ILeaseProvider::_nil();
+    iLeaseProvider = tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider::_nil();
     iComponentAccessControlService = scs::core::IComponent::_nil();
   }
 
@@ -491,15 +491,15 @@ namespace openbus {
     return poa;
   }
 
-  access_control_service::Credential_var Openbus::getInterceptedCredential() {
+  tecgraf::openbus::core::v1_05::access_control_service::Credential_var Openbus::getInterceptedCredential() {
     return ini->getServerInterceptor()->getCredential();
   }
 
-  access_control_service::IAccessControlService* Openbus::getAccessControlService() {
+  tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService* Openbus::getAccessControlService() {
     return iAccessControlService;
   }
 
-  registry_service::IRegistryService* Openbus::getRegistryService() {
+  tecgraf::openbus::core::v1_05::registry_service::IRegistryService* Openbus::getRegistryService() {
     logger->log(logger::INFO, "Openbus::getRegistryService() BEGIN");
     logger->indent();
     scs::core::IComponent_var iComponentRegistryService;
@@ -514,7 +514,7 @@ namespace openbus {
           CORBA::Object_var objref = conns[(CORBA::ULong) 0].objref;
           iComponentRegistryService = scs::core::IComponent::_narrow(objref);
           objref = iComponentRegistryService->getFacetByName("IRegistryService_v1_05");
-          iRegistryService = registry_service::IRegistryService::_narrow(objref);
+          iRegistryService = tecgraf::openbus::core::v1_05::registry_service::IRegistryService::_narrow(objref);
         }
       } catch (CORBA::Exception& e) {
         logger->log(logger::ERROR, "Não foi possível obter o serviço de registro.");
@@ -525,10 +525,10 @@ namespace openbus {
     return iRegistryService;
   } 
 
-  access_control_service::Credential* Openbus::getCredential() {
+  tecgraf::openbus::core::v1_05::access_control_service::Credential* Openbus::getCredential() {
   #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
-    access_control_service::Credential* threadCredential = 
-      (access_control_service::Credential*) MICOMT::Thread::get_specific(threadKey);
+    tecgraf::openbus::core::v1_05::access_control_service::Credential* threadCredential = 
+      (tecgraf::openbus::core::v1_05::access_control_service::Credential*) MICOMT::Thread::get_specific(threadKey);
     if (threadCredential) {
       return threadCredential;
     } else {
@@ -543,7 +543,7 @@ namespace openbus {
     return credentialValidationPolicy;
   }
 
-  void Openbus::setThreadCredential(access_control_service::Credential* credential) {
+  void Openbus::setThreadCredential(tecgraf::openbus::core::v1_05::access_control_service::Credential* credential) {
   #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
     MICOMT::Thread::set_specific(threadKey, (void*) credential);
   #else
@@ -577,18 +577,18 @@ namespace openbus {
     iComponentAccessControlService = scs::core::IComponent::_narrow(objIC);
     CORBA::Object_var objLP = iComponentAccessControlService->getFacet(
       "IDL:tecgraf/openbus/core/v1_05/access_control_service/ILeaseProvider:1.0");
-    iLeaseProvider = access_control_service::ILeaseProvider::_narrow(objLP);
+    iLeaseProvider = tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider::_narrow(objLP);
     CORBA::Object_var objACS = iComponentAccessControlService->getFacet(
       "IDL:tecgraf/openbus/core/v1_05/access_control_service/IAccessControlService:1.0");
     iAccessControlService = 
-      access_control_service::IAccessControlService::_narrow(objACS);
+      tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService::_narrow(objACS);
     CORBA::Object_var objFT = iComponentAccessControlService->getFacet(
       "IDL:tecgraf/openbus/fault_tolerance/v1_05/IFaultTolerantService:1.0");
     iFaultTolerantService = tecgraf::openbus::fault_tolerance::v1_05::IFaultTolerantService::_narrow(objFT);
     logger->dedent(logger::INFO, "Openbus::createProxyToIAccessControlService() END");
   }
 
-  registry_service::IRegistryService* Openbus::connect(
+  tecgraf::openbus::core::v1_05::registry_service::IRegistryService* Openbus::connect(
     const char* user,
     const char* password)
     throw (CORBA::SystemException, LOGIN_FAILURE)
@@ -674,7 +674,7 @@ namespace openbus {
     }
   }
 
-  registry_service::IRegistryService* Openbus::connect(
+  tecgraf::openbus::core::v1_05::registry_service::IRegistryService* Openbus::connect(
     const char* entity,
     const char* privateKeyFilename,
     const char* ACSCertificateFilename)
@@ -706,7 +706,7 @@ namespace openbus {
       /* Requisição de um "desafio" que somente poderá ser decifrado através
       *  da chave privada da entidade reconhecida pelo barramento.
       */
-        OctetSeq_var octetSeq =
+        tecgraf::openbus::core::v1_05::OctetSeq_var octetSeq =
           iAccessControlService->getChallenge(entity);
         if (octetSeq->length() == 0) {
           logger->log(logger::ERROR, "Throwing SECURITY_EXCEPTION...");
@@ -791,7 +791,7 @@ namespace openbus {
 
         free(challengePlainText);
 
-        OctetSeq_var answerOctetSeq = new OctetSeq(
+        tecgraf::openbus::core::v1_05::OctetSeq_var answerOctetSeq = new tecgraf::openbus::core::v1_05::OctetSeq(
           (CORBA::ULong) RSAModulusSize, (CORBA::ULong) RSAModulusSize,
           (CORBA::Octet*)answer, 0);
 
