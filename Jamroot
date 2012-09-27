@@ -1,0 +1,87 @@
+
+import common ;
+import os ;
+import string ;
+
+local scs-path-env = [ os.environ SCS_PATH ] ;
+local openssl-lib-path-env = [ os.environ OPENSSL_LIB_PATH ] ;
+local openssl-include-path-env = [ os.environ OPENSSL_INCLUDE_PATH ] ;
+local logger-path-env = [ os.environ LOGGER_PATH ] ;
+local openbus-idl-path-env = [ os.environ OPENBUS_IDL_PATH ] ;
+
+path-constant scs-path : $(scs-path-env) ;
+path-constant openssl-lib-path : $(openssl-lib-path-env) ;
+path-constant openssl-include-path : $(openssl-include-path-env) ;
+path-constant openbus-idl-path : $(openbus-idl-path-env) ;
+
+use-project scs : $(scs-path) ;
+use-project logger : $(logger-path-env) ;
+
+project openssl ;
+
+lib crypto : : <name>crypto <search>$(openssl-lib-path) ;
+
+lib openssl : crypto : <name>ssl <search>$(openssl-lib-path)
+ : : <include>$(openssl-include-path)
+ ;
+
+project openbus ;
+
+path-constant here : . ;
+
+alias legacy_idls : $(here)/legacy/idl/credential_v1_5.idl
+ ;
+
+alias idls : $(openbus-idl-path)/access_control.idl
+ $(openbus-idl-path)/core.idl
+ $(openbus-idl-path)/credential.idl
+ $(openbus-idl-path)/offer_registry.idl
+ /scs//idls
+ : <include>$(openbus-idl-path)
+ : : <include>$(openbus-idl-path)
+ ;
+
+rule tag ( name : type ? : property-set )
+{
+  if $(type) in STATIC_LIB SHARED_LIB IMPORT_LIB
+  {
+    local result ;
+    local debug ;
+    if <variant>debug in [ $(property-set).raw ]
+    {
+      debug = -debug ;
+    }
+    if <threading>multi in [ $(property-set).raw ]
+    {
+      result = [ common.format-name <base> -mico
+        multithread $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    else
+    {
+      result = [ common.format-name <base> -mico
+        singlethread $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    return $(result) ;
+  }
+}
+
+lib openbus : src/Connection.cpp src/ConnectionManager.cpp
+ src/Connection_impl.cpp src/ORBInitializer.cpp
+ src/interceptors/ClientInterceptor_impl.cpp
+ src/interceptors/ORBInitializer_impl.cpp
+ src/interceptors/ServerInterceptor_impl.cpp
+ src/util/OpenSSL.cpp src/util/Ticket_impl.c
+ /mico//mico /scs//scs /boost//headers /logger//logger
+ idls legacy_idls /openssl//openssl
+ : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
+   <include>include
+   <threading>multi:<source>/boost//thread
+   <implicit-dependency>idls
+   <implicit-dependency>legacy_idls
+   <tag>@tag
+ :
+ : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
+   <include>include
+ ;
+
+install stage : openbus ;
