@@ -13,12 +13,8 @@
 
 #include "stubs/hello.h"
 
-using namespace std;
-using namespace tecgraf::openbus::core::v1_05;
-using namespace tecgraf::openbus::core::v1_05::registry_service;
-
 openbus::Openbus* bus;
-registry_service::IRegistryService* registryService = 0;
+tecgraf::openbus::core::v1_05::registry_service::IRegistryService* registryService = 0;
 char* registryId;
 scs::core::ComponentContext* componentContext;
 const char* entityName;
@@ -28,16 +24,16 @@ const char* facetName;
 
 struct HelloImpl : virtual public POA_demoidl::hello::IHello {
     void sayHello() throw(CORBA::SystemException) {
-      cout << "Servant diz: HELLO!" << endl;
-      access_control_service::Credential_var credential = 
+      std::cout << "Servant diz: HELLO!" << std::endl;
+      tecgraf::openbus::core::v1_05::access_control_service::Credential_var credential = 
         bus->getInterceptedCredential();
-      cout << "Usuario OpenBus que fez a chamada: " << credential->owner.in()
-        << endl;
+      std::cout << "Usuario OpenBus que fez a chamada: " << credential->owner.in()
+        << std::endl;
     };
 };
 
 void termination_handler(int p) {
-  cout << "Encerrando o processo servidor..." << endl;
+  std::cout << "Encerrando o processo servidor..." << std::endl;
   openbus::Openbus::terminationHandlerCallback((long) signal);
 }
 
@@ -67,7 +63,7 @@ int main(int argc, char* argv[]) {
 
   bus->init(argc, argv);
 
-  cout << "Conectando no barramento..." << endl;
+  std::cout << "Conectando no barramento..." << std::endl;
 
 /* Conexao com o barramento atraves de certificado. */
   try {
@@ -76,19 +72,19 @@ int main(int argc, char* argv[]) {
       privateKeyFilename,
       ACSCertificateFilename);
   } catch (CORBA::SystemException& e) {
-    cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
-         << "* Falha na comunicacao. *" << endl;
+    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl \
+         << "* Falha na comunicacao. *" << std::endl;
     exit(1);
   } catch (openbus::LOGIN_FAILURE& e) {
-    cout << "** Nao foi possivel se conectar ao barramento. **" << endl \
-         << "* Par usuario/senha invalido. *" << endl;
+    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl \
+         << "* Par usuario/senha invalido. *" << std::endl;
     exit(1);
   } catch (openbus::SECURITY_EXCEPTION& e) {
-    cout << e.what() << endl;
+    std::cout << e.what() << std::endl;
     exit(1);
   }
 
-  cout << "Conexao com o barramento estabelecida com sucesso!" << endl;
+  std::cout << "Conexao com o barramento estabelecida com sucesso!" << std::endl;
 
 /* Definicao do componente. */
   scs::core::ComponentId componentId;
@@ -118,33 +114,33 @@ int main(int argc, char* argv[]) {
     new openbus::util::PropertyListHelper();
 
 /* Criacao de uma *oferta de servico*. */
-  registry_service::ServiceOffer serviceOffer;
+  tecgraf::openbus::core::v1_05::registry_service::ServiceOffer serviceOffer;
   serviceOffer.properties = propertyListHelper->getPropertyList();
   serviceOffer.member = componentContext->getIComponent();
   delete propertyListHelper;
 
-  cout << "Registrando servico IHello no barramento..." << endl;
+  std::cout << "Registrando servico IHello no barramento..." << std::endl;
 
 /* Registro do servico no barramento. */
   try {
     if (registryService) {
       registryId = registryService->_cxx_register(serviceOffer);
     } else {
-      cout << "Nao foi possivel adquirir um proxy para o servico de registro." 
-        << endl;
+      std::cout << "Nao foi possivel adquirir um proxy para o servico de registro." 
+        << std::endl;
       exit(1);
     }
-  } catch (UnathorizedFacets& e) {
-    cout << "Nao foi possivel registrar IHello." << endl;
+  } catch (tecgraf::openbus::core::v1_05::registry_service::UnathorizedFacets& e) {
+    std::cout << "Nao foi possivel registrar IHello." << std::endl;
     CORBA::ULong idx;
     CORBA::ULong length = e.facets.length();
     for (idx = 0; idx < length; idx++) {
-      cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
+      std::cout << "Faceta nao autorizada: " << e.facets[idx] << std::endl;
     }
     exit(1);
   }
-  cout << "Servico IHello registrado." << endl;
-  cout << "Aguardando requisicoes..." << endl;
+  std::cout << "Servico IHello registrado." << std::endl;
+  std::cout << "Aguardando requisicoes..." << std::endl;
 
   bus->run();
 
