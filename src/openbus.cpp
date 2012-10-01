@@ -227,13 +227,13 @@ namespace openbus {
         timeRenewingFixe = true;
       } else if (!strcmp(_argv[idx], "-OpenbusDebug")) {
         char* debugLevelStr = _argv[++idx];
-        if (!strcmp(debugLevelStr, "logger::ALL")) {
+        if (!strcmp(debugLevelStr, "ALL")) {
           debugLevel = logger::ALL;
-        } else if (!strcmp(debugLevelStr, "logger::ERROR")) {
+        } else if (!strcmp(debugLevelStr, "ERROR")) {
           debugLevel = logger::ERROR;
-        } else if (!strcmp(debugLevelStr, "logger::INFO")) {
+        } else if (!strcmp(debugLevelStr, "INFO")) {
           debugLevel = logger::INFO;
-        } else if (!strcmp(debugLevelStr, "logger::WARNING")) {
+        } else if (!strcmp(debugLevelStr, "WARNING")) {
           debugLevel = logger::WARNING;
         }
       } else if (!strcmp(_argv[idx], "-OpenbusDebugFile")) {
