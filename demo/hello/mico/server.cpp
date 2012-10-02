@@ -13,23 +13,22 @@
 
 #include "stubs/hello.h"
 
-openbus::Openbus* bus;
-tecgraf::openbus::core::v1_05::registry_service::IRegistryService* registryService = 0;
-char* registryId;
-scs::core::ComponentContext* componentContext;
-const char* entityName;
-const char* privateKeyFilename;
-const char* ACSCertificateFilename;
-const char* facetName;
+openbus::Openbus *bus;
+tecgraf::openbus::core::v1_05::registry_service::IRegistryService *registryService = 0;
+char *registryId;
+scs::core::ComponentContext *componentContext;
+const char *entityName;
+const char *privateKeyFilename;
+const char *ACSCertificateFilename;
+const char *facetName;
 
 struct HelloImpl : virtual public POA_demoidl::hello::IHello {
-    void sayHello() throw(CORBA::SystemException) {
-      std::cout << "Servant diz: HELLO!" << std::endl;
-      tecgraf::openbus::core::v1_05::access_control_service::Credential_var credential = 
-        bus->getInterceptedCredential();
-      std::cout << "Usuario OpenBus que fez a chamada: " << credential->owner.in()
-        << std::endl;
-    };
+  void sayHello() {
+    std::cout << "Servant diz: HELLO!" << std::endl;
+    tecgraf::openbus::core::v1_05::access_control_service::Credential_var credential = 
+      bus->getInterceptedCredential();
+    std::cout << "Usuario OpenBus que fez a chamada: " << credential->owner.in() << std::endl;
+  };
 };
 
 void termination_handler(int p) {
@@ -37,25 +36,19 @@ void termination_handler(int p) {
   openbus::Openbus::terminationHandlerCallback((long) signal);
 }
 
-void commandLineParse(int argc, char* argv[]) {
-  for (short i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "-EntityName")) {
-      i++;
-      entityName = argv[i];
-    } else if (!strcmp(argv[i], "-PrivateKeyFilename")) {
-      i++;
-      privateKeyFilename = argv[i];
-    } else if (!strcmp(argv[i], "-ACSCertificateFilename")) {
-      i++;
-      ACSCertificateFilename = argv[i];
-    } else if (!strcmp(argv[i], "-FacetName")) {
-      i++;
-      facetName = argv[i];
-    } 
-  }
+void commandLineParse(int argc, char **argv) {
+  for (short i = 1; i < argc; ++i)
+    if (!strcmp(argv[i], "-EntityName"))
+      entityName = argv[++i];
+    else if (!strcmp(argv[i], "-PrivateKeyFilename"))
+      privateKeyFilename = argv[++i];
+    else if (!strcmp(argv[i], "-ACSCertificateFilename"))
+      ACSCertificateFilename = argv[++i];
+    else if (!strcmp(argv[i], "-FacetName"))
+      facetName = argv[++i];
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char **argv) {
   signal(SIGINT, termination_handler);
   bus = openbus::Openbus::getInstance();
 
@@ -67,19 +60,16 @@ int main(int argc, char* argv[]) {
 
 /* Conexao com o barramento atraves de certificado. */
   try {
-    registryService = bus->connect(
-      entityName, 
-      privateKeyFilename,
-      ACSCertificateFilename);
-  } catch (CORBA::SystemException& e) {
-    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl \
-         << "* Falha na comunicacao. *" << std::endl;
+    registryService = bus->connect(entityName, privateKeyFilename, ACSCertificateFilename);
+  } catch (const CORBA::SystemException &) {
+    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl
+              << "* Falha na comunicacao. *" << std::endl;
     exit(1);
-  } catch (openbus::LOGIN_FAILURE& e) {
-    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl \
-         << "* Par usuario/senha invalido. *" << std::endl;
+  } catch (const openbus::LOGIN_FAILURE &) {
+    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl
+              << "* Par usuario/senha invalido. *" << std::endl;
     exit(1);
-  } catch (openbus::SECURITY_EXCEPTION& e) {
+  } catch (const openbus::SECURITY_EXCEPTION &e) {
     std::cout << e.what() << std::endl;
     exit(1);
   }
@@ -98,7 +88,7 @@ int main(int argc, char* argv[]) {
 
   std::auto_ptr<PortableServer::ServantBase> facet(new HelloImpl);
   ::componentContext->addFacet(facetName, "IDL:demoidl/hello/IHello:1.0", facet);
-  assert(facet.get() == 0);
+  assert(!facet.get());
 
 // /* Descricao das facetas. */
 //   std::list<scs::core::ExtendedFacetDescription> extFacets;
@@ -110,14 +100,12 @@ int main(int argc, char* argv[]) {
 //   extFacets.push_back(helloDesc);
 //   componentContext = componentBuilder->newComponent(extFacets, componentId);
 
-  openbus::util::PropertyListHelper* propertyListHelper = \
-    new openbus::util::PropertyListHelper();
+  openbus::util::PropertyListHelper propertyListHelper;
 
 /* Criacao de uma *oferta de servico*. */
   tecgraf::openbus::core::v1_05::registry_service::ServiceOffer serviceOffer;
-  serviceOffer.properties = propertyListHelper->getPropertyList();
+  serviceOffer.properties = propertyListHelper.getPropertyList();
   serviceOffer.member = componentContext->getIComponent();
-  delete propertyListHelper;
 
   std::cout << "Registrando servico IHello no barramento..." << std::endl;
 
@@ -126,17 +114,13 @@ int main(int argc, char* argv[]) {
     if (registryService) {
       registryId = registryService->_cxx_register(serviceOffer);
     } else {
-      std::cout << "Nao foi possivel adquirir um proxy para o servico de registro." 
-        << std::endl;
+      std::cout << "Nao foi possivel adquirir um proxy para o servico de registro." << std::endl;
       exit(1);
     }
-  } catch (tecgraf::openbus::core::v1_05::registry_service::UnathorizedFacets& e) {
+  } catch (const tecgraf::openbus::core::v1_05::registry_service::UnathorizedFacets &e) {
     std::cout << "Nao foi possivel registrar IHello." << std::endl;
-    CORBA::ULong idx;
-    CORBA::ULong length = e.facets.length();
-    for (idx = 0; idx < length; idx++) {
+    for (CORBA::ULong idx = 0; idx < e.facets.length(); ++idx)
       std::cout << "Faceta nao autorizada: " << e.facets[idx] << std::endl;
-    }
     exit(1);
   }
   std::cout << "Servico IHello registrado." << std::endl;

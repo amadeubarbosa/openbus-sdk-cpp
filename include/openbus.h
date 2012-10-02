@@ -550,7 +550,7 @@ private:
      *  @return  Se a tentativa de conexão for bem sucedida, uma instância que representa o 
      *    serviço é retornada.
      */
-    tecgraf::openbus::core::v1_05::registry_service::IRegistryService* connect(const char *user, const char *password);
+    tecgraf::openbus::core::v1_05::registry_service::IRegistryService * connect(const char *user, const char *password);
 
     /**
      *  Realiza uma tentativa de conexão com o barramento utilizando o mecanismo de 
@@ -570,9 +570,9 @@ private:
      *  @return  Se a tentativa de conexão for bem sucedida, uma instância que representa o 
      *    serviço é retornada.
      */
-    tecgraf::openbus::core::v1_05::registry_service::IRegistryService* connect(const char *entity, 
-                                                                               const char *privateKeyFilename,
-                                                                               const char *ACSCertificateFilename);
+    tecgraf::openbus::core::v1_05::registry_service::IRegistryService * connect(const char *entity, 
+                                                                                const char *privateKeyFilename,
+                                                                                const char *ACSCertificateFilename);
 
     /**
      *  Desfaz a conexão atual.

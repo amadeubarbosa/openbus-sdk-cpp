@@ -9,28 +9,23 @@
 #include "stubs/hello.h"
 #include <openbus.h>
 
-const char* busUser;
-const char* busPassword;
-const char* facetName;
+const char *busUser;
+const char *busPassword;
+const char *facetName;
 
-void commandLineParse(int argc, char* argv[]) {
-  for (short i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "-BusUser")) {
-      i++;
-      busUser = argv[i];
-    } else if (!strcmp(argv[i], "-BusPassword")) {
-      i++;
-      busPassword = argv[i];
-    } else if (!strcmp(argv[i], "-FacetName")) {
-      i++;
-      facetName = argv[i];
-    } 
-  }
+void commandLineParse(int argc, char **argv) {
+  for (short i = 1; i < argc; ++i)
+    if (!strcmp(argv[i], "-BusUser"))
+      busUser = argv[++i];
+    else if (!strcmp(argv[i], "-BusPassword"))
+      busPassword = argv[++i];
+    else if (!strcmp(argv[i], "-FacetName"))
+      facetName = argv[++i];
 }
 
-int main(int argc, char* argv[]) {
-  openbus::Openbus* bus;
-  tecgraf::openbus::core::v1_05::registry_service::IRegistryService* registryService;
+int main(int argc, char **argv) {
+  openbus::Openbus *bus;
+  tecgraf::openbus::core::v1_05::registry_service::IRegistryService *registryService;
 
   bus = openbus::Openbus::getInstance();
 
@@ -42,16 +37,14 @@ int main(int argc, char* argv[]) {
 
 /* Conexão com o barramento. */
   try {
-    registryService = bus->connect(
-      busUser,
-      busPassword);
-  } catch (CORBA::SystemException& e) {
-    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl \
-         << "* Falha na comunicacao. *" << std::endl;
+    registryService = bus->connect(busUser, busPassword);
+  } catch (const CORBA::SystemException &) {
+    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl
+              << "* Falha na comunicacao. *" << std::endl;
     exit(-1);
-  } catch (openbus::LOGIN_FAILURE& e) {
-    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl \
-         << "* Par usuario/senha inválido. *" << std::endl;
+  } catch (const openbus::LOGIN_FAILURE &) {
+    std::cout << "** Nao foi possivel se conectar ao barramento. **" << std::endl
+              << "* Par usuario/senha inválido. *" << std::endl;
     exit(-1);
   }
 
@@ -61,19 +54,19 @@ int main(int argc, char* argv[]) {
 *  O trabalho de criação da lista é facilitado pelo uso da classe 
 *  FacetListHelper.
 */
-  openbus::util::FacetListHelper* facetListHelper =
-    new openbus::util::FacetListHelper();
-  facetListHelper->add(facetName);
+  openbus::util::FacetListHelper facetListHelper;
+  facetListHelper.add(facetName);
 
 /* Busca no barramento o serviço desejado.
 *  Uma lista de *ofertas de serviço* é retornada para o usuário.
 *  OBS.: Neste demo somente há uma oferta de serviço.
 */
   tecgraf::openbus::core::v1_05::registry_service::ServiceOfferList_var serviceOfferList =
-    registryService->find(facetListHelper->getFacetList());
-  delete facetListHelper;
+    registryService->find(facetListHelper.getFacetList());
 
-  if (serviceOfferList->length() > 0) {
+  if (!serviceOfferList->length()) {
+    std::cout << "Nenhuma oferta encontrada." << std::endl;
+  } else {
     tecgraf::openbus::core::v1_05::registry_service::ServiceOffer serviceOffer = serviceOfferList[(CORBA::ULong) 0];
   
     scs::core::IComponent_var component = serviceOffer.member;
@@ -83,8 +76,6 @@ int main(int argc, char* argv[]) {
     std::cout << "Fazendo chamada remota sayHello()..." << std::endl;
 
     hello->sayHello();
-  } else {
-    std::cout << "Nenhuma oferta encontrada." << std::endl;
   }
   
   std::cout << "Desconectando-se do barramento..." << std::endl;
