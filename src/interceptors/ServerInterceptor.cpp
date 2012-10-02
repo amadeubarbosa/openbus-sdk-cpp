@@ -154,9 +154,9 @@ namespace openbus {
       Openbus::logger->log(logger::INFO, request.str());
       
       openbus::Openbus* bus = openbus::Openbus::getInstance();
-      if (!bus->isInterceptable(repID, operation)) {
-        free(repID);
-        free(operation);
+      if (!bus->isInterceptable(repID, operation) || !strcmp(operation, "_is_a") 
+          || !strcmp(operation, "_interface") || !strcmp(operation, "_non_existent"))
+      {
         Openbus::logger->log(logger::WARNING, "Este método não será interceptado.");
         Openbus::logger->dedent(logger::INFO, "ServerInterceptor::receive_request() END");
       } else {

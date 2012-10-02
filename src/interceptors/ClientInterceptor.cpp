@@ -27,9 +27,6 @@ namespace openbus {
     ClientInterceptor::~ClientInterceptor() {}
 
     void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr ri) 
-      throw(
-        CORBA::SystemException,
-        PortableInterceptor::ForwardRequest)
     {
       Openbus::logger->log(logger::INFO, "ClientInterceptor::send_request() BEGIN");
       Openbus::logger->indent();
@@ -79,22 +76,13 @@ namespace openbus {
       Openbus::logger->dedent(logger::INFO, "ClientInterceptor::send_request() END");
     }
 
-    char* ClientInterceptor::name() 
-      throw(CORBA::SystemException)
-    {
-      return CORBA::string_dup("AccessControl");
-    }
+    char* ClientInterceptor::name() { return CORBA::string_dup("AccessControl"); }
     
-    void ClientInterceptor::send_poll( PortableInterceptor::ClientRequestInfo_ptr ri ) 
-      throw(CORBA::SystemException) {}
+    void ClientInterceptor::send_poll( PortableInterceptor::ClientRequestInfo_ptr ri ) {}
     
-    void ClientInterceptor::receive_reply( PortableInterceptor::ClientRequestInfo_ptr ri ) 
-      throw(CORBA::SystemException) {}
+    void ClientInterceptor::receive_reply( PortableInterceptor::ClientRequestInfo_ptr ri ) {}
 
     void ClientInterceptor::receive_exception( PortableInterceptor::ClientRequestInfo_ptr ri ) 
-      throw(
-        CORBA::SystemException,
-        PortableInterceptor::ForwardRequest)
     {
     #if 0
       Openbus::logger->log(logger::INFO, "ClientInterceptor::receive_exception() BEGIN");
@@ -190,10 +178,7 @@ namespace openbus {
     #endif
     }
 
-    void ClientInterceptor::receive_other( PortableInterceptor::ClientRequestInfo_ptr ri ) 
-      throw(
-        CORBA::SystemException,
-        PortableInterceptor::ForwardRequest) {}
+    void ClientInterceptor::receive_other( PortableInterceptor::ClientRequestInfo_ptr ri ) {}
     
     void ClientInterceptor::destroy() {}
   }

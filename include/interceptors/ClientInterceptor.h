@@ -31,24 +31,12 @@ namespace openbus {
       public:
         ClientInterceptor(IOP::Codec_ptr pcdr_codec);
         ~ClientInterceptor();
-        void send_request(PortableInterceptor::ClientRequestInfo_ptr ri) 
-          throw(
-            CORBA::SystemException,
-            PortableInterceptor::ForwardRequest);
-        void send_poll(PortableInterceptor::ClientRequestInfo_ptr ri) 
-          throw(CORBA::SystemException);
-        void receive_reply(PortableInterceptor::ClientRequestInfo_ptr ri) 
-          throw(CORBA::SystemException);
-        void receive_exception(PortableInterceptor::ClientRequestInfo_ptr ri) 
-          throw(
-            CORBA::SystemException,
-            PortableInterceptor::ForwardRequest);
-        void receive_other(PortableInterceptor::ClientRequestInfo_ptr ri) 
-          throw(
-            CORBA::SystemException,
-            PortableInterceptor::ForwardRequest);
-        char* name()
-          throw(CORBA::SystemException);
+        void send_request(PortableInterceptor::ClientRequestInfo_ptr ri);
+        void send_poll(PortableInterceptor::ClientRequestInfo_ptr ri);
+        void receive_reply(PortableInterceptor::ClientRequestInfo_ptr ri);
+        void receive_exception(PortableInterceptor::ClientRequestInfo_ptr ri);
+        void receive_other(PortableInterceptor::ClientRequestInfo_ptr ri);
+        char* name();
         void destroy();
     };
   }

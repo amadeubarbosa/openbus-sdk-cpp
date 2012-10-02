@@ -591,7 +591,6 @@ namespace openbus {
   tecgraf::openbus::core::v1_05::registry_service::IRegistryService* Openbus::connect(
     const char* user,
     const char* password)
-    throw (CORBA::SystemException, LOGIN_FAILURE)
   {
     logger->log(logger::INFO, "Openbus::connect() BEGIN");
     logger->indent();
@@ -678,7 +677,6 @@ namespace openbus {
     const char* entity,
     const char* privateKeyFilename,
     const char* ACSCertificateFilename)
-    throw (CORBA::SystemException, LOGIN_FAILURE, SECURITY_EXCEPTION)
   {
     mutex.lock();
     logger->log(logger::INFO, "Openbus::connect() BEGIN");
