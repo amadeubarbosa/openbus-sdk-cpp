@@ -3,7 +3,7 @@
 #include <openssl/x509.h>
 
 #include "openbus/interceptors/ServerInterceptor_impl.h"
-#include "legacy/stubs/credential_v1_5.h"
+#include "stubs/credential_v1_5.h"
 #include "openbus/util/OpenSSL.h"
 #include "openbus/log.h"
 #include "openbus/util/AutoLock_impl.h"

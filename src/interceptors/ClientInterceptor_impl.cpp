@@ -2,7 +2,7 @@
 #include <sstream>
 
 #include "openbus/interceptors/ClientInterceptor_impl.h"
-#include "legacy/stubs/credential_v1_5.h"
+#include "stubs/credential_v1_5.h"
 #include "openbus/log.h"
 #include "openbus/util/OpenSSL.h"
 #include "openbus/util/AutoLock_impl.h"

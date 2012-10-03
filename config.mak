@@ -76,6 +76,7 @@ TARGETROOT=lib
 
 INCLUDES=. \
          legacy/stubs \
+         legacy \
          stubs \
          include \
          ${MICO_INC} \
