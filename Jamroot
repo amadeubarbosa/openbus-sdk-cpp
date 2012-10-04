@@ -97,7 +97,7 @@ explicit stage-libs ;
 
 feature.feature core-idl-dummy-feature : one two three : link-incompatible ;
 mico-idl.cpp-h cpp-h-stub : core-idls : <core-idl-dummy-feature>two ;
-install stage-stubs : cpp-h-stub : <location>stage/stub
+install stage-stubs : cpp-h-stub : <location>stage/stubs
  <install-dependencies>on <install-type>CPP <install-type>H
  <link>static
  ;
