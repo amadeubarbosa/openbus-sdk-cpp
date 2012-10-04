@@ -92,12 +92,44 @@ lib openbus : src/Connection.cpp src/ConnectionManager.cpp
  ;
 explicit openbus ;
 
-install stage-libs : openbus : <location>stage ;
+local rule requirements-location-suffix ( requirements * )
+{
+  local mt = ;
+  local dbg = ;
+  if <threading>multi in $(requirements)
+  {
+    mt = -multi ;
+  }
+  else
+  {
+    mt = -single ;
+  }
+  if <variant>debug in $(requirements)
+  {
+    dbg = -debug ;
+  }
+  return $(mt)$(dbg) ;
+}
+
+rule stage-libs-location ( requirements * )
+{
+  local suffix = [ requirements-location-suffix $(requirements) ] ;
+  return <location>stage$(suffix) ;
+}
+
+rule stage-stub-location ( requirements * )
+{
+  local suffix = [ requirements-location-suffix $(requirements) ] ;
+  return <location>stage$(suffix)/stubs ;
+}
+
+install stage-libs : openbus : <conditional>@stage-libs-location ;
 explicit stage-libs ;
 
 feature.feature core-idl-dummy-feature : one two three : link-incompatible ;
 mico-idl.cpp-h cpp-h-stub : core-idls : <core-idl-dummy-feature>two ;
-install stage-stubs : cpp-h-stub : <location>stage/stubs <install-dependencies>on <install-type>CPP <install-type>H
+install stage-stubs : cpp-h-stub : <conditional>@stage-stub-location
+ <install-dependencies>on <install-type>CPP <install-type>H
  <link>static
  ;
 explicit stage-stubs ;
@@ -180,6 +212,12 @@ exe-test register_service
  : register_service.cpp
  : test-hello-idl ;
 
+rule stage-tests-location ( requirements * )
+{
+  local suffix = [ requirements-location-suffix $(requirements) ] ;
+  return <location>stage-tests$(suffix) ;
+}
+
 install stage-tests : connect_host_port_connect_to_right_host_and_port
  connect_host_port_connect_to_wrong_host_and_port
  connect_orb_connect_getting_orb_with_createORB
@@ -201,5 +239,6 @@ install stage-tests : connect_host_port_connect_to_right_host_and_port
  fail_user_created_orb
  get_offer
  register_service
+ : <conditional>@stage-tests-location
  ;
 explicit stage-tests ;
