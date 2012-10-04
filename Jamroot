@@ -92,43 +92,12 @@ lib openbus : src/Connection.cpp src/ConnectionManager.cpp
  ;
 explicit openbus ;
 
-local rule requirements-location-suffix ( requirements * )
-{
-  local mt = ;
-  local dbg = ;
-  if <threading>multi in $(requirements)
-  {
-    mt = -multi ;
-  }
-  else
-  {
-    mt = -single ;
-  }
-  if <variant>debug in $(requirements)
-  {
-    dbg = -debug ;
-  }
-  return $(mt)$(dbg) ;
-}
-
-rule stage-libs-location ( requirements * )
-{
-  local suffix = [ requirements-location-suffix $(requirements) ] ;
-  return <location>stage$(suffix) ;
-}
-
-rule stage-stub-location ( requirements * )
-{
-  local suffix = [ requirements-location-suffix $(requirements) ] ;
-  return <location>stage$(suffix)/stubs ;
-}
-
-install stage-libs : openbus : <conditional>@stage-libs-location ;
+install stage-libs : openbus : <location>stage ;
 explicit stage-libs ;
 
 feature.feature core-idl-dummy-feature : one two three : link-incompatible ;
 mico-idl.cpp-h cpp-h-stub : core-idls : <core-idl-dummy-feature>two ;
-install stage-stubs : cpp-h-stub : <conditional>@stage-stub-location
+install stage-stubs : cpp-h-stub : <location>stage/stub
  <install-dependencies>on <install-type>CPP <install-type>H
  <link>static
  ;
@@ -212,6 +181,24 @@ exe-test register_service
  : register_service.cpp
  : test-hello-idl ;
 
+local rule requirements-location-suffix ( requirements * )
+{
+  local mt = ;
+  local dbg = ;
+  if <threading>multi in $(requirements)
+  {
+    mt = -multi ;
+  }
+  else
+  {
+    mt = -single ;
+  }
+  if <variant>debug in $(requirements)
+  {
+    dbg = -debug ;
+  }
+  return $(mt)$(dbg) ;
+}
 rule stage-tests-location ( requirements * )
 {
   local suffix = [ requirements-location-suffix $(requirements) ] ;
