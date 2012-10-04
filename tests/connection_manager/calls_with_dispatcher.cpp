@@ -2,7 +2,7 @@
 #include <openbus/ConnectionManager.h>
 #include <openbus/ORBInitializer.h>
 #include <configuration.h>
-#include "hello.h"
+#include <stubs/hello.h>
 
 int main(int argc, char* argv[])
 {
