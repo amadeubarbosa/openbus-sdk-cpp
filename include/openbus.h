@@ -62,7 +62,7 @@ typedef std::map<std::string, MethodSet*> MethodsNotInterceptable;
 /**
  * \brief Falha no processo de login, ou seja, o par nome de usuário e senha não foi validado.
  */
- struct LOGIN_FAILURE : public std::runtime_error {
+struct LOGIN_FAILURE : public std::runtime_error {
   LOGIN_FAILURE(const std::string &msg = "") : runtime_error(msg) {}
 };
 
@@ -280,32 +280,46 @@ private:
    * Thread/Callback responsável pela renovação da credencial do usuário que está logado neste 
    * barramento.
    */
-#if (OPENBUS_ORBIX || (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD))
 #ifdef OPENBUS_ORBIX
   IT_Thread renewLeaseIT_Thread;
   class RenewLeaseThread : public IT_ThreadBody {
   public:
     void* run();
+    bool runningLeaseExpiredCallback;
+    RenewLeaseThread();
+    void stop();
+  private:
+    bool sigINT;
+    bool sleep(unsigned short time);
+  };
+  static RenewLeaseThread *renewLeaseThread;
 #else
-    class RenewLeaseThread : public MICOMT::Thread {
-    public:
-      void _run(void *);
-#endif
-      bool runningLeaseExpiredCallback;
-      RenewLeaseThread();
-      void stop();
-    private:
-      bool sigINT;
-      bool sleep(unsigned short time);
-    };
-    static RenewLeaseThread *renewLeaseThread;
-#else
-    class RenewLeaseCallback : public CORBA::DispatcherCallback {
-    public:
-      RenewLeaseCallback();
-      void callback(CORBA::Dispatcher *dispatcher, Event event);
-    };
-    RenewLeaseCallback renewLeaseCallback;
+  #ifdef OPENBUS_SDK_MULTITHREAD
+  class RenewLogin : public MICOMT::Thread {
+  public:
+    RenewLogin();
+    ~RenewLogin();
+    void _run(void *);
+    void stop();
+    void pause();
+    void run();
+  private:
+    MICOMT::Mutex _mutex;
+    MICOMT::CondVar _condVar;
+    tecgraf::openbus::core::v1_05::access_control_service::Lease _validityTime;
+    bool _pause;
+    bool _stop;
+    tecgraf::openbus::core::v1_05::access_control_service::Lease renew();
+  };
+  static RenewLogin *renewLogin;
+  #else
+  class RenewLeaseCallback : public CORBA::DispatcherCallback {
+  public:
+  RenewLeaseCallback();
+    void callback(CORBA::Dispatcher *dispatcher, Event event);
+  };
+  RenewLeaseCallback renewLeaseCallback;
+  #endif
 #endif
 
     /**
