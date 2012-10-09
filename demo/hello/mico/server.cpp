@@ -31,6 +31,19 @@ struct HelloImpl : virtual public POA_demoidl::hello::IHello {
   };
 };
 
+struct RenewLogin : public openbus::Openbus::LeaseExpiredCallback {
+  void expired() {
+    try {
+      bus->disconnect();
+      bus->connect(entityName, privateKeyFilename, ACSCertificateFilename);
+    } catch (const openbus::LOGIN_FAILURE &) {
+      std::cout << "Falha no login." << std::endl;
+    } catch (const CORBA::Exception &) {
+      std::cout << "Nao foi possivel desconectar e conectar novamente." << std::endl;
+    }
+  }
+};
+
 void termination_handler(int p) {
   std::cout << "Encerrando o processo servidor..." << std::endl;
   openbus::Openbus::terminationHandlerCallback((long) signal);
@@ -49,6 +62,7 @@ void commandLineParse(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
+  RenewLogin renewLogin;
   signal(SIGINT, termination_handler);
   bus = openbus::Openbus::getInstance();
 
@@ -73,6 +87,8 @@ int main(int argc, char **argv) {
     std::cout << e.what() << std::endl;
     exit(1);
   }
+
+  bus->setLeaseExpiredCallback(&renewLogin);
 
   std::cout << "Conexao com o barramento estabelecida com sucesso!" << std::endl;
 

@@ -157,7 +157,9 @@ void Openbus::RunThread::_run(void *) {
   orb->run();
 }
 
-Openbus::RenewLogin::RenewLogin() : _condVar(&_mutex), _validityTime(0), _pause(false), _stop(false) {
+Openbus::RenewLogin::RenewLogin(tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider_var i) 
+  : _condVar(&_mutex), _iLeaseProvider(i), _validityTime(0), _pause(false), _stop(false) 
+{
   logger->log(logger::INFO, "[RenewLogin::RenewLogin]");
 }
 
@@ -168,12 +170,18 @@ Openbus::RenewLogin::~RenewLogin() {
 tecgraf::openbus::core::v1_05::access_control_service::Lease Openbus::RenewLogin::renew() {
   logger->log(logger::INFO, "[RunThread::renew]");
   tecgraf::openbus::core::v1_05::access_control_service::Lease validityTime = _validityTime;
+  bool expired = false;
   try {
     logger->log(logger::INFO, "[Chamando remotamente renew()]");
-    bool status = bus->iLeaseProvider->renewLease(*bus->credential, _validityTime);
+    expired = !(_iLeaseProvider->renewLease(*bus->credential, _validityTime));
+  } catch (CORBA::NO_PERMISSION &) {
+    expired = true;
   } catch (CORBA::Exception &) {
     logger->log(logger::WARNING, "[Falha na renovacao da credencial]");
-    /* [TODO] callback */
+  }
+  if (expired) {
+    logger->log(logger::WARNING, "[Credencial expirada.]");
+    if (_leaseExpiredCallback) _leaseExpiredCallback->expired();    
   }
   return validityTime;
 }
@@ -701,7 +709,7 @@ void Openbus::RenewLogin::run() {
             #ifdef OPENBUS_SDK_MULTITHREAD
               if (!renewLogin) {
                 Openbus::logger->log(logger::INFO, "Criando uma RenewLogin.");
-                renewLogin = new Openbus::RenewLogin();
+                renewLogin = new Openbus::RenewLogin(iLeaseProvider);
                 renewLogin->start();
               } else renewLogin->run();
             #else
@@ -883,7 +891,7 @@ void Openbus::RenewLogin::run() {
             #ifdef OPENBUS_SDK_MULTITHREAD
               if (!renewLogin) {
                 Openbus::logger->log(logger::INFO, "Criando uma RenewLogin.");
-                renewLogin = new Openbus::RenewLogin();
+                renewLogin = new Openbus::RenewLogin(iLeaseProvider);
                 renewLogin->start();
               } else renewLogin->run();
             #else

@@ -297,7 +297,7 @@ private:
   #ifdef OPENBUS_SDK_MULTITHREAD
   class RenewLogin : public MICOMT::Thread {
   public:
-    RenewLogin();
+    RenewLogin(const tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider_var);
     ~RenewLogin();
     void _run(void *);
     void stop();
@@ -306,6 +306,7 @@ private:
   private:
     MICOMT::Mutex _mutex;
     MICOMT::CondVar _condVar;
+    tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider_var _iLeaseProvider;
     tecgraf::openbus::core::v1_05::access_control_service::Lease _validityTime;
     bool _pause;
     bool _stop;
