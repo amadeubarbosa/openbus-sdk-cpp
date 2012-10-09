@@ -3,7 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "hello.h"
+#include <stubs/hello.h>
 #include <CORBA.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -190,7 +190,9 @@ int main(int argc, char** argv)
     }
     while(true);
   
+#ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
+#endif
   }
   catch(offer_registry::InvalidService const&)
   {
