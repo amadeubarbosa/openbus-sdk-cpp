@@ -25,6 +25,10 @@ modules.poke : BOOST_BUILD_PATH : $(search_path) ;
 
 import mico-idl ;
 
+project dl ;
+
+lib dl : : <name>dl <link>shared ;
+
 project openssl ;
 
 lib crypto : : <name>crypto <search>$(openssl-lib-path)
@@ -113,7 +117,7 @@ local rule exe-test ( test-name : filename : idl ? )
   local test-requirements = <implicit-dependency>core-idls
     <core-idl-dummy-feature>three
     <threading>multi:<source>/boost//thread <include>tests
-    <implicit-dependency>$(idl) ;
+    <implicit-dependency>$(idl) <link>static:<source>dl ;
   exe $(test-name) : tests/$(filename) $(idl) $(test-dependencies)
    : $(test-requirements) ;
   explicit $(test-name) ;
@@ -229,3 +233,19 @@ install stage-tests : connect_host_port_connect_to_right_host_and_port
  : <conditional>@stage-tests-location
  ;
 explicit stage-tests ;
+
+rule stage-demos-location ( requirements * )
+{
+  local suffix = [ requirements-location-suffix $(requirements) ] ;
+  return <location>stage-demos(suffix) ;
+}
+
+local all-demos = [ MATCH demo/(.*)/Jamfile : [ glob demo/*/Jamfile ] ] ;
+local demo-targets = ;
+for local d in $(all-demos)
+{
+  demo-targets += demo/$(d)//$(d) ;
+}
+install stage-demos : $(demo-targets) : <conditional>@stage-demos-location ;
+explicit stage-demos ;
+
