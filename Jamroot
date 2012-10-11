@@ -4,6 +4,8 @@ import os ;
 import string ;
 import feature ;
 import modules ;
+import "class" : new ;
+import property-set ;
 
 local scs-path-env = [ os.environ SCS_PATH ] ;
 local openssl-lib-path-env = [ os.environ OPENSSL_LIB_PATH ] ;
@@ -185,6 +187,8 @@ exe-test register_service
  : register_service.cpp
  : test-hello-idl ;
 
+feature.feature <openbus-stage-demo-name> : : free ;
+
 local rule requirements-location-suffix ( requirements * )
 {
   local mt = ;
@@ -234,21 +238,54 @@ install stage-tests : connect_host_port_connect_to_right_host_and_port
  ;
 explicit stage-tests ;
 
+alias assistant-tmp : assistant//assistant ;
+explicit assistant-tmp ;
+
 rule stage-demos-location ( requirements * )
 {
+  local ps = [ new property-set $(requirements) ] ;
+  local name = [ $(ps).get <openbus-stage-demo-name> ] ;
   local suffix = [ requirements-location-suffix $(requirements) ] ;
-  return <location>stage-demos(suffix) ;
+  return <location>stage-demos$(suffix)/$(name) ;
 }
 
 local all-demos = [ MATCH demo/(.*)/Jamfile : [ glob demo/*/Jamfile ] ] ;
-local demo-targets = ;
 for local d in $(all-demos)
 {
-  demo-targets += demo/$(d)//$(d) ;
+  install stage-demo-$(d) : $(d) : <conditional>@stage-demos-location
+   : <openbus-stage-demo-name>$(d) ;
+  explicit stage-demo-$(d) ;
 }
-install stage-demos : $(demo-targets) : <conditional>@stage-demos-location ;
+alias stage-demos : stage-demo-$(all-demos) : <conditional>@stage-demos-location ;
 explicit stage-demos ;
+
+rule stage-assistant-demos-location ( requirements * )
+{
+  local ps = [ new property-set $(requirements) ] ;
+  local name = [ $(ps).get <openbus-stage-demo-name> ] ;
+  local suffix = [ requirements-location-suffix $(requirements) ] ;
+  return <location>stage-assistant-demos$(suffix)/$(name) ;
+}
+
+local all-assistant-demos = [ MATCH assistant/demo/(.*)/Jamfile : [ glob assistant/demo/*/Jamfile ] ] ;
+for local d in $(all-assistant-demos)
+{
+  install stage-assistant-demo-$(d) : assistant/demo/$(d)//$(d) : <conditional>@stage-assistant-demos-location
+   : <openbus-stage-demo-name>$(d)
+  ;
+  explicit stage-assistant-demo-$(d) ;
+}
+alias stage-assistant-demos : stage-assistant-$(all-assistant-demos) ;
+explicit stage-assistant-demos ;
 
 install stage-assistant : assistant//assistant ;
 explicit stage-assistant ;
+
+rule stage-assistant-tests-location ( requirements * )
+{
+  local suffix = [ requirements-location-suffix $(requirements) ] ;
+  return <location>stage-assistant-tests$(suffix) ;
+}
+install stage-assistant-tests : assistant/tests//tests : <conditional>@stage-assistant-tests-location ;
+explicit stage-assistant-tests ;
 

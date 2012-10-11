@@ -2,7 +2,7 @@
 #include <openbus/assistant.h>
 #include <scs/ComponentContext.h>
 
-#include <hello.h>
+#include <stubs/hello.h>
 
 int main(int argc, char** argv)
 {

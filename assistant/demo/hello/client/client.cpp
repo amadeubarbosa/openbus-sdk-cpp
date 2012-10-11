@@ -1,6 +1,6 @@
 #include <openbus/assistant.h>
 #include <iostream>
-#include "hello.h"
+#include <stubs/hello.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;

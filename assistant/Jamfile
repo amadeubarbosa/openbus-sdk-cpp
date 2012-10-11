@@ -31,9 +31,14 @@ rule tag ( name : type ? : property-set )
   }
 }
 
+project rt ;
+
+lib rt : : <name>rt ;
+
 lib assistant : src/assistant_common.cpp
  /mico//mico /scs//scs /boost//headers /logger//logger
  /openssl//openssl /openbus//openbus /openbus//core-idls
+ /boost//chrono /boost//system rt
  : <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
    <include>include
    <threading>multi:<source>src/assistant_mt.cpp
