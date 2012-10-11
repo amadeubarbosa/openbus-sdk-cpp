@@ -3,7 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "greetings.h"
+#include <stubs/greetings.h>
 #include <CORBA.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -228,6 +228,8 @@ int main(int argc, char** argv)
                       , conn->offers()))
     return -1;
 
+#ifdef OPENBUS_SDK_MULTITHREAD
   orb_thread.join();
+#endif
 }
 

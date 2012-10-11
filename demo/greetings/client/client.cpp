@@ -1,7 +1,7 @@
 #include <openbus/ConnectionManager.h>
 #include <openbus/ORBInitializer.h>
 #include <iostream>
-#include "greetings.h"
+#include <stubs/greetings.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
