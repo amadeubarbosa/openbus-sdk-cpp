@@ -1,8 +1,8 @@
 #include <openbus/ConnectionManager.h>
 #include <openbus/ORBInitializer.h>
 #include <iostream>
-#include "hello.h"
-#include "sharedauth.h"
+#include <stubs/hello.h>
+#include <stubs/sharedauth.h>
 
 #include <fstream>
 #include <iterator>

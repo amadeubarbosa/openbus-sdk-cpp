@@ -3,7 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "independent_clock.h"
+#include <stubs/independent_clock.h>
 #include <CORBA.h>
 #include <time.h>
 

@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include <independent_clock.h>
+#include <stubs/independent_clock.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;

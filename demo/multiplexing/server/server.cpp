@@ -3,7 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "greetings.h"
+#include <stubs/greetings.h>
 #include <CORBA.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -105,7 +105,9 @@ int main(int argc, char** argv)
     properties[1].name = "german";
     conn3->offers()->registerService(german_greetings_component.getIComponent(), properties);
 
+#ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
+#endif
   }
   catch (services::ServiceFailure e)
   {
