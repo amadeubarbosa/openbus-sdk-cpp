@@ -1,0 +1,41 @@
+
+project openbus/demos ;
+
+path-constant demo-hello : ../hello ;
+
+alias hello-idl : $(demo-hello)/idl/hello.idl ;
+
+exe audit_client
+ : client/client.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <core-idl-dummy-feature>three
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+exe audit_server
+ : server/server.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <core-idl-dummy-feature>three
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+
+exe audit_proxy
+ : proxy/proxy.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <core-idl-dummy-feature>three
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+
+alias audit : audit_client audit_server audit_proxy ;
+
