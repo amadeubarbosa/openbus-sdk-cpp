@@ -249,3 +249,6 @@ for local d in $(all-demos)
 install stage-demos : $(demo-targets) : <conditional>@stage-demos-location ;
 explicit stage-demos ;
 
+install stage-assistant : assistant//assistant ;
+explicit stage-assistant ;
+

@@ -1,0 +1,49 @@
+
+import common ;
+import os ;
+import string ;
+import feature ;
+import modules ;
+
+project openbus/assistant ;
+
+rule tag ( name : type ? : property-set )
+{
+  if $(type) in STATIC_LIB SHARED_LIB IMPORT_LIB
+  {
+    local result ;
+    local debug ;
+    if <variant>debug in [ $(property-set).raw ]
+    {
+      debug = -debug ;
+    }
+    if <threading>multi in [ $(property-set).raw ]
+    {
+      result = [ common.format-name <base> -mico
+        multithread $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    else
+    {
+      result = [ common.format-name <base> -mico
+        singlethread $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    return $(result) ;
+  }
+}
+
+lib assistant : src/assistant_common.cpp
+ /mico//mico /scs//scs /boost//headers /logger//logger
+ /openssl//openssl /openbus//openbus /openbus//core-idls
+ : <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
+   <include>include
+   <threading>multi:<source>src/assistant_mt.cpp
+   <threading>single:<source>src/assistant_st.cpp 
+   <threading>multi:<source>/boost//thread
+   <implicit-dependency>/openbus//core-idls
+   <tag>@tag
+ : :
+   <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
+   <include>include
+ ;
+explicit assistant ;
+
