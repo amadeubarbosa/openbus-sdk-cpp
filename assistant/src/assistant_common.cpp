@@ -140,6 +140,8 @@ struct login_error
   }
 };
 
+void register_relogin(boost::shared_ptr<assistant_detail::shared_state>);
+
 void invalid_login_callback::operator()(Connection &c, idl_ac::LoginInfo old_login
                                         , boost::weak_ptr<assistant_detail::shared_state> state_weak) const
 {
@@ -152,6 +154,8 @@ void invalid_login_callback::operator()(Connection &c, idl_ac::LoginInfo old_log
        , login_error(state->login_error)
        , assistant_detail::wait_until_timeout_and_signal_exit(state)
        , state->logging);
+
+    register_relogin(state);
   }
 }
 

@@ -45,6 +45,14 @@ void register_component(idl_or::OfferRegistry_var offer_registry
                         , logger::logger& logging);
 
 
+void register_relogin(boost::shared_ptr<shared_state> state)
+{
+  boost::unique_lock<boost::mutex> lock(state->mutex);
+  state->new_queued_components = true;
+  state->relogin = true;
+  state->work_cond_var.notify_one();
+}
+
 namespace {
 
 void orb_thread_function(CORBA::ORB_var orb
@@ -109,42 +117,56 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
     boost::unique_lock<boost::mutex> lock(state->mutex);
     do
     {
-      register_container components;
-      std::transform(state->queued_components.begin()
-                     , state->queued_components.end()
-                     , std::back_inserter<register_container>(components)
-                     , &construct_register_item);
-      std::copy(state->queued_components.begin(), state->queued_components.end()
-                , std::back_inserter<std::vector<std::pair
-                <scs::core::IComponent_var, idl_or::ServicePropertySeq> > >(state->components));
-      state->queued_components.clear();
-
-      boost::function<void(scs::core::IComponent_var, idl_or::ServicePropertySeq
-                           , std::string /*error*/)> register_error_callback
-        = state->register_error;
-      lock.unlock();
-
       do
       {
-        work_thread_log.level_log(logger::debug_level, "Registering some components");
-        register_iterator current = components.begin();
-        assistant_detail::execute_with_retry
-          (boost::bind(&register_component, state->connection->offers()
-                       , boost::ref(current), components.end()
-                       , boost::ref(state->logging))
-           , register_fail(register_error_callback, current)
-           , assistant_detail::wait_until_timeout_and_signal_exit(state));
-      }
-      while(std::find_if(components.begin(), components.end()
-                         , &assistant_detail::not_registered_predicate) != components.end());
+        if(state->relogin)
+        {
+          work_thread_log.level_log(logger::debug_level, "The login has failed, will have to re-register every component");
+          state->relogin = false;
+          state->queued_components.insert(state->queued_components.end()
+                                          , state->components.begin(), state->components.end());
+          state->components.clear();
+        }
+        register_container components;
+        std::transform(state->queued_components.begin()
+                       , state->queued_components.end()
+                       , std::back_inserter<register_container>(components)
+                       , &construct_register_item);
+        std::copy(state->queued_components.begin(), state->queued_components.end()
+                  , std::back_inserter<std::vector<std::pair
+                  <scs::core::IComponent_var, idl_or::ServicePropertySeq> > >(state->components));
+        state->queued_components.clear();
 
+        boost::function<void(scs::core::IComponent_var, idl_or::ServicePropertySeq
+                             , std::string /*error*/)> register_error_callback
+          = state->register_error;
+        lock.unlock();
+
+        do
+        {
+          work_thread_log.level_log(logger::debug_level, "Registering some components");
+          register_iterator current = components.begin();
+          assistant_detail::execute_with_retry
+            (boost::bind(&register_component, state->connection->offers()
+                         , boost::ref(current), components.end()
+                         , boost::ref(state->logging))
+             , register_fail(register_error_callback, current)
+             , assistant_detail::wait_until_timeout_and_signal_exit(state));
+          lock.lock();
+        }
+        while(std::find_if(components.begin(), components.end()
+                           , &assistant_detail::not_registered_predicate) != components.end()
+              && !state->relogin);
+      }
+      while(state->relogin);
+      lock.unlock();
       work_thread_log.level_log(logger::debug_level, "All components registered");
       
       lock.lock();
       while(!state->new_queued_components && !state->work_exit)
       {
         work_thread_log.level_log(logger::debug_level, "Waiting for newer components to be registered");
-          state->work_cond_var.wait(lock);
+        state->work_cond_var.wait(lock);
       }
       state->new_queued_components = false;
       if(state->work_exit)

@@ -53,6 +53,20 @@ void AssistantImpl::shutdown()
   state->orb->shutdown(true);
 }
 
+void register_relogin(boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  state->queued_components.insert
+    (state->queued_components.end()
+     , state->components.begin(), state->components.end());
+  state->components.clear();
+    boost::chrono::microseconds s = boost::chrono::duration_cast
+      <boost::chrono::microseconds>(state->retry_wait);
+    std::auto_ptr<add_offers_dispatcher> dispatcher(new add_offers_dispatcher(state->orb, state));
+    state->orb->dispatcher()->tm_event(dispatcher.get(), s.count());
+    state->asynchronous_dispatcher = dispatcher.release();
+  }
+}
+
 namespace assistant_detail {
 
 void register_queued_components(boost::shared_ptr<shared_state> state)

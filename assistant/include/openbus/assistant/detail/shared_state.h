@@ -77,6 +77,7 @@ struct shared_state
   boost::chrono::steady_clock::duration retry_wait;
   bool work_exit;
   bool connection_ready;
+  bool relogin;
 #ifdef ASSISTANT_SDK_MULTITHREAD
   bool new_queued_components;
   boost::thread work_thread;
@@ -98,7 +99,7 @@ struct shared_state
     : orb(orb), auth_info(auth_info), host(host), port(port)
     , login_error(login_error), register_error(register_error)
     , fatal_error(fatal_error), work_exit(false)
-    , connection_ready(false)
+    , connection_ready(false), relogin(false)
 #ifdef ASSISTANT_SDK_MULTITHREAD
     , new_queued_components(false)
 #else
