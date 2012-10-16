@@ -12,15 +12,15 @@ using namespace auxiliar;
 using namespace tecgraf::openbus::core::v1_05;
 using namespace tecgraf::openbus::core::v1_05::registry_service;
 
-registry_service::IRegistryService* rgs;
-access_control_service::Credential* credential;
+tecgraf::openbus::core::v1_05::registry_service::IRegistryService* rgs;
+tecgraf::openbus::core::v1_05::access_control_service::Credential* credential;
 char* registryIdentifier;
 char* registryIdentifier2;
 openbus::util::PropertyListHelper* propertyListHelper;
 openbus::util::PropertyListHelper* propertyListHelper2;
-stringstream offerId;
-stringstream entityName;
-stringstream privateKeyFilename;
+std::stringstream offerId;
+std::stringstream entityName;
+std::stringstream privateKeyFilename;
 
 class RGSTest : virtual public POA_IRGSTest {
     void foo() 
@@ -84,11 +84,11 @@ int main(int argc, char* argv[]) {
         finish(TESTCASE);
       }
     } catch (UnathorizedFacets& e) {
-      cout << "Nao foi possivel registrar a oferta." << endl;
+      std::cout << "Nao foi possivel registrar a oferta." << std::endl;
       CORBA::ULong idx;
       CORBA::ULong length = e.facets.length();
       for (idx = 0; idx < length; idx++) {
-        cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
+        std::cout << "Faceta nao autorizada: " << e.facets[idx] << std::endl;
       }
       fail(TESTCASE, "UnathorizedFacet");
       finish(TESTCASE);
@@ -104,11 +104,11 @@ int main(int argc, char* argv[]) {
         finish(TESTCASE);
       }
     } catch (UnathorizedFacets& e) {
-      cout << "Nao foi possivel registrar a oferta." << endl;
+      std::cout << "Nao foi possivel registrar a oferta." << std::endl;
       CORBA::ULong idx;
       CORBA::ULong length = e.facets.length();
       for (idx = 0; idx < length; idx++) {
-        cout << "Faceta nao autorizada: " << e.facets[idx] << endl;
+        std::cout << "Faceta nao autorizada: " << e.facets[idx] << std::endl;
       }
       fail(TESTCASE, "UnathorizedFacet");
       finish(TESTCASE);

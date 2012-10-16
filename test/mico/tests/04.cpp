@@ -7,8 +7,8 @@
 using namespace openbus;
 using namespace auxiliar;
 
-registry_service::IRegistryService* rgs;
-access_control_service::Credential* credential;
+tecgraf::openbus::core::v1_05::registry_service::IRegistryService* rgs;
+tecgraf::openbus::core::v1_05::access_control_service::Credential* credential;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();

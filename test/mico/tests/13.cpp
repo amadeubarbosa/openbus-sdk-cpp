@@ -7,9 +7,9 @@
 using namespace openbus;
 using namespace auxiliar;
 
-access_control_service::IAccessControlService* iAccessControlService;
-stringstream entityName;
-stringstream privateKeyFilename;
+tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService* iAccessControlService;
+std::stringstream entityName;
+std::stringstream privateKeyFilename;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();
@@ -33,9 +33,9 @@ int main(int argc, char* argv[]) {
       entityName.str().c_str(), 
       privateKeyFilename.str().c_str(), 
       "AccessControlService.crt"); 
-    access_control_service::Credential* trueCredential = 
+    tecgraf::openbus::core::v1_05::access_control_service::Credential* trueCredential = 
       bus->getCredential();
-    access_control_service::Credential wrongCredential;
+    tecgraf::openbus::core::v1_05::access_control_service::Credential wrongCredential;
     wrongCredential.identifier = "00000000";
     wrongCredential.owner = "none";
     wrongCredential.delegate = "";

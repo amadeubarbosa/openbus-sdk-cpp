@@ -11,14 +11,14 @@ using namespace auxiliar;
 using namespace tecgraf::openbus::core::v1_05;
 using namespace tecgraf::openbus::core::v1_05::registry_service;
 
-registry_service::IRegistryService* rgs;
-access_control_service::Credential* credential;
+tecgraf::openbus::core::v1_05::registry_service::IRegistryService* rgs;
+tecgraf::openbus::core::v1_05::access_control_service::Credential* credential;
 char* registryIdentifier;
 char* registryIdentifier2;
 openbus::util::PropertyListHelper* propertyListHelper;
 openbus::util::PropertyListHelper* propertyListHelper2;
-stringstream entityName;
-stringstream privateKeyFilename;
+std::stringstream entityName;
+std::stringstream privateKeyFilename;
 
 class RGSTest : virtual public POA_IRGSTest {
     void foo() 

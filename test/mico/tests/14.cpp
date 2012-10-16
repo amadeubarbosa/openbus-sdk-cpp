@@ -11,7 +11,7 @@ using namespace openbus;
 using namespace auxiliar;
 
 Openbus* bus;
-access_control_service::IAccessControlService* iAccessControlService;
+tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService* iAccessControlService;
 bool leaseExpiredCallbackBefore;
 
 class MyCallbackBefore : public Openbus::LeaseExpiredCallback {

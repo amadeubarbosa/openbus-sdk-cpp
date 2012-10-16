@@ -7,9 +7,9 @@
 using namespace openbus;
 using namespace auxiliar;
 
-access_control_service::IAccessControlService* iAccessControlService;
-stringstream entityName;
-stringstream privateKeyFilename;
+tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService* iAccessControlService;
+std::stringstream entityName;
+std::stringstream privateKeyFilename;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();
@@ -37,8 +37,8 @@ int main(int argc, char* argv[]) {
     if (!iAccessControlService->isValid(*bus->getCredential())) {
       fail(TESTCASE, "Credencial deveria ser valida.");
     }
-    access_control_service::Credential* credential2 =
-      new access_control_service::Credential;
+    tecgraf::openbus::core::v1_05::access_control_service::Credential* credential2 =
+      new tecgraf::openbus::core::v1_05::access_control_service::Credential;
     credential2->identifier = "123";
     credential2->owner = "TesteBarramento";
     credential2->delegate = "";

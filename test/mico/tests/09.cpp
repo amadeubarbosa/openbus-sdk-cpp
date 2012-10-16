@@ -7,7 +7,7 @@
 using namespace openbus;
 using namespace auxiliar;
 
-access_control_service::IAccessControlService* iAccessControlService;
+tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService* iAccessControlService;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();
@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
     bus->init(9, (char**) _args);
     bus->connect(getUsername(), getPassword());
     iAccessControlService = bus->getAccessControlService();
-    access_control_service::Credential_var c;
-    access_control_service::Lease l;
+    tecgraf::openbus::core::v1_05::access_control_service::Credential_var c;
+    tecgraf::openbus::core::v1_05::access_control_service::Lease l;
     iAccessControlService->loginByPassword(getUsername(), 
       getPassword(),
       c, l);

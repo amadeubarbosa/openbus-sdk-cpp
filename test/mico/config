@@ -1,6 +1,3 @@
-# Descomente a linha abaixo para ativar o modo debug.
-#DBG=YES
-
 # Descomente a linha abaixo para o uso em Valgrind.
 # p.s.: O modo debug(DBG) deve estar ativado.
 #CPPFLAGS= -fno-inline
@@ -28,21 +25,26 @@ ifeq "$(TEC_UNAME)" "SunOS510_64"
   endif
 endif
 
-ifeq "$(MULTITHREAD)" "Yes"
-  MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-multithread
-  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread
-  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread
-  DEFINES+=MULTITHREAD
+OPENBUSINC = ${OPENBUS_HOME}/include
+OPENBUSLIB = ${OPENBUS_HOME}/lib
+
+ifeq "$(DBG)" "Yes"
+  LIB_DEBUG=-debug
+endif
+
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+  MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-multithread$(LIB_DEBUG)
+  MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-multithread$(LIB_DEBUG)
+  MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-multithread$(LIB_DEBUG)
+  DEFINES+=OPENBUS_SDK_MULTITHREAD
   DEFINES+=SCS_THREADING_ENABLED
+  DEFINES+=LOGGER_MULTITHREAD
   LIBS+=pthread
 else
   MICO_BIN= ${MICODIR}/bin/mico-${MICOVERSION}-singlethread
   MICO_INC= ${OPENBUS_HOME}/include/mico-${MICOVERSION}-singlethread
   MICO_LIB= ${OPENBUS_HOME}/lib/mico-${MICOVERSION}-singlethread
 endif
-
-OPENBUSINC = ${OPENBUS_HOME}/include
-OPENBUSLIB = ${OPENBUS_HOME}/lib
 
 INCLUDES= . \
   ../../util \
@@ -53,22 +55,21 @@ INCLUDES= . \
   ${OPENBUSINC} \
   ${OPENBUSINC}/logger \
   ${OPENBUSINC}/cxxtest
-  
-  
+    
 AUXILIAR_SRC= ../util/auxiliar.cpp
 
 LDIR= ${OPENBUSLIB} ${MICO_LIB}
 
 LIBS+= mico${MICOVERSION} dl crypto ssl
 
-ifeq "$(MULTITHREAD)" "Yes"
-  SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
-        ${OPENBUSLIB}/libscsmicoMT.a \
-        ${OPENBUSLIB}/liblogger.a
+ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
+  SLIB= ${OPENBUSLIB}/libopenbus-micomultithread$(LIB_DEBUG).a \
+        ${OPENBUSLIB}/libscs-micomultithread$(LIB_DEBUG).a \
+        ${OPENBUSLIB}/liblogger-multithread$(LIB_DEBUG).a
 else
-  SLIB= ${OPENBUSLIB}/libopenbusmicoST.a \
-        ${OPENBUSLIB}/libscsmicoST.a \
-        ${OPENBUSLIB}/liblogger.a
+  SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread$(LIB_DEBUG).a \
+        ${OPENBUSLIB}/libscs-micosinglethread$(LIB_DEBUG).a \
+        ${OPENBUSLIB}/liblogger-singlethread$(LIB_DEBUG).a
 endif
 
 USE_LUA51= YES

@@ -7,7 +7,7 @@
 using namespace openbus;
 using namespace auxiliar;
 
-access_control_service::IAccessControlService* iAccessControlService;
+tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService* iAccessControlService;
 
 int main(int argc, char* argv[]) {
   loadConfigFile();
