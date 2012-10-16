@@ -157,8 +157,9 @@ void Openbus::RunThread::_run(void *) {
   orb->run();
 }
 
-Openbus::RenewLogin::RenewLogin(tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider_var i) 
-  : _condVar(&_mutex), _iLeaseProvider(i), _validityTime(0), _pause(false), _stop(false) 
+Openbus::RenewLogin::RenewLogin(tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider_var i, 
+                                unsigned short t)
+  : _condVar(&_mutex), _iLeaseProvider(i), _validityTime(t), _pause(false), _stop(false) 
 {
   logger->log(logger::INFO, "[RenewLogin::RenewLogin]");
 }
@@ -190,7 +191,7 @@ void Openbus::RenewLogin::_run(void *) {
   logger->log(logger::INFO, "[RenewLogin::_run]");
   _mutex.lock();
   while (!_stop) {
-    while (!_pause && _condVar.timedwait(5000)) {
+    while (!_pause && _condVar.timedwait(_validityTime * 1000)) {
       _mutex.unlock();
       logger->log(logger::INFO, "[Chamando RenewLogin::renew()]");
       _validityTime = renew();
@@ -198,7 +199,7 @@ void Openbus::RenewLogin::_run(void *) {
     }
     if (!_stop) {
       logger->log(logger::INFO, "[condVar.wait()]");
-      int r = _condVar.wait();
+      MICO_Boolean r = _condVar.wait();
       assert(r);
     }
   }
@@ -709,7 +710,7 @@ void Openbus::RenewLogin::run() {
             #ifdef OPENBUS_SDK_MULTITHREAD
               if (!renewLogin) {
                 Openbus::logger->log(logger::INFO, "Criando uma RenewLogin.");
-                renewLogin = new Openbus::RenewLogin(iLeaseProvider);
+                renewLogin = new Openbus::RenewLogin(iLeaseProvider, timeRenewing);
                 renewLogin->start();
               } else renewLogin->run();
             #else
@@ -891,7 +892,7 @@ void Openbus::RenewLogin::run() {
             #ifdef OPENBUS_SDK_MULTITHREAD
               if (!renewLogin) {
                 Openbus::logger->log(logger::INFO, "Criando uma RenewLogin.");
-                renewLogin = new Openbus::RenewLogin(iLeaseProvider);
+                renewLogin = new Openbus::RenewLogin(iLeaseProvider, timeRenewing);
                 renewLogin->start();
               } else renewLogin->run();
             #else
