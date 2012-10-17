@@ -1,21 +1,16 @@
-#include <openbus.h>
+#include <openbus/assistant.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "dedicated_clock.h"
+#include <stubs/dedicated_clock.h>
 #include <CORBA.h>
 #include <time.h>
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
-#endif
-
 namespace offer_registry
- = tecgraf::openbus::core::v2_00::services::offer_registry;
+ = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace demo = tecgraf::openbus::demo;
-namespace services = tecgraf::openbus::core::v2_00::services;
-namespace access_control = tecgraf::openbus::core::v2_00::services::access_control;
+namespace services = tecgraf::openbus::core::v2_0::services;
+namespace access_control = tecgraf::openbus::core::v2_0::services::access_control;
 
 struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
 {
@@ -27,13 +22,15 @@ struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
 
 int main(int argc, char** argv)
 {
-  openbus::extension::Openbus openbus(argc, argv, "localhost", 2089);
-  openbus.loginByPassword("demo", "demo");
+  using namespace openbus::assistant::keywords;
+  openbus::assistant::Assistant assistant
+    ("localhost", 2089, _username = "demo", _password = "demo"
+     , _argc = argc, _argv = argv);
 
   scs::core::ComponentId componentId
     = { "DedicatedClock", '1', '0', '0', ""};
   scs::core::ComponentContext clock_component
-    (manager->orb(), componentId);
+    (assistant.orb(), componentId);
   ClockImpl clock_servant;
   clock_component.addFacet
     ("clock", demo::_tc_Clock->id(), &clock_servant);
@@ -41,9 +38,9 @@ int main(int argc, char** argv)
   properties.length(1);
   properties[0].name = "offer.domain";
   properties[0].value = "Demos";
-  openbus.addOffer(clock_component.getIComponent(), properties);
+  assistant.addOffer(clock_component.getIComponent(), properties);
 
-  openbus.wait();
+  assistant.wait();
 
   return 0;
 }

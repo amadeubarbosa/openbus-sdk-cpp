@@ -1,34 +1,30 @@
-
+#include <openbus/assistant.h>
 #include <iostream>
-
-#include <openbus/extension/openbus.h>
-#include <dedicated_clock.h>
-
-#include <boost/thread.hpp>
+#include <stubs/dedicated_clock.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace demo = tecgraf::openbus::demo;
 namespace services = tecgraf::openbus::core::v2_0::services;
 
-demo::Clock_ptr get_clock(offer_registry::ServiceOfferDescSeq_var offers)
+demo::Clock_ptr get_clock(offer_registry::ServiceOfferDescSeq const& offers)
 {
-  if (offers->length() == 0)
+  if (offers.length() == 0)
   {
     std::cout << "O servico Clock nao se encontra no barramento." << std::endl;
     return demo::Clock::_nil();
   }
-  else if(offers->length() == 1)
+  else if(offers.length() == 1)
   {
     CORBA::ULong i = 0;
-    return demo::Clock::_narrowxbg
+    return demo::Clock::_narrow
       (offers[i].service_ref->getFacetByName("clock"));
   }
   else
   {
     std::cout << "Existe mais de um servico Clock no barramento. Tentaremos encontrar uma funcional." << std::endl;
 
-    for(CORBA::ULong i = 0; i != offers->length(); ++i)
+    for(CORBA::ULong i = 0; i != offers.length(); ++i)
     {
       try
       {
@@ -45,38 +41,43 @@ demo::Clock_ptr get_clock(offer_registry::ServiceOfferDescSeq_var offers)
 
 int main(int argc, char** argv)
 {
-    openbus::extension::Openbus openbus(argc, argv, "localhost", 2089);
-    openbus.loginByPassword("demo", "demo");
+  using namespace openbus::assistant::keywords;
+  openbus::assistant::Assistant assistant
+    ("localhost", 2089, _username = "demo", _password = "demo"
+     , _argc = argc, _argv = argv);
 
-    do
+  do
+  {
+    try
     {
-      boost::this_thread::sleep(boost::posix_time::seconds(30));
-
-      try
+      offer_registry::ServiceOfferDescSeq
+        offers = assistant.findOffers
+        (assistant.createFacetAndEntityProperty("clock", "demo"), -1);
+      // Pegando uma oferta valida
+      demo::Clock_ptr clock = ::get_clock(offers);
+      if(!CORBA::is_nil(clock))
       {
-        offer_registry::ServiceOfferDescSeq_var offers = openbus.findOffersByEntity("demo");
-        // Pegando uma oferta valida
-        demo::Clock_ptr clock = ::get_clock(offers);
-        if(!CORBA::is_nil(clock))
-        {
-          // Chama a funcao
-          std::cout << "Hora no servidor em ticks: " << clock->getTimeInTicks() << std::endl;
-        }
-      }
-      catch (services::ServiceFailure e)
-      {
-        std::cout << "Falha no serviço remoto. Causa: " << std::endl;
-      }
-      catch (CORBA::TRANSIENT const&)
-      {
-        std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
-          "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
-      }
-      catch (CORBA::OBJECT_NOT_EXIST const&)
-      {
-        std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
+        // Chama a funcao
+        std::cout << "Hora no servidor em ticks: " << clock->getTimeInTicks() << std::endl;
       }
     }
-    while(true);
-    return 0;
+    catch (services::ServiceFailure e)
+    {
+      std::cout << "Falha no serviço remoto. Causa: " << std::endl;
+    }
+    catch (CORBA::TRANSIENT const&)
+    {
+      std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
+        "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+    }
+    catch (CORBA::OBJECT_NOT_EXIST const&)
+    {
+      std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
+    }
+
+    unsigned int t = 30u;
+    do { t = sleep(t); } while(t);
+  }
+  while(true);
+  return 0;
 }
