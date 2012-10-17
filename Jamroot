@@ -40,7 +40,7 @@ lib openssl : crypto : <name>ssl <search>$(openssl-lib-path)
  : : <include>$(openssl-include-path)
  ;
 
-project openbus ;
+project openbus : build-dir bin ;
 
 path-constant here : . ;
 
