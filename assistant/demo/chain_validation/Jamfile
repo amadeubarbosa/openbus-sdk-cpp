@@ -1,0 +1,45 @@
+
+project openbus/assistant/demos ;
+
+path-constant here : . ;
+
+alias chain-validation-idl : $(here)/idl/chain_validation.idl ;
+
+exe chain_validation_client
+ : client/client.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl chain-validation-idl
+   /openbus/assistant//assistant
+ : <implicit-dependency>/openbus//core-idls
+   <core-idl-dummy-feature>three
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>chain-validation-idl
+ ;
+exe chain_validation_executive
+ : executive/executive.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl chain-validation-idl
+   /openbus/assistant//assistant
+ : <implicit-dependency>/openbus//core-idls
+   <core-idl-dummy-feature>three
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>chain-validation-idl
+ ;
+
+exe chain_validation_secretary
+ : secretary/secretary.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl chain-validation-idl
+   /openbus/assistant//assistant
+ : <implicit-dependency>/openbus//core-idls
+   <core-idl-dummy-feature>three
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>chain-validation-idl
+ ;
+
+alias chain_validation : chain_validation_client chain_validation_executive
+ chain_validation_secretary ;
+
