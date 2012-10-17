@@ -53,20 +53,6 @@ void AssistantImpl::shutdown()
   state->orb->shutdown(true);
 }
 
-void register_relogin(boost::shared_ptr<assistant_detail::shared_state> state)
-{
-  state->queued_components.insert
-    (state->queued_components.end()
-     , state->components.begin(), state->components.end());
-  state->components.clear();
-    boost::chrono::microseconds s = boost::chrono::duration_cast
-      <boost::chrono::microseconds>(state->retry_wait);
-    std::auto_ptr<add_offers_dispatcher> dispatcher(new add_offers_dispatcher(state->orb, state));
-    state->orb->dispatcher()->tm_event(dispatcher.get(), s.count());
-    state->asynchronous_dispatcher = dispatcher.release();
-  }
-}
-
 namespace assistant_detail {
 
 void register_queued_components(boost::shared_ptr<shared_state> state)
@@ -74,6 +60,14 @@ void register_queued_components(boost::shared_ptr<shared_state> state)
   typedef std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> >
     component_container_type;
   component_container_type& queued_components = state->queued_components;
+
+  // We use indexes instead of iterators because the call to registerService
+  // can invalidate iterators and pointers to component_container_type
+  // if it calls register_relogin. But, register_relogin guarantees that
+  // The queued_components elements before it being called are kept there, but with
+  // pointers to them invalidated.
+  // registerService is the only function that can invalidate have queued_components
+  // modified in this function.
   std::size_t i = 0;
   while(i != queued_components.size())
   {
@@ -81,10 +75,22 @@ void register_queued_components(boost::shared_ptr<shared_state> state)
     {
       logger::log_scope l(state->logging, logger::info_level, "Registering one component");
       assistant_detail::exception_logging ex_l(l);
+
+      // This function can invalidate queued_components pointers and iterators
       state->connection->offers()
         ->registerService(queued_components[i].first, queued_components[i].second);
-      state->components.push_back(queued_components[i]);
-      queued_components.erase(boost::next(queued_components.begin(), i));
+
+      if(state->relogin) // queued_components were modified
+      {
+        state->relogin = false;
+        continue; // retry this registration
+      }
+      else
+      {
+        // Succesful, remove from queued_components
+        state->components.push_back(queued_components[i]);
+        queued_components.erase(boost::next(queued_components.begin(), i));
+      }
     }
     catch(CORBA::TRANSIENT const& e)
     {
@@ -175,6 +181,27 @@ void wait_login(boost::shared_ptr<assistant_detail::shared_state> state
   }
 }
 
+}
+
+// PRE: Q = state->queued_components /\ C = state->components /\ AS = state->asynchronous_dispatcher
+// POS: \forall i. i < Q.size(): Q[i] == state->queued_components
+//       /\ state->components.empty()
+//       /\ \forall i. i < C.size(): state->queued_components[i + Q.size()] == C[i]
+//       /\ (AS == 0 => state->asynchronous_dispatcher = new add_offers_dispatcher)
+void register_relogin(boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  state->relogin = true;
+  state->queued_components.insert
+    (state->queued_components.end()
+     , state->components.begin(), state->components.end());
+  state->components.clear();
+  if(!state->queued_components.empty() && !state->asynchronous_dispatcher)
+  {
+    std::auto_ptr<assistant_detail::add_offers_dispatcher>
+      dispatcher(new assistant_detail::add_offers_dispatcher(state->orb, state));
+    state->orb->dispatcher()->tm_event(dispatcher.get(), 0);
+    state->asynchronous_dispatcher = dispatcher.release();
+  }
 }
 
 void AssistantImpl::wait()
