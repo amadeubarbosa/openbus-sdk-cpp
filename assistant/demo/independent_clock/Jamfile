@@ -9,6 +9,7 @@ exe independent_clock_client
  : client/client.cpp /openbus//openbus
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl independent-clock-idl
+   /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
    <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
@@ -19,6 +20,7 @@ exe independent_clock_server
  : server/server.cpp /openbus//openbus
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl independent-clock-idl
+   /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
    <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
