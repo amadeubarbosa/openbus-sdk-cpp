@@ -363,18 +363,18 @@ idl_or::ServiceOfferDescSeq findOffers_immediate
 (idl_or::ServicePropertySeq properties, boost::shared_ptr<assistant_detail::shared_state> state);
 idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
                                        , boost::shared_ptr<assistant_detail::shared_state> state);
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int timeout_secs
+idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int retries
                                        , boost::shared_ptr<assistant_detail::shared_state> state);
 
-idl_or::ServiceOfferDescSeq AssistantImpl::findOffers
-  (idl_or::ServicePropertySeq properties, int timeout_secs) const
+idl_or::ServiceOfferDescSeq AssistantImpl::findServices
+  (idl_or::ServicePropertySeq properties, int retries) const
 {
-  if(timeout_secs < 0)
+  if(retries < 0)
     return assistant::findOffers(properties, state);
-  else if(timeout_secs == 0)
+  else if(retries == 0)
     return assistant::findOffers_immediate(properties, state);
   else
-    return assistant::findOffers(properties, timeout_secs, state);
+    return assistant::findOffers(properties, retries, state);
 }
 
 idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOfferDescSeq offers)

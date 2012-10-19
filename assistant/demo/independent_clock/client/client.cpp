@@ -108,13 +108,14 @@ int main(int argc, char** argv)
     try
     {
       offer_registry::ServiceOfferDescSeq offers
-        = assistant.findOffers(assistant.createFacetAndEntityProperty("clock", "demo"), -1);
+        = assistant.findServices(assistant.createFacetAndEntityProperty("clock", "demo"), -1);
       // Pegando uma oferta valida
       if(! ::call_with_found_clock(offers, printTime()))
       {
-        s = true;
         std::cout << "Servidor fora do ar, hora atual " << time(0) << std::endl;
       }
+      else
+        s = true;
     }
     catch (services::ServiceFailure e)
     {

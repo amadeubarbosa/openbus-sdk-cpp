@@ -292,14 +292,24 @@ public:
   void onFatalError(boost::function<void(const char* /*error*/)> f);
 
   /** 
-   * \brief Adiciona oferta para ser registrada ao barramento e tenta
-   *  sua oferta assincronamente
+   * \brief Solicita que o assistente registre um serviço no barramento.
+   * 
+   * Esse método notifica o assistente de que o serviço fornecido deve ser
+   * mantido como uma oferta de serviço válida no barramento. Para tanto,
+   * sempre que o assistente restabelecer o login esse serviço será registrado
+   * novamente no barramento.
    *
-   * \param component Referencia para componente a ser registrado
-   * \param properties Propriedades que devem ser registradas junto
-   *  com a oferta
+   * Para que o registro de serviços seja bem sucedido é necessário que o ORB
+   * utilizado pelo assistente esteja processando chamadas, por exemplo,
+   * fazendo com que a aplicação chame o método 'ORB::run()'.
+   * 
+   * Caso ocorram erros, a callback de tratamento de erro apropriada será
+   * chamada.
+   *
+   * \param component Referência do serviço sendo ofertado.
+   * \param properties Propriedades do serviço sendo ofertado.
    */
-  void addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties = idl_or::ServicePropertySeq());
+  void registerService(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties = idl_or::ServicePropertySeq());
 
   /** 
    * \brief Constroi sequencia de propriedades para determinada faceta e entidade
@@ -310,15 +320,55 @@ public:
   static idl_or::ServicePropertySeq createFacetAndEntityProperty(const char* facet, const char* entity);
 
   /** 
-   * \brief Busca oferta de determinada propriedade
+   * \brief Busca por ofertas que apresentem um conjunto de propriedades
+   *        definido.
+   * 
+   * Serão selecionadas apenas as ofertas de serviço que apresentem todas as 
+   * propriedades especificadas. As propriedades utilizadas nas buscas podem
+   * ser aquelas fornecidas no momento do registro da oferta de serviço, assim
+   * como as propriedades automaticamente geradas pelo barramento.
+   * 
+   * Caso ocorram erros, a callback de tratamento de erro apropriada será
+   * chamada. Se o número de tentativas se esgotar e não houver sucesso, uma
+   * sequência vazia será retornada.
    *
-   * \param properties Propriedades para busca de ofertas no barramento
-   * \param timeout NÃºmeo de segundos de timeout. 0 significa retornar
-   *  imediatamente, -1 esperar infinitamente. O tempo de retorno da
-   *  funÃ§Ã£pode demorar mais que o tempo especificado, mas a funcao nao
-   *  vai continuar tentando depois que o tempo de timeout tiver passado.
+   * \param properties Propriedades que as ofertas de serviços encontradas
+   *                   devem apresentar.
+   * \param retries Parâmetro opcional indicando o número de novas tentativas
+   *                de busca de ofertas em caso de falhas, como o barramento
+   *                estar indisponível ou não ser possível estabelecer um login
+   *                até o momento. 'retries' com o valor 0 implica que a
+   *                operação retorna imediatamente após uma única tentativa.
+   *                Para tentar indefinidamente o valor de 'retries' deve ser
+   *                -1. Entre cada tentativa é feita uma pausa dada pelo
+   *                parâmetro 'interval' fornecido na criação do assistente
+   *                (veja a interface 'AssistantFactory').
+   *
+   * \return Sequência de descrições de ofertas de serviço encontradas.
    */
-  idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int timeout) const;
+  idl_or::ServiceOfferDescSeq findServices(idl_or::ServicePropertySeq properties
+                                           , int retries) const;
+
+  /**
+   * \brief Devolve uma lista de todas as ofertas de serviço registradas.
+   * 
+   * Caso ocorram erros, a callback de tratamento de erro apropriada será
+   * chamada. Se o número de tentativas se esgotar e não houver sucesso, uma
+   * sequência vazia será retornada.
+   * 
+   * \param retries Parâmetro opcional indicando o número de novas tentativas
+   *                de busca de ofertas em caso de falhas, como o barramento
+   *                estar indisponível ou não for possível estabelecer um login
+   *                até o momento. 'retries' com o valor 0 implica que a
+   *                operação retorna imediatamente após uma única tentativa.
+   *                Para tentar indefinidamente o valor de 'retries' deve ser
+   *                -1. Entre cada tentativa é feita uma pausa dada pelo
+   *                parâmetro 'interval' fornecido na criação do assistente
+   *                (veja a interface 'AssistantFactory').
+   * 
+   * \return Sequência de descrições de ofertas de serviço registradas.
+   */
+  idl_or::ServiceOfferDescSeq getAllServices(int retries) const;
 
   /** 
    * \brief Filtra ofertas e retorna somente as que se encontram responsivas
@@ -327,16 +377,54 @@ public:
    */
   static idl_or::ServiceOfferDescSeq filterWorkingOffers(idl_or::ServiceOfferDescSeq offers);
   
-  /** 
-   * \brief Termina execucao do ORB e conexao com o barramento
+  /**
+   * \brief Inicia o processo de login por autenticação compartilhada.
+   * 
+   * A autenticação compartilhada permite criar um novo login compartilhando a
+   * mesma autenticação do login atual da conexão. Portanto essa operação só
+   * pode ser chamada enquanto a conexão estiver autenticada, caso contrário a
+   * exceção de sistema CORBA::NO_PERMISSION{NoLogin} é lançada. As informações
+   * fornecidas por essa operação devem ser passadas para a operação
+   * 'loginBySharedAuth' para conclusão do processo de login por autenticação
+   * compartilhada. Isso deve ser feito dentro do tempo de lease definido pelo
+   * administrador do barramento. Caso contrário essas informações se tornam
+   * inválidas e não podem mais ser utilizadas para criar um login.
+   * 
+   * \param secret Segredo a ser fornecido na conclusão do processo de login.
+   * \param retries Parâmetro opcional indicando o número de novas tentativas
+   *                de busca de ofertas em caso de falhas, como o barramento
+   *                estar indisponível ou não for possível estabelecer um login
+   *                até o momento. 'retries' com o valor 0 implica que a
+   *                operação retorna imediatamente após uma única tentativa.
+   *                Para tentar indefinidamente o valor de 'retries' deve ser
+   *                -1. Entre cada tentativa é feita uma pausa dada pelo
+   *                parâmetro 'interval' fornecido na criação do assistente
+   *                (veja a interface 'AssistantFactory').
+   *
+   * \return Objeto que representa o processo de login iniciado.
    */
-  void shutdown();
+  std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq> startSharedAuth(int retries);
 
   /** 
-   * \brief Espera pelo termino de execucao do ORB e prove a thread atual
-   *  para uso pela API assistants
+   * \brief Encerra o funcionamento do assistente liberando todos os recursos
+   *        alocados por ele.
+   * 
+   * Essa operação deve ser chamada antes do assistente ser descartado, pois
+   * como o assistente tem um funcionamento ativo, ele continua funcionando e
+   * consumindo recursos mesmo que a aplicação não tenha mais referências a ele.
+   * Em particular, alguns dos recursos gerenciados pelo assistente são:
+   * - Login no barramento;
+   * - Ofertas de serviço registradas no barramento;
+   * - Observadores de serviço registrados no barramento;
+   * - Threads de manutenção desses recursos no barramento;
+   * - Conexão default no ORB sendo utilizado;
+   *
+   * Em particular, o processamento de requisições do ORB (e.g. através da
+   * operação 'ORB::run()') não é gerido pelo assistente, portanto é
+   * responsabilidade da aplicação iniciar e parar esse processamento (e.g.
+   * através da operação 'ORB::shutdown()')
    */
-  void wait();
+  void shutdown();
 
   /** 
    * \brief Espera pelo termino de execucao do processo de login
@@ -344,7 +432,7 @@ public:
   void waitLogin();
 
   /** 
-   * \brief Retorna o ORB utilizado pela API assistants
+   * \brief ORB utilizado pelo assistente.
    */
   CORBA::ORB_var orb() const
   {

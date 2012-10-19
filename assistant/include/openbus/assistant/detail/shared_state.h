@@ -81,7 +81,6 @@ struct shared_state
 #ifdef ASSISTANT_SDK_MULTITHREAD
   bool new_queued_components;
   boost::thread work_thread;
-  boost::thread orb_thread;
   boost::mutex mutex;
   // work_cond_var is notified for exiting the work thread and to
   // consume queued components for registration

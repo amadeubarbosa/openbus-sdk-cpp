@@ -21,6 +21,7 @@ typename boost::result_of<F()>::type execute_with_retry(F f, E error, WaitF wait
   {
     try
     {
+      log.log("Trying to execute");
       return f();
     }
     catch(CORBA::NO_PERMISSION const& e)
@@ -76,6 +77,7 @@ typename boost::result_of<F()>::type execute_with_retry
   {
     try
     {
+      log.log("Trying to execute");
       return f();
     }
     catch(CORBA::TRANSIENT const& e)

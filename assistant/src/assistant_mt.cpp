@@ -56,30 +56,6 @@ void register_relogin(boost::shared_ptr<assistant_detail::shared_state> state)
 
 namespace {
 
-void orb_thread_function(CORBA::ORB_var orb
-                         , boost::shared_ptr<assistant_detail::shared_state> state)
-{
-  logger::log_scope l(state->logging, logger::debug_level, "ORB event thread");
-  assistant_detail::exception_logging ex_l(l);
-  try
-  {
-    orb->run();
-    l.level_log(logger::info_level, "ORB returned from run");
-    {
-      boost::unique_lock<boost::mutex> lock(state->mutex);
-      state->work_exit = true;
-      state->work_cond_var.notify_one();
-    }
-  }
-  catch(...)
-  {
-    l.level_log(logger::error_level, "Exception thrown in ORB thread");
-    boost::unique_lock<boost::mutex> lock(state->mutex);
-    state->work_exit = true;
-    state->work_cond_var.notify_one();
-  }
-}
-
 void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> state)
 {
   logger::log_scope work_thread_log(state->logging, logger::debug_level, "work_thread_function");
@@ -249,26 +225,40 @@ struct find_services_error
   }
 };
 
+struct find_services_error_retry
+{
+  find_services_error_retry(int& retry, boost::shared_ptr<assistant_detail::shared_state> state)
+    : retry(&retry), state(state) {}
+  typedef void result_type;
+  template <typename E>
+  result_type operator()(E const& e) const
+  {
+    --*retry;
+    logger::log_scope log(state->logging, logger::info_level, "Failed to find service");
+    log.vlog("More %d retries to go", *retry);
+    if(!*retry)
+      throw e;
+  }
+  int* retry;
+  boost::shared_ptr<assistant_detail::shared_state> state;
+};
+
 }
 
 void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
 {
-  state->orb_thread = boost::thread(boost::bind(&assistant::orb_thread_function, state->orb, state));
   state->work_thread = boost::thread(boost::bind(&assistant::work_thread_function, state));
 }
 
 void AssistantImpl::shutdown()
 {
-  state->orb->shutdown(true);
+  boost::unique_lock<boost::mutex> lock(state->mutex);
+  state->work_exit = true;
+  state->work_cond_var.notify_one();
   state->work_thread.join();
 }
 
-void AssistantImpl::wait()
-{
-  state->work_thread.join();
-}
-
-void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
+void AssistantImpl::registerService(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
 {
   boost::unique_lock<boost::mutex> l(state->mutex);
   state->queued_components.push_back(std::make_pair(component, properties));
@@ -276,21 +266,20 @@ void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::Servic
   state->work_cond_var.notify_one();
 }
 
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int timeout_secs
+idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int retries
                                        , boost::shared_ptr<assistant_detail::shared_state> state)
 {
-  boost::chrono::steady_clock::time_point timeout
-    = boost::chrono::steady_clock::now()
-    + boost::chrono::seconds(timeout_secs);
-
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  while(!state->connection_ready && retries > 0)
   {
-    boost::unique_lock<boost::mutex> l(state->mutex);
-    while(!state->connection_ready && 
-          state->connection_ready_var.wait_until(l, timeout) != boost::cv_status::timeout)
-      ;
-    if(!state->connection_ready)
-      throw timeout_error();
+    l.unlock();
+    boost::this_thread::sleep_for(state->retry_wait);
+    l.lock();
   }
+  l.unlock();
+  
+  if(retries == 0)
+    throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
   // From here connection_ready is true, which means that state->connection is valid
   // and imutable, and a happens before has already been established between
@@ -299,7 +288,8 @@ idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, in
   idl_or::ServiceOfferDescSeq_var r
     = assistant_detail::execute_with_retry
     (boost::bind(find_services(), state, properties)
-     , find_services_error(), timeout, state->logging);
+     , find_services_error_retry(retries, state), assistant_detail::wait_until_timeout_and_signal_exit(state)
+     , state->logging);
   return *r;
 }
 
@@ -331,7 +321,7 @@ idl_or::ServiceOfferDescSeq findOffers_immediate
   {
     boost::unique_lock<boost::mutex> l(state->mutex);
     if(!state->connection_ready)
-      throw timeout_error();
+      throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
   }
 
   // From here connection_ready is true, which means that state->connection is valid
