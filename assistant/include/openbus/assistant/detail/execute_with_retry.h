@@ -47,6 +47,18 @@ typename boost::result_of<F()>::type execute_with_retry(F f, E error, WaitF wait
     {
       error(e);
     }
+    catch(idl::services::offer_registry::UnauthorizedFacets const& e)
+    {
+      error(e);
+    }
+    catch(CORBA::SystemException const& e)
+    {
+      error(e);
+    }
+    catch(CORBA::UserException const& e)
+    {
+      error(e);
+    }
 
     wait_f();
   }
@@ -83,6 +95,18 @@ typename boost::result_of<F()>::type execute_with_retry
       error(e);
     }
     catch(idl::services::UnauthorizedOperation const& e)
+    {
+      error(e);
+    }
+    catch(idl::services::offer_registry::UnauthorizedFacets const& e)
+    {
+      error(e);
+    }
+    catch(CORBA::SystemException const& e)
+    {
+      error(e);
+    }
+    catch(CORBA::UserException const& e)
     {
       error(e);
     }

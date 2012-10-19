@@ -35,6 +35,21 @@ inline const char* exception_message(idl::services::UnauthorizedOperation const&
   return "tecgraf::openbus::core::v2_0::services::UnauthorizedOperation";
 }
 
+inline const char* exception_message(idl::services::offer_registry::UnauthorizedFacets const&)
+{
+  return "tecgraf::openbus::core::v2_0::services::offer_registry::UnauthorizedFacets";
+}
+
+inline const char* exception_message(CORBA::SystemException const&)
+{
+  return "Unknown derived exception of CORBA::SystemException";
+}
+
+inline const char* exception_message(CORBA::UserException const&)
+{
+  return "Unknown derived exception of CORBA::UserException";
+}
+
 } } }
 
 #endif

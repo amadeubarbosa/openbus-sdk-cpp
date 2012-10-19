@@ -5,6 +5,7 @@
 #include <openbus/assistant/detail/register_information.h>
 #include <openbus/assistant/detail/execute_with_retry.h>
 #include <openbus/assistant/detail/exception_message.h>
+#include <openbus/assistant/detail/create_connection_and_login.h>
 
 namespace openbus { namespace assistant {
 
@@ -45,7 +46,7 @@ void register_component(idl_or::OfferRegistry_var offer_registry
                         , logger::logger& logging);
 
 
-void register_relogin(boost::shared_ptr<shared_state> state)
+void register_relogin(boost::shared_ptr<assistant_detail::shared_state> state)
 {
   boost::unique_lock<boost::mutex> lock(state->mutex);
   state->new_queued_components = true;
@@ -96,7 +97,7 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
       std::auto_ptr<Connection> connection = assistant_detail::create_connection_and_login
         (state->orb, state->host, state->port, state->auth_info
          , state->logging, state
-         , login_error_callback);
+         , login_error_callback, boost::none);
       {
         work_thread_log.level_log(logger::debug_level, "Registering connection as default");
         openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
@@ -140,18 +141,26 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
         boost::function<void(scs::core::IComponent_var, idl_or::ServicePropertySeq
                              , std::string /*error*/)> register_error_callback
           = state->register_error;
-        lock.unlock();
 
         do
         {
-          work_thread_log.level_log(logger::debug_level, "Registering some components");
-          register_iterator current = components.begin();
-          assistant_detail::execute_with_retry
-            (boost::bind(&register_component, state->connection->offers()
-                         , boost::ref(current), components.end()
-                         , boost::ref(state->logging))
-             , register_fail(register_error_callback, current)
-             , assistant_detail::wait_until_timeout_and_signal_exit(state));
+          lock.unlock();
+          try
+          {
+            work_thread_log.level_log(logger::debug_level, "Registering some components");
+            register_iterator current = components.begin();
+            assistant_detail::execute_with_retry
+              (boost::bind(&register_component, state->connection->offers()
+                           , boost::ref(current), components.end()
+                           , boost::ref(state->logging))
+               , register_fail(register_error_callback, current)
+               , assistant_detail::wait_until_timeout_and_signal_exit(state)
+               , state->logging);
+          }
+          catch(timeout_error const&)
+          {
+            work_thread_log.level_log(logger::info_level, "Timeout'ed registering component");
+          }
           lock.lock();
         }
         while(std::find_if(components.begin(), components.end()
@@ -187,6 +196,7 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
   catch(std::exception const& e)
   {
     logger::log_scope l(state->logging, logger::error_level, "Worker thread std::exception catch");
+    l.vlog("The typeid(e).name() of the exception is: %s", typeid(e).name());
     assistant_detail::exception_logging ex_l(l);
     try
     {
@@ -289,7 +299,7 @@ idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, in
   idl_or::ServiceOfferDescSeq_var r
     = assistant_detail::execute_with_retry
     (boost::bind(find_services(), state, properties)
-     , find_services_error(), timeout);
+     , find_services_error(), timeout, state->logging);
   return *r;
 }
 
@@ -310,7 +320,8 @@ idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
   idl_or::ServiceOfferDescSeq_var r
     = assistant_detail::execute_with_retry
     (boost::bind(find_services(), state, properties)
-     , find_services_error(), assistant_detail::wait_until_timeout_and_signal_exit(state));
+     , find_services_error(), assistant_detail::wait_until_timeout_and_signal_exit(state)
+     , state->logging);
   return *r;
 }
 
@@ -333,7 +344,7 @@ idl_or::ServiceOfferDescSeq findOffers_immediate
 
 namespace assistant_detail {
 
-void wait_login(boost::shared_ptr<assitant_detail::shared_state> state)
+void wait_login(boost::shared_ptr<assistant_detail::shared_state> state)
 {
   boost::unique_lock<boost::mutex> l(state->mutex);
   while(!state->connection_ready)
