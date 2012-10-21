@@ -7,9 +7,9 @@ CPPFLAGS= -g -fno-inline -Wall -DMULTITHREAD -DSCS_THREADING_ENABLED -DLOGGER_MU
 OPENBUSINC= ${OPENBUS_HOME}/include
 OPENBUSLIB= ${OPENBUS_HOME}/lib
 
-SLIB= ${OPENBUSLIB}/libopenbusmicoMT.a \
-      ${OPENBUSLIB}/libscsmicoMT.a \
-      ${OPENBUSLIB}/liblogger.a
+SLIB= ${OPENBUSLIB}/libopenbus-micomultithread.a \
+      ${OPENBUSLIB}/libscs-micomultithread.a \
+      ${OPENBUSLIB}/liblogger-multithread.a
 
 INCLUDES= -I. \
 				  -Istubs \
