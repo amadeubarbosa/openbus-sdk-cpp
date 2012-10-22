@@ -444,11 +444,6 @@ public:
   void shutdown();
 
   /** 
-   * \brief Espera pelo termino de execucao do processo de login
-   */
-  void waitLogin();
-
-  /** 
    * \brief ORB utilizado pelo assistente.
    */
   CORBA::ORB_var orb() const
@@ -468,6 +463,7 @@ public:
   void exitChain();
   CallerChain getJoinedChain();
 protected:
+  friend class assistant_access;
   AssistantImpl() {}
   void InitWithPassword(std::string const& hostname, unsigned short port
                         , std::string const& username, std::string const& password

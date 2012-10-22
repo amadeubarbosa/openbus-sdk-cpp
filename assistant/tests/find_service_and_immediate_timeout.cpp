@@ -1,5 +1,6 @@
 
 #include <openbus/assistant.h>
+#include <openbus/assistant/waitlogin.h>
 
 int main(int argc, char** argv)
 {
@@ -10,7 +11,7 @@ int main(int argc, char** argv)
 
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 
-  assistant.waitLogin();
+  waitLogin(assistant);
 
   idl_or::ServiceOfferDescSeq offers
     = assistant.findServices(assistant.createFacetAndEntityProperty("hello", "notexistantentity"), 0);

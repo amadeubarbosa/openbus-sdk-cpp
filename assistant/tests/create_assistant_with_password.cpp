@@ -1,5 +1,6 @@
 
 #include <openbus/assistant.h>
+#include <openbus/assistant/waitlogin.h>
 
 int main(int argc, char** argv)
 {
@@ -8,6 +9,6 @@ int main(int argc, char** argv)
     ("localhost", 2089, _username = "demo", _password = "demo"
      , _argc = argc, _argv = argv, _log_level = logger::debug_level);
 
-  assistant.waitLogin();
+  waitLogin(assistant);
   assistant.shutdown();
 }

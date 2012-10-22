@@ -134,7 +134,7 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
                , assistant_detail::wait_until_timeout_and_signal_exit(state)
                , state->logging);
           }
-          catch(timeout_error const&)
+          catch(assistant_detail::timeout_error const&)
           {
             work_thread_log.level_log(logger::info_level, "Timeout'ed registering component");
           }
@@ -328,6 +328,19 @@ void wait_login(boost::shared_ptr<assistant_detail::shared_state> state)
   assert(state->connection_ready);
 }
 
+}
+
+struct assistant_access
+{
+  static boost::shared_ptr<assistant_detail::shared_state> state(Assistant a)
+  {
+    return a.state;
+  }
+};
+
+void waitLogin(Assistant a)
+{
+  assistant_detail::wait_login(assistant_access::state(a));
 }
 
 void AssistantImpl::onLoginError(boost::function<void(std::string /*error*/)> f)

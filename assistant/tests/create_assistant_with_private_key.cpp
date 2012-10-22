@@ -1,5 +1,6 @@
 
 #include <openbus/assistant.h>
+#include <openbus/assistant/waitlogin.h>
 
 #include <fstream>
 
@@ -29,6 +30,6 @@ int main(int argc, char** argv)
      , _private_key = key
      , _argc = argc, _argv = argv, _log_level = logger::debug_level);
 
-  assistant.waitLogin();
+  waitLogin(assistant);
   assistant.shutdown();
 }
