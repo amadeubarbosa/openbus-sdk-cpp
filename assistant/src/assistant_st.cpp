@@ -204,13 +204,6 @@ void register_relogin(boost::shared_ptr<assistant_detail::shared_state> state)
   }
 }
 
-void AssistantImpl::wait()
-{
-  wait_login(state);
-  if(!state->work_exit)
-    state->orb->run();
-}
-
 void AssistantImpl::waitLogin()
 {
   wait_login(state);
@@ -239,7 +232,7 @@ struct find_services_error
   }
 };
 
-void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
+void AssistantImpl::registerService(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
 {
   try
   {
@@ -267,7 +260,7 @@ void AssistantImpl::addOffer(scs::core::IComponent_var component, idl_or::Servic
   }
 }
 
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int timeout_secs
+idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int retries
                                        , boost::shared_ptr<assistant_detail::shared_state> state)
 {
   logger::log_scope log(state->logging, logger::debug_level, "findOffers with timeout");
@@ -307,7 +300,7 @@ idl_or::ServiceOfferDescSeq findOffers_immediate
 {
   logger::log_scope log(state->logging, logger::debug_level, "findOffers with immediate timeout");
   if(!state->connection_ready)
-    throw timeout_error();
+    throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
   assert(!CORBA::is_nil(state->connection->offers()));
   idl_or::ServiceOfferDescSeq_var r = state->connection->offers()->findServices(properties);

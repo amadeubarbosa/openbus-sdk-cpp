@@ -17,7 +17,7 @@ int main(int argc, char** argv)
   do
   {
     offer_registry::ServiceOfferDescSeq offers
-      = assistant.filterWorkingOffers(assistant.findOffers
+      = assistant.filterWorkingOffers(assistant.findServices
         (assistant.createFacetAndEntityProperty("hello", "demo"), -1));
     CORBA::ULong i = 0;
     while(i != offers.length())
