@@ -279,9 +279,17 @@ void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
   state->asynchronous_login_dispatcher = dispatcher.release();
 }
 
-void AssistantImpl::waitLogin()
+struct assistant_access
 {
-  wait_login(state);
+  static boost::shared_ptr<assistant_detail::shared_state> state(Assistant a)
+  {
+    return a.state;
+  }
+};
+
+void waitLogin(Assistant a)
+{
+  assistant_detail::wait_login(assistant_access::state(a));
 }
 
 struct find_services
