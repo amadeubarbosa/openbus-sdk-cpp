@@ -27,7 +27,7 @@ int main(int argc, char** argv)
   openbus::assistant::Assistant assistant
     ("localhost", 2089, _entity = "TestCppHello"
      , _private_key = key
-     , _argc = argc, _argv = argv);
+     , _argc = argc, _argv = argv, _log_level = logger::debug_level);
 
   assistant.waitLogin();
   assistant.shutdown();

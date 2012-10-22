@@ -5,11 +5,57 @@
 
 #include <log/logger.h>
 
+#define OPENBUS_ASSISTANT_CATCH_EXCEPTIONS(x)                           \
+  catch(CORBA::NO_PERMISSION const& e)                                  \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(CORBA::TRANSIENT const& e)                                      \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(CORBA::COMM_FAILURE const& e)                                   \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(CORBA::OBJECT_NOT_EXIST const& e)                               \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(idl::services::ServiceFailure const& e)                         \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(idl::services::UnauthorizedOperation const& e)                  \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(idl::services::offer_registry::UnauthorizedFacets const& e)     \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(CORBA::SystemException const& e)                                \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(CORBA::UserException const& e)                                  \
+    {                                                                   \
+      x(e);                                                             \
+    }
+
 namespace openbus { namespace assistant { namespace assistant_detail {
 
 struct wait_predicate_signalled
 {
   const char* what() const throw() { return "wait_predicate_signalled"; }
+};
+
+struct timeout_error : std::exception
+{
+  const char* what() const throw()
+  {
+    return "timeout_error";
+  }
 };
 
 template <typename F, typename E, typename WaitF>
@@ -24,42 +70,7 @@ typename boost::result_of<F()>::type execute_with_retry(F f, E error, WaitF wait
       log.log("Trying to execute");
       return f();
     }
-    catch(CORBA::NO_PERMISSION const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::TRANSIENT const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::COMM_FAILURE const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::OBJECT_NOT_EXIST const& e)
-    {
-      error(e);
-    }
-    catch(idl::services::ServiceFailure const& e)
-    {
-      error(e);
-    }
-    catch(idl::services::UnauthorizedOperation const& e)
-    {
-      error(e);
-    }
-    catch(idl::services::offer_registry::UnauthorizedFacets const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::SystemException const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::UserException const& e)
-    {
-      error(e);
-    }
+    OPENBUS_ASSISTANT_CATCH_EXCEPTIONS(error)
 
     wait_f();
   }
@@ -80,38 +91,7 @@ typename boost::result_of<F()>::type execute_with_retry
       log.log("Trying to execute");
       return f();
     }
-    catch(CORBA::TRANSIENT const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::COMM_FAILURE const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::OBJECT_NOT_EXIST const& e)
-    {
-      error(e);
-    }
-    catch(idl::services::ServiceFailure const& e)
-    {
-      error(e);
-    }
-    catch(idl::services::UnauthorizedOperation const& e)
-    {
-      error(e);
-    }
-    catch(idl::services::offer_registry::UnauthorizedFacets const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::SystemException const& e)
-    {
-      error(e);
-    }
-    catch(CORBA::UserException const& e)
-    {
-      error(e);
-    }
+    OPENBUS_ASSISTANT_CATCH_EXCEPTIONS(error)
 
     if(timeout <= boost::chrono::steady_clock::now())
     {

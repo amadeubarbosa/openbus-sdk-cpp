@@ -5,6 +5,7 @@
 #include <openbus/assistant/detail/register_information.h>
 #include <openbus/assistant/detail/execute_with_retry.h>
 #include <openbus/assistant/detail/exception_message.h>
+#include <openbus/assistant/detail/find_services_error_retry.h>
 #include <openbus/assistant/detail/create_connection_and_login.h>
 
 namespace openbus { namespace assistant {
@@ -225,29 +226,13 @@ struct find_services_error
   }
 };
 
-struct find_services_error_retry
-{
-  find_services_error_retry(int& retry, boost::shared_ptr<assistant_detail::shared_state> state)
-    : retry(&retry), state(state) {}
-  typedef void result_type;
-  template <typename E>
-  result_type operator()(E const& e) const
-  {
-    --*retry;
-    logger::log_scope log(state->logging, logger::info_level, "Failed to find service");
-    log.vlog("More %d retries to go", *retry);
-    if(!*retry)
-      throw e;
-  }
-  int* retry;
-  boost::shared_ptr<assistant_detail::shared_state> state;
-};
-
 }
 
 void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
 {
+  logger::log_scope l(state->logging, logger::info_level, "create_threads");
   state->work_thread = boost::thread(boost::bind(&assistant::work_thread_function, state));
+  l.log("Created work thread");
 }
 
 void AssistantImpl::shutdown()
@@ -288,7 +273,8 @@ idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, in
   idl_or::ServiceOfferDescSeq_var r
     = assistant_detail::execute_with_retry
     (boost::bind(find_services(), state, properties)
-     , find_services_error_retry(retries, state), assistant_detail::wait_until_timeout_and_signal_exit(state)
+     , assistant_detail::find_services_error_retry(retries, state)
+     , assistant_detail::wait_until_timeout_and_signal_exit(state)
      , state->logging);
   return *r;
 }

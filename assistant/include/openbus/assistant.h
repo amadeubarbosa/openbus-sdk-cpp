@@ -11,7 +11,13 @@
 #include <CORBA.h>
 
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
-#define BOOST_PARAMETER_MAX_ARITY 12
+#ifdef BOOST_PARAMETER_MAX_ARITY
+#if BOOST_PARAMETER_MAX_ARITY < 13
+#error The BOOST_PARAMETER_MAX_ARITY must be at least 13 before #including openbus/assistant.h or must not be defined at all. Add -DBOOST_PARAMETER_MAX_ARITY=13 to your build definitions
+#endif
+#else
+#define BOOST_PARAMETER_MAX_ARITY 13
+#endif
 #include <boost/parameter.hpp>
 #endif
 
@@ -39,6 +45,7 @@ BOOST_PARAMETER_NAME(on_login_error);
 BOOST_PARAMETER_NAME(on_register_error);
 BOOST_PARAMETER_NAME(on_fatal_error);
 BOOST_PARAMETER_NAME(retry_wait);
+BOOST_PARAMETER_NAME(log_level);
 }
 using namespace keywords;
 #endif
@@ -173,8 +180,10 @@ protected:
        , args[_on_login_error | login_error_callback_type()]
        , args[_on_register_error | register_error_callback_type()]
        , args[_on_fatal_error | fatal_error_callback_type()]
+       , args[_log_level | logger::warning_level]
        );
-    
+
+
     typedef boost::chrono::seconds seconds;
     unsigned int retry_wait
       = args[_retry_wait | assistant::default_retry_wait];
@@ -190,19 +199,21 @@ protected:
                            , int& argc, char** argv
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
-                           , fatal_error_callback_type fatal_error) const
+                           , fatal_error_callback_type fatal_error
+                           , logger::level l) const
     {
       self->InitWithPassword(hostname, port, username, password, argc, argv
-                             , login_error, register_error, fatal_error);
+                             , login_error, register_error, fatal_error, l);
     }
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port
                            , std::string username, std::string password, void_, void_, void_, void_, void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
-                           , fatal_error_callback_type fatal_error) const
+                           , fatal_error_callback_type fatal_error
+                           , logger::level l) const
     {
       self->InitWithPassword(hostname, port, username, password
-                             , login_error, register_error, fatal_error);
+                             , login_error, register_error, fatal_error, l);
     }
     result_type operator()(AssistantImpl* self
                            , std::string hostname, unsigned short port, void_, void_
@@ -210,39 +221,43 @@ protected:
                            , int& argc, char** argv
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
-                           , fatal_error_callback_type fatal_error) const
+                           , fatal_error_callback_type fatal_error
+                           , logger::level l) const
     {
       self->InitWithPrivateKey(hostname, port, entity, private_key, argc, argv
-                             , login_error, register_error, fatal_error);
+                               , login_error, register_error, fatal_error, l);
     }
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
                            , std::string entity, CORBA::OctetSeq private_key, void_, void_, void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
-                           , fatal_error_callback_type fatal_error) const
+                           , fatal_error_callback_type fatal_error
+                           , logger::level l) const
     {
       self->InitWithPrivateKey(hostname, port, entity, private_key
-                               , login_error, register_error, fatal_error);
+                               , login_error, register_error, fatal_error, l);
     }
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
                            , std::string entity, void_, std::string private_key_filename, void_
                            , int& argc, char** argv
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
-                           , fatal_error_callback_type fatal_error) const
+                           , fatal_error_callback_type fatal_error
+                           , logger::level l) const
     {
       self->InitWithPrivateKeyFile(hostname, port, entity, private_key_filename, argc, argv
-                                   , login_error, register_error, fatal_error);
+                                   , login_error, register_error, fatal_error, l);
     }
     result_type operator()(AssistantImpl* self
                            , std::string hostname, unsigned short port, void_, void_
                            , std::string entity, void_, std::string private_key_filename, void_, void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
-                           , fatal_error_callback_type fatal_error) const
+                           , fatal_error_callback_type fatal_error
+                           , logger::level l) const
     {
       self->InitWithPrivateKeyFile(hostname, port, entity, private_key_filename
-                                   , login_error, register_error, fatal_error);
+                                   , login_error, register_error, fatal_error, l);
     }
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
                            , void_, void_, void_
@@ -250,10 +265,11 @@ protected:
                            , int& argc, char** argv
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
-                           , fatal_error_callback_type fatal_error) const
+                           , fatal_error_callback_type fatal_error
+                           , logger::level l) const
     {
       self->InitWithSharedAuth(hostname, port, shared_auth_callback, argc, argv
-                               , login_error, register_error, fatal_error);
+                               , login_error, register_error, fatal_error, l);
     }
     result_type operator()(AssistantImpl* self
                            , std::string hostname, unsigned short port, void_, void_, void_
@@ -262,10 +278,11 @@ protected:
                            , void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
-                           , fatal_error_callback_type fatal_error) const
+                           , fatal_error_callback_type fatal_error
+                           , logger::level l) const
     {
       self->InitWithSharedAuth(hostname, port, shared_auth_callback
-                               , login_error, register_error, fatal_error);
+                               , login_error, register_error, fatal_error, l);
     }
   };
 public:
@@ -440,6 +457,12 @@ public:
     return state->orb;
   }
 
+  logger::logger& logging() const
+  {
+    assert(!!state);
+    return state->logging;
+  }
+
   CallerChain getCallerChain();
   void joinChain(CallerChain chain);
   void exitChain();
@@ -451,57 +474,57 @@ protected:
                         , int& argc, char** argv
                         , login_error_callback_type login_error
                         , register_error_callback_type register_error
-                        , fatal_error_callback_type fatal_error);
+                        , fatal_error_callback_type fatal_error
+                        , logger::level l);
   void InitWithPassword(std::string const& hostname, unsigned short port
                         , std::string const& username, std::string const& password
                         , login_error_callback_type login_error
                         , register_error_callback_type register_error
-                        , fatal_error_callback_type fatal_error);
+                        , fatal_error_callback_type fatal_error
+                        , logger::level l);
   void InitWithPrivateKey(std::string const& hostname, unsigned short port
                           , std::string const& entity, CORBA::OctetSeq const& private_key
                           , int& argc, char** argv
                           , login_error_callback_type login_error
                           , register_error_callback_type register_error
-                          , fatal_error_callback_type fatal_error);
+                          , fatal_error_callback_type fatal_error
+                          , logger::level l);
   void InitWithPrivateKey(std::string const& hostname, unsigned short port
                           , std::string const& entity, CORBA::OctetSeq const& private_key
                           , login_error_callback_type login_error
                           , register_error_callback_type register_error
-                          , fatal_error_callback_type fatal_error);
+                          , fatal_error_callback_type fatal_error
+                          , logger::level l);
   void InitWithPrivateKeyFile(std::string const& hostname, unsigned short port
                               , std::string const& entity, std::string const& private_key_file
                               , int& argc, char** argv
                               , login_error_callback_type login_error
                               , register_error_callback_type register_error
-                              , fatal_error_callback_type fatal_error);
+                              , fatal_error_callback_type fatal_error
+                              , logger::level l);
   void InitWithPrivateKeyFile(std::string const& hostname, unsigned short port
                               , std::string const& entity, std::string const& private_key_file
                               , login_error_callback_type login_error
                               , register_error_callback_type register_error
-                              , fatal_error_callback_type fatal_error);
+                              , fatal_error_callback_type fatal_error
+                              , logger::level l);
   void InitWithSharedAuth(std::string const& hostname, unsigned short port
                           , shared_auth_callback_type shared_auth_callback
                           , int& argc, char** argv
                           , login_error_callback_type login_error
                           , register_error_callback_type register_error
-                          , fatal_error_callback_type fatal_error);
+                          , fatal_error_callback_type fatal_error
+                          , logger::level l);
   void InitWithSharedAuth(std::string const& hostname, unsigned short port
                           , shared_auth_callback_type shared_auth_callback
                           , login_error_callback_type login_error
                           , register_error_callback_type register_error
-                          , fatal_error_callback_type fatal_error);
+                          , fatal_error_callback_type fatal_error
+                          , logger::level l);
 
   boost::shared_ptr<assistant_detail::shared_state> state;
 };
 #endif
-
-struct timeout_error : std::exception
-{
-  const char* what() const throw()
-  {
-    return "timeout_error";
-  }
-};
 
 /** \brief Classe Openbus com API do assistants
  *
@@ -532,6 +555,7 @@ struct Assistant : AssistantImpl
       (host, OPENBUS_ASSISTANT_STRING_LAMBDA())
       (port, (unsigned short)))
    (optional
+    (log_level, (logger::level))
     (username, OPENBUS_ASSISTANT_STRING_LAMBDA())
     (entity, OPENBUS_ASSISTANT_STRING_LAMBDA())
     (password, OPENBUS_ASSISTANT_STRING_LAMBDA())
@@ -560,7 +584,8 @@ struct Assistant : AssistantImpl
                                       , login_error_callback_type login_error = login_error_callback_type()
                                       , register_error_callback_type register_error
                                          = register_error_callback_type()
-                                      , fatal_error_callback_type fatal_error = fatal_error_callback_type());
+                                      , fatal_error_callback_type fatal_error = fatal_error_callback_type()
+                                      , logger::level l = logger::warning_level);
 
   /** \brief Constriu um Openbus com informacao de autenticacao
    *  por certificado
@@ -571,7 +596,8 @@ struct Assistant : AssistantImpl
                                         , login_error_callback_type login_error = login_error_callback_type()
                                         , register_error_callback_type register_error
                                           = register_error_callback_type()
-                                        , fatal_error_callback_type fatal_error = fatal_error_callback_type());
+                                        , fatal_error_callback_type fatal_error = fatal_error_callback_type()
+                                        , logger::level l = logger::warning_level);
 
   /** \brief Constriu um Openbus com informacao de autenticacao
    *  por Shared Authentication
@@ -582,7 +608,8 @@ struct Assistant : AssistantImpl
                                         , login_error_callback_type login_error = login_error_callback_type()
                                         , register_error_callback_type register_error
                                           = register_error_callback_type()
-                                        , fatal_error_callback_type fatal_error = fatal_error_callback_type());
+                                        , fatal_error_callback_type fatal_error = fatal_error_callback_type()
+                                        , logger::level l = logger::warning_level);
 private:
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
   Assistant() {}

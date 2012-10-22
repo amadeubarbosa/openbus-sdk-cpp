@@ -11,7 +11,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/utility/result_of.hpp>
-#include <log/output/streambuf_output.h>
 
 #include <boost/chrono/include.hpp>
 #include <boost/weak_ptr.hpp>
@@ -239,28 +238,30 @@ void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short
                                      , int& argc, char** argv
                                      , login_error_callback_type login_error
                                      , register_error_callback_type register_error
-                                     , fatal_error_callback_type fatal_error)
+                                     , fatal_error_callback_type fatal_error
+                                     , logger::level l)
 {
   CORBA::ORB_var orb = ORBInitializer(argc, argv);
   activate_RootPOA(orb);
   assistant_detail::password_authentication_info info = {username, password};
   state.reset(new assistant_detail::shared_state
-              (orb, info, hostname, port, login_error, register_error, fatal_error));
-  state->logging.set_level(logger::debug_level);
-  state->logging.add_output(logger::output::make_streambuf_output(*std::cerr.rdbuf()));
+              (orb, info, hostname, port, login_error, register_error, fatal_error, l));
+  logger::log_scope log(state->logging, logger::info_level, "InitWithPassword");
+  log.log("Constructed assistant");
   create_threads(state);
 }
 void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short port
                                      , std::string const& username, std::string const& password
                                      , login_error_callback_type login_error
                                      , register_error_callback_type register_error
-                                     , fatal_error_callback_type fatal_error)
+                                     , fatal_error_callback_type fatal_error
+                                     , logger::level l)
 {
   int argc = 1;
   char* argv[] = {const_cast<char*>("")};
   InitWithPassword(hostname, port, username, password
                    , argc, argv, login_error
-                   , register_error, fatal_error);
+                   , register_error, fatal_error, l);
 }
 
 void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned short port
@@ -268,15 +269,16 @@ void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned sho
                                        , int& argc, char** argv
                                        , login_error_callback_type login_error
                                        , register_error_callback_type register_error
-                                       , fatal_error_callback_type fatal_error)
+                                       , fatal_error_callback_type fatal_error
+                                       , logger::level l)
 {
   CORBA::ORB_var orb = ORBInitializer(argc, argv);
   activate_RootPOA(orb);
   assistant_detail::certificate_authentication_info info = {entity, private_key};
   state.reset(new assistant_detail::shared_state
-              (orb, info, hostname, port, login_error, register_error, fatal_error));
-  state->logging.set_level(logger::debug_level);
-  state->logging.add_output(logger::output::make_streambuf_output(*std::cerr.rdbuf()));
+              (orb, info, hostname, port, login_error, register_error, fatal_error, l));
+  logger::log_scope log(state->logging, logger::info_level, "InitWithPrivateKey");
+  log.log("Constructed assistant");
   create_threads(state);
 }
 
@@ -284,13 +286,14 @@ void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned sho
                                        , std::string const& entity, CORBA::OctetSeq const& private_key
                                        , login_error_callback_type login_error
                                        , register_error_callback_type register_error
-                                       , fatal_error_callback_type fatal_error)
+                                       , fatal_error_callback_type fatal_error
+                                       , logger::level l)
 {
   int argc = 1;
   char* argv[] = {const_cast<char*>("")};
   InitWithPrivateKey(hostname, port, entity, private_key
                      , argc, argv, login_error
-                     , register_error, fatal_error);
+                     , register_error, fatal_error, l);
 }
 
 void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned short port
@@ -298,15 +301,16 @@ void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned sho
                                        , int& argc, char** argv
                                        , login_error_callback_type login_error
                                        , register_error_callback_type register_error
-                                       , fatal_error_callback_type fatal_error)
+                                       , fatal_error_callback_type fatal_error
+                                       , logger::level l)
 {
   CORBA::ORB_var orb = ORBInitializer(argc, argv);
   activate_RootPOA(orb);
   assistant_detail::shared_auth_authentication_info info = {shared_auth_callback};
   state.reset(new assistant_detail::shared_state
-              (orb, info, hostname, port, login_error, register_error, fatal_error));
-  state->logging.set_level(logger::debug_level);
-  state->logging.add_output(logger::output::make_streambuf_output(*std::cerr.rdbuf()));
+              (orb, info, hostname, port, login_error, register_error, fatal_error, l));
+  logger::log_scope log(state->logging, logger::info_level, "InitWithSharedAuth");
+  log.log("Constructed assistant");
   create_threads(state);
 }
 
@@ -314,12 +318,13 @@ void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned sho
                                        , shared_auth_callback_type shared_auth_callback
                                        , login_error_callback_type login_error
                                        , register_error_callback_type register_error
-                                       , fatal_error_callback_type fatal_error)
+                                       , fatal_error_callback_type fatal_error
+                                       , logger::level l)
 {
   int argc = 1;
   char* argv[] = {const_cast<char*>("")};
   InitWithSharedAuth(hostname, port, shared_auth_callback, argc, argv, login_error
-                     , register_error, fatal_error);
+                     , register_error, fatal_error, l);
 }
 
 Assistant Assistant::createWithPassword(const char* username, const char* password
@@ -327,11 +332,12 @@ Assistant Assistant::createWithPassword(const char* username, const char* passwo
                                         , int& argc, char** argv
                                         , login_error_callback_type login_error
                                         , register_error_callback_type register_error
-                                        , fatal_error_callback_type fatal_error)
+                                        , fatal_error_callback_type fatal_error
+                                        , logger::level l)
 {
   Assistant assistant;
   assistant.InitWithPassword(host, port, username, password, argc, argv
-                             , login_error, register_error, fatal_error);
+                             , login_error, register_error, fatal_error, l);
   return assistant;
 }
  
@@ -340,11 +346,12 @@ Assistant Assistant::createWithPrivateKey(const char* entity, const idl::OctetSe
                                           , int& argc, char** argv
                                           , login_error_callback_type login_error
                                           , register_error_callback_type register_error
-                                          , fatal_error_callback_type fatal_error)
+                                          , fatal_error_callback_type fatal_error
+                                          , logger::level l)
 {
   Assistant assistant;
   assistant.InitWithPrivateKey(host, port, entity, privKey, argc, argv
-                               , login_error, register_error, fatal_error);
+                               , login_error, register_error, fatal_error, l);
   return assistant;
 }
 

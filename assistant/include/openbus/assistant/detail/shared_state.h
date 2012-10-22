@@ -4,6 +4,7 @@
 #define OPENBUS_ASSISTANT_DETAIL_SHARED_STATE_H
 
 #include <log/logger.h>
+#include <log/output/streambuf_output.h>
 
 #include <scs/IComponent.h>
 #include <openbus/ConnectionManager.h>
@@ -19,6 +20,7 @@
 
 #include <CORBA.h>
 
+#include <iostream>
 
 namespace openbus { namespace assistant {
 
@@ -48,6 +50,7 @@ typedef boost::variant<password_authentication_info
   authentication_info;
 
 struct add_offers_dispatcher;
+struct login_dispatcher;
 
 struct shared_state
 {
@@ -87,24 +90,29 @@ struct shared_state
   boost::condition_variable work_cond_var;
   boost::condition_variable connection_ready_var;
 #else
-  add_offers_dispatcher* asynchronous_dispatcher;
+  login_dispatcher* asynchronous_login_dispatcher;
+  add_offers_dispatcher* asynchronous_offers_dispatcher;
 #endif
 
   shared_state(CORBA::ORB_var orb, authentication_info auth_info
                , std::string const& host, unsigned short port
                , login_error_callback_type login_error
                , register_error_callback_type register_error
-               , fatal_error_callback_type fatal_error)
-    : orb(orb), auth_info(auth_info), host(host), port(port)
+               , fatal_error_callback_type fatal_error
+               , logger::level l)
+    : logging(l), orb(orb), auth_info(auth_info), host(host), port(port)
     , login_error(login_error), register_error(register_error)
     , fatal_error(fatal_error), work_exit(false)
     , connection_ready(false), relogin(false)
 #ifdef ASSISTANT_SDK_MULTITHREAD
     , new_queued_components(false)
 #else
-    , asynchronous_dispatcher(0)
+    , asynchronous_login_dispatcher(0)
+    , asynchronous_offers_dispatcher(0)
 #endif
-  {}
+  {
+    logging.add_output(logger::output::make_streambuf_output(*std::cerr.rdbuf()));
+  }
 };
 
 } } }

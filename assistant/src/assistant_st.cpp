@@ -5,6 +5,7 @@
 #include <openbus/assistant/detail/register_information.h>
 #include <openbus/assistant/detail/execute_with_retry.h>
 #include <openbus/assistant/detail/exception_message.h>
+#include <openbus/assistant/detail/find_services_error_retry.h>
 #include <openbus/assistant/detail/create_connection_and_login.h>
 
 #include <boost/bind.hpp>
@@ -41,10 +42,6 @@ void wait_until_timeout_and_signal_exit::operator()() const
   f(boost::bind(predicate(), state), time_point);
 }
 
-}
-
-void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
-{
 }
 
 void AssistantImpl::shutdown()
@@ -134,18 +131,24 @@ private:
   boost::weak_ptr<shared_state> state_;
 };
 
+void create_add_offers_dispatcher(boost::shared_ptr<shared_state> state
+                                  , boost::optional<boost::chrono::microseconds> s = boost::none)
+{
+  if(!state->asynchronous_offers_dispatcher)
+  {
+    int wait = s? s->count() : 0u;
+    std::auto_ptr<add_offers_dispatcher> dispatcher(new add_offers_dispatcher(state->orb, state));
+    state->orb->dispatcher()->tm_event(dispatcher.get(), wait);
+    state->asynchronous_offers_dispatcher = dispatcher.release();
+  }
+}
+
 void simple_add_offer_error(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties
                             , boost::shared_ptr<shared_state> state)
 {
   state->queued_components.push_back(std::make_pair(component, properties));
-  if(!state->asynchronous_dispatcher)
-  {
-    boost::chrono::microseconds s = boost::chrono::duration_cast
-      <boost::chrono::microseconds>(state->retry_wait);
-    std::auto_ptr<add_offers_dispatcher> dispatcher(new add_offers_dispatcher(state->orb, state));
-    state->orb->dispatcher()->tm_event(dispatcher.get(), s.count());
-    state->asynchronous_dispatcher = dispatcher.release();
-  }
+  create_add_offers_dispatcher(state, boost::chrono::duration_cast<boost::chrono::microseconds>
+                               (state->retry_wait));
 }
 
 void wait_login(boost::shared_ptr<assistant_detail::shared_state> state
@@ -169,25 +172,88 @@ void wait_login(boost::shared_ptr<assistant_detail::shared_state> state
   }
   state->connection = connection;
   state->connection_ready = true;
-  assert(!state->asynchronous_dispatcher);
+  assert(!state->asynchronous_offers_dispatcher);
   register_queued_components(state);
   if(!state->queued_components.empty())
+    create_add_offers_dispatcher(state);
+}
+
+}
+
+std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::string const& host
+                                                   , unsigned short port, logger::logger& logging
+                                                   , boost::shared_ptr<assistant_detail::shared_state> state);
+void login_simple(Connection& c, assistant_detail::authentication_info const& info
+                  , logger::logger& logging);
+
+namespace assistant_detail {
+
+void try_wait_login(boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  logger::log_scope log(state->logging, logger::debug_level, "try_wait_login function");
+  assistant_detail::exception_logging ex_l(log);
+
+  log.log("Creating connection and logging");
+  std::auto_ptr<Connection> connection = create_connection_simple
+    (state->orb, state->host, state->port, state->logging, state);
+  login_simple(*connection, state->auth_info, state->logging);
   {
-    boost::chrono::microseconds s = boost::chrono::duration_cast
-      <boost::chrono::microseconds>(state->retry_wait);
-    std::auto_ptr<add_offers_dispatcher> dispatcher(new add_offers_dispatcher(state->orb, state));
-    state->orb->dispatcher()->tm_event(dispatcher.get(), s.count());
-    state->asynchronous_dispatcher = dispatcher.release();
+    log.log("Registering connection as default");
+    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
+      (state->orb->resolve_initial_references("OpenbusConnectionManager"));
+    assert(manager != 0);
+    manager->setDefaultConnection(connection.get());
   }
+  state->connection = connection;
+  state->connection_ready = true;
+  assert(!state->asynchronous_offers_dispatcher);
+  register_queued_components(state);
+  if(!state->queued_components.empty())
+    create_add_offers_dispatcher(state);
 }
+
+class login_dispatcher : public CORBA::DispatcherCallback
+{
+public:
+  login_dispatcher(CORBA::ORB_var orb, boost::weak_ptr<shared_state> state)
+    : orb(orb), state_(state) {}
+
+  template <typename E>
+  void error(E const& e)
+  {
+    boost::shared_ptr<shared_state> state = state_.lock();
+    assert(!!state);
+    state->login_error(assistant_detail::exception_message(e));
+  }
+
+  void callback(CORBA::Dispatcher*, Event)
+  {
+    if(boost::shared_ptr<shared_state> state = state_.lock())
+    {
+      if(!state->connection_ready)
+        try
+        {
+          try_wait_login(state);
+        }
+        OPENBUS_ASSISTANT_CATCH_EXCEPTIONS(error)
+      else
+        orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);
+    }
+    else
+      orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);
+  }
+private:
+  CORBA::ORB_var orb;
+  boost::weak_ptr<shared_state> state_;
+};
 
 }
 
-// PRE: Q = state->queued_components /\ C = state->components /\ AS = state->asynchronous_dispatcher
+// PRE: Q = state->queued_components /\ C = state->components /\ AS = state->asynchronous_offers_dispatcher
 // POS: \forall i. i < Q.size(): Q[i] == state->queued_components
 //       /\ state->components.empty()
 //       /\ \forall i. i < C.size(): state->queued_components[i + Q.size()] == C[i]
-//       /\ (AS == 0 => state->asynchronous_dispatcher = new add_offers_dispatcher)
+//       /\ (AS == 0 => state->asynchronous_offers_dispatcher = new add_offers_dispatcher)
 void register_relogin(boost::shared_ptr<assistant_detail::shared_state> state)
 {
   state->relogin = true;
@@ -195,13 +261,22 @@ void register_relogin(boost::shared_ptr<assistant_detail::shared_state> state)
     (state->queued_components.end()
      , state->components.begin(), state->components.end());
   state->components.clear();
-  if(!state->queued_components.empty() && !state->asynchronous_dispatcher)
+  if(!state->queued_components.empty() && !state->asynchronous_offers_dispatcher)
   {
     std::auto_ptr<assistant_detail::add_offers_dispatcher>
       dispatcher(new assistant_detail::add_offers_dispatcher(state->orb, state));
     state->orb->dispatcher()->tm_event(dispatcher.get(), 0);
-    state->asynchronous_dispatcher = dispatcher.release();
+    state->asynchronous_offers_dispatcher = dispatcher.release();
   }
+}
+
+void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  assert(state->asynchronous_login_dispatcher == 0);
+  std::auto_ptr<assistant_detail::login_dispatcher>
+    dispatcher(new assistant_detail::login_dispatcher(state->orb, state));
+  state->orb->dispatcher()->tm_event(dispatcher.get(), 0);
+  state->asynchronous_login_dispatcher = dispatcher.release();
 }
 
 void AssistantImpl::waitLogin()
@@ -244,7 +319,16 @@ void AssistantImpl::registerService(scs::core::IComponent_var component, idl_or:
       state->components.push_back(std::make_pair(component, properties));
     }
     else
+    {
       state->queued_components.push_back(std::make_pair(component, properties));
+      if(!state->asynchronous_offers_dispatcher && !state->asynchronous_login_dispatcher)
+      {
+        std::auto_ptr<assistant_detail::add_offers_dispatcher>
+          dispatcher(new assistant_detail::add_offers_dispatcher(state->orb, state));
+        state->orb->dispatcher()->tm_event(dispatcher.get(), 0);
+        state->asynchronous_offers_dispatcher = dispatcher.release();
+      }
+    }
   }
   catch(CORBA::TRANSIENT const& e)
   {
@@ -263,26 +347,43 @@ void AssistantImpl::registerService(scs::core::IComponent_var component, idl_or:
 idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int retries
                                        , boost::shared_ptr<assistant_detail::shared_state> state)
 {
-  logger::log_scope log(state->logging, logger::debug_level, "findOffers with timeout");
-  boost::chrono::steady_clock::time_point timeout
-    = boost::chrono::steady_clock::now()
-    + boost::chrono::seconds(timeout_secs);
+  logger::log_scope log(state->logging, logger::debug_level, "findOffers with retries");
+  assert(retries > 0);
+
+  while(!state->connection_ready && retries)
+  {
+    log.log("Not logged in yet. Trying to login");
+    boost::chrono::steady_clock::time_point timeout
+      = boost::chrono::steady_clock::now()
+      + state->retry_wait;
+
+    try
+    {
+      wait_login(state, timeout);
+    }
+    catch(assistant_detail::timeout_error&)
+    {
+      log.log("Failed logging by timeout");
+    }
+  }
 
   if(!state->connection_ready)
-    wait_login(state, timeout);
+    throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
   assert(!CORBA::is_nil(state->connection->offers()));
   idl_or::ServiceOfferDescSeq_var r
     = assistant_detail::execute_with_retry
     (boost::bind(find_services(), state, properties)
-     , find_services_error(), timeout, state->logging);
+     , assistant_detail::find_services_error_retry(retries, state)
+     , assistant_detail::wait_until_timeout_and_signal_exit(state)
+     , state->logging);
   return *r;
 }
 
 idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
                                        , boost::shared_ptr<assistant_detail::shared_state> state)
 {
-  logger::log_scope log(state->logging, logger::debug_level, "findOffers with infinity timeout");
+  logger::log_scope log(state->logging, logger::debug_level, "findOffers with infinity retries");
   if(!state->connection_ready)
     wait_login(state);
 
@@ -298,7 +399,7 @@ idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
 idl_or::ServiceOfferDescSeq findOffers_immediate
   (idl_or::ServicePropertySeq properties, boost::shared_ptr<assistant_detail::shared_state> state)
 {
-  logger::log_scope log(state->logging, logger::debug_level, "findOffers with immediate timeout");
+  logger::log_scope log(state->logging, logger::debug_level, "findOffers without retries");
   if(!state->connection_ready)
     throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
