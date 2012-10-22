@@ -1,0 +1,6 @@
+
+xml assistant : assistant.qbk ;
+
+boostbook standalone
+ : assistant
+ ;

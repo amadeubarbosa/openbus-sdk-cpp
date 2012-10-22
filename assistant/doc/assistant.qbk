@@ -1,0 +1,31 @@
+[/ -*- coding: utf-8-unix  -*- ]
+
+[library Documentação do Assistant C++
+    [quickbook 1.5]
+    [version 1.0]
+    [id assistant]
+    [copyright 2012 TecGraf/PUC-Rio]
+    [authors [Almeida, Felipe Magno]]
+    [/ license ]
+    [source-mode c++]
+]
+
+[def __Assistant__ [link assistant Assistant]]
+
+[section Introdução]
+
+__Assistant__ é o nome da abstração da biblioteca de acesso, que
+facilita a construção de aplicativos e serviços ligados ao barramento.
+
+[endsect]
+
+[section Instalação]
+
+[endsect]
+
+[section Autenticando no barramento]
+
+
+
+[endsect]
+
