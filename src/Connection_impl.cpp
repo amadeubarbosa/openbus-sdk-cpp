@@ -73,7 +73,7 @@ idl_ac::ValidityTime RenewLogin::renew() {
   try {
     l.level_log(debug_level, "access_control()->renew()");
     validityTime = _access_control->renew();
-  } catch (CORBA::Exception &) {
+  } catch (const CORBA::Exception &) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
   }
   return validityTime;
@@ -83,19 +83,14 @@ void RenewLogin::_run(void*) {
   log_scope l(log.general_logger(), debug_level, "RenewLogin::_run");
   _manager->setRequester(_conn);
   _mutex.lock();
-  while (!_stop) {
-    while (!_pause &_condVar.timedwait(_validityTime*1000)) {
+  do {
+    while (!_pause && _condVar.timedwait(_validityTime*1000)) {
       _mutex.unlock();
       l.log("chamando RenewLogin::renew() ...");
       _validityTime = renew();
       _mutex.lock();
     }
-    if (!_stop) {
-      l.log("condVar.wait() ...");
-      int r = _condVar.wait();
-      assert(r);
-    }
-  }
+  } while (!_stop && _condVar.wait());
   _mutex.unlock();
 }
 
