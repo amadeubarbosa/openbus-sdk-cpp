@@ -289,3 +289,7 @@ rule stage-assistant-tests-location ( requirements * )
 install stage-assistant-tests : assistant/tests//tests : <conditional>@stage-assistant-tests-location ;
 explicit stage-assistant-tests ;
 
+alias assistant-doc-onehtml : assistant/doc//standalone : <format>onehtml ;
+explicit assistant-doc-onehtml ;
+
+stage assistant-doc : assistant-doc-onehtml ;
