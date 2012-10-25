@@ -15,25 +15,59 @@
 
 [section Introdução]
 
-__Assistant__ é o nome da abstração da biblioteca de acesso, que
-facilita a construção de aplicativos e serviços ligados ao
-barramento. O __Assistant__ é construído sobre a API básica da
-biblioteca de acesso e provê uma API menor e assíncrona para várias
-tarefas rotineiras na construção de serviços. O __Assistant__ é
-recomendado, sempre que viável, para construção de serviços para o
-barramento __Openbus__.
-
-Os seguintes conhecimentos são assumidos pelo documento:
+Esse manual oferece um overview de implementação de serviços com uso
+do barramento __Openbus__, assim como explicação de várias
+características opções. Os seguintes conhecimentos são assumidos pelo
+documento:
 
 * Linguagem C++
 * CORBA
 * Modelo de Componentes SCS
+
+A proposta do manual é capacitar o indivíduo, que atenda aos
+pré-requisitos do documento, a escrever serviços para o barramento
+__Openbus__ dentro do escopo dessa API.
 
 [endsect]
 
 [section Instalação]
 
 Incluir aqui quando criar o pacote
+
+[endsect]
+
+[section Escopo]
+
+__Assistant__ é o nome de uma abstração da biblioteca de acesso do
+__Openbus__. Ela visa facilitar os recursos mais utilizados pelos
+clientes do barramento. Para atingir esse objetivo, alguns sacrifícios
+foram feitos e portanto o __Assistant__ não é tão flexível quanto o
+uso direto da API básica, mas atende a maioria dos casos de usos
+involvendo o barramento __Openbus__.
+
+[section Aplicações no __Assistant__]
+
+As aplicações mais comuns, e as que são melhores implementadas usando
+o __Assistant__ tem o seguinte em comum:
+
+* Se comunica com um único barramento
+* Possui apenas uma autenticação com o barramento
+
+
+[section O que o __Assistant__ não faz]
+
+Por ser uma abstração mais simples e focada em um grupo de casos de
+uso, naturalmente o __Assistant__ não consegue resolver todos os
+problemas que a API básica, da qual o __Assistant__ é implementado,
+pode.
+
+Portanto, os seguintes casos só conseguem ser implementados com uso da
+API básica:
+
+* Se comunica com mais de um barramento
+* Faz uso de mais de um ORB
+* Possui múltiplas identidades com um ou mais barramentos
+* 
 
 [endsect]
 
