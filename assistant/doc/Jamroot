@@ -1,4 +1,6 @@
 
+project openbus/assistant/doc ;
+
 xml assistant : assistant.qbk ;
 
 boostbook standalone

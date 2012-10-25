@@ -11,21 +11,57 @@
 ]
 
 [def __Assistant__ [link assistant Assistant]]
+[def __Openbus__ Openbus]
 
 [section Introdução]
 
 __Assistant__ é o nome da abstração da biblioteca de acesso, que
-facilita a construção de aplicativos e serviços ligados ao barramento.
+facilita a construção de aplicativos e serviços ligados ao
+barramento. O __Assistant__ é construído sobre a API básica da
+biblioteca de acesso e provê uma API menor e assíncrona para várias
+tarefas rotineiras na construção de serviços. O __Assistant__ é
+recomendado, sempre que viável, para construção de serviços para o
+barramento __Openbus__.
+
+Os seguintes conhecimentos são assumidos pelo documento:
+
+* Linguagem C++
+* CORBA
+* Modelo de Componentes SCS
 
 [endsect]
 
 [section Instalação]
+
+Incluir aqui quando criar o pacote
+
+[endsect]
+
+[section Desenvolvimento]
+
+Prover um serviço no __Openbus__ usando o __Assistant__ é bem
+simples. Para isso, precisamos construir uma instância da classe
+__Assistant__ que nos proverá as funções necessárias para ofertar
+serviços no barramento.
+
+Em C++ instancia-se a classe openbus::assistant::Assistant usando,
+preferencialmente, ['named parameters].
+
+[section Named Parameters]
+
+['Named Parameters] é uma forma de passagem de argumentos, aonde cada
+argumento e parâmetro é casado no ponto de chamada. Um exemplo
+hipotético de ['named parameters'] seria o seguinte:
+
+           int main()
+           {
+           }
 
 [endsect]
 
 [section Autenticando no barramento]
 
 
-
 [endsect]
 
+[endsect]
