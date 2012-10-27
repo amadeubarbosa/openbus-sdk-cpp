@@ -45,7 +45,7 @@ foram feitos e portanto o __Assistant__ não é tão flexível quanto o
 uso direto da API básica, mas atende a maioria dos casos de usos
 involvendo o barramento __Openbus__.
 
-[section Aplicações no __Assistant__]
+[section Aplicações no Assistant]
 
 As aplicações mais comuns, e as que são melhores implementadas usando
 o __Assistant__ tem o seguinte em comum:
@@ -53,8 +53,19 @@ o __Assistant__ tem o seguinte em comum:
 * Se comunica com um único barramento
 * Possui apenas uma autenticação com o barramento
 
+Geralmente um aplicativo que se conecta ao barramento é um de dois
+tipos, ou um híbrido:
 
-[section O que o __Assistant__ não faz]
+* Servidor
+* Cliente
+
+Um servidor adiciona ofertas no barramento, disponibilizando um ou
+mais serviços através destas ofertas. Um cliente, pelo outro lado,
+consulta o barramento por ofertas de serviços que deseja consumir.
+
+[endsect]
+
+[section O que o Assistant não faz]
 
 Por ser uma abstração mais simples e focada em um grupo de casos de
 uso, naturalmente o __Assistant__ não consegue resolver todos os
@@ -67,7 +78,34 @@ API básica:
 * Se comunica com mais de um barramento
 * Faz uso de mais de um ORB
 * Possui múltiplas identidades com um ou mais barramentos
-* 
+
+O __Assistant__ recebe as informações de autenticação como usuário,
+senha, chave privada, etc, na construção do __Assistant__, assim
+como outras informações necessárias para uso de CORBA.
+
+Com essas informações, o __Assistant__ se autentica com o barramento,
+de forma assíncrona e mantém válida essa autenticação, renovando a
+autenticação quando esta expira. Também é refeita a autenticação se a
+mesma ficar inválida por qualquer outro motivo, como por remoção
+através de ferramentas de governança do barramento __Openbus__.
+
+[warning A construção do __Assistant__ não implica que a autenticação
+já tenha ocorrido com sucesso. O que significa que funções sincronas,
+como findServices podem falhar com a exceção NO_PERMISSION por não
+estar ainda autenticado com o barramento __Openbus__]
+
+[endsect]
+
+[section Vantagens de usar o Assistant]
+
+Para as aplicações que estão no escopo do __Assistant__, usar o __Assistant possui várias vantagens. Dentre as principais:
+
+* Autenticação simplificada com o barramento
+* Tratamento automático de erros
+
+
+
+[endsect]
 
 [endsect]
 
