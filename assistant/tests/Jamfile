@@ -14,7 +14,6 @@ local rule exe-test ( test-name : filename : idl ? )
    /openbus/assistant//assistant
   ;
   local test-requirements = <implicit-dependency>/openbus//core-idls
-    <core-idl-dummy-feature>three
     <threading>multi:<source>/boost//thread <include>tests
     <implicit-dependency>$(idl) <link>static:<source>/dl//dl ;
   exe $(test-name) : $(filename) $(idl) $(test-dependencies)

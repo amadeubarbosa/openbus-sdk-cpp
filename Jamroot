@@ -44,13 +44,13 @@ project openbus : build-dir bin ;
 
 path-constant here : . ;
 
-alias core-idls : $(openbus-idl-path)/access_control.idl
+lib core-idls : $(openbus-idl-path)/access_control.idl
  $(openbus-idl-path)/core.idl
  $(openbus-idl-path)/credential.idl
  $(openbus-idl-path)/offer_registry.idl
  $(here)/legacy/idl/credential_v1_5.idl
  /scs//idls
- : <include>$(openbus-idl-path)
+ : <include>$(openbus-idl-path) <implicit-dependency>/scs//idls
  : : <include>$(openbus-idl-path)
  ;
 explicit core-idls ;
@@ -101,8 +101,7 @@ explicit openbus ;
 install stage-libs : openbus : <location>stage ;
 explicit stage-libs ;
 
-feature.feature core-idl-dummy-feature : one two three : link-incompatible ;
-mico-idl.cpp-h cpp-h-stub : core-idls : <core-idl-dummy-feature>two ;
+mico-idl.cpp-h cpp-h-stub : core-idls ;
 install stage-stubs : cpp-h-stub : <location>stage/stubs
  <install-dependencies>on <install-type>CPP <install-type>H
  <link>static
@@ -117,7 +116,6 @@ local rule exe-test ( test-name : filename : idl ? )
    /mico//mico /scs//scs /boost//headers /logger//logger
    core-idls /openssl//openssl ;
   local test-requirements = <implicit-dependency>core-idls
-    <core-idl-dummy-feature>three
     <threading>multi:<source>/boost//thread <include>tests
     <implicit-dependency>$(idl) <link>static:<source>dl ;
   exe $(test-name) : tests/$(filename) $(idl) $(test-dependencies)
@@ -289,7 +287,9 @@ rule stage-assistant-tests-location ( requirements * )
 install stage-assistant-tests : assistant/tests//tests : <conditional>@stage-assistant-tests-location ;
 explicit stage-assistant-tests ;
 
-alias assistant-doc-onehtml : assistant/doc//standalone : <format>onehtml ;
+alias assistant-doc-onehtml : assistant/doc//documentation-html/<location>assistant-doc
+  assistant/doc//documentation-images/<location>assistant-doc
+ : <format>onehtml ;
 explicit assistant-doc-onehtml ;
 
-stage assistant-doc : assistant-doc-onehtml ;
+alias assistant-doc : assistant-doc-onehtml ;

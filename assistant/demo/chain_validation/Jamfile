@@ -11,7 +11,6 @@ exe chain_validation_client
    /openbus//core-idls /openssl//openssl chain-validation-idl
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>chain-validation-idl
@@ -22,7 +21,6 @@ exe chain_validation_executive
    /openbus//core-idls /openssl//openssl chain-validation-idl
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>chain-validation-idl
@@ -34,7 +32,6 @@ exe chain_validation_secretary
    /openbus//core-idls /openssl//openssl chain-validation-idl
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>chain-validation-idl

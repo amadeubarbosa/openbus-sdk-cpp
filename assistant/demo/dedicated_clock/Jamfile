@@ -11,7 +11,6 @@ exe dedicated_clock_client
    /openbus//core-idls /openssl//openssl dedicated-clock-idl
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>dedicated-clock-idl
@@ -22,7 +21,6 @@ exe dedicated_clock_server
    /openbus//core-idls /openssl//openssl dedicated-clock-idl
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>dedicated-clock-idl
