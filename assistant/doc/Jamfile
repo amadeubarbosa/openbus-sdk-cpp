@@ -7,10 +7,12 @@ project openbus/assistant/doc ;
 path-constant doc-images : images ;
 
 xml assistant : assistant.qbk ;
+explicit assistant ;
 
 boostbook standalone
  : assistant
  ;
+explicit standalone ;
 
 local dependencies =
  /openbus/assistant//assistant
@@ -44,7 +46,7 @@ install documentation-html : standalone namedparameters
  auth_private_key_file offers offers_chain searching_offers
  searching_offers_errors searching_offers_errors_retry
  ;
+explicit documentation-html ;
 
-install documentation-images : [ glob images/*.png ] : <install-source-root>.
- ;
-
+install documentation-images : [ glob images/*.png ] : <install-source-root>. ;
+explicit documentation-images ;
