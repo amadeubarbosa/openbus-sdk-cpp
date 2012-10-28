@@ -3,23 +3,29 @@
 #ifndef OPENBUS_ASSISTANT_H
 #define OPENBUS_ASSISTANT_H
 
+#ifndef OPENBUS_ASSISTANT_DOXYGEN
 #include <openbus/assistant/detail/shared_state.h>
+#endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
 #include <scs/IComponent.h>
 #include <openbus/ConnectionManager.h>
 #include <openbus/ORBInitializer.h>
 #include <CORBA.h>
 
+#include <boost/mpl/void.hpp>
+
+#ifndef OPENBUS_ASSISTANT_DOXYGEN
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
 #ifdef BOOST_PARAMETER_MAX_ARITY
 #if BOOST_PARAMETER_MAX_ARITY < 13
 #error The BOOST_PARAMETER_MAX_ARITY must be at least 13 before #including openbus/assistant.h or must not be defined at all. Add -DBOOST_PARAMETER_MAX_ARITY=13 to your build definitions
-#endif
-#else
+#endif // #if BOOST_PARAMETER_MAX_ARITY < 13
+#else // #ifdef BOOST_PARAMETER_MAX_ARITY
 #define BOOST_PARAMETER_MAX_ARITY 13
-#endif
+#endif // #ifdef BOOST_PARAMETER_MAX_ARITY
 #include <boost/parameter.hpp>
-#endif
+#endif // #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
+#endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
 namespace openbus { namespace assistant {
 
@@ -28,6 +34,7 @@ namespace idl = tecgraf::openbus::core::v2_0;
 namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
 namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
+#endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
 namespace keywords {
@@ -48,9 +55,21 @@ BOOST_PARAMETER_NAME(retry_wait);
 BOOST_PARAMETER_NAME(log_level);
 }
 using namespace keywords;
-#endif
+#endif // #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
 
+#ifndef OPENBUS_ASSISTANT_DOXYGEN
 struct AssistantImpl
+#else
+/** \brief Classe Openbus com API do assistants
+ *
+ * A classe Openbus deve ser instanciada por um de seus dois
+ * named parameters startByPassword e startByCertificate. Essa
+ * instancia mantera as ofertas adicionadas a ela e um login
+ * validos no barramento indicado em sua construcao enquanto
+ * um erro fatal nao ocorre e/ou um shutdown nao e invocado.
+ */
+struct Assistant
+#endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 {
   typedef boost::function<void(std::string)> login_error_callback_type;
   typedef boost::function<void(scs::core::IComponent_var
@@ -59,6 +78,7 @@ struct AssistantImpl
   typedef boost::function<void(const char*)> fatal_error_callback_type;
   typedef boost::function<std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq>()> shared_auth_callback_type;
 
+#ifndef OPENBUS_ASSISTANT_DOXYGEN
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
 protected:
   template <typename ArgumentPack>
@@ -286,7 +306,10 @@ protected:
     }
   };
 public:
-#endif
+#endif // #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
+#else  // #ifndef OPENBUS_ASSISTANT_DOXYGEN
+  Assistant(NamedParameters ...);
+#endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
   /** 
    * \brief Atribui uma funcao callback para erros de login
@@ -462,6 +485,7 @@ public:
   void joinChain(CallerChain chain);
   void exitChain();
   CallerChain getJoinedChain();
+#ifndef OPENBUS_ASSISTANT_DOXYGEN
 protected:
   friend class assistant_access;
   AssistantImpl() {}
@@ -520,16 +544,7 @@ protected:
 
   boost::shared_ptr<assistant_detail::shared_state> state;
 };
-#endif
 
-/** \brief Classe Openbus com API do assistants
- *
- * A classe Openbus deve ser instanciada por um de seus dois
- * named parameters startByPassword e startByCertificate. Essa
- * instancia mantera as ofertas adicionadas a ela e um login
- * validos no barramento indicado em sua construcao enquanto
- * um erro fatal nao ocorre e/ou um shutdown nao e invocado.
- */
 struct Assistant : AssistantImpl
 {
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
@@ -544,7 +559,6 @@ struct Assistant : AssistantImpl
     <boost::mpl::_                        \
     , std::string> >)
 
-#ifndef OPENBUS_ASSISTANT_DOXYGEN
   BOOST_PARAMETER_CONSTRUCTOR
   (Assistant, (AssistantImpl), keywords::tag
    , (required
@@ -566,10 +580,8 @@ struct Assistant : AssistantImpl
     (on_fatal_error, (boost::function<void(const char* /*error*/)>))
    )
   )
-#else
-  Assistant(NamedArguments);
-#endif
-#endif
+#endif // #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
+#endif // #ifdef OPENBUS_ASSISTANT_DOXYGEN
 
   /** \brief Constroi um Openbus com informacao de autenticacao
    *   por usuario e senha
@@ -609,9 +621,9 @@ struct Assistant : AssistantImpl
 private:
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
   Assistant() {}
-#endif
+#endif // #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
 };
 
 } }
 
-#endif
+#endif // #ifndef OPENBUS_ASSISTANT_H
