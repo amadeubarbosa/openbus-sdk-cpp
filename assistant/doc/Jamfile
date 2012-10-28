@@ -1,16 +1,54 @@
 
 import testing ;
 import path ;
+import doxygen ;
+import os ;
 
-project openbus/assistant/doc ;
+using auto-index ;
+using doxygen ;
+
+import boostbook ;
+
+# project openbus/assistant/doc ;
 
 path-constant doc-images : images ;
+path-constant here : . ;
+path-constant openbus-cpp-root : ../.. ;
 
-xml assistant : assistant.qbk ;
+local boost_path = [ os.environ BOOST_PATH ] ;
+
+doxygen reference :
+  $(here)/../../assistant/include/openbus/assistant.h
+  : <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+    <doxygen:param>EXTRACT_PRIVATE=NO
+    <doxygen:param>ENABLE_PREPROCESSING=YES
+    <doxygen:param>EXPAND_ONLY_PREDEF=YES
+    <doxygen:param>MACRO_EXPANSION=YES
+    <doxygen:param>INPUT_ENCODING=ISO-8859-1
+    <prefix>include
+    <xsl:param>"boost.doxygen.reftitle=Referencia do Assistant"
+    <doxygen:param>"PREDEFINED= \\
+        \"OPENBUS_ASSISTANT_DOXYGEN=1\""
+ ;
+explicit reference ;
+
+xml assistant : assistant.qbk
+ : <include>$(boost_path)/tools/auto_index/include
+   <dependency>reference
+ ;
 explicit assistant ;
 
 boostbook standalone
  : assistant
+ : <implicit-dependency>reference
+   <auto-index>on
+   <auto-index-verbose>on
+   <xsl:param>boost.root=$(boost_path)
+   <format>pdf:<auto-index-internal>off
+   <format>html:<auto-index-internal>on
+#   <format>html:<auto-index-type>appendix
+#   <auto-index-script>index.idx
+#   <auto-index-prefix>"$(here)/.."
  ;
 explicit standalone ;
 

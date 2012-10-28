@@ -10,6 +10,8 @@
     [source-mode c++]
 ]
 
+[include auto_index_helpers.qbk]
+
 [def __Assistant__ [link assistant Assistant]]
 [def __Openbus__ Openbus]
 [def __BoostParameters__ [@http://www.boost.org/doc/libs/1_51_0/libs/parameter/doc/html/index.html
@@ -140,7 +142,7 @@ simples. Para isso, precisamos construir uma instância da classe
 __Assistant__ que nos proverá as funções necessárias para ofertar
 serviços no barramento.
 
-Em C++ instancia-se a classe openbus::assistant::Assistant usando,
+Em C++ instancia-se a classe ``[classref openbus::assistant::Assistant]`` usando,
 preferencialmente, ['named parameters].
 
 [section Named Parameters]
@@ -529,3 +531,16 @@ fez a chamada remota para nosso serviço. O exemplo inteiro:
 [endsect]
 
 [endsect]
+
+[section:index Índices]
+
+[named_index class_name Classes]
+[named_index typedef_name Typedefs]
+[named_index function_name Funções Livres]
+[named_index macro_name Macros]
+[/index]
+
+[endsect] 
+
+[xinclude reference.xml]
+
