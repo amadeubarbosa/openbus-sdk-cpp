@@ -21,9 +21,9 @@ local requirements =
  <implicit-dependency>/scs//scs-idl
  ;
 
-local rule compile-rule ( name )
+local rule compile-rule ( name idl ? )
 {
-  compile $(name).cpp $(dependencies) : $(requirements) : $(name) ;
+  compile $(name).cpp $(dependencies) $(idl) : $(requirements) <implicit-dependency>$(idl) : $(name) ;
   explicit $(name).cpp ;
   return $(l) ;
 }
@@ -33,9 +33,13 @@ compile-rule namedparameters_host_port ;
 compile-rule auth_user ;
 compile-rule auth_private_key ;
 compile-rule auth_private_key_file ;
+compile-rule offers hello.idl ;
+compile-rule searching_offers hello.idl ;
+compile-rule searching_offers_errors hello.idl ;
 
 install documentation-html : standalone namedparameters
- #namedparameters_host_port auth_user auth_private_key
+ namedparameters_host_port auth_user auth_private_key
+ auth_private_key_file offers searching_offers searching_offers_errors
  ;
 
 install documentation-images : [ glob images/*.png ] : <install-source-root>.

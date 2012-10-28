@@ -14,6 +14,11 @@
 [def __Openbus__ Openbus]
 [def __BoostParameters__ [@http://www.boost.org/doc/libs/1_51_0/libs/parameter/doc/html/index.html
 Boost.Parameter] ]
+[def __SharedAuthentication__ ['Shared Authentication]]
+[def __MICO__ ['Mico]]
+[def __CORBA__ ['CORBA]]
+[def __SCS__ ['SCS]]
+[def __TypeCode__ ['TypeCode]]
 
 [section Introdução]
 
@@ -237,7 +242,7 @@ __Assistant__, temos disponíveis três métodos de autenticação:
 
 * Por usuário e senha
 * Por certificado, com chave privada
-* Por ['Shared Authentication]
+* Por __SharedAuthentication__
 
 [section Autenticação por usuário e senha]
 
@@ -275,6 +280,207 @@ chave diretamente:
 [import auth_private_key.cpp]
 [auth_private_key]
 
+Porém, se a chave estiver em um arquivo seria muito mais fácil passar
+o nome do arquivo do que fazer a leitura do mesmo em um
+OctetSeq. Neste caso é só usar o parâmetro `_private_key_filename`:
+
+[import auth_private_key_file.cpp]
+[auth_private_key_file]
+
+[endsect]
+
+[endsect]
+
+[section Registrando ofertas]
+
+O propósito principal do __Assistant__ para um servidor, é o de
+autenticar ao barramento __Openbus__ e ofertar os serviços no Registro
+de Ofertas.
+
+Primeiramente fazemos o `#include` do ['header] do __Assistant__ para
+que possamos construir um `openbus::assistant::Assistant`.
+
+[import offers.cpp]
+[create_offers_include]
+
+Feito isto, podemos instanciar a classe
+`openbus::assistant::Assistant`, que cuidará da autenticação por nós:
+
+[create_offers_auth]
+
+Se formos ofertar algum serviço, esse serviço precisa estar definido
+em alguma IDL. Usaremos como base a seguinte IDL, que não poderia ser
+mais simples:
+
+[import hello.idl]
+[say_hello_idl]
+
+Dada esta IDL, precisamos fazer o `#include` do ['header] do ['stub]
+gerado pelo __MICO__ e fazer a implementação de seu ['Servant].
+
+[create_offers_include_hello]
+
+[note Estamos usando como padrão neste documento que os ['stubs]
+gerados pelo compilador IDL do __MICO__ se encontrem em um diretório
+chamado ['stubs], porém, essa é apenas um padrão de uso e para
+projetos mais simples não é necessário e nem sempre vantajoso separar
+este header de outros, dependendo de qual sistema de ['build] se está
+usando]
+
+E então a construção do ['Servant] __CORBA__:
+
+[create_offers_servant_hello]
+
+Definido o ['Servant], fazemos sua instanciação para inclusão em um
+componente __SCS__,que será finalmente ofertado no barramento:
+
+[create_offers_instantiate_servant_hello]
+
+[note Por não haver necessidade de alocação dinâmica, instanciamos o
+['Servant] na ['automatic storage], aonde o objeto será desalocado
+automaticamente no fim de seu escopo. Facilitando o raciocínio sobre o
+software, assim como elimina uma possibilidade de memory leak]
+
+Instanciado o ['Servant], podemos incluir este como faceta do
+componente que será ofertado, mas para isto primeiro o componente
+precisa ser também instanciado:
+
+[create_offers_instantiate_component]
+
+E então a faceta adicionada:
+
+[create_offers_add_facet]
+
+[note Usamos aqui o objeto de __TypeCode__ para retornar o ['RepoID]
+da nossa interface `Hello`. Assim diminuimos uma redundância e
+adicionamos uma checagem estática se o nome da classe mudar. Porém, é
+necessário lembrar de passar o parâmetro `--typecode` para o
+compilador IDL do __MICO__]
+
+Vejamos nosso pequeno servidor como fica ao criar o componente com
+nossa faceta:
+
+[create_offers_component_created]
+
+Agora só nos resta registrar o serviço e passar a linha de execução
+para o __ORB__. Registrando o serviço:
+
+[create_offers_register_service]
+
+E chamando `run()` no __ORB__:
+
+[create_offers_run]
+
+E assim terminamos a construção de nosso pequeno serviço ofertado no
+barramento:
+
+[create_offers]
+
+[endsect]
+
+[section Buscando ofertas no barramento]
+
+[import searching_offers.cpp]
+
+Já criamos o servidor, agora para completar é necessário construir um
+consumidor deste serviço. Alguém que irá buscar esse serviço no
+Registro de Ofertas e chamar `sayHello()`, que é o que nosso serviço
+atualmente faz.
+
+Para tal, precisamos, assim como no servidor, autenticar-nos ao
+barramento. Porém, as coincidências acabam aí. No cliente não
+criaremos ['Servants] e nem criaremos ofertas, apenas faremos uma
+busca e de posse da oferta, faremos uso desta.
+
+Vejamos aqui novamente a autenticação, mas desta vez de nosso cliente:
+
+[searching_offers_auth]
+
+Como vimos, a instanciação da classe `openbus::assistant::Assistant`
+coloca o __Assistant__ em responsabilidade por nos autenticar ao
+barramento de forma assincrona. Agora, nos resta fazer uso do Registro
+de Ofertas através do __Assistant__. Para fazermos uma busca no
+barramento por serviços, fazemos uso da função `findServices`.
+
+Mas, para podermos fazer a busca, precisamos saber o que
+buscar. Sabemos que nosso serviço possui uma faceta chamada `hello`, e
+que o mesmo se autenticou no barramento com usuário: `usuario`. Este
+usuário representa a entidade deste serviço. Em posse dessas
+informações, podemos usar uma função auxiliar do __Assistant__ que
+constroi uma lista de propriedades com essas duas propriedades. O nome
+desta função é `createFacetAndEntityProperty`. E então de posse dessa
+lista de propriedades podemos fazer a busca imediatamente.
+
+A função `findServices` de busca de serviços recebe dois parâmetros:
+uma lista de propriedades, que construiremos com a função
+`createFacetAndEntityProperty`; e um inteiro que representa o número
+de re-tentativas que a função deve fazer em caso de erros. Esse número
+pode ser `-1`, que indica que a função deve tentar indefinidamente;
+pode ser o número `0`, que indica que a função deve retornar uma
+exceção se qualquer falha ocorrer e nenhuma nova tentativa se a mesma
+falhar; e qualquer número maior que zero, que indica o número de novas
+tentativas em caso de falhas.
+
+[searching_offers_find_service]
+
+[note Passamos `-1` para `findServices` para que a função tente
+indefinidamente até a função obter sucesso]
+
+Obtemos o objeto `offers` contendo uma lista de ofertas que condizem com
+as propriedades passadas para `findServices`.
+
+Podemos então chamar a função `sayHello` para cada uma das ofertas recebidas.
+
+[searching_offers_use_service]
+
+[caution A função `findServices` possui tratamento de erros, tais como
+em caso de falha de comunicação com o barramento e outros, porém, o
+`for` sobre as ofertas retornadas no código acima não faz qualquer
+tipo de tratamento de erros. Se alguma das operações, como `_narrow` e
+`sayHello`, executadas sobre as ofertas falharem, então toda a
+aplicação terminará.]
+
+[section Tratando erros]
+
+Toda operação remota está sujeita a falhas. Como a operação precisa
+coordenar programas diferentes, rodando em arquiteturas e localidades
+diferentes, inúmeras falhas são possíveis, sendo as mais comuns uma
+falha de comunicação física como por exemplo o cabo de rede
+desconectado. Ou o serviço pode não estar mais rodando, ou ter sido
+fechado.
+
+Portanto, é essencial que toda chamada remota esteja protegida, de
+algum modo, por tratamentos de erros. Tratamento de erro em __CORBA__
+é feito através de exceções. A exceção `CORBA::TRANSIENT` significa
+que o serviço não conseguiu se comunicar com o outro ponto; a exceção
+`CORBA::COMM_FAILURE` significa a mesma coisa, mas a conexão não
+conseguiu ser iniciada por algum motivo; A exceção
+`CORBA::OBJECT_NOT_EXIST` significa que o serviço que deveria prover
+esse objeto __CORBA__ já não mais possui esse objeto em sua memória, e
+a sua referência deve ser descartada. Outras exceções herdam de
+`CORBA::SystemException`. Se fossemos tratar erros para que o programa
+não termine inesperadamente, poderíamos fazer o seguinte:
+
+[import searching_offers_errors.cpp]
+[searching_offers_errors_use_service]
+
+Esse programa exemplo retornará com sucesso se nenhuma oferta for
+retornada ou se nenhuma operação remota obtiver sucesso. Se quisermos
+que a aplicação tente indefinidamente até obter sucesso, como fizemos
+com `findServices`, podemos mudar para o seguinte:
+
+[import searching_offers_errors_retry.cpp]
+[searching_offers_errors_retry_use_service]
+
+[endsect]
+
+[endsect]
+
+[section Cadeias]
+
+A maior evolução no barramento __Openbus__ na versão 2.0 foi a
+reformulação do sistema de segurança do mesmo. Com este novo sistema
+de segurança que foi desenvolvido, é possível para 
 
 [endsect]
 
