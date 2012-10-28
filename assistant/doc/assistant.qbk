@@ -480,7 +480,51 @@ com `findServices`, podemos mudar para o seguinte:
 
 A maior evolução no barramento __Openbus__ na versão 2.0 foi a
 reformulação do sistema de segurança do mesmo. Com este novo sistema
-de segurança que foi desenvolvido, é possível para 
+de segurança que foi desenvolvido, é possível para um serviço saber
+qual entidade que fez a chamada, e também é possível para algum
+serviço intermediário passar para um serviço que ele é usuário a
+identidade de quem está usando esse intermediário. Isso cria uma
+cadeia de entidades que pode ser lida pelo serviço final para
+autorizar ou não a chamada.
+
+Veremos o caso mais simples, modificando o serviço de ['Hello'] que
+implementamos anteriormente para dizer ['Hello Usuario']. Aonde
+Usuario será o nome da entidade que nos chamou. Uma aplicação mais
+complexa poderia usar essa informação para escolher qual banco de
+dados ele pegará os dados, ou como fará a autenticação para obter os
+dados ou simplesmente recusar a operação para determinadas entidades.
+
+Relembrando, nosso Servant foi implementado da seguinte maneira:
+
+[create_offers_servant_hello]
+
+O __Assistant__ oferece as seguintes funções relativas a Cadeias:
+`getCallerChain`, `joinChain`, `exitChain` e `getJoinedChain`.
+
+Faremos uso da função `getCallerChain`. Mas para tal, precisamos ter
+acesso ao __Assistant__ de dentro do nosso ['Servant]. Poderíamos usar
+uma variável global, assim todo programa teria acesso ao
+__Assistant__, porém como variáveis globais trazem vários problemas,
+modificaremos o __Servant__ para receber como argumento de construção
+o próprio __Assistant__. Assim, criaremos um construtor:
+
+[import offers_chain.cpp]
+[create_offers_chain_servant_constructor]
+
+E mudamos a instanciação do ['Servant] para passar o __Assistant__
+como argumento de construção:
+
+[create_offers_chain_instantiate_servant_hello]
+
+E assim, já podemos fazer a chamada de `getCallerChain` em `sayHello`
+usando a variável-membro `assistant` no ['Servant].
+
+[create_offers_chain_say_hello]
+
+E assim implementamos um serviço que imprime o nome da entidade que
+fez a chamada remota para nosso serviço. O exemplo inteiro:
+
+[create_offers_chain]
 
 [endsect]
 

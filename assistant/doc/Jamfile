@@ -34,12 +34,15 @@ compile-rule auth_user ;
 compile-rule auth_private_key ;
 compile-rule auth_private_key_file ;
 compile-rule offers hello.idl ;
+compile-rule offers_chain hello.idl ;
 compile-rule searching_offers hello.idl ;
 compile-rule searching_offers_errors hello.idl ;
+compile-rule searching_offers_errors_retry hello.idl ;
 
 install documentation-html : standalone namedparameters
  namedparameters_host_port auth_user auth_private_key
- auth_private_key_file offers searching_offers searching_offers_errors
+ auth_private_key_file offers offers_chain searching_offers
+ searching_offers_errors searching_offers_errors_retry
  ;
 
 install documentation-images : [ glob images/*.png ] : <install-source-root>.
