@@ -12,6 +12,8 @@
 
 [def __Assistant__ [link assistant Assistant]]
 [def __Openbus__ Openbus]
+[def __BoostParameters__ [@http://www.boost.org/doc/libs/1_51_0/libs/parameter/doc/html/index.html
+Boost.Parameter] ]
 
 [section Introdução]
 
@@ -102,8 +104,25 @@ Para as aplicações que estão no escopo do __Assistant__, usar o __Assistant p
 
 * Autenticação simplificada com o barramento
 * Tratamento automático de erros
+* Manter serviços ofertados
 
+Como foi dito anteriormente, a autenticação ocorre de forma
+assíncrona. O mesmo ocorre com o registro de ofertas. Essa diferença
+entre __Assistant__ e a API básica é crucial para entender as
+vantagens de se usar o __Assistant__.
 
+O registro de oferta ocorre de forma assíncrona e se por qualquer
+motivo o registro se perder, como por perder autenticação com o
+barramento, o __Assistant__ automaticamente faz um novo registro de
+oferta. Assim, o usuário não precisa se preocupar com os vários casos
+de erros que possam acontecer num sistema distribuido para garantir
+que suas ofertas estão visiveis para outros serviços.
+
+Para funções que são sincronas, como as que se espera um retorno, como
+busca por ofertas. O __Assistant__ recebe também um parâmetro de
+número de tentativas, assim o usuário pode usar o tratamento de erro
+automático do __Assistant__ para essas chamadas remotas, que podem
+falhar por inúmeros motivos.
 
 [endsect]
 
@@ -123,15 +142,138 @@ preferencialmente, ['named parameters].
 
 ['Named Parameters] é uma forma de passagem de argumentos, aonde cada
 argumento e parâmetro é casado no ponto de chamada. Um exemplo
-hipotético de ['named parameters'] seria o seguinte:
+hipotético de ['named parameters] seria o seguinte:
 
-           int main()
-           {
-           }
+[import namedparameters.cpp]
+[namedparameters]
+
+[note No __Assistant__ todos os parâmetros começam com um
+['underscore], esse é o padrão seguido pela biblioteca 
+__BoostParameters__ que é usada no __Assistant__]
+
+Os seguintes parâmetros existem no __Assistant__:
+
+[table Named parameters existentes no Assistant
+  [[Parametros] [Descrição]]
+  [
+        [_host]
+        [asd]
+  ]
+  [
+        [_port]
+        [asd]
+  ]
+  [
+        [_username]
+        [asd]
+  ]
+  [
+        [_entity]
+        [asd]
+  ]
+  [
+        [_password]
+        [asd]
+  ]
+  [
+        [_private_key]
+        [asd]
+  ]
+  [
+        [_private_key_filename]
+        [asd]
+  ]
+  [
+        [_shared_auth_callback]
+        [asd]
+  ]
+  [
+        [_argc]
+        [asd]
+  ]
+  [
+        [_argv]
+        [asd]
+  ]
+  [
+        [_on_login_error]
+        [asd]
+  ]
+  [
+        [_on_register_error]
+        [asd]
+  ]
+  [
+        [_on_fatal_error]
+        [asd]
+  ]
+  [
+        [_retry_wait]
+        [asd]
+  ]
+  [
+        [_log_level]
+        [asd]
+  ]
+]
+
+Os parâmetros `_host` e `_port` são obrigatórios, e portanto é possível passar os argumentos sem referenciar os parâmetros, apenas passando-os como os primeiros argumentos na construção do __Assistant__, da seguinte forma:
+
+[import namedparameters_host_port.cpp]
+[namedparameters_host_port]
+
+[caution Se o seu compilador não suportar __BoostParameters__, então é
+possível definir a macro `OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS`
+na compilação do projeto e usar uma das funções `createWithPassword`,
+`createWithPrivateKey` ou `createWithSharedAuth` para criar o
+__Assistant__]
 
 [endsect]
 
 [section Autenticando no barramento]
+
+Como vimos nos parâmetros disponíveis para construção do
+__Assistant__, temos disponíveis três métodos de autenticação:
+
+* Por usuário e senha
+* Por certificado, com chave privada
+* Por ['Shared Authentication]
+
+[section Autenticação por usuário e senha]
+
+A autenticação por usuário e senha se faz com os parâmetros
+`_username` e `_password`.
+
+[import auth_user.cpp]
+[auth_user]
+
+Como vimos anteriormente, após a construção de
+`openbus::assistant::Assistant`, a autenticação não necessariamente já
+ocorreu, pois a mesma é feita assincronamente e pode se repetir
+indefinidamente, sem intervenção do usuário. O __Assistant__ assume
+que o cliente pretende se manter logado por todo o tempo em que o
+__Assistant__ se mantiver vivo. E por isso em qualquer erro que
+implique na perda de autenticação o __Assistant__ tratará-lo tentando
+se autenticar novamente até conseguir. Esse é uma das principais
+vantagens de se usar o __Assistant__.
+
+[endsect]
+
+[section Autenticação por chave privada]
+
+Existem duas formas de se autenticar por chave privada no __Assistant__
+do C++:
+
+* Com o conteúdo em um OctetSeq CORBA
+* Passando como argumento o nome do arquivo da chave
+
+Nem sempre a chave se encontra em um arquivo, como por exemplo no caso
+de construção de uma chave privada dinamicamente, ou recebida por
+algum método de IPC. Neste caso faz mais sentido passar o conteúdo da
+chave diretamente:
+
+[import auth_private_key.cpp]
+[auth_private_key]
 
 
 [endsect]
