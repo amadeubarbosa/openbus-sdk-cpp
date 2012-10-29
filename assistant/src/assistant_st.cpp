@@ -5,7 +5,6 @@
 #include <openbus/assistant/detail/register_information.h>
 #include <openbus/assistant/detail/execute_with_retry.h>
 #include <openbus/assistant/detail/exception_message.h>
-#include <openbus/assistant/detail/find_services_error_retry.h>
 #include <openbus/assistant/detail/create_connection_and_login.h>
 
 #include <boost/bind.hpp>
@@ -292,29 +291,6 @@ void waitLogin(Assistant a)
   assistant_detail::wait_login(assistant_access::state(a));
 }
 
-struct find_services
-{
-  typedef idl_or::ServiceOfferDescSeq_var result_type;
-  result_type operator()(boost::shared_ptr<assistant_detail::shared_state> state
-                         , idl_or::ServicePropertySeq properties) const
-  {
-    return state->connection->offers()->findServices(properties);
-  }
-};
-
-struct find_services_error
-{
-  typedef void result_type;
-  result_type operator()(CORBA::TRANSIENT const& e) const {}
-  result_type operator()(CORBA::COMM_FAILURE const& e) const {}
-  result_type operator()(CORBA::OBJECT_NOT_EXIST const& e) const {}
-  template <typename E>
-  result_type operator()(E const& e) const
-  {
-    throw e;
-  }
-};
-
 void AssistantImpl::registerService(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties)
 {
   try
@@ -350,70 +326,6 @@ void AssistantImpl::registerService(scs::core::IComponent_var component, idl_or:
   {
     simple_add_offer_error(component, properties, state);
   }
-}
-
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int retries
-                                       , boost::shared_ptr<assistant_detail::shared_state> state)
-{
-  logger::log_scope log(state->logging, logger::debug_level, "findOffers with retries");
-  assert(retries > 0);
-
-  while(!state->connection_ready && retries)
-  {
-    log.log("Not logged in yet. Trying to login");
-    boost::chrono::steady_clock::time_point timeout
-      = boost::chrono::steady_clock::now()
-      + state->retry_wait;
-
-    try
-    {
-      wait_login(state, timeout);
-    }
-    catch(assistant_detail::timeout_error&)
-    {
-      log.log("Failed logging by timeout");
-    }
-  }
-
-  if(!state->connection_ready)
-    throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-
-  assert(!CORBA::is_nil(state->connection->offers()));
-  idl_or::ServiceOfferDescSeq_var r
-    = assistant_detail::execute_with_retry
-    (boost::bind(find_services(), state, properties)
-     , assistant_detail::find_services_error_retry(retries, state)
-     , assistant_detail::wait_until_timeout_and_signal_exit(state)
-     , state->logging);
-  return *r;
-}
-
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
-                                       , boost::shared_ptr<assistant_detail::shared_state> state)
-{
-  logger::log_scope log(state->logging, logger::debug_level, "findOffers with infinity retries");
-  if(!state->connection_ready)
-    wait_login(state);
-
-  assert(!CORBA::is_nil(state->connection->offers()));
-  idl_or::ServiceOfferDescSeq_var r
-    = assistant_detail::execute_with_retry
-    (boost::bind(find_services(), state, properties)
-     , find_services_error(), assistant_detail::wait_until_timeout_and_signal_exit(state)
-     , state->logging);
-  return *r;
-}
-
-idl_or::ServiceOfferDescSeq findOffers_immediate
-  (idl_or::ServicePropertySeq properties, boost::shared_ptr<assistant_detail::shared_state> state)
-{
-  logger::log_scope log(state->logging, logger::debug_level, "findOffers without retries");
-  if(!state->connection_ready)
-    throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-
-  assert(!CORBA::is_nil(state->connection->offers()));
-  idl_or::ServiceOfferDescSeq_var r = state->connection->offers()->findServices(properties);
-  return *r;
 }
 
 } }

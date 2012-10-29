@@ -1,14 +1,17 @@
 // -*- coding: iso-latin-1 -*-
 
+#ifndef OPENBUS_ASSISTANT_DETAIL_NORMAL_ERROR_HANDLING_UNTIL_RETRY_H
+#define OPENBUS_ASSISTANT_DETAIL_NORMAL_ERROR_HANDLING_UNTIL_RETRY_H
+
 #include <openbus/assistant/detail/shared_state.h>
 
 namespace openbus { namespace assistant {
 
 namespace assistant_detail {
 
-struct find_services_error_retry
+struct normal_error_handling_until_retry
 {
-  find_services_error_retry(int& retry, boost::shared_ptr<assistant_detail::shared_state> state)
+  normal_error_handling_until_retry(int& retry, boost::shared_ptr<assistant_detail::shared_state> state)
     : retry(&retry), state(state) {}
   typedef void result_type;
   template <typename E>
@@ -25,3 +28,5 @@ struct find_services_error_retry
 };
 
 } } }
+
+#endif

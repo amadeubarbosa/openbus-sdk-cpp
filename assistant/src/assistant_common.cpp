@@ -8,6 +8,10 @@
 #include <openbus/assistant/detail/exception_message.h>
 #include <openbus/assistant/detail/create_connection_and_login.h>
 #include <openbus/assistant/detail/wait_login.h>
+#include <openbus/assistant/detail/tri_types_retry.h>
+#include <openbus/assistant/detail/functional/find_services.h>
+#include <openbus/assistant/detail/functional/get_all_services.h>
+#include <openbus/assistant/detail/functional/start_shared_auth.h>
 
 #include <boost/bind.hpp>
 #include <boost/utility/result_of.hpp>
@@ -366,22 +370,26 @@ idl_or::ServicePropertySeq AssistantImpl::createFacetAndEntityProperty(const cha
   return properties;
 }  
 
-idl_or::ServiceOfferDescSeq findOffers_immediate
-(idl_or::ServicePropertySeq properties, boost::shared_ptr<assistant_detail::shared_state> state);
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
-                                       , boost::shared_ptr<assistant_detail::shared_state> state);
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int retries
-                                       , boost::shared_ptr<assistant_detail::shared_state> state);
-
 idl_or::ServiceOfferDescSeq AssistantImpl::findServices
   (idl_or::ServicePropertySeq properties, int retries) const
 {
-  if(retries < 0)
-    return assistant::findOffers(properties, state);
-  else if(retries == 0)
-    return assistant::findOffers_immediate(properties, state);
-  else
-    return assistant::findOffers(properties, retries, state);
+  return assistant_detail::tri_types_retry
+    (assistant_detail::functional::find_services(state, properties)
+     , state, retries);
+}
+
+idl_or::ServiceOfferDescSeq AssistantImpl::getAllServices (int retries) const
+{
+  return assistant_detail::tri_types_retry
+    (assistant_detail::functional::get_all_services(state)
+     , state, retries);
+}
+
+std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq> AssistantImpl::startSharedAuth(int retries)
+{
+  return assistant_detail::tri_types_retry
+    (assistant_detail::functional::start_shared_auth(state)
+     , state, retries);
 }
 
 idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOfferDescSeq offers)
