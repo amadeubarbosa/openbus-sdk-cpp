@@ -25,15 +25,70 @@ struct normal_error_handling
 #ifdef ASSISTANT_SDK_MULTITHREAD
 template <typename Op>
 typename boost::result_of<Op()>::type tri_types_retry_immediate
- (Op op, boost::shared_ptr<assistant_detail::shared_state> state);
+ (Op op, boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    if(!state->connection_ready)
+      throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+  }
+
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  return op();
+}
 
 template <typename Op>
 typename boost::result_of<Op()>::type tri_types_retry_determinate_retries
- (Op op, boost::shared_ptr<assistant_detail::shared_state> state, int retries);
+ (Op op, boost::shared_ptr<assistant_detail::shared_state> state, int retries)
+{
+  boost::unique_lock<boost::mutex> l(state->mutex);
+  while(!state->connection_ready && retries > 0)
+  {
+    l.unlock();
+    boost::this_thread::sleep_for(state->retry_wait);
+    l.lock();
+  }
+  l.unlock();
+  
+  if(retries == 0)
+    throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  return assistant_detail::execute_with_retry
+    (op
+     , assistant_detail::normal_error_handling_until_retry(retries, state)
+     , assistant_detail::wait_until_timeout_and_signal_exit(state)
+     , state->logging);
+}
 
 template <typename Op>
 typename boost::result_of<Op()>::type tri_types_retry_infinitely
- (Op op, boost::shared_ptr<assistant_detail::shared_state> state);
+ (Op op, boost::shared_ptr<assistant_detail::shared_state> state)
+{
+  {
+    boost::unique_lock<boost::mutex> l(state->mutex);
+    while(!state->connection_ready)
+      state->connection_ready_var.wait(l);
+    assert(state->connection_ready);
+  }
+
+  // From here connection_ready is true, which means that state->connection is valid
+  // and imutable, and a happens before has already been established between
+  // state->connection and connection_ready (because of the acquire semantics of the lock
+  // above and release semantics of the unlock after assignment of connection_ready)
+  return assistant_detail::execute_with_retry
+    (op
+     , normal_error_handling()
+     , assistant_detail::wait_until_timeout_and_signal_exit(state)
+     , state->logging);
+}
+
 #else
 template <typename Op>
 typename boost::result_of<Op()>::type tri_types_retry_immediate

@@ -5,7 +5,6 @@
 #include <openbus/assistant/detail/register_information.h>
 #include <openbus/assistant/detail/execute_with_retry.h>
 #include <openbus/assistant/detail/exception_message.h>
-#include <openbus/assistant/detail/find_services_error_retry.h>
 #include <openbus/assistant/detail/create_connection_and_login.h>
 
 namespace openbus { namespace assistant {
@@ -203,29 +202,6 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
   }
 }
 
-struct find_services
-{
-  typedef idl_or::ServiceOfferDescSeq_var result_type;
-  result_type operator()(boost::shared_ptr<assistant_detail::shared_state> state
-                         , idl_or::ServicePropertySeq properties) const
-  {
-    return state->connection->offers()->findServices(properties);
-  }
-};
-
-struct find_services_error
-{
-  typedef void result_type;
-  result_type operator()(CORBA::TRANSIENT const& e) const {}
-  result_type operator()(CORBA::COMM_FAILURE const& e) const {}
-  result_type operator()(CORBA::OBJECT_NOT_EXIST const& e) const {}
-  template <typename E>
-  result_type operator()(E const& e) const
-  {
-    throw e;
-  }
-};
-
 }
 
 void create_threads(boost::shared_ptr<assistant_detail::shared_state> state)
@@ -249,73 +225,6 @@ void AssistantImpl::registerService(scs::core::IComponent_var component, idl_or:
   state->queued_components.push_back(std::make_pair(component, properties));
   state->new_queued_components = true;
   state->work_cond_var.notify_one();
-}
-
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties, int retries
-                                       , boost::shared_ptr<assistant_detail::shared_state> state)
-{
-  boost::unique_lock<boost::mutex> l(state->mutex);
-  while(!state->connection_ready && retries > 0)
-  {
-    l.unlock();
-    boost::this_thread::sleep_for(state->retry_wait);
-    l.lock();
-  }
-  l.unlock();
-  
-  if(retries == 0)
-    throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-
-  // From here connection_ready is true, which means that state->connection is valid
-  // and imutable, and a happens before has already been established between
-  // state->connection and connection_ready (because of the acquire semantics of the lock
-  // above and release semantics of the unlock after assignment of connection_ready)
-  idl_or::ServiceOfferDescSeq_var r
-    = assistant_detail::execute_with_retry
-    (boost::bind(find_services(), state, properties)
-     , assistant_detail::find_services_error_retry(retries, state)
-     , assistant_detail::wait_until_timeout_and_signal_exit(state)
-     , state->logging);
-  return *r;
-}
-
-idl_or::ServiceOfferDescSeq findOffers(idl_or::ServicePropertySeq properties
-                                       , boost::shared_ptr<assistant_detail::shared_state> state)
-{
-  {
-    boost::unique_lock<boost::mutex> l(state->mutex);
-    while(!state->connection_ready)
-      state->connection_ready_var.wait(l);
-    assert(state->connection_ready);
-  }
-
-  // From here connection_ready is true, which means that state->connection is valid
-  // and imutable, and a happens before has already been established between
-  // state->connection and connection_ready (because of the acquire semantics of the lock
-  // above and release semantics of the unlock after assignment of connection_ready)
-  idl_or::ServiceOfferDescSeq_var r
-    = assistant_detail::execute_with_retry
-    (boost::bind(find_services(), state, properties)
-     , find_services_error(), assistant_detail::wait_until_timeout_and_signal_exit(state)
-     , state->logging);
-  return *r;
-}
-
-idl_or::ServiceOfferDescSeq findOffers_immediate
-  (idl_or::ServicePropertySeq properties, boost::shared_ptr<assistant_detail::shared_state> state)
-{
-  {
-    boost::unique_lock<boost::mutex> l(state->mutex);
-    if(!state->connection_ready)
-      throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-  }
-
-  // From here connection_ready is true, which means that state->connection is valid
-  // and imutable, and a happens before has already been established between
-  // state->connection and connection_ready (because of the acquire semantics of the lock
-  // above and release semantics of the unlock after assignment of connection_ready)
-  idl_or::ServiceOfferDescSeq_var r = state->connection->offers()->findServices(properties);
-  return *r;
 }
 
 namespace assistant_detail {
