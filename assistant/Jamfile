@@ -33,7 +33,9 @@ rule tag ( name : type ? : property-set )
 
 project rt ;
 
-lib rt : : <name>rt ;
+lib real_rt : : <name>rt ;
+explicit real_rt ;
+alias rt : : : : <target-os>linux:<source>real_rt ;
 
 lib assistant : src/assistant_common.cpp
  /mico//mico /scs//scs /boost//headers /logger//logger
