@@ -7,6 +7,7 @@ import modules ;
 import "class" : new ;
 import property-set ;
 
+local scs-idl-path-env = [ os.environ SCS_IDL_PATH ] ;
 local scs-path-env = [ os.environ SCS_PATH ] ;
 local openssl-lib-path-env = [ os.environ OPENSSL_LIB_PATH ] ;
 local openssl-include-path-env = [ os.environ OPENSSL_INCLUDE_PATH ] ;
@@ -17,6 +18,7 @@ path-constant scs-path : $(scs-path-env) ;
 path-constant openssl-lib-path : $(openssl-lib-path-env) ;
 path-constant openssl-include-path : $(openssl-include-path-env) ;
 path-constant openbus-idl-path : $(openbus-idl-path-env) ;
+path-constant scs-idl-path : $(scs-idl-path-env) ;
 
 use-project scs : $(scs-path) ;
 use-project logger : $(logger-path-env) ;
@@ -114,7 +116,16 @@ explicit openbus ;
 install stage-libs : openbus : <location>stage ;
 explicit stage-libs ;
 
-mico-idl.cpp-h cpp-h-stub : core-idls ;
+feature.feature core-idl-diff : off on : composite link-incompatible ;
+mico-idl.cpp-h cpp-h-stub : [ alias cpp-h-stub-idl : $(openbus-idl-path)/access_control.idl
+ $(openbus-idl-path)/core.idl $(openbus-idl-path)/credential.idl
+ $(openbus-idl-path)/offer_registry.idl
+ $(here)/legacy/idl/credential_v1_5.idl
+ $(scs-idl-path)/scs.idl
+ : : : <include>$(scs-idl-path)
+ ]
+ : <core-idl-diff>on
+ ;
 install stage-stubs : cpp-h-stub : <location>stage/stubs
  <install-dependencies>on <install-type>CPP <install-type>H
  <link>static
