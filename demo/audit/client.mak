@@ -8,11 +8,11 @@ SRC= client/client.cpp stubs/hello.cc
 INCLUDES+= stubs
 
 STUBS=stubs/hello.h stubs/hello.cc
-IDLS=idl/hello.idl
+IDLS=../hello/idl/hello.idl
 
 genstubs: $(STUBS)
 
 $(STUBS): $(IDLS)
 	mkdir -p stubs
-	cd stubs ; $(MICO_BIN)/idl --no-paths --any --typecode ../idl/hello.idl
+	cd stubs ; $(MICO_BIN)/idl --no-paths --any --typecode ../../hello/idl/hello.idl
 
