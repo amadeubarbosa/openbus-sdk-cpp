@@ -1,7 +1,7 @@
 #include <openbus/ConnectionManager.h>
 #include <openbus/ORBInitializer.h>
 #include <iostream>
-#include "chain_validation.h"
+#include <stubs/chain_validation.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;

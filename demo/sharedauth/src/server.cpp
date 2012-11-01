@@ -192,6 +192,8 @@ int main(int argc, char** argv)
   
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
+#else
+    orb->run();
 #endif
   }
   catch(offer_registry::InvalidService const&)

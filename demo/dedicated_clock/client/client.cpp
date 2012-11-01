@@ -2,9 +2,7 @@
 #include <openbus/ORBInitializer.h>
 #include <iostream>
 
-#include <dedicated_clock.h>
-
-#include <boost/thread.hpp>
+#include <stubs/dedicated_clock.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;

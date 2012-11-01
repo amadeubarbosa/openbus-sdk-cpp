@@ -12,7 +12,6 @@ exe sharedauth_client
    /openbus//core-idls /openssl//openssl sharedauth-idl
    hello-idl
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>sharedauth-idl
@@ -24,7 +23,6 @@ exe sharedauth_server
    /openbus//core-idls /openssl//openssl sharedauth-idl
    hello-idl
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>sharedauth-idl
@@ -37,7 +35,6 @@ exe sharedauth_client_sharedauth
    /openbus//core-idls /openssl//openssl sharedauth-idl
    hello-idl
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>sharedauth-idl

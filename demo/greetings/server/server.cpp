@@ -197,12 +197,12 @@ int main(int argc, char** argv)
     ("greetings", _tc_Greetings->id(), &english_greetings_servant);
 
   scs::core::ComponentContext portuguese_greetings_component(orb, componentId);
-  GreetingsImpl portuguese_greetings_servant("Olá");
+  GreetingsImpl portuguese_greetings_servant("Ol�");
   portuguese_greetings_component.addFacet
     ("greetings", _tc_Greetings->id(), &portuguese_greetings_servant);
 
   scs::core::ComponentContext german_greetings_component(orb, componentId);
-  GreetingsImpl german_greetings_servant("Olá em alemao");
+  GreetingsImpl german_greetings_servant("Guten Tag");
   german_greetings_component.addFacet
     ("greetings", _tc_Greetings->id(), &german_greetings_servant);
     
@@ -211,25 +211,27 @@ int main(int argc, char** argv)
   properties[0].name = "offer.domain";
   properties[0].value = "Demos";
   properties[1].name = "language";
-  properties[1].name = "english";
+  properties[1].value = "english";
   if(!registerService(english_greetings_component.getIComponent(), properties
                       , conn->offers()))
     return -1;
 
   properties[1].name = "language";
-  properties[1].name = "portuguese";
+  properties[1].value = "portuguese";
   if(!registerService(portuguese_greetings_component.getIComponent(), properties
                       , conn->offers()))
     return -1;
 
   properties[1].name = "language";
-  properties[1].name = "german";
+  properties[1].value = "german";
   if(!registerService(german_greetings_component.getIComponent(), properties
                       , conn->offers()))
     return -1;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
   orb_thread.join();
+#else
+  orb->run();
 #endif
 }
 

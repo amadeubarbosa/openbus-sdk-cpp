@@ -134,6 +134,6 @@ int main(int argc, char** argv)
       unsigned int t = 30u;
       do { t = sleep(t); } while(t);
     }
-    while(!try_again);
+    while(try_again);
   }
 }

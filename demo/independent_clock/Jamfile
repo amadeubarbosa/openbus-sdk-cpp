@@ -10,7 +10,6 @@ exe independent_clock_client
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl independent-clock-idl
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>independent-clock-idl
@@ -20,7 +19,6 @@ exe independent_clock_server
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl independent-clock-idl
  : <implicit-dependency>/openbus//core-idls
-   <core-idl-dummy-feature>three
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>independent-clock-idl

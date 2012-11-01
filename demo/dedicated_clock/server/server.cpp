@@ -3,7 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "dedicated_clock.h"
+#include <stubs/dedicated_clock.h>
 #include <CORBA.h>
 #include <time.h>
 
@@ -184,7 +184,11 @@ int main(int argc, char** argv)
     }
     while(true);
   
+#ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
+#else
+    orb->run();
+#endif
   }
   catch(offer_registry::InvalidService const&)
   {

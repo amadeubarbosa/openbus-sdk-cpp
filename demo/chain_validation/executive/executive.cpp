@@ -3,7 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "chain_validation.h"
+#include <stubs/chain_validation.h>
 #include <CORBA.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -95,7 +95,11 @@ int main(int argc, char** argv)
     properties[0].value = "Demos";
     conn->offers()->registerService(message_component.getIComponent(), properties);
 
+#ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
+#else
+    orb->run();
+#endif
   }
   catch (services::ServiceFailure e)
   {

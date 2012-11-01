@@ -3,7 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "chain_validation.h"
+#include <stubs/chain_validation.h>
 #include <CORBA.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -44,7 +44,7 @@ struct MessageImpl : POA_Message
 
 struct MeetingImpl : POA_Meeting
 {
-  long bookMeeting()
+  CORBA::Long bookMeeting()
   {
     std::cout << "Meeting has been booked" << std::endl;
     return 0;
@@ -161,7 +161,11 @@ int main(int argc, char** argv)
     
     conn->offers()->registerService(meeting_component.getIComponent(), properties);
 
+#ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
+#else
+    orb->run();
+#endif
   }
   catch (services::ServiceFailure e)
   {

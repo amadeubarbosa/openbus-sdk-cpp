@@ -3,7 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include "hello.h"
+#include <stubs/hello.h>
 #include <CORBA.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -148,7 +148,11 @@ int main(int argc, char** argv)
       properties[0].value = "Demos";
       conn->offers()->registerService(hello_component.getIComponent(), properties);
 
+#ifdef OPENBUS_SDK_MULTITHREAD
       orb_thread.join();
+#else
+      orb->run();
+#endif
     }
   }
   catch (services::ServiceFailure e)
