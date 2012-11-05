@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     try
     {
       offer_registry::ServiceOfferDescSeq
-        offers = assistant.findOffers
+        offers = assistant.findServices
         (assistant.createFacetAndEntityProperty("clock", "demo"), -1);
       // Pegando uma oferta valida
       demo::Clock_ptr clock = ::get_clock(offers);

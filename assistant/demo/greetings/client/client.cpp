@@ -108,7 +108,7 @@ int main(int argc, char** argv)
       try
       {
         offer_registry::ServiceOfferDescSeq
-          offers = assistant.findOffers(props, -1);
+          offers = assistant.findServices(props, -1);
         // Pegando uma oferta valida
         ::try_call_with_found_reference(offers, sayGreetings(try_again, *language));
         continue;

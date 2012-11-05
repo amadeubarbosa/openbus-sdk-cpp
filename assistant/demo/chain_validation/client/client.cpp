@@ -55,7 +55,7 @@ int main(int argc, char** argv)
     props[0].value = "secretary";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    offer_registry::ServiceOfferDescSeq offers = assistant.findOffers(props, -1);
+    offer_registry::ServiceOfferDescSeq offers = assistant.findServices(props, -1);
     // Pegando uma oferta valida
     ::Message_var message = ::get_message(offers);
     if(!CORBA::is_nil(message))
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
     props[0].value = "executive";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    offers = assistant.findOffers(props, -1);
+    offers = assistant.findServices(props, -1);
     // Pegando uma oferta valida
     message = ::get_message(offers);
     if(!CORBA::is_nil(message))

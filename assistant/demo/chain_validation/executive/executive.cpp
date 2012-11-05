@@ -76,10 +76,13 @@ int main(int argc, char** argv)
     properties.length(2);
     properties[0].name = "offer.domain";
     properties[0].value = "Demos";
-    assistant.addOffer(message_component.getIComponent(), properties);
+    assistant.registerService(message_component.getIComponent(), properties);
 
-    assistant.wait();
-    // orb_thread.join();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    orb_thread.join();
+#else
+    assistant.orb()->run();
+#endif
   }
   catch (services::ServiceFailure e)
   {

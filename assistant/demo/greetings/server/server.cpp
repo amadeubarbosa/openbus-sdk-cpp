@@ -43,7 +43,7 @@ int main(int argc, char** argv)
      , _argc = argc, _argv = argv);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-  boost::thread orb_thread(boost::bind(&run_orb, orb));
+  boost::thread orb_thread(boost::bind(&run_orb, assistant.orb()));
 #endif
 
   scs::core::ComponentId componentId = { "Greetings", '1', '0', '0', "" };
@@ -68,19 +68,20 @@ int main(int argc, char** argv)
   properties[0].value = "Demos";
   properties[1].name = "language";
   properties[1].value = "english";
-  assistant.addOffer(english_greetings_component.getIComponent(), properties);
+  assistant.registerService(english_greetings_component.getIComponent(), properties);
 
   properties[1].name = "language";
   properties[1].value = "portuguese";
-  assistant.addOffer(portuguese_greetings_component.getIComponent(), properties);
+  assistant.registerService(portuguese_greetings_component.getIComponent(), properties);
 
   properties[1].name = "language";
   properties[1].value = "german";
-  assistant.addOffer(german_greetings_component.getIComponent(), properties);
+  assistant.registerService(german_greetings_component.getIComponent(), properties);
 
-  assistant.wait();
-// #ifdef OPENBUS_SDK_MULTITHREAD
-//   orb_thread.join();
-// #endif
+#ifdef OPENBUS_SDK_MULTITHREAD
+  orb_thread.join();
+#else
+  assistant.orb()->run();
+#endif
 }
 

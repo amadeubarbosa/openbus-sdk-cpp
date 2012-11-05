@@ -102,7 +102,7 @@ int main(int argc, char** argv)
        , _argc = argc, _argv = argv);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-  boost::thread orb_thread(boost::bind(&run_orb, orb));
+  boost::thread orb_thread(boost::bind(&run_orb, assistant.orb()));
 #endif
 
     // Recebendo ofertas
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     props[0].value = "executive";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    offer_registry::ServiceOfferDescSeq offers = assistant.findOffers(props, -1);
+    offer_registry::ServiceOfferDescSeq offers = assistant.findServices(props, -1);
     // Pegando uma oferta valida
     ::Message_var message_executive = ::get_message(offers);
     if(CORBA::is_nil(message_executive))
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
     properties.length(2);
     properties[0].name = "offer.domain";
     properties[0].value = "Demos";
-    assistant.addOffer(message_component.getIComponent(), properties);
+    assistant.registerService(message_component.getIComponent(), properties);
 
     scs::core::ComponentId meeting_componentId = { "Meeting", '1', '0', '0', "" };
     scs::core::ComponentContext meeting_component
@@ -141,10 +141,13 @@ int main(int argc, char** argv)
     meeting_component.addFacet
       ("meeting", ::_tc_Meeting->id(), &meeting_servant);
     
-    assistant.addOffer(meeting_component.getIComponent(), properties);
+    assistant.registerService(meeting_component.getIComponent(), properties);
 
-    assistant.wait();
-    // orb_thread.join();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    orb_thread.join();
+#else
+    assistant.orb()->run();
+#endif
   }
   catch (services::ServiceFailure e)
   {

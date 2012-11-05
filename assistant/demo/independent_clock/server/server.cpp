@@ -27,6 +27,11 @@ struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
   }
 };
 
+void run_orb(CORBA::ORB_var orb)
+{
+  orb->run();
+}
+
 void clock_loop()
 {
   while(true)
@@ -44,6 +49,8 @@ int main(int argc, char** argv)
     ("localhost", 2089, _username = "demo", _password = "demo"
      , _argc = argc, _argv = argv);
 
+  boost::thread orb_thread(boost::bind(&run_orb, assistant.orb()));
+
   scs::core::ComponentId componentId
     = { "IndependentClock", '1', '0', '0', ""};
   scs::core::ComponentContext clock_component
@@ -58,7 +65,7 @@ int main(int argc, char** argv)
   assistant.registerService(clock_component.getIComponent(), properties);
 
   boost::thread local_clock_thread(& ::clock_loop);
-
-  assistant.orb()->run();
+  
+  orb_thread.join();
   local_clock_thread.join();
 }

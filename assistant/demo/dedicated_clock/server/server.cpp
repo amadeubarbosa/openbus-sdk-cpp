@@ -38,9 +38,9 @@ int main(int argc, char** argv)
   properties.length(1);
   properties[0].name = "offer.domain";
   properties[0].value = "Demos";
-  assistant.addOffer(clock_component.getIComponent(), properties);
+  assistant.registerService(clock_component.getIComponent(), properties);
 
-  assistant.wait();
+  assistant.orb()->run();
 
   return 0;
 }
