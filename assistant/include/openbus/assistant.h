@@ -72,7 +72,7 @@ struct Assistant
 #endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 {
   static void dummy_login_error_callback(std::string) {}
-  static void dummy_register_error_callback(scs::core::IComponent_var, idl_or::ServicePropertySeq) {}
+  static void dummy_register_error_callback(scs::core::IComponent_var, idl_or::ServicePropertySeq, std::string) {}
   static void dummy_fatal_error_callback(const char*) {}
   typedef boost::function<void(std::string)> login_error_callback_type;
   typedef boost::function<void(scs::core::IComponent_var
