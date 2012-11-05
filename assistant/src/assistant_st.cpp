@@ -21,11 +21,11 @@ namespace assistant_detail {
 
 struct wait_until_cancelled
 {
-  template <typename Pred, typename TimePoint>
-  void operator()(Pred p, TimePoint time_point) const
+  template <typename Pred, typename TimeDuration>
+  void operator()(Pred p, TimeDuration time_duration) const
   {
     int seconds = boost::chrono::duration_cast<boost::chrono::seconds>
-      (time_point - boost::chrono::steady_clock::now()).count();
+      (time_duration).count();
     while(!p() && seconds)
       seconds = ::sleep(seconds);
     if(p())
@@ -36,9 +36,7 @@ struct wait_until_cancelled
 void wait_until_timeout_and_signal_exit::operator()() const
 {
   wait_until_cancelled f;
-  boost::chrono::steady_clock::time_point time_point
-    = boost::chrono::steady_clock::now() + state->retry_wait;
-  f(boost::bind(predicate(), state), time_point);
+  f(boost::bind(predicate(), state), state->retry_wait);
 }
 
 }
@@ -50,6 +48,28 @@ void AssistantImpl::shutdown()
 }
 
 namespace assistant_detail {
+
+struct register_error_handler
+{
+  register_error_handler(boost::shared_ptr<shared_state> state
+                         , std::size_t& i)
+    : state(state), i(&i) {}
+
+  template <typename E>
+  void operator()(E const& e)
+  {
+    if(!state->relogin) // i is still valid
+    {
+      state->register_error(state->queued_components[*i].first
+                            , state->queued_components[*i].second
+                            , assistant_detail::exception_message(e));
+      ++*i;
+    }
+  }
+
+  boost::shared_ptr<shared_state> state;
+  std::size_t* i;
+};
 
 void register_queued_components(boost::shared_ptr<shared_state> state)
 {
@@ -67,6 +87,7 @@ void register_queued_components(boost::shared_ptr<shared_state> state)
   std::size_t i = 0;
   while(i != queued_components.size())
   {
+    register_error_handler error_handler(state, i);
     try
     {
       logger::log_scope l(state->logging, logger::info_level, "Registering one component");
@@ -88,18 +109,7 @@ void register_queued_components(boost::shared_ptr<shared_state> state)
         queued_components.erase(boost::next(queued_components.begin(), i));
       }
     }
-    catch(CORBA::TRANSIENT const& e)
-    {
-      ++i;
-    }
-    catch(CORBA::COMM_FAILURE const& e)
-    {
-      ++i;
-    }
-    catch(CORBA::OBJECT_NOT_EXIST const& e)
-    {
-      ++i;
-    }
+    OPENBUS_ASSISTANT_CATCH_EXCEPTIONS(error_handler)
   }
 }
 
@@ -115,8 +125,8 @@ public:
       register_queued_components(state);
       if(!state->queued_components.empty())
       {
-        boost::chrono::microseconds s = boost::chrono::duration_cast
-          <boost::chrono::microseconds>(state->retry_wait);
+        boost::chrono::milliseconds s = boost::chrono::duration_cast
+          <boost::chrono::milliseconds>(state->retry_wait);
         state->orb->dispatcher()->tm_event(this, s.count());
       }
       else
@@ -131,7 +141,7 @@ private:
 };
 
 void create_add_offers_dispatcher(boost::shared_ptr<shared_state> state
-                                  , boost::optional<boost::chrono::microseconds> s = boost::none)
+                                  , boost::optional<boost::chrono::milliseconds> s = boost::none)
 {
   if(!state->asynchronous_offers_dispatcher)
   {
@@ -146,7 +156,7 @@ void simple_add_offer_error(scs::core::IComponent_var component, idl_or::Service
                             , boost::shared_ptr<shared_state> state)
 {
   state->queued_components.push_back(std::make_pair(component, properties));
-  create_add_offers_dispatcher(state, boost::chrono::duration_cast<boost::chrono::microseconds>
+  create_add_offers_dispatcher(state, boost::chrono::duration_cast<boost::chrono::milliseconds>
                                (state->retry_wait));
 }
 
@@ -229,12 +239,22 @@ public:
   {
     if(boost::shared_ptr<shared_state> state = state_.lock())
     {
+      logger::log_scope log(state->logging, logger::debug_level, "try login callback function");
       if(!state->connection_ready)
+      {
         try
         {
           try_wait_login(state);
         }
         OPENBUS_ASSISTANT_CATCH_EXCEPTIONS(error)
+        if(!state->connection_ready)
+        {
+          boost::chrono::milliseconds s = boost::chrono::duration_cast
+            <boost::chrono::milliseconds>(state->retry_wait);
+          log.vlog("Logging failed, rescheduling login in %d milliseconds", (int)s.count());
+          state->orb->dispatcher()->tm_event(this, s.count());
+        }
+      }
       else
         orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);
     }

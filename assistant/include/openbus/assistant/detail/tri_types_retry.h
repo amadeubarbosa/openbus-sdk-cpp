@@ -15,6 +15,10 @@ struct normal_error_handling
   result_type operator()(CORBA::TRANSIENT const& e) const {}
   result_type operator()(CORBA::COMM_FAILURE const& e) const {}
   result_type operator()(CORBA::OBJECT_NOT_EXIST const& e) const {}
+  result_type operator()(CORBA::NO_PERMISSION const& e) {}
+  result_type operator()(idl::services::ServiceFailure const& e) {}
+  result_type operator()(idl::services::UnauthorizedOperation const& e) {}
+  result_type operator()(idl::services::offer_registry::UnauthorizedFacets const& e) {}
   template <typename E>
   result_type operator()(E const& e) const
   {
