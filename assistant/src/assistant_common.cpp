@@ -18,6 +18,7 @@
 
 #include <boost/chrono/include.hpp>
 #include <boost/weak_ptr.hpp>
+#include <boost/preprocessor/facilities/empty.hpp>
 
 #include <iterator>
 
@@ -405,22 +406,7 @@ idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOf
         result_offers[result_offers.length()-1] = offers[i];
       }
     }
-    catch(CORBA::TRANSIENT const& e)
-    {
-    }
-    catch(CORBA::COMM_FAILURE const& e)
-    {
-    }
-    catch(CORBA::OBJECT_NOT_EXIST const& e)
-    {
-      std::abort();
-    }
-    catch(idl::services::ServiceFailure const& e)
-    {
-    }
-    catch(idl::services::UnauthorizedOperation const& e)
-    {
-    }
+    OPENBUS_ASSISTANT_CATCH_EXCEPTIONS(BOOST_PP_EMPTY())
   }
   return result_offers;
 }
