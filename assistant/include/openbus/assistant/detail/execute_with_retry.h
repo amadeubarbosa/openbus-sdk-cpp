@@ -30,6 +30,22 @@
     {                                                                   \
       x(e);                                                             \
     }                                                                   \
+  catch(idl::services::access_control::InvalidCertificate const& e)     \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(idl::services::access_control::MissingCertificate const& e)     \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(idl::services::access_control::InvalidPublicKey const& e)       \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(idl::services::access_control::AccessDenied const& e)           \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
   catch(idl::services::offer_registry::UnauthorizedFacets const& e)     \
     {                                                                   \
       x(e);                                                             \

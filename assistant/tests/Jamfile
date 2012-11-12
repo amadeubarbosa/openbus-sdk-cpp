@@ -26,6 +26,11 @@ exe-test add_offer : add_offer.cpp : hello-idl ;
 exe-test create_assistant_with_password : create_assistant_with_password.cpp ;
 exe-test create_assistant_with_password_wo_named_parameters : create_assistant_with_password_wo_named_parameters.cpp ;
 exe-test create_assistant_with_private_key : create_assistant_with_private_key.cpp ;
+exe-test create_assistant_with_private_key_with_login_callback : create_assistant_with_private_key_with_login_callback.cpp
+ : hello-idl ;
+exe-test create_assistant_with_private_key_with_login_callback_with_register_service
+ : create_assistant_with_private_key_with_login_callback_with_register_service.cpp
+ : hello-idl ;
 exe-test find_service_and_immediate_timeout : find_service_and_immediate_timeout.cpp ;
 exe-test find_service_and_never_timeout : find_service_and_never_timeout.cpp ;
 exe-test find_service_and_timeout : find_service_and_timeout.cpp ;
