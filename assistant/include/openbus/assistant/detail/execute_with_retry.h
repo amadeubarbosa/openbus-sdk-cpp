@@ -57,6 +57,10 @@
   catch(CORBA::UserException const& e)                                  \
     {                                                                   \
       x(e);                                                             \
+    }                                                                   \
+  catch(std::exception& e)                                              \
+    {                                                                   \
+      x(e);                                                             \
     }
 
 namespace openbus { namespace assistant { namespace assistant_detail {

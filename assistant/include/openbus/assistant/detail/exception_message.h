@@ -70,6 +70,11 @@ inline const char* exception_message(CORBA::UserException const&)
   return "Unknown derived exception of CORBA::UserException";
 }
 
+inline const char* exception_message(std::exception const& e)
+{
+  return "Unknown derived exception of std::exception";
+}
+
 } } }
 
 #endif
