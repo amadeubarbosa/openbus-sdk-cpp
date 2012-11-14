@@ -75,6 +75,16 @@ inline const char* exception_message(std::exception const& e)
   return "Unknown derived exception of std::exception";
 }
 
+inline const char* exception_message(idl::services::offer_registry::InvalidService const& e)
+{
+  return "tecgraf::openbus::core::v2_0::services::offer_registry::InvalidService";
+}
+
+inline const char* exception_message(idl::services::offer_registry::InvalidProperties const& e)
+{
+  return "tecgraf::openbus::core::v2_0::services::offer_registry::InvalidProperties";
+}
+
 } } }
 
 #endif

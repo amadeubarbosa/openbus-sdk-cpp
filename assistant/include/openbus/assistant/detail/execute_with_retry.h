@@ -50,6 +50,14 @@
     {                                                                   \
       x(e);                                                             \
     }                                                                   \
+  catch(idl::services::offer_registry::InvalidService const& e)         \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
+  catch(idl::services::offer_registry::InvalidProperties const& e)      \
+    {                                                                   \
+      x(e);                                                             \
+    }                                                                   \
   catch(CORBA::SystemException const& e)                                \
     {                                                                   \
       x(e);                                                             \
