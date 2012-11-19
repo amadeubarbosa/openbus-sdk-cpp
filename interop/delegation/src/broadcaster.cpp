@@ -1,6 +1,6 @@
 #include <openbus/ORBInitializer.h>
 #include <openbus/log.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
 #include <typeinfo>
@@ -18,10 +18,10 @@ namespace delegation = tecgraf::openbus::interop::delegation;
 #ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
 public:
-  RunThread(openbus::ConnectionManager* m) : _manager(m) {}
-  void _run(void*) { _manager->orb()->run(); }
+  RunThread(openbus::OpenBusContext* m) : _openbusContext(m) {}
+  void _run(void*) { _openbusContext->orb()->run(); }
 private:
-  openbus::ConnectionManager* _manager;
+  openbus::OpenBusContext* _openbusContext;
 };
 #endif
 
@@ -92,14 +92,14 @@ int main(int argc, char** argv) {
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
     std::auto_ptr <openbus::Connection> conn
-      (manager->createConnection(bus.host.c_str(), bus.port));
-    manager->setDefaultConnection(conn.get());
+      (openbusContext->createConnection(bus.host.c_str(), bus.port));
+    openbusContext->setDefaultConnection(conn.get());
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread* runThread = new RunThread(manager);
+    RunThread* runThread = new RunThread(openbusContext);
     runThread->start();
     #endif
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
       componentId.minor_version = '0';
       componentId.patch_version = '0';
       componentId.platform_spec = "C++";
-      scs::core::ComponentContext broadcaster_component(manager->orb(), componentId);
+      scs::core::ComponentContext broadcaster_component(openbusContext->orb(), componentId);
     
       BroadcasterImpl broadcaster_servant(*conn.get(), m);
       broadcaster_component.addFacet("broadcaster", delegation::_tc_Broadcaster->id(), &broadcaster_servant);

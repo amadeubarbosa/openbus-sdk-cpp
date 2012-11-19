@@ -4,7 +4,7 @@
 #define OPENBUS_ASSISTANT_REFERENCE_H
 
 #include <scs/IComponent.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include <CORBA.h>
 

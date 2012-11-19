@@ -1,4 +1,4 @@
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
@@ -50,12 +50,12 @@ int main(int argc, char** argv)
 #endif
 
     // Construindo e logando conexao
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    assert(manager != 0);
-    std::auto_ptr <openbus::Connection> conn1 (manager->createConnection("localhost", 2089));
-    std::auto_ptr <openbus::Connection> conn2 (manager->createConnection("localhost", 2089));
-    std::auto_ptr <openbus::Connection> conn3 (manager->createConnection("localhost", 2089));
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+    assert(openbusContext != 0);
+    std::auto_ptr <openbus::Connection> conn1 (openbusContext->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn2 (openbusContext->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn3 (openbusContext->createConnection("localhost", 2089));
     try
     {
       conn1->loginByPassword("demo1", "demo1");
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    manager->setDispatcher(*conn2);
+    openbusContext->setDispatcher(*conn2);
 
     scs::core::ComponentId componentId = { "Greetings", '1', '0', '0', "" };
     scs::core::ComponentContext english_greetings_component(orb, componentId);
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     german_greetings_component.addFacet
       ("greetings", _tc_Greetings->id(), &german_greetings_servant);
     
-    manager->setRequester(conn1.get());
+    openbusContext->setRequester(conn1.get());
     offer_registry::ServicePropertySeq properties;
     properties.length(2);
     properties[0].name = "offer.domain";
@@ -95,12 +95,12 @@ int main(int argc, char** argv)
     properties[1].value = "english";
     conn1->offers()->registerService(english_greetings_component.getIComponent(), properties);
 
-    manager->setRequester(conn2.get());
+    openbusContext->setRequester(conn2.get());
     properties[1].name = "language";
     properties[1].value = "portuguese";
     conn2->offers()->registerService(portuguese_greetings_component.getIComponent(), properties);
 
-    manager->setRequester(conn3.get());
+    openbusContext->setRequester(conn3.get());
     properties[1].name = "language";
     properties[1].value = "german";
     conn3->offers()->registerService(german_greetings_component.getIComponent(), properties);

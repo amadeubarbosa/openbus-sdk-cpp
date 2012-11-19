@@ -95,7 +95,7 @@ endif
 USE_NODEPEND=Yes
 
 SRC=src/ORBInitializer.cpp \
-    src/ConnectionManager.cpp \
+    src/OpenBusContext.cpp \
     src/Connection.cpp \
     src/Connection_impl.cpp \
     src/interceptors/ORBInitializer_impl.cpp \

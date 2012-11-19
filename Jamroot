@@ -94,7 +94,7 @@ rule tag ( name : type ? : property-set )
   }
 }
 
-lib openbus : src/Connection.cpp src/ConnectionManager.cpp
+lib openbus : src/Connection.cpp src/OpenBusContext.cpp
  src/Connection_impl.cpp src/ORBInitializer.cpp
  src/interceptors/ClientInterceptor_impl.cpp
  src/interceptors/ORBInitializer_impl.cpp

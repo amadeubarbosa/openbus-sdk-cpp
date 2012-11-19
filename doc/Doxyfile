@@ -574,7 +574,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = ../include/openbus/Connection.h ../include/openbus/ConnectionManager.h ../include/openbus/ORBInitializer.h ../include/openbus/log.h
+INPUT                  = ../include/openbus/Connection.h ../include/openbus/OpenBusContext.h ../include/openbus/ORBInitializer.h ../include/openbus/log.h
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is

@@ -5,7 +5,7 @@
 
 #include "openbus/Connection.h"
 #include "openbus/Connection_impl.h"
-#include "openbus/ConnectionManager.h"
+#include "openbus/OpenBusContext.h"
 extern "C" {
   #include "openbus/util/Ticket_impl.h"
 }
@@ -43,7 +43,7 @@ namespace interceptors {
     void send_other(PortableInterceptor::ServerRequestInfo*) { }
     char *name() { return CORBA::string_dup("ServerInterceptor"); }
     void destroy() { }
-    void connectionManager(ConnectionManager *m) { _manager = m; }
+    void openbusContext(OpenBusContext *m) { _openbusContext = m; }
   private:
     Mutex _mutex;
     PortableInterceptor::Current *_piCurrent;
@@ -53,7 +53,7 @@ namespace interceptors {
     PortableInterceptor::SlotId _slotId_signedCallChain;
     PortableInterceptor::SlotId _slotId_legacyCallChain;
     IOP::Codec *_cdrCodec;
-    ConnectionManager *_manager;
+    OpenBusContext *_openbusContext;
     void sendCredentialReset(Connection *, Login*, PortableInterceptor::ServerRequestInfo*);
 
     typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;

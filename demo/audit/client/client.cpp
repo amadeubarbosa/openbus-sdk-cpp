@@ -1,4 +1,4 @@
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include <iostream>
 #include <stubs/hello.h>
@@ -53,10 +53,10 @@ int main(int argc, char** argv)
     poa_manager->activate();
 
     // Construindo e logando conexao
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    assert(manager != 0);
-    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+    assert(openbusContext != 0);
+    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
     try
     {
       conn->loginByPassword("demo", "demo");
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
       std::cout << "Falha ao tentar realizar o login por senha no barramento: a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    manager->setDefaultConnection(conn.get());
+    openbusContext->setDefaultConnection(conn.get());
 
     // Recebendo ofertas
     openbus::idl_or::ServicePropertySeq props;

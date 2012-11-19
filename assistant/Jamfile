@@ -33,7 +33,7 @@ rule tag ( name : type ? : property-set )
 
 project rt ;
 
-lib real_rt : : <name>rt ;
+lib real_rt : : <name>rt <link>shared ;
 explicit real_rt ;
 alias rt : : : : <target-os>linux:<source>real_rt ;
 

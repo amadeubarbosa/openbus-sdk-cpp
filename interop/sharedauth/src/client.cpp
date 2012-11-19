@@ -1,6 +1,6 @@
 #include <openbus/ORBInitializer.h>
 #include <openbus/log.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <iostream>
 #include "stubs/hello.h"
 #include "stubs/encoding.h"
@@ -32,12 +32,12 @@ int main(int argc, char** argv) {
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
+    openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
     std::auto_ptr <openbus::Connection> conn
-      (manager->createConnection(bus.host.c_str(), bus.port));
+      (openbusContext->createConnection(bus.host.c_str(), bus.port));
 
-    manager->setDefaultConnection(conn.get());
+    openbusContext->setDefaultConnection(conn.get());
     conn->loginByPassword("interop_sharedauth_cpp_client"
                           , "interop_sharedauth_cpp_client");
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
       hello->sayHello();
     } else std::cout << "nenhuma oferta encontrada." << std::endl;
     std::cout << "orb.run()" << std::endl;
-    manager->orb()->run();
+    openbusContext->orb()->run();
   } catch(std::exception const& e) {
     std::cout << "[error (std::exception)] " << e.what() << std::endl;
   } catch (const CORBA::Exception &e) {

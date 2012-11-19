@@ -1,5 +1,5 @@
 #include <openbus/ORBInitializer.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/log.h>
 #include <openbus/util/OpenSSL.h>
 #include <scs/ComponentContext.h>
@@ -11,7 +11,7 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
-openbus::ConnectionManager *manager;
+openbus::OpenBusContext *openbusContext;
 std::auto_ptr<openbus::Connection> conn;
 scs::core::ComponentContext *ctx;
 openbus::idl_or::ServicePropertySeq props;
@@ -57,10 +57,10 @@ void onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l) {
 #ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
 public:
-  RunThread(openbus::ConnectionManager *m) : _manager(m) {}
-  void _run(void*) { _manager->orb()->run(); }
+  RunThread(openbus::OpenBusContext *m) : _openbusContext(m) {}
+  void _run(void*) { _openbusContext->orb()->run(); }
 private:
-  openbus::ConnectionManager *_manager;
+  openbus::OpenBusContext *_openbusContext;
 };
 #endif
 
@@ -97,14 +97,14 @@ int main(int argc, char** argv) {
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
     
-    manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    conn = manager->createConnection(host.c_str(), port);
-    manager->setDefaultConnection(conn.get());
+    openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+    conn = openbusContext->createConnection(host.c_str(), port);
+    openbusContext->setDefaultConnection(conn.get());
     conn->onInvalidLogin(&onInvalidLogin);
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread *runThread = new RunThread(manager);
+    RunThread *runThread = new RunThread(openbusContext);
     runThread->start();
     #endif
     
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "c++";
-    ctx = new scs::core::ComponentContext(manager->orb(), componentId);
+    ctx = new scs::core::ComponentContext(openbusContext->orb(), componentId);
 
     props.length(1);
     openbus::idl_or::ServiceProperty property;
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
     #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
     #else
-    manager->orb()->run();
+    openbusContext->orb()->run();
     #endif
   } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;

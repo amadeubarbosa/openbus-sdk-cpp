@@ -1,4 +1,4 @@
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
@@ -18,15 +18,15 @@ namespace services = tecgraf::openbus::core::v2_0::services;
 struct MessageImpl : POA_Message
 {
   MessageImpl(Message_var executive_message
-              , openbus::ConnectionManager& manager)
-    : executive_message(executive_message), manager(manager) {}
+              , openbus::OpenBusContext& openbusContext)
+    : executive_message(executive_message), openbusContext(openbusContext) {}
 
   void sendMessage(const char* message)
   {
     std::cout << "Relaying message " << message << std::endl;
     try
     {
-      openbus::Connection& c = *manager.getRequester();
+      openbus::Connection& c = *openbusContext.getRequester();
       c.joinChain(c.getCallerChain());
       executive_message->sendMessage(message);
       std::cout << "Execution succesful" << std::endl;
@@ -39,7 +39,7 @@ struct MessageImpl : POA_Message
   }
 
   Message_var executive_message;
-  openbus::ConnectionManager& manager;
+  openbus::OpenBusContext& openbusContext;
 };
 
 struct MeetingImpl : POA_Meeting
@@ -107,10 +107,10 @@ int main(int argc, char** argv)
 #endif
 
     // Construindo e logando conexao
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    assert(manager != 0);
-    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+    assert(openbusContext != 0);
+    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
     try
     {
       conn->loginByPassword("secretary", "secretary");
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    manager->setDefaultConnection(conn.get());
+    openbusContext->setDefaultConnection(conn.get());
 
     // Recebendo ofertas
     openbus::idl_or::ServicePropertySeq props;
@@ -141,8 +141,8 @@ int main(int argc, char** argv)
 
     scs::core::ComponentId message_componentId = { "Message", '1', '0', '0', "" };
     scs::core::ComponentContext message_component
-      (manager->orb(), message_componentId);
-    MessageImpl message_servant(message_executive, *manager);
+      (openbusContext->orb(), message_componentId);
+    MessageImpl message_servant(message_executive, *openbusContext);
     message_component.addFacet
       ("message", ::_tc_Message->id(), &message_servant);
     
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
 
     scs::core::ComponentId meeting_componentId = { "Meeting", '1', '0', '0', "" };
     scs::core::ComponentContext meeting_component
-      (manager->orb(), meeting_componentId);
+      (openbusContext->orb(), meeting_componentId);
     MeetingImpl meeting_servant;
     meeting_component.addFacet
       ("meeting", ::_tc_Meeting->id(), &meeting_servant);

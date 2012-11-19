@@ -20,9 +20,9 @@ namespace openbus {
    * Inicializa um ORB utilizado exclusivamente para chamadas através de barramentos OpenBus, ou
    * seja, esse ORB não pode ser utilizado para fazer chamadas CORBA ordinárias sem o controle de
    * acesso do OpenBus que permite identificação da origem das chamadas. Esse controle de acesso é
-   * feito através conexões que são obtidas e manipuladas através de um ConnectionManager. Cada ORB
-   * possui um ConnectionManager associado, que pode ser obitido através do comando:
-   * CORBA::ORB::resolve_initial_reference("OpenBusConnectionManager")
+   * feito através conexões que são obtidas e manipuladas através de um OpenBusContext. Cada ORB
+   * possui um OpenBusContext associado, que pode ser obitido através do comando:
+   * CORBA::ORB::resolve_initial_reference("OpenBusContext")
    *
    * O ORB é inicializado da mesma forma feita pela operação 'CORBA::ORB_init' definida pelo padrão
    * CORBA. Em particular, algumas implementações de CORBA não permitem inicialização de múltiplos

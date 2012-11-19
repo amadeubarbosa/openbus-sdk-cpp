@@ -34,11 +34,11 @@ Connection::Connection(
   PortableInterceptor::SlotId s2,
   PortableInterceptor::SlotId s3,
   PortableInterceptor::SlotId s4,
-  ConnectionManager *m, std::vector<std::string> props) 
+  OpenBusContext *m, std::vector<std::string> props) 
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
   _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _slotId_receiveConnection(s4), 
   _renewLogin(0), _loginInfo(0), 
-  _onInvalidLogin(0), _state(UNLOGGED), _manager(m), _busid(0), _legacyDelegate(CALLER)
+  _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m), _busid(0), _legacyDelegate(CALLER)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -160,7 +160,7 @@ void Connection::loginByPassword(const char *entity, const char *password) {
     m.lock();
   } else {
     _renewLogin = std::auto_ptr<RenewLogin> 
-      (new RenewLogin(this, _access_control, _manager, validityTime));
+      (new RenewLogin(this, _access_control, _openbusContext, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
@@ -168,7 +168,7 @@ void Connection::loginByPassword(const char *entity, const char *password) {
   #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
-    (new RenewLogin(_orb, this, _access_control, _manager, validityTime));
+    (new RenewLogin(_orb, this, _access_control, _openbusContext, validityTime));
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -232,7 +232,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
     m.lock();
   } else {
     _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, 
-                                                            _manager, validityTime));
+                                                            _openbusContext, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
@@ -240,7 +240,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
-    (new RenewLogin(_orb, this, _access_control, _manager, validityTime));
+    (new RenewLogin(_orb, this, _access_control, _openbusContext, validityTime));
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -251,12 +251,12 @@ std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> Connection::startSharedAuth(
   Connection *c = 0;
   idl_ac::LoginProcess_ptr loginProcess;
   try {
-    c = _manager->getRequester();
-    _manager->setRequester(this);
+    c = _openbusContext->getRequester();
+    _openbusContext->setRequester(this);
     loginProcess = _access_control->startLoginBySharedAuth(challenge);
-    _manager->setRequester(c);
+    _openbusContext->setRequester(c);
   } catch (...) {
-    _manager->setRequester(c);
+    _openbusContext->setRequester(c);
     throw;
   }
   CORBA::OctetSeq secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
@@ -311,7 +311,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
     m.lock();
   } else {
     _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, _access_control, 
-                                                            _manager, validityTime));
+                                                            _openbusContext, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
@@ -319,7 +319,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(_orb, this, _access_control, 
-                                                          _manager, validityTime));
+                                                          _openbusContext, validityTime));
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -338,14 +338,14 @@ bool Connection::_logout(bool local) {
     if (!local) {
       Connection *c = 0;
       try {
-        c = _manager->getRequester();
-        _manager->setRequester(this);
+        c = _openbusContext->getRequester();
+        _openbusContext->setRequester(this);
         _access_control->logout();
         sucess = true;
-        _manager->setRequester(c);
+        _openbusContext->setRequester(c);
       } catch (...) { 
         sucess = false; 
-        _manager->setRequester(c);
+        _openbusContext->setRequester(c);
       }
     }
     m.lock();

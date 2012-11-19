@@ -1,5 +1,5 @@
 
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include "stubs/hello.h"
 #include <scs/ComponentContext.h>
@@ -39,10 +39,10 @@ int main(int argc, char** argv)
   boost::thread orb_thread(boost::bind(&call_orb, orb));
 #endif
 
-  CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenbusConnectionManager");
-  openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>(obj_connection_manager);
-  std::auto_ptr <openbus::Connection> conn (manager->createConnection(cfg.host().c_str(), cfg.port()));
-  manager->setDefaultConnection(conn.get());
+  CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenBusContext");
+  openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
+  std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(cfg.host().c_str(), cfg.port()));
+  openbusContext->setDefaultConnection(conn.get());
   conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
 
   scs::core::ComponentId componentId;
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    scs::core::ComponentContext ctx(manager->orb(), componentId);
+    scs::core::ComponentContext ctx(openbusContext->orb(), componentId);
   
     hello_impl hello_servant (*conn);
 

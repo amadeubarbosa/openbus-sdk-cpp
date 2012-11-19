@@ -1,4 +1,4 @@
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 
 #include <iostream>
@@ -129,19 +129,19 @@ int main(int argc, char** argv)
   poa_manager->activate();
 
   // Construindo e logando conexao
-  openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-    (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-  assert(manager != 0);
+  openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+    (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+  assert(openbusContext != 0);
   std::auto_ptr <openbus::Connection> conn;
 
   do
   {
     try
     {
-      conn = manager->createConnection("localhost", 2089);
+      conn = openbusContext->createConnection("localhost", 2089);
       conn->onInvalidLogin( ::onReloginCallback());
       conn->loginByPassword("demo", "demo");
-      manager->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(conn.get());
       break;
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)

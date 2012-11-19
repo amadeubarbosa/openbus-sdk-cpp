@@ -4,7 +4,7 @@
 #include <CORBA.h>
 
 #include "openbus/Connection_impl.h"
-#include "openbus/ConnectionManager.h"
+#include "openbus/OpenBusContext.h"
 #include "openbus/Connection.h"
 #ifndef TECGRAF_LRUCACHE_H_
 #define TECGRAF_LRUCACHE_H_
@@ -28,7 +28,7 @@ namespace interceptors {
     void receive_other(PortableInterceptor::ClientRequestInfo *ri) { }
     char * name() { return CORBA::string_dup("ClientInterceptor"); }
     void destroy() { }
-    void connectionManager(ConnectionManager *m) { _manager = m; }
+    void openbusContext(OpenBusContext *m) { _openbusContext = m; }
     Connection & getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
     openbus::CallerChain * getJoinedChain(PortableInterceptor::ClientRequestInfo *r);
     static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
@@ -56,7 +56,7 @@ namespace interceptors {
     SessionLRUCache _sessionLRUCache;    
     
     CallChainLRUCache _callChainLRUCache;
-    ConnectionManager *_manager;
+    OpenBusContext *_openbusContext;
     Mutex _mutex;
   };
 

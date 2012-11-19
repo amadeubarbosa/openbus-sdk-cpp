@@ -1,4 +1,4 @@
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
@@ -17,12 +17,12 @@ namespace services = tecgraf::openbus::core::v2_0::services;
 
 struct MessageImpl : public POA_Message
 {
-  MessageImpl(openbus::ConnectionManager& manager)
-    : manager(manager) {}
+  MessageImpl(openbus::OpenBusContext& openbusContext)
+    : openbusContext(openbusContext) {}
 
   void sendMessage(const char* message)
   {
-    openbus::Connection* c = manager.getRequester();
+    openbus::Connection* c = openbusContext.getRequester();
     openbus::CallerChain chain = c->getCallerChain();
     if(chain != openbus::CallerChain()
        && !std::strcmp(chain.caller().entity, "secretary"))
@@ -39,7 +39,7 @@ struct MessageImpl : public POA_Message
     }
   }
 
-  openbus::ConnectionManager& manager;
+  openbus::OpenBusContext& openbusContext;
 };
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -66,10 +66,10 @@ int main(int argc, char** argv)
 #endif
 
     // Construindo e logando conexao
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    assert(manager != 0);
-    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+    assert(openbusContext != 0);
+    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
     try
     {
       conn->loginByPassword("executive", "executive");
@@ -80,12 +80,12 @@ int main(int argc, char** argv)
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    manager->setDefaultConnection(conn.get());
+    openbusContext->setDefaultConnection(conn.get());
 
     scs::core::ComponentId componentId = { "Message", '1', '0', '0', "" };
     scs::core::ComponentContext message_component
-      (manager->orb(), componentId);
-    MessageImpl message_servant(*manager);
+      (openbusContext->orb(), componentId);
+    MessageImpl message_servant(*openbusContext);
     message_component.addFacet
       ("message", ::_tc_Message->id(), &message_servant);
     

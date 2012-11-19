@@ -27,7 +27,7 @@ namespace openbus {
 }
 
 #include "openbus/util/Mutex_impl.h"
-#include "openbus/ConnectionManager.h"
+#include "openbus/OpenBusContext.h"
 #include "openbus/util/OpenSSL.h"
 #include "openbus/Connection.h"
 #ifndef TECGRAF_LRUCACHE_H_
@@ -61,7 +61,7 @@ namespace openbus {
 #ifdef OPENBUS_SDK_MULTITHREAD
   class RenewLogin : public MICOMT::Thread {
   public:
-    RenewLogin(Connection*, idl_ac::AccessControl_ptr, ConnectionManager*, idl_ac::ValidityTime);
+    RenewLogin(Connection*, idl_ac::AccessControl_ptr, OpenBusContext*, idl_ac::ValidityTime);
     ~RenewLogin();
     void _run(void *);
     void stop();
@@ -71,7 +71,7 @@ namespace openbus {
     Mutex _mutex;
     Connection *_conn;
     idl_ac::AccessControl_ptr _access_control;
-    ConnectionManager *_manager;
+    OpenBusContext *_openbusContext;
     idl_ac::ValidityTime _validityTime;
     bool _pause;
     bool _stop;
@@ -83,7 +83,7 @@ namespace openbus {
 
   class RenewLogin : public CORBA::DispatcherCallback {
   public:
-    RenewLogin(CORBA::ORB_ptr, Connection *, idl_ac::AccessControl_ptr, ConnectionManager *, 
+    RenewLogin(CORBA::ORB_ptr, Connection *, idl_ac::AccessControl_ptr, OpenBusContext *, 
                idl_ac::ValidityTime);
     ~RenewLogin();
     void callback(CORBA::Dispatcher*, Event);
@@ -91,7 +91,7 @@ namespace openbus {
     CORBA::ORB_ptr _orb;
     Connection *_conn;
     idl_ac::AccessControl_ptr _access_control;
-    ConnectionManager *_manager;
+    OpenBusContext *_openbusContext;
     idl_ac::ValidityTime _validityTime;
     idl_ac::ValidityTime renew(CORBA::Dispatcher*);
   };

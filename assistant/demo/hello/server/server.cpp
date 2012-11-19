@@ -9,7 +9,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 {
   void sayHello()
   {
-    std::cout << "Hello" << std::endl;
+    std::cout << "Hello!" << std::endl;
   }
 };
 

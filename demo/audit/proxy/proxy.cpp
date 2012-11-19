@@ -1,4 +1,4 @@
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
@@ -20,13 +20,13 @@ namespace access_control = tecgraf::openbus::core::v2_0::services::access_contro
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 {
   HelloImpl(simple::Hello_var hello
-            , openbus::ConnectionManager& manager)
-    : hello(hello), manager(manager) {}
+            , openbus::OpenBusContext& openbusContext)
+    : hello(hello), openbusContext(openbusContext) {}
 
   void sayHello()
   {
     std::cout << "Hello called on proxy" << std::endl;
-    openbus::Connection* c = manager.getRequester();
+    openbus::Connection* c = openbusContext.getRequester();
     openbus::CallerChain chain = c->getCallerChain();
     c->joinChain(chain);
     if(chain != openbus::CallerChain())
@@ -42,7 +42,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
   }
 
   simple::Hello_var hello;
-  openbus::ConnectionManager& manager;
+  openbus::OpenBusContext& openbusContext;
 };
 
 simple::Hello_ptr get_hello(offer_registry::ServiceOfferDescSeq_var offers)
@@ -102,10 +102,10 @@ int main(int argc, char** argv)
 #endif
 
     // Construindo e logando conexao
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    assert(manager != 0);
-    std::auto_ptr <openbus::Connection> conn (manager->createConnection("localhost", 2089));
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+    assert(openbusContext != 0);
+    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
     try
     {
       conn->loginByPassword("proxy", "proxy");
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    manager->setDefaultConnection(conn.get());
+    openbusContext->setDefaultConnection(conn.get());
 
     // Recebendo ofertas
     openbus::idl_or::ServicePropertySeq props;
@@ -137,8 +137,8 @@ int main(int argc, char** argv)
       componentId.patch_version = '0';
       componentId.platform_spec = "";
       scs::core::ComponentContext hello_component
-        (manager->orb(), componentId);
-      HelloImpl hello_servant(hello, *manager);
+        (openbusContext->orb(), componentId);
+      HelloImpl hello_servant(hello, *openbusContext);
       hello_component.addFacet
         ("hello", simple::_tc_Hello->id(), &hello_servant);
     

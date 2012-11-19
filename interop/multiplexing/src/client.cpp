@@ -1,6 +1,6 @@
 #include <openbus/ORBInitializer.h>
 #include <openbus/log.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <iostream>
 #include "stubs/hello.h"
 
@@ -36,15 +36,15 @@ int main(int argc, char** argv) {
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
+    openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
     
     for (std::size_t bus_index = 0; bus_index != 2; ++bus_index)
     {
       std::auto_ptr <openbus::Connection> 
-        conn (manager->createConnection(properties_file.buses[bus_index].host.c_str()
+        conn (openbusContext->createConnection(properties_file.buses[bus_index].host.c_str()
                                         , properties_file.buses[bus_index].port));
-      manager->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(conn.get());
       conn->loginByPassword(entity.c_str(), entity.c_str());
       openbus::idl_or::ServicePropertySeq props;
       props.length(2);

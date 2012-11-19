@@ -22,9 +22,9 @@ struct MessageImpl : public POA_Message
 
   void sendMessage(const char* message)
   {
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-    openbus::Connection* c = manager->getRequester();
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+    openbus::Connection* c = openbusContext->getRequester();
     openbus::CallerChain chain = c->getCallerChain();
     if(chain != openbus::CallerChain()
        && !std::strcmp(chain.caller().entity, "secretary"))

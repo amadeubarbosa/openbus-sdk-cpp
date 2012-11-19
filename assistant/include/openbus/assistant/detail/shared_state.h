@@ -7,7 +7,7 @@
 #include <log/output/streambuf_output.h>
 
 #include <scs/IComponent.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 
 #ifdef ASSISTANT_SDK_MULTITHREAD

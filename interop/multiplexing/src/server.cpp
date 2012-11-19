@@ -1,6 +1,6 @@
 #include <openbus/ORBInitializer.h>
 #include <openbus/log.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
 #include <sstream>
@@ -36,22 +36,22 @@ private:
 #ifdef OPENBUS_SDK_MULTITHREAD
 class RunThread : public MICOMT::Thread {
 public:
-  RunThread(openbus::ConnectionManager *m) : _manager(m) {}
-  void _run(void*) { _manager->orb()->run(); }
+  RunThread(openbus::OpenBusContext *m) : _openbusContext(m) {}
+  void _run(void*) { _openbusContext->orb()->run(); }
 private:
-  openbus::ConnectionManager *_manager;
+  openbus::OpenBusContext *_openbusContext;
 };
 
 class RegisterThread : public MICOMT::Thread {
 public:
-  RegisterThread(openbus::ConnectionManager *m, scs::core::ComponentContext &ctx, 
-    openbus::Connection *c) : _manager(m), _conn(c), _ctx(ctx) {}
+  RegisterThread(openbus::OpenBusContext *m, scs::core::ComponentContext &ctx, 
+    openbus::Connection *c) : _openbusContext(m), _conn(c), _ctx(ctx) {}
   void _run(void*) {
 #else
 class Register {
 public:
-  Register(openbus::ConnectionManager *m, scs::core::ComponentContext &ctx,
-           openbus::Connection *c) : _manager(m), _conn(c), _ctx(ctx) 
+  Register(openbus::OpenBusContext *m, scs::core::ComponentContext &ctx,
+           openbus::Connection *c) : _openbusContext(m), _conn(c), _ctx(ctx) 
   {
 #endif
     try {
@@ -61,7 +61,7 @@ public:
       property.name = "offer.domain";
       property.value = "Interoperability Tests";
       props[0] = property;
-      _manager->setRequester(_conn);
+      _openbusContext->setRequester(_conn);
       _conn->offers()->registerService(_ctx.getIComponent(), props);
     } catch (const CORBA::Exception &e) {
       #ifdef OPENBUS_SDK_MULTITHREAD
@@ -72,7 +72,7 @@ public:
     }
   }
 private:
-  openbus::ConnectionManager *_manager;
+  openbus::OpenBusContext *_openbusContext;
   openbus::Connection *_conn;
   scs::core::ComponentContext &_ctx;
 };
@@ -101,16 +101,16 @@ int main(int argc, char** argv) {
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
+    openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
     std::auto_ptr <openbus::Connection> connBusB
-      (manager->createConnection(buses[0].host.c_str(), buses[0].port));
+      (openbusContext->createConnection(buses[0].host.c_str(), buses[0].port));
     std::auto_ptr <openbus::Connection> conn1BusA
-      (manager->createConnection(buses[1].host.c_str(), buses[1].port));
+      (openbusContext->createConnection(buses[1].host.c_str(), buses[1].port));
     std::auto_ptr <openbus::Connection> conn2BusA
-      (manager->createConnection(buses[1].host.c_str(), buses[1].port));
+      (openbusContext->createConnection(buses[1].host.c_str(), buses[1].port));
     std::auto_ptr <openbus::Connection> conn3BusA
-      (manager->createConnection(buses[1].host.c_str(), buses[1].port));
+      (openbusContext->createConnection(buses[1].host.c_str(), buses[1].port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
     connVec.push_back(connBusB.get());
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread *runThread = new RunThread(manager);
+    RunThread *runThread = new RunThread(openbusContext);
     runThread->start();
     #endif
     
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext ctx(manager->orb(), componentId);
+    scs::core::ComponentContext ctx(openbusContext->orb(), componentId);
     
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(connVec));
     ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
@@ -138,25 +138,25 @@ int main(int argc, char** argv) {
     conn3BusA->loginByPassword(entity.c_str(), entity.c_str());
     connBusB->loginByPassword(entity.c_str(), entity.c_str());
     
-    manager->setDispatcher(*conn1BusA.get());
-    manager->setDispatcher(*connBusB.get());
+    openbusContext->setDispatcher(*conn1BusA.get());
+    openbusContext->setDispatcher(*connBusB.get());
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RegisterThread *registerThread1 = new RegisterThread(manager, ctx, conn1BusA.get());
-    RegisterThread *registerThread2 = new RegisterThread(manager, ctx, conn2BusA.get());
-    RegisterThread *registerThread3 = new RegisterThread(manager, ctx, conn3BusA.get());
-    RegisterThread *registerThread4 = new RegisterThread(manager, ctx, connBusB.get());
+    RegisterThread *registerThread1 = new RegisterThread(openbusContext, ctx, conn1BusA.get());
+    RegisterThread *registerThread2 = new RegisterThread(openbusContext, ctx, conn2BusA.get());
+    RegisterThread *registerThread3 = new RegisterThread(openbusContext, ctx, conn3BusA.get());
+    RegisterThread *registerThread4 = new RegisterThread(openbusContext, ctx, connBusB.get());
     registerThread1->start();
     registerThread2->start();
     registerThread3->start();
     registerThread4->start();
     runThread->wait();
     #else
-    Register(manager, ctx, conn1BusA.get());
-    Register(manager, ctx, conn2BusA.get());
-    Register(manager, ctx, conn3BusA.get());
-    Register(manager, ctx, connBusB.get());
-    manager->orb()->run();
+    Register(openbusContext, ctx, conn1BusA.get());
+    Register(openbusContext, ctx, conn2BusA.get());
+    Register(openbusContext, ctx, conn3BusA.get());
+    Register(openbusContext, ctx, connBusB.get());
+    openbusContext->orb()->run();
     #endif
   } catch(std::exception const& e) {
     std::cout << "[error (std::exception)] " << e.what() << std::endl;

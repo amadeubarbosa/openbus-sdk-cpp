@@ -8,7 +8,7 @@
 #endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
 #include <scs/IComponent.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include <CORBA.h>
 

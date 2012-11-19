@@ -62,11 +62,11 @@ std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::stri
 {
   logger::log_scope l(logging, logger::info_level, "Criando conexão");
   assistant_detail::exception_logging ex_l(l, "Failed creating connection");
-  openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-    (orb->resolve_initial_references("OpenbusConnectionManager"));
-  assert(manager != 0);
+  openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+    (orb->resolve_initial_references("OpenBusContext"));
+  assert(openbusContext != 0);
 
-  std::auto_ptr<openbus::Connection> c = manager->createConnection(host.c_str(), port);
+  std::auto_ptr<openbus::Connection> c = openbusContext->createConnection(host.c_str(), port);
   l.log("Connection created");
   boost::weak_ptr<assistant_detail::shared_state> weak_state = state;
   c->onInvalidLogin(boost::bind(invalid_login_callback(), _1, _2, weak_state));

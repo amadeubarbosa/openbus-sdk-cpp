@@ -1,4 +1,4 @@
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <openbus/ORBInitializer.h>
 #include <scs/ComponentContext.h>
 #include <iostream>
@@ -90,18 +90,18 @@ int main(int argc, char** argv)
 #endif
 
   // Construindo e logando conexao
-  openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-    (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
-  assert(manager != 0);
+  openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+    (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+  assert(openbusContext != 0);
   std::auto_ptr <openbus::Connection> conn;
   do
   {
     try
     {
-      conn = manager->createConnection("localhost", 2089);
+      conn = openbusContext->createConnection("localhost", 2089);
       conn->onInvalidLogin( ::onReloginCallback());
       conn->loginByPassword("demo", "demo");
-      manager->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(conn.get());
       break;
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
   componentId.patch_version = '0';
   componentId.platform_spec = "";
   scs::core::ComponentContext hello_component
-    (manager->orb(), componentId);
+    (openbusContext->orb(), componentId);
   HelloImpl hello_servant;
   hello_component.addFacet
     ("hello", simple::_tc_Hello->id(), &hello_servant);

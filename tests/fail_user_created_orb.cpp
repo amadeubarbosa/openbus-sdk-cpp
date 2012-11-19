@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 
   try
   {
-    orb->resolve_initial_references("OpenbusConnectionManager");
+    orb->resolve_initial_references("OpenBusContext");
     std::abort();
   }
   catch(CORBA::ORB::InvalidName const&)

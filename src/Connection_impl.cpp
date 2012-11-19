@@ -54,9 +54,9 @@ Login *LoginCache::validateLogin(char *id) {
 }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-RenewLogin::RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, ConnectionManager *m, 
+RenewLogin::RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, OpenBusContext *m, 
                        idl_ac::ValidityTime t)
-  : _conn(c), _access_control(a), _manager(m), _validityTime(t), _pause(false), _stop(false), 
+  : _conn(c), _access_control(a), _openbusContext(m), _validityTime(t), _pause(false), _stop(false), 
     _condVar(_mutex.mutex())
 {
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
@@ -81,7 +81,7 @@ idl_ac::ValidityTime RenewLogin::renew() {
 
 void RenewLogin::_run(void*) {
   log_scope l(log.general_logger(), debug_level, "RenewLogin::_run");
-  _manager->setRequester(_conn);
+  _openbusContext->setRequester(_conn);
   _mutex.lock();
   do {
     while (!_pause && _condVar.timedwait(_validityTime*1000)) {
@@ -124,8 +124,8 @@ void RenewLogin::run() {
 #else
 
 RenewLogin::RenewLogin(CORBA::ORB_ptr o, Connection *c, idl_ac::AccessControl_ptr a, 
-                       ConnectionManager *m, idl_ac::ValidityTime t)
-  : _orb(o), _conn(c), _access_control(a), _manager(m), _validityTime(t) 
+                       OpenBusContext *m, idl_ac::ValidityTime t)
+  : _orb(o), _conn(c), _access_control(a), _openbusContext(m), _validityTime(t) 
 { 
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
   _orb->dispatcher()->tm_event(this, _validityTime*1000);
@@ -146,13 +146,13 @@ idl_ac::ValidityTime RenewLogin::renew(CORBA::Dispatcher *dispatcher) {
   idl_ac::ValidityTime validityTime = _validityTime;
   Connection *c = 0;
   try {
-    c = _manager->getRequester();
-    _manager->setRequester(_conn);
+    c = _openbusContext->getRequester();
+    _openbusContext->setRequester(_conn);
     validityTime = _access_control->renew();
-    _manager->setRequester(c);
+    _openbusContext->setRequester(c);
   } catch (CORBA::Exception &) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
-    _manager->setRequester(c);
+    _openbusContext->setRequester(c);
   }
   return validityTime;
 }

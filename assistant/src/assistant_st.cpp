@@ -174,10 +174,10 @@ void wait_login(boost::shared_ptr<assistant_detail::shared_state> state
      , state->logging, state, state->login_error, timeout);
   {
     log.log("Registering connection as default");
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (state->orb->resolve_initial_references("OpenbusConnectionManager"));
-    assert(manager != 0);
-    manager->setDefaultConnection(connection.get());
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (state->orb->resolve_initial_references("OpenBusContext"));
+    assert(openbusContext != 0);
+    openbusContext->setDefaultConnection(connection.get());
   }
   state->connection = connection;
   state->connection_ready = true;
@@ -208,10 +208,10 @@ void try_wait_login(boost::shared_ptr<assistant_detail::shared_state> state)
   login_simple(*connection, state->auth_info, state->logging);
   {
     log.log("Registering connection as default");
-    openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-      (state->orb->resolve_initial_references("OpenbusConnectionManager"));
-    assert(manager != 0);
-    manager->setDefaultConnection(connection.get());
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (state->orb->resolve_initial_references("OpenBusContext"));
+    assert(openbusContext != 0);
+    openbusContext->setDefaultConnection(connection.get());
   }
   state->connection = connection;
   state->connection_ready = true;

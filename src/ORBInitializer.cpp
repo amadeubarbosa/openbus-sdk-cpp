@@ -3,7 +3,7 @@
 #include "openbus/ORBInitializer.h"
 #include "openbus/log.h"
 #include "openbus/util/AutoLock_impl.h"
-#include "openbus/ConnectionManager.h"
+#include "openbus/OpenBusContext.h"
 #include "openbus/interceptors/ORBInitializer_impl.h"
 #include "openbus/interceptors/ClientInterceptor_impl.h"
 #include "openbus/interceptors/ServerInterceptor_impl.h"
@@ -32,10 +32,10 @@ CORBA::ORB *ORBInitializer(int argc, char **argv) {
   */
   CORBA::ORB *orb = CORBA::ORB_init(argc, argv);
   try {
-    orb->resolve_initial_references(CONNECTION_MANAGER_ID);
+    orb->resolve_initial_references(OPENBUS_CONTEXT_ID);
     l.log("Este ORB ja foi criado.");
   } catch(CORBA::ORB_InvalidName &) {
-    ConnectionManager *manager = new ConnectionManager(
+    OpenBusContext *openbusContext = new OpenBusContext(
       orb, 
       orbInitializer->codec(), 
       orbInitializer->slotId_joinedCallChain(), 
@@ -43,10 +43,10 @@ CORBA::ORB *ORBInitializer(int argc, char **argv) {
       orbInitializer->slotId_legacyCallChain(), 
       orbInitializer->slotId_requesterConnection(),
       orbInitializer->slotId_receiveConnection());
-    l.level_log(debug_level, "Registrando ConnectionManager");
-    orb->register_initial_reference(CONNECTION_MANAGER_ID, manager);
-    orbInitializer->clientInterceptor()->connectionManager(manager);
-    orbInitializer->serverInterceptor()->connectionManager(manager);
+    l.level_log(debug_level, "Registrando OpenBusContext");
+    orb->register_initial_reference(OPENBUS_CONTEXT_ID, openbusContext);
+    orbInitializer->clientInterceptor()->openbusContext(openbusContext);
+    orbInitializer->serverInterceptor()->openbusContext(openbusContext);
   }
   l.log("Retornando ORB");
   return orb;

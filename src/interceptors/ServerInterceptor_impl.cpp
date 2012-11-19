@@ -29,7 +29,7 @@ ServerInterceptor::ServerInterceptor(
   : _piCurrent(piCurrent), _slotId_requesterConnection(slotId_requesterConnection),
     _slotId_receiveConnection(slotId_receiveConnection),
     _slotId_joinedCallChain(slotId_joinedCallChain),_slotId_signedCallChain(slotId_signedCallChain),
-    _slotId_legacyCallChain(slotId_legacyCallChain), _cdrCodec(cdr_codec), _manager(0),
+    _slotId_legacyCallChain(slotId_legacyCallChain), _cdrCodec(cdr_codec), _openbusContext(0),
     _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE))
 {
   log_scope l(log.general_logger(), debug_level,"ServerInterceptor::ServerInterceptor");
@@ -90,11 +90,11 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
   }
   idl_cr::CredentialData credential;
   if (hasContext && (any >>= credential)) {
-    Connection *conn = _manager->getDispatcher(credential.bus);
-    if (!conn) conn = _manager->getDefaultConnection();
+    Connection *conn = _openbusContext->getDispatcher(credential.bus);
+    if (!conn) conn = _openbusContext->getDefaultConnection();
     if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
 
-    /* disponibilizando a conexão atual para ConnectionManager::getRequester() */
+    /* disponibilizando a conexão atual para OpenBusContext::getRequester() */
     size_t bufSize = sizeof(Connection*);
     unsigned char buf[bufSize];
     memcpy(buf, &conn, bufSize);
@@ -109,7 +109,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
 
     /* definindo a conexão atual como a conexão a ser utilizada pelas chamadas remotas a serem 
     ** realizadas por este ponto de interceptação */
-    _manager->setRequester(conn);
+    _openbusContext->setRequester(conn);
 
     AutoLock conn_mutex(&conn->_mutex);
     if (!conn->_login())

@@ -33,7 +33,7 @@ namespace openbus {
 #include "openbus/interceptors/ServerInterceptor_impl.h"
 #include "openbus/Connection_impl.h"
 #include "openbus/util/OpenSSL.h"
-#include "openbus/ConnectionManager.h"
+#include "openbus/OpenBusContext.h"
 
 inline bool operator==(openbus::idl_ac::LoginInfo const &lhs, openbus::idl_ac::LoginInfo const &rhs)
 {
@@ -166,7 +166,7 @@ inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs) { return 
  * É importante notar que a conexão define uma forma de acesso, mas não é usada diretamente pela
  * aplicação ao realizar ou receber chamadas, pois as chamadas ocorrem usando proxies e servants de
  * um ORB. As conexções que são efetivamente usadas nas chamadas do ORB são definidas através do
- * ConnectionManager associado ao ORB.
+ * OpenBusContext associado ao ORB.
  */
 class Connection {
 public:
@@ -395,14 +395,14 @@ public:
   ~Connection();
 private:
   /**
-  * Connection deve ser adquirido através de: ConnectionManager::createConnection()
+  * Connection deve ser adquirido através de: OpenBusContext::createConnection()
   */
   Connection(const std::string host, const unsigned short port, CORBA::ORB*, IOP::Codec*, 
     PortableInterceptor::SlotId slotId_joinedCallChain, 
     PortableInterceptor::SlotId slotId_signedCallChain, 
     PortableInterceptor::SlotId slotId_legacyCallChain, 
     PortableInterceptor::SlotId slotId_receiveConnection, 
-    ConnectionManager*, std::vector<std::string> props);
+    OpenBusContext*, std::vector<std::string> props);
   openssl::pkey fetchBusKey();
   void checkBusid() const;
   bool _logout(bool local);
@@ -437,7 +437,7 @@ private:
   } _state;
   
   /* Variáveis que são modificadas somente no construtor. */
-  ConnectionManager *_manager;
+  OpenBusContext *_openbusContext;
   openssl::pkey _key;
   PortableInterceptor::Current_var _piCurrent;
   scs::core::IComponent_var _iComponent;
@@ -452,7 +452,7 @@ private:
   
   friend class openbus::interceptors::ServerInterceptor;
   friend class openbus::interceptors::ClientInterceptor;
-  friend class openbus::ConnectionManager;
+  friend class openbus::OpenBusContext;
 };
 
 }

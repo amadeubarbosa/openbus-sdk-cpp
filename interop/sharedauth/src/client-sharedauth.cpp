@@ -1,6 +1,6 @@
 #include <openbus/ORBInitializer.h>
 #include <openbus/log.h>
-#include <openbus/ConnectionManager.h>
+#include <openbus/OpenBusContext.h>
 #include <iostream>
 #include "stubs/hello.h"
 #include "stubs/encoding.h"
@@ -32,10 +32,10 @@ int main(int argc, char** argv) {
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    openbus::ConnectionManager *manager = dynamic_cast<openbus::ConnectionManager*>
-      (orb->resolve_initial_references(CONNECTION_MANAGER_ID));
+    openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
     std::auto_ptr <openbus::Connection> conn
-      (manager->createConnection(bus.host.c_str(), bus.port));
+      (openbusContext->createConnection(bus.host.c_str(), bus.port));
 
     {
       CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         std::cout << "Falhou unmarshaling os dados no arquivo de log" << std::endl;
         return 1;
       }
-      manager->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(conn.get());
     }
 
     openbus::idl_or::ServicePropertySeq props;

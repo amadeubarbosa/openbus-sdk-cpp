@@ -31,9 +31,9 @@ Connection & ClientInterceptor::getCurrentConnection(PortableInterceptor::Client
     assert(connectionAddrOctetSeq.length() == sizeof(conn));
     std::memcpy(&conn, connectionAddrOctetSeq.get_buffer(), sizeof(conn));
   }
-  assert(_manager);
+  assert(_openbusContext);
   if(!conn)
-    if (!(conn = _manager->getDefaultConnection())) {
+    if (!(conn = _openbusContext->getDefaultConnection())) {
       l.log("throw NoLoginCode");
       throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
     }
@@ -65,7 +65,7 @@ ClientInterceptor::ClientInterceptor(
     _slotId_joinedCallChain(slotId_joinedCallChain),
     _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE)),
     _callChainLRUCache(CallChainLRUCache(LOGINCACHE_LRU_SIZE)),
-    _manager(0)
+    _openbusContext(0)
 { 
   log_scope l(log.general_logger(), info_level, "ClientInterceptor::ClientInterceptor");
   _slotId_ignoreInterceptor = slotId_ignoreInterceptor;

@@ -76,10 +76,10 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
          , login_error_callback, boost::none);
       {
         work_thread_log.level_log(logger::debug_level, "Registering connection as default");
-        openbus::ConnectionManager* manager = dynamic_cast<openbus::ConnectionManager*>
-          (state->orb->resolve_initial_references("OpenbusConnectionManager"));
-        assert(manager != 0);
-        manager->setDefaultConnection(connection.get());
+        openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+          (state->orb->resolve_initial_references("OpenBusContext"));
+        assert(openbusContext != 0);
+        openbusContext->setDefaultConnection(connection.get());
       }
       assert(!!connection.get());
       boost::unique_lock<boost::mutex> lock(state->mutex);
