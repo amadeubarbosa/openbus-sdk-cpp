@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1 -*-
 /**
 * API - SDK Openbus C++
-* \file openbus/ConnectionManager.h
+* \file openbus/OpenBusContext.h
 */
 
 #ifndef _TECGRAF_MANAGER_H_
@@ -12,13 +12,13 @@
 #include <vector>
 
 namespace openbus {
-  class ConnectionManager;
+  class OpenBusContext;
 }
 
 #include "openbus/interceptors/ORBInitializer_impl.h"
 #include "openbus/Connection.h"
 
-#define CONNECTION_MANAGER_ID "OpenbusConnectionManager"
+#define OPENBUS_CONTEXT_ID "OpenBusContext"
 
 /**
 * \brief openbus
@@ -27,13 +27,13 @@ namespace openbus {
   /**
    * \brief Gerencia conexões de acesso a barramentos OpenBus através de um ORB.
    *
-   * Conexões representam formas diferentes de acesso ao barramento. O ConnectionManager permite
+   * Conexões representam formas diferentes de acesso ao barramento. O OpenBusContext permite
    * criar essas conexões e gerenciá-las, indicando quais são utilizadas em cada chamada. As
    * conexões são usadas basicamente de duas formas no tratamento das chamadas: 
    * - para realizar uma chamada remota (cliente), neste caso a conexão é denominada "Requester".
    * - para validar uma chamada recebida (servidor), neste caso a conexão é denominada "Dispatcher".
    */
-  class ConnectionManager : public CORBA::LocalObject {
+  class OpenBusContext : public CORBA::LocalObject {
   public:
     /**
      * \brief Cria uma conexão para um barramento.
@@ -83,7 +83,7 @@ namespace openbus {
      * como é feito através das operações 'setRequester' e 'setDispatcher'.
      * 
      * @param[in] conn Conexão a ser definida como conexão padrão. O 'ownership' da conexão não é
-     * transferida para o ConnectionManager, e a conexão deve ser removida do ConnectionManager
+     * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
      * antes de destruida
      */
     void setDefaultConnection(Connection *conn) { _defaultConnection = conn; }
@@ -93,7 +93,7 @@ namespace openbus {
      * 
      * Veja operação 'setDefaultConnection'.
      * 
-     * \return Conexão definida como conexão padrão. ConnectionManager não possui ownership dessa
+     * \return Conexão definida como conexão padrão. OpenBusContext não possui ownership dessa
      * conexão e o mesmo não é transferido para o código de usuário na execução desta função
      */
     Connection * getDefaultConnection() const { return _defaultConnection; }
@@ -105,7 +105,7 @@ namespace openbus {
      * atual. Quando 'conn' é 'null' o contexto passa a ficar sem nenhuma conexão associada.
      * 
      * @param[in] conn Conexão a ser associada ao contexto corrente. O 'ownership' da conexão não é
-     * transferida para o ConnectionManager, e a conexão deve ser removida do ConnectionManager
+     * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
      * antes de destruida
      */
     void setRequester(Connection *conn);
@@ -115,7 +115,7 @@ namespace openbus {
      * 
      * @throw CORBA::Exception
      *
-     * @return Conexão a barramento associada a thread corrente. ConnectionManager não possui
+     * @return Conexão a barramento associada a thread corrente. OpenBusContext não possui
      * ownership dessa conexão e o mesmo não é transferido para o código de usuário na execução
      * desta função
      */
@@ -131,7 +131,7 @@ namespace openbus {
      * conexão.
      * 
      * @param[in] conn Conexão a ser definida como "Dispatcher". O 'ownership' da conexão não é
-     * transferida para o ConnectionManager, e a conexão deve ser removida do ConnectionManager
+     * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
      * antes de destruida
      */
     void setDispatcher(Connection &conn);
@@ -140,11 +140,11 @@ namespace openbus {
      * \brief Devolve a conexão "Dispatcher" do barramento indicado.
      * 
      * @param[in] busid Identificador do barramento ao qual a conexão está
-     * associada. ConnectionManager não possui ownership dessa conexão e o mesmo não é transferido
+     * associada. OpenBusContext não possui ownership dessa conexão e o mesmo não é transferido
      * para o código de usuário na execução desta função
      * 
      * @return Conexão "Dispatcher" do barramento indicado, ou 'null' caso não haja nenhuma conexão
-     *         "Dispatcher" associada ao barramento indicado. ConnectionManager não possui ownership
+     *         "Dispatcher" associada ao barramento indicado. OpenBusContext não possui ownership
      *         dessa conexão e o mesmo não é transferido para o código de usuário na execução desta
      *         função
      */
@@ -156,14 +156,14 @@ namespace openbus {
      * \param busid Identificador do barramento ao qual a conexão está associada.
      * 
      * \return Conexão "Dispatcher" associada ao barramento ou 'null' se não houver nenhuma conexão
-     *         associada. ConnectionManager não possui ownership dessa conexão e o mesmo não é
+     *         associada. OpenBusContext não possui ownership dessa conexão e o mesmo não é
      *         transferido para o código de usuário na execução desta função
      */
     
     /**
      * \brief Devolve a conexão "Dispatcher" do barramento indicado.
      * 
-     * \param busid Identificador do barramento ao qual a conexão está associada. ConnectionManager
+     * \param busid Identificador do barramento ao qual a conexão está associada. OpenBusContext
      * não possui ownership dessa conexão e o mesmo não é transferido para o código de usuário na
      * execução desta função
      * 
@@ -178,16 +178,16 @@ namespace openbus {
     CORBA::ORB * orb() const { return _orb; }
   private:
     /**
-    * ConnectionManager deve ser adquirido através de:
-    *   orb->resolve_initial_references(CONNECTION_MANAGER_ID)
+    * OpenBusContext deve ser adquirido através de:
+    *   orb->resolve_initial_references(OPENBUS_CONTEXT_ID)
     */
-    ConnectionManager(CORBA::ORB *, IOP::Codec *, 
+    OpenBusContext(CORBA::ORB *, IOP::Codec *, 
       PortableInterceptor::SlotId slotId_joinedCallChain, 
       PortableInterceptor::SlotId slotId_signedCallChain, 
       PortableInterceptor::SlotId slotId_legacyCallChain,
       PortableInterceptor::SlotId slotId_requesterConnection,
       PortableInterceptor::SlotId slotId_receiveConnection);
-    ~ConnectionManager();
+    ~OpenBusContext();
     void orb(CORBA::ORB *o) { _orb = o; }
     typedef std::map<std::string, Connection*> BusidConnection;
     Mutex _mutex;

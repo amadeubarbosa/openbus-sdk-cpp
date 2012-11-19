@@ -1,9 +1,9 @@
-#include "openbus/ConnectionManager.h"
+#include "openbus/OpenBusContext.h"
 #include "openbus/log.h"
 #include "openbus/util/AutoLock_impl.h"
 
 namespace openbus {
-ConnectionManager::ConnectionManager(CORBA::ORB *o, IOP::Codec *c, 
+OpenBusContext::OpenBusContext(CORBA::ORB *o, IOP::Codec *c, 
                                      PortableInterceptor::SlotId s1, 
                                      PortableInterceptor::SlotId s2, 
                                      PortableInterceptor::SlotId s3,
@@ -13,18 +13,18 @@ ConnectionManager::ConnectionManager(CORBA::ORB *o, IOP::Codec *c,
     _slotId_legacyCallChain(s3), _slotId_requesterConnection(s4), _slotId_receiveConnection(s5),
     _defaultConnection(0)
 {
-  log_scope l(log.general_logger(), debug_level, "ConnectionManager::ConnectionManager");
+  log_scope l(log.general_logger(), debug_level, "OpenBusContext::OpenBusContext");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent));
 }
 
-ConnectionManager::~ConnectionManager() { }
+OpenBusContext::~OpenBusContext() { }
 
-std::auto_ptr<Connection> ConnectionManager::createConnection(const char *host, short port, 
+std::auto_ptr<Connection> OpenBusContext::createConnection(const char *host, short port, 
                                                               std::vector<std::string> props)
 {
-  log_scope l(log.general_logger(), debug_level, "ConnectionManager::createConnection");
+  log_scope l(log.general_logger(), debug_level, "OpenBusContext::createConnection");
   l.vlog("createConnection para host %s:%hi", host, port);
   std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, _slotId_joinedCallChain, 
     _slotId_signedCallChain, _slotId_legacyCallChain, _slotId_receiveConnection, this, props));
@@ -32,8 +32,8 @@ std::auto_ptr<Connection> ConnectionManager::createConnection(const char *host, 
   return conn;
 }
 
-void ConnectionManager::setRequester(Connection *c) {
-  log_scope l(log.general_logger(), info_level, "ConnectionManager::setRequester");
+void OpenBusContext::setRequester(Connection *c) {
+  log_scope l(log.general_logger(), info_level, "OpenBusContext::setRequester");
   l.vlog("connection:%p", c);
   size_t size = sizeof(Connection *);
   unsigned char buf[size];
@@ -44,8 +44,8 @@ void ConnectionManager::setRequester(Connection *c) {
   _piCurrent->set_slot(_slotId_requesterConnection, connectionAddrAny);
 }
 
-Connection * ConnectionManager::getRequester() const { 
-  log_scope l(log.general_logger(), info_level, "ConnectionManager::getRequester");
+Connection * OpenBusContext::getRequester() const { 
+  log_scope l(log.general_logger(), info_level, "OpenBusContext::getRequester");
   CORBA::Any_var connectionAddrAny=_piCurrent->get_slot(_slotId_requesterConnection);
   idl::OctetSeq connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) {
@@ -56,14 +56,14 @@ Connection * ConnectionManager::getRequester() const {
   } else return 0;
 }
 
-void ConnectionManager::setDispatcher(Connection &c) {
-  log_scope l(log.general_logger(), info_level, "ConnectionManager::setDispatcher");
+void OpenBusContext::setDispatcher(Connection &c) {
+  log_scope l(log.general_logger(), info_level, "OpenBusContext::setDispatcher");
   AutoLock m(&_mutex);
   if (c._busid) _busidConnection[std::string(c._busid)] = &c;
 }
 
-Connection * ConnectionManager::getDispatcher(const char *busid) {
-  log_scope l(log.general_logger(), info_level, "ConnectionManager::getDispatcher");
+Connection * OpenBusContext::getDispatcher(const char *busid) {
+  log_scope l(log.general_logger(), info_level, "OpenBusContext::getDispatcher");
   l.vlog("getDispatcher do barramento %s", busid);
   if (!busid) return 0;
   AutoLock m(&_mutex);
@@ -72,8 +72,8 @@ Connection * ConnectionManager::getDispatcher(const char *busid) {
   else return 0;
 }
 
-Connection * ConnectionManager::clearDispatcher(const char *busid) {
-  log_scope l(log.general_logger(), info_level, "ConnectionManager::clearDispatcher");
+Connection * OpenBusContext::clearDispatcher(const char *busid) {
+  log_scope l(log.general_logger(), info_level, "OpenBusContext::clearDispatcher");
   l.vlog("clearDispatcher para a conexão [busid:%s]", busid);
   if (!busid) return 0;
   AutoLock m(&_mutex);
