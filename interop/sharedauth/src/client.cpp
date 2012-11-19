@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     poa_manager->activate();
 
     openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+      (orb->resolve_initial_references("OpenBusContext"));
     std::auto_ptr <openbus::Connection> conn
       (openbusContext->createConnection(bus.host.c_str(), bus.port));
 

@@ -23,7 +23,7 @@ struct MessageImpl : public POA_Message
   void sendMessage(const char* message)
   {
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+      (orb->resolve_initial_references("OpenBusContext"));
     openbus::Connection* c = openbusContext->getRequester();
     openbus::CallerChain chain = c->getCallerChain();
     if(chain != openbus::CallerChain()

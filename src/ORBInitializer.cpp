@@ -32,7 +32,7 @@ CORBA::ORB *ORBInitializer(int argc, char **argv) {
   */
   CORBA::ORB *orb = CORBA::ORB_init(argc, argv);
   try {
-    orb->resolve_initial_references(OPENBUS_CONTEXT_ID);
+    orb->resolve_initial_references("OpenBusContext");
     l.log("Este ORB ja foi criado.");
   } catch(CORBA::ORB_InvalidName &) {
     OpenBusContext *openbusContext = new OpenBusContext(
@@ -44,7 +44,7 @@ CORBA::ORB *ORBInitializer(int argc, char **argv) {
       orbInitializer->slotId_requesterConnection(),
       orbInitializer->slotId_receiveConnection());
     l.level_log(debug_level, "Registrando OpenBusContext");
-    orb->register_initial_reference(OPENBUS_CONTEXT_ID, openbusContext);
+    orb->register_initial_reference("OpenBusContext", openbusContext);
     orbInitializer->clientInterceptor()->openbusContext(openbusContext);
     orbInitializer->serverInterceptor()->openbusContext(openbusContext);
   }

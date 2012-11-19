@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
     // Construindo e logando conexao
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+      (orb->resolve_initial_references("OpenBusContext"));
     assert(openbusContext != 0);
     std::auto_ptr <openbus::Connection> conn1 (openbusContext->createConnection("localhost", 2089));
     std::auto_ptr <openbus::Connection> conn2 (openbusContext->createConnection("localhost", 2089));

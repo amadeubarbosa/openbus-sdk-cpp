@@ -18,7 +18,6 @@ namespace openbus {
 #include "openbus/interceptors/ORBInitializer_impl.h"
 #include "openbus/Connection.h"
 
-#define OPENBUS_CONTEXT_ID "OpenBusContext"
 
 /**
 * \brief openbus
@@ -179,7 +178,7 @@ namespace openbus {
   private:
     /**
     * OpenBusContext deve ser adquirido através de:
-    *   orb->resolve_initial_references(OPENBUS_CONTEXT_ID)
+    *   orb->resolve_initial_references("OpenBusContext")
     */
     OpenBusContext(CORBA::ORB *, IOP::Codec *, 
       PortableInterceptor::SlotId slotId_joinedCallChain, 

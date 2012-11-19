@@ -26,7 +26,7 @@ struct MessageImpl : POA_Message
     try
     {
       openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-        (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+        (orb->resolve_initial_references("OpenBusContext"));
       openbus::Connection& c = *openbusContext->getRequester();
       c.joinChain(c.getCallerChain());
       executive_message->sendMessage(message);

@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
     openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+      (orb->resolve_initial_references("OpenBusContext"));
     std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(host.c_str(), port));
     openbusContext->setDefaultConnection(conn.get());
     conn->loginByPassword(entity.c_str(), entity.c_str());

@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
     openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+      (orb->resolve_initial_references("OpenBusContext"));
     
     for (std::size_t bus_index = 0; bus_index != 2; ++bus_index)
     {

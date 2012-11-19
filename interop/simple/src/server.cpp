@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
     poa_manager->activate();
     
     openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+      (orb->resolve_initial_references("OpenBusContext"));
     conn = openbusContext->createConnection(host.c_str(), port);
     openbusContext->setDefaultConnection(conn.get());
     conn->onInvalidLogin(&onInvalidLogin);

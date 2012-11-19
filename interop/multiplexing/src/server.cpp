@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
     openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references(OPENBUS_CONTEXT_ID));
+      (orb->resolve_initial_references("OpenBusContext"));
     std::auto_ptr <openbus::Connection> connBusB
       (openbusContext->createConnection(buses[0].host.c_str(), buses[0].port));
     std::auto_ptr <openbus::Connection> conn1BusA
