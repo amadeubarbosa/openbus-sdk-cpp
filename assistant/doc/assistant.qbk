@@ -142,7 +142,7 @@ simples. Para isso, precisamos construir uma instância da classe
 __Assistant__ que nos proverá as funções necessárias para ofertar
 serviços no barramento.
 
-Em C++ instancia-se a classe ``[classref openbus::assistant::Assistant]`` usando,
+Em C++ instancia-se a classe [classref openbus::assistant::Assistant] usando,
 preferencialmente, ['named parameters].
 
 [section Named Parameters]
@@ -163,64 +163,97 @@ Os seguintes parâmetros existem no __Assistant__:
 [table Named parameters existentes no Assistant
   [[Parametros] [Descrição]]
   [
-        [_host]
-        [asd]
+        [`_host`]
+[Nome do ['host] aonde se encontra o barramento. Conteúdo deste ['named parameter] é obrigatório. Pode ser passado com ['named parameter] ou como
+primeiro argumento do construtor do [classref openbus::assistant::Assistant].]
   ]
   [
-        [_port]
-        [asd]
+        [`_port`]
+[Porta TCP de onde se encontra o barramento. Conteúdo deste ['named parameter] é obrigatório. Pode ser passado com ['named parameter] ou como
+segundo argumento do construtor do [classref openbus::assistant::Assistant].]
   ]
   [
-        [_username]
-        [asd]
+        [`_username`]
+[Nome do usuário para autenticação ao barramento. Esse parâmetro deve ser usado quando se pretende fazer uma autenticação
+por usuário e senha. Deve sempre ser usado junto com o ['named parameter] _password.]
   ]
   [
-        [_entity]
-        [asd]
+        [`_entity`]
+[Nome da entidade registrada por certificado no barramento. Esse parâmetro deve ser usado quando se pretende
+fazer uma autenticação por certificado. Deve sempre ser usado junto com um dos dois ['named parameters] _private_key
+ou _private_key_filename.]
   ]
   [
-        [_password]
-        [asd]
+        [`_password`]
+[Senha de autenticação. Esse parâmetro deve ser usado quando se pretende fazer uma autenticação por usuário e senha.
+Deve sempre ser usado junto com o ['named parameter] _username.]
   ]
   [
-        [_private_key]
-        [asd]
+        [`_private_key`]
+[Conteúdo de chave privada usada para criação do certificado registrado no barramento. Esse parâmetro deve ser usado quando se
+pretende fazer uma autenticação por certificado. Seu tipo deve ser um CORBA::OctetSeq e seu conteúdo deve ser de uma
+chave privada gerada com o ['shell script] openssl-generate.sh. Deve sempre ser usado com o ['named parameter] _entity.]
   ]
   [
-        [_private_key_filename]
-        [asd]
+        [`_private_key_filename`]
+[Nome do arquivo que contém a chave privada usada para criação do certificado registrado no barramento. Esse parâmetro deve
+ser usado quando se
+pretende fazer uma autenticação por certificado. O conteúdo deste arquivo deve ser de uma
+chave privada gerada com o ['shell script] openssl-generate.sh. Deve sempre ser usado com o ['named parameter] _entity.]
   ]
   [
-        [_shared_auth_callback]
-        [asd]
+        [`_shared_auth_callback`]
+[['Function object] de assinatura `std::pair<LoginProcess, CORBA::OctetSeq>()`. Esse ['function object] deve
+retornar um par contendo um `LoginProcess` e um segredo em `CORBA::OctetSeq` que tenham sido retornados
+por um `startSharedAuth` sobre uma conexão com o mesmo barramento. Essa função pode ser chamada mais de uma vez,
+e o seu retorno não deve se repetir, já que o objeto `LoginProcess` só é válido ao ser usado pela primeira vez.]
   ]
   [
-        [_argc]
-        [asd]
+        [`_retry_wait`]
+[Número de segundos de espera em caso de erros. Esse argumento modifica o tempo entre tentativas de operações
+com o barramento.]
   ]
   [
-        [_argv]
-        [asd]
+        [`_log_level`]
+[Nível de log utilizado pela implementação do __Assistant__ em sua execução. Os níveis existentes, em ordem crescente de verbosidade, são: `::logger::disabled_level`, `::logger::error_level`, `::logger::warning_level`, `::logger::info_level` e
+`::logger::debug_level`.]
   ]
   [
-        [_on_login_error]
-        [asd]
+        [`_argc`]
+[Número de argumentos no ['array] passado em _argv. Esse parâmetro é usado para passar o par argc e argv
+da função `int main(int argc, char* argv[])` para o ORB. Isso permite que o usuário do aplicativo configure
+algumas características do ORB por linha de comando do aplicativo. Deve ser usado em conjunto com ['named parameter] _argv.
+Esse argumento pode ser modificado pelo ORB.]
   ]
   [
-        [_on_register_error]
-        [asd]
+        [`_argv`]
+[['Array] de argumentos de linha de comando. Esse parâmetro é usado para passar o par argc e argv
+da função `int main(int argc, char* argv[])` para o ORB. Isso permite que o usuário do aplicativo configure
+algumas características do ORB por linha de comando do aplicativo. Deve ser usado em conjunto com ['named parameter] _argc,
+que indica o número de argumentos que contém o array. Esse argumento pode ser modificado pelo ORB.]
   ]
   [
-        [_on_fatal_error]
-        [asd]
+        [`_on_login_error`]
+[['Function object] de tratamento de erros de ['login]. O ['function object] passado como argumento deve ter a assinatura
+`void(std::string)`. O argumento `std::string` passado é o nome da exceção que foi tratatada pelo __Assistant__.
+[note Essa função pode ser executada em outra thread em um ambiente multithread.] ]
   ]
   [
-        [_retry_wait]
-        [asd]
+        [`_on_register_error`]
+[['Function object] de tratamento de erros de registro de ofertas. O ['function object] passado como argumento deve ter
+ a assinatura `void(IComponent_var, ServicePropertySeq, std::string)`. O argumento `IComponent_var` é a referência CORBA
+usada para tentativa de registro; o argumento `ServicePropertySeq` é o conjunto de propriedades a serem registradas
+na oferta e o argumento `std::string` passado é o nome da exceção que foi tratatada pelo __Assistant__ durante o erro.
+[note Essa função pode ser executada em outra thread em um ambiente multithread.] ]
   ]
   [
-        [_log_level]
-        [asd]
+        [`_on_fatal_error`]
+[['Function object] de tratamento de erros fatais. O ['function object] passado como argumento deve ter
+ a assinatura `void(const char*)`. O argumento passado é o nome da exceção que foi tratatada pelo __Assistant__ durante o erro.
+[note Essa função recebe um `const char*` ao invés de um `std::string`, pois essa função pode ser executada por motivos
+de falta de recursos. Assim, o __Assistant__ evita uma alocação requerida pela classe `std::string` para evitar que
+outra exceção possa ser lançada durante a tentativa de tratamento do erro.]
+[note Essa função pode ser executada em outra thread em um ambiente multithread.] ]
   ]
 ]
 
