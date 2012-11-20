@@ -59,7 +59,7 @@ ifeq "$(OPENBUS_SDK_MULTITHREAD)" "Yes"
 else
   SLIB= ${OPENBUSLIB}/libopenbus-micosinglethread${MICO_DEBUG}.a \
         ${OPENBUSLIB}/libscs-micosinglethread${MICO_DEBUG}.a \
-        ${OPENBUSLIB}/liblogger$-singlethread{MICO_DEBUG}.a
+        ${OPENBUSLIB}/liblogger-singlethread${MICO_DEBUG}.a
 endif
 
 #USE_LUA51= YES
