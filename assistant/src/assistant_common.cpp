@@ -245,13 +245,14 @@ void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short
                                      , login_error_callback_type login_error
                                      , register_error_callback_type register_error
                                      , fatal_error_callback_type fatal_error
+                                     , find_error_callback_type find_error
                                      , logger::level l)
 {
   CORBA::ORB_var orb = ORBInitializer(argc, argv);
   activate_RootPOA(orb);
   assistant_detail::password_authentication_info info = {username, password};
   state.reset(new assistant_detail::shared_state
-              (orb, info, hostname, port, login_error, register_error, fatal_error, l));
+              (orb, info, hostname, port, login_error, register_error, fatal_error, find_error, l));
   logger::log_scope log(state->logging, logger::info_level, "InitWithPassword");
   log.log("Constructed assistant");
   create_threads(state);
@@ -261,13 +262,14 @@ void AssistantImpl::InitWithPassword(std::string const& hostname, unsigned short
                                      , login_error_callback_type login_error
                                      , register_error_callback_type register_error
                                      , fatal_error_callback_type fatal_error
+                                     , find_error_callback_type find_error
                                      , logger::level l)
 {
   int argc = 1;
   char* argv[] = {const_cast<char*>("")};
   InitWithPassword(hostname, port, username, password
                    , argc, argv, login_error
-                   , register_error, fatal_error, l);
+                   , register_error, fatal_error, find_error, l);
 }
 
 void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned short port
@@ -276,13 +278,14 @@ void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned sho
                                        , login_error_callback_type login_error
                                        , register_error_callback_type register_error
                                        , fatal_error_callback_type fatal_error
+                                       , find_error_callback_type find_error
                                        , logger::level l)
 {
   CORBA::ORB_var orb = ORBInitializer(argc, argv);
   activate_RootPOA(orb);
   assistant_detail::certificate_authentication_info info = {entity, private_key};
   state.reset(new assistant_detail::shared_state
-              (orb, info, hostname, port, login_error, register_error, fatal_error, l));
+              (orb, info, hostname, port, login_error, register_error, fatal_error, find_error, l));
   logger::log_scope log(state->logging, logger::info_level, "InitWithPrivateKey");
   log.log("Constructed assistant");
   create_threads(state);
@@ -293,13 +296,14 @@ void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned sho
                                        , login_error_callback_type login_error
                                        , register_error_callback_type register_error
                                        , fatal_error_callback_type fatal_error
+                                       , find_error_callback_type find_error
                                        , logger::level l)
 {
   int argc = 1;
   char* argv[] = {const_cast<char*>("")};
   InitWithPrivateKey(hostname, port, entity, private_key
                      , argc, argv, login_error
-                     , register_error, fatal_error, l);
+                     , register_error, fatal_error, find_error, l);
 }
 
 void AssistantImpl::InitWithPrivateKeyFile(std::string const& hostname, unsigned short port
@@ -308,6 +312,7 @@ void AssistantImpl::InitWithPrivateKeyFile(std::string const& hostname, unsigned
                                            , login_error_callback_type login_error
                                            , register_error_callback_type register_error
                                            , fatal_error_callback_type fatal_error
+                                           , find_error_callback_type find_error
                                            , logger::level l)
 {
   std::ifstream key_file(private_key_file.c_str());
@@ -321,7 +326,7 @@ void AssistantImpl::InitWithPrivateKeyFile(std::string const& hostname, unsigned
     key.length(size);
     key_file.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(key.get_buffer())), size);
 
-    InitWithPrivateKey(hostname, port, entity, key, argc, argv, login_error, register_error, fatal_error, l);
+    InitWithPrivateKey(hostname, port, entity, key, argc, argv, login_error, register_error, fatal_error, find_error, l);
   }
   else
     throw openbus::InvalidPrivateKey();
@@ -332,13 +337,14 @@ void AssistantImpl::InitWithPrivateKeyFile(std::string const& hostname, unsigned
                                            , login_error_callback_type login_error
                                            , register_error_callback_type register_error
                                            , fatal_error_callback_type fatal_error
+                                           , find_error_callback_type find_error
                                            , logger::level l)
 {
   int argc = 1;
   char* argv[] = {const_cast<char*>("")};
   InitWithPrivateKeyFile(hostname, port, entity, private_key_file
                          , argc, argv, login_error
-                         , register_error, fatal_error, l);
+                         , register_error, fatal_error, find_error, l);
 }
 
 void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned short port
@@ -347,13 +353,14 @@ void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned sho
                                        , login_error_callback_type login_error
                                        , register_error_callback_type register_error
                                        , fatal_error_callback_type fatal_error
+                                       , find_error_callback_type find_error
                                        , logger::level l)
 {
   CORBA::ORB_var orb = ORBInitializer(argc, argv);
   activate_RootPOA(orb);
   assistant_detail::shared_auth_authentication_info info = {shared_auth_callback};
   state.reset(new assistant_detail::shared_state
-              (orb, info, hostname, port, login_error, register_error, fatal_error, l));
+              (orb, info, hostname, port, login_error, register_error, fatal_error, find_error, l));
   logger::log_scope log(state->logging, logger::info_level, "InitWithSharedAuth");
   log.log("Constructed assistant");
   create_threads(state);
@@ -364,12 +371,13 @@ void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned sho
                                        , login_error_callback_type login_error
                                        , register_error_callback_type register_error
                                        , fatal_error_callback_type fatal_error
+                                       , find_error_callback_type find_error
                                        , logger::level l)
 {
   int argc = 1;
   char* argv[] = {const_cast<char*>("")};
   InitWithSharedAuth(hostname, port, shared_auth_callback, argc, argv, login_error
-                     , register_error, fatal_error, l);
+                     , register_error, fatal_error, find_error, l);
 }
 
 Assistant Assistant::createWithPassword(const char* username, const char* password
@@ -378,11 +386,12 @@ Assistant Assistant::createWithPassword(const char* username, const char* passwo
                                         , login_error_callback_type login_error
                                         , register_error_callback_type register_error
                                         , fatal_error_callback_type fatal_error
+                                        , find_error_callback_type find_error
                                         , logger::level l)
 {
   Assistant assistant;
   assistant.InitWithPassword(host, port, username, password, argc, argv
-                             , login_error, register_error, fatal_error, l);
+                             , login_error, register_error, fatal_error, find_error, l);
   return assistant;
 }
  
@@ -392,11 +401,12 @@ Assistant Assistant::createWithPrivateKey(const char* entity, const idl::OctetSe
                                           , login_error_callback_type login_error
                                           , register_error_callback_type register_error
                                           , fatal_error_callback_type fatal_error
+                                          , find_error_callback_type find_error
                                           , logger::level l)
 {
   Assistant assistant;
   assistant.InitWithPrivateKey(host, port, entity, privKey, argc, argv
-                               , login_error, register_error, fatal_error, l);
+                               , login_error, register_error, fatal_error, find_error, l);
   return assistant;
 }
 
@@ -416,21 +426,21 @@ idl_or::ServiceOfferDescSeq AssistantImpl::findServices
 {
   return assistant_detail::tri_types_retry
     (assistant_detail::functional::find_services(state, properties)
-     , state, retries);
+     , state, retries, state->find_error);
 }
 
 idl_or::ServiceOfferDescSeq AssistantImpl::getAllServices (int retries) const
 {
   return assistant_detail::tri_types_retry
     (assistant_detail::functional::get_all_services(state)
-     , state, retries);
+     , state, retries, state->find_error);
 }
 
 std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq> AssistantImpl::startSharedAuth(int retries)
 {
   return assistant_detail::tri_types_retry
     (assistant_detail::functional::start_shared_auth(state)
-     , state, retries);
+     , state, retries, state->find_error);
 }
 
 idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOfferDescSeq offers)

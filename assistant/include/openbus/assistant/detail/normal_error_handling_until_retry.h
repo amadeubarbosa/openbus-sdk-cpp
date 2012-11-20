@@ -4,6 +4,9 @@
 #define OPENBUS_ASSISTANT_DETAIL_NORMAL_ERROR_HANDLING_UNTIL_RETRY_H
 
 #include <openbus/assistant/detail/shared_state.h>
+#include <openbus/assistant/detail/exception_message.h>
+
+#include <boost/function.hpp>
 
 namespace openbus { namespace assistant {
 
@@ -11,8 +14,9 @@ namespace assistant_detail {
 
 struct normal_error_handling_until_retry
 {
-  normal_error_handling_until_retry(int& retry, boost::shared_ptr<assistant_detail::shared_state> state)
-    : retry(&retry), state(state) {}
+  normal_error_handling_until_retry(int& retry, boost::shared_ptr<assistant_detail::shared_state> state
+                                    , boost::function<void(std::string)> f)
+    : retry(&retry), state(state), f(f) {}
   typedef void result_type;
   template <typename E>
   result_type operator()(E const& e) const
@@ -22,9 +26,12 @@ struct normal_error_handling_until_retry
     log.vlog("More %d retries to go", *retry);
     if(!*retry)
       throw e;
+    else if(f)
+      f(exception_message(e));
   }
   int* retry;
   boost::shared_ptr<assistant_detail::shared_state> state;
+  boost::function<void(std::string)> f;
 };
 
 } } }

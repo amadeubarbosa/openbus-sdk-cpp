@@ -59,6 +59,7 @@ struct shared_state
                                , idl_or::ServicePropertySeq
                                , std::string)> register_error_callback_type;
   typedef boost::function<void(const char*)> fatal_error_callback_type;
+  typedef boost::function<void(std::string)> find_error_callback_type;
 
   // connection_ready = true ==> (connection.get() != 0
   //  /\ connection.get() is never modified again)
@@ -76,6 +77,7 @@ struct shared_state
   login_error_callback_type login_error;
   register_error_callback_type register_error;
   fatal_error_callback_type fatal_error;
+  find_error_callback_type find_error;
   std::auto_ptr<openbus::Connection> connection;
   boost::chrono::steady_clock::duration retry_wait;
   bool work_exit;
@@ -99,10 +101,11 @@ struct shared_state
                , login_error_callback_type login_error
                , register_error_callback_type register_error
                , fatal_error_callback_type fatal_error
+               , find_error_callback_type find_error
                , logger::level l)
     : logging(l), orb(orb), auth_info(auth_info), host(host), port(port)
     , login_error(login_error), register_error(register_error)
-    , fatal_error(fatal_error), work_exit(false)
+    , fatal_error(fatal_error), find_error(find_error), work_exit(false)
     , connection_ready(false), relogin(false)
 #ifdef ASSISTANT_SDK_MULTITHREAD
     , new_queued_components(false)
