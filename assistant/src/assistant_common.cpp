@@ -21,6 +21,7 @@
 #include <boost/preprocessor/facilities/empty.hpp>
 
 #include <iterator>
+#include <fstream>
 
 namespace openbus { namespace assistant {
 
@@ -299,6 +300,45 @@ void AssistantImpl::InitWithPrivateKey(std::string const& hostname, unsigned sho
   InitWithPrivateKey(hostname, port, entity, private_key
                      , argc, argv, login_error
                      , register_error, fatal_error, l);
+}
+
+void AssistantImpl::InitWithPrivateKeyFile(std::string const& hostname, unsigned short port
+                                           , std::string const& entity, std::string const& private_key_file
+                                           , int& argc, char** argv
+                                           , login_error_callback_type login_error
+                                           , register_error_callback_type register_error
+                                           , fatal_error_callback_type fatal_error
+                                           , logger::level l)
+{
+  std::ifstream key_file(private_key_file.c_str());
+  if(key_file.is_open())
+  {
+    key_file.seekg(0, std::ios::end);
+    std::size_t size = key_file.tellg();
+    key_file.seekg(0, std::ios::beg);
+
+    CORBA::OctetSeq key;
+    key.length(size);
+    key_file.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(key.get_buffer())), size);
+
+    InitWithPrivateKey(hostname, port, entity, key, argc, argv, login_error, register_error, fatal_error, l);
+  }
+  else
+    throw openbus::InvalidPrivateKey();
+}
+
+void AssistantImpl::InitWithPrivateKeyFile(std::string const& hostname, unsigned short port
+                                           , std::string const& entity, std::string const& private_key_file
+                                           , login_error_callback_type login_error
+                                           , register_error_callback_type register_error
+                                           , fatal_error_callback_type fatal_error
+                                           , logger::level l)
+{
+  int argc = 1;
+  char* argv[] = {const_cast<char*>("")};
+  InitWithPrivateKeyFile(hostname, port, entity, private_key_file
+                         , argc, argv, login_error
+                         , register_error, fatal_error, l);
 }
 
 void AssistantImpl::InitWithSharedAuth(std::string const& hostname, unsigned short port
