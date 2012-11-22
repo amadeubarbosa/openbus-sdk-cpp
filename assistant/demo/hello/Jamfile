@@ -16,7 +16,7 @@ exe hello_client
    <implicit-dependency>hello-idl
  ;
 exe hello_server
- : server/server.cpp /openbus//openbus
+ : server/server.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl hello-idl
    /openbus/assistant//assistant

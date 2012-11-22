@@ -16,7 +16,7 @@ exe dedicated_clock_client
    <implicit-dependency>dedicated-clock-idl
  ;
 exe dedicated_clock_server
- : server/server.cpp /openbus//openbus
+ : server/server.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl dedicated-clock-idl
    /openbus/assistant//assistant

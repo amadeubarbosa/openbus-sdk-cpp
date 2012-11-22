@@ -16,7 +16,7 @@ exe greetings_client
    <implicit-dependency>greetings-idl
  ;
 exe greetings_server
- : server/server.cpp /openbus//openbus
+ : server/server.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl greetings-idl
    /openbus/assistant//assistant

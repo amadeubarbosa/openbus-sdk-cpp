@@ -16,7 +16,7 @@ exe chain_validation_client
    <implicit-dependency>chain-validation-idl
  ;
 exe chain_validation_executive
- : executive/executive.cpp /openbus//openbus
+ : executive/executive.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl chain-validation-idl
    /openbus/assistant//assistant
@@ -27,7 +27,7 @@ exe chain_validation_executive
  ;
 
 exe chain_validation_secretary
- : secretary/secretary.cpp /openbus//openbus
+ : secretary/secretary.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl chain-validation-idl
    /openbus/assistant//assistant

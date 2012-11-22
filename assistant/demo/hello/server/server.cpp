@@ -1,6 +1,8 @@
 #include <openbus/assistant.h>
 #include <stubs/hello.h>
 
+#include <boost/program_options.hpp>
+
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace simple = tecgraf::openbus::interop::simple;
@@ -15,9 +17,30 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 
 int main(int argc, char** argv)
 {
+  std::string private_key_filename;
+  {
+    namespace po = boost::program_options;
+    po::options_description desc("Allowed options");
+    desc.add_options()
+      ("help", "This help message")
+      ("private-key", po::value<std::string>(), "Path to private key")
+      ;
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if(vm.count("help") || !vm.count("private-key"))
+    {
+      std::cout << desc << std::endl;
+      return 0;
+    }
+    private_key_filename = vm["private-key"].as<std::string>();
+  }
+
   using namespace openbus::assistant::keywords;
   openbus::assistant::Assistant assistant
-    ("localhost", 2089, _username = "demo", _password = "demo"
+    ("localhost", 2089, _entity = "demo"
+     , _private_key_filename = private_key_filename
      , _argc = argc, _argv = argv
      , _log_level = logger::debug_level);
   
