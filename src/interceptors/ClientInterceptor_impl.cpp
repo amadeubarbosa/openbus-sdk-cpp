@@ -107,7 +107,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
       if (b) {
         /* recuperando uma sessão para esta requisição. */
         credential.session = session.id;
-        session.ticket = ++session.ticket;
+        ++session.ticket;
         credential.ticket = session.ticket;
         int bufSize = 22 + strlen(operation);
         std::auto_ptr<unsigned char> buf (new unsigned char[bufSize]());
