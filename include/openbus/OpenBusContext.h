@@ -34,6 +34,14 @@ namespace openbus {
    */
   class OpenBusContext : public CORBA::LocalObject {
   public:
+    typedef boost::function<Connection* (OpenBusContext &context, const char *busId, 
+                                         const char *loginId, 
+                                         const char *operation)> CallDispatchCallback;
+
+    void onCallDispatch(CallDispatchCallback c);
+
+    CallDispatchCallback onCallDispatch() const;
+
     /**
      * \brief Cria uma conexão para um barramento.
      * 
@@ -95,7 +103,7 @@ namespace openbus {
      * \return Conexão definida como conexão padrão. OpenBusContext não possui ownership dessa
      * conexão e o mesmo não é transferido para o código de usuário na execução desta função
      */
-    Connection * getDefaultConnection() const { return _defaultConnection; }
+    Connection * getDefaultConnection() const;
     
     /**
      * \brief Define a conexão "Requester" do contexto corrente.
@@ -189,7 +197,7 @@ namespace openbus {
     ~OpenBusContext();
     void orb(CORBA::ORB *o) { _orb = o; }
     typedef std::map<std::string, Connection*> BusidConnection;
-    Mutex _mutex;
+    mutable Mutex _mutex;
     CORBA::ORB *_orb;
     PortableInterceptor::Current_var _piCurrent;
     IOP::Codec *_codec;
@@ -200,6 +208,7 @@ namespace openbus {
     PortableInterceptor::SlotId _slotId_receiveConnection;
     Connection *_defaultConnection;
     BusidConnection _busidConnection;
+    CallDispatchCallback _callDispatchCallback;
     friend CORBA::ORB *openbus::ORBInitializer(int argc, char **argv);
   };
 }

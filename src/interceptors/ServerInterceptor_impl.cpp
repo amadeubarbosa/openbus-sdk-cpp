@@ -70,6 +70,31 @@ void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller,
 
 ServerInterceptor::~ServerInterceptor() { }
 
+Connection * ServerInterceptor::getDispatcher(OpenBusContext &context, const char *busId, 
+                                              const char *loginId, const char *operation)
+{
+  Connection *conn = 0;
+  log_scope l(log.general_logger(), debug_level,"ServerInterceptor::getDispatcher");
+  try {
+    if (context.onCallDispatch()) {
+      conn = context.onCallDispatch()(context, busId, loginId, operation);
+    }
+  } catch (...) {
+    // [TODO] mais detalhes?
+    l.level_log(warning_level, "Falha na execucao da callback CallDispatch.");
+  }
+  if (conn) {
+    if (!conn->login() || (strcmp(conn->busid(), busId))) {
+      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+    } 
+  } else {
+    if (!(conn = context.getDefaultConnection())) {
+      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+    }
+  }
+  return conn;
+}
+
 void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::ServerRequestInfo *r)
 {
   const char *operation = r->operation();
@@ -90,9 +115,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
   }
   idl_cr::CredentialData credential;
   if (hasContext && (any >>= credential)) {
-    Connection *conn = _openbusContext->getDispatcher(credential.bus);
-    if (!conn) conn = _openbusContext->getDefaultConnection();
-    if (!conn) throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+    Connection *conn = getDispatcher(*_openbusContext, credential.bus, credential.login, operation);
 
     /* disponibilizando a conexão atual para OpenBusContext::getRequester() */
     size_t bufSize = sizeof(Connection*);

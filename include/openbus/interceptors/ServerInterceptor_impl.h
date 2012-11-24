@@ -54,6 +54,8 @@ namespace interceptors {
     PortableInterceptor::SlotId _slotId_legacyCallChain;
     IOP::Codec *_cdrCodec;
     OpenBusContext *_openbusContext;
+    Connection *getDispatcher(OpenBusContext &context, const char *busId, const char *loginId, 
+                               const char *operation);
     void sendCredentialReset(Connection *, Login*, PortableInterceptor::ServerRequestInfo*);
 
     typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;

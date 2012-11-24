@@ -11,7 +11,7 @@ OpenBusContext::OpenBusContext(CORBA::ORB *o, IOP::Codec *c,
                                      PortableInterceptor::SlotId s5) 
   : _orb(o), _codec(c), _slotId_joinedCallChain(s1), _slotId_signedCallChain(s2), 
     _slotId_legacyCallChain(s3), _slotId_requesterConnection(s4), _slotId_receiveConnection(s5),
-    _defaultConnection(0)
+  _defaultConnection(0), _callDispatchCallback(0)
 {
   log_scope l(log.general_logger(), debug_level, "OpenBusContext::OpenBusContext");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
@@ -30,6 +30,12 @@ std::auto_ptr<Connection> OpenBusContext::createConnection(const char *host, sho
     _slotId_signedCallChain, _slotId_legacyCallChain, _slotId_receiveConnection, this, props));
   l.vlog("connection: %p", conn.get());
   return conn;
+}
+
+Connection * OpenBusContext::getDefaultConnection() const 
+{
+  AutoLock _(&_mutex);
+  return _defaultConnection; }
 }
 
 void OpenBusContext::setRequester(Connection *c) {
@@ -83,5 +89,15 @@ Connection * OpenBusContext::clearDispatcher(const char *busid) {
     _busidConnection.erase(it);
     return c;
   } else return 0;    
+}
+
+void OpenBusContext::onCallDispatch(CallDispatchCallback c) {
+  AutoLock ctx_mutex(&_mutex);
+  _callDispatchCallback = c;
+}
+
+OpenBusContext::CallDispatchCallback OpenBusContext::onCallDispatch() const {
+  AutoLock ctx_mutex(&_mutex);
+  return _callDispatchCallback;
 }
 }
