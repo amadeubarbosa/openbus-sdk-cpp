@@ -16,7 +16,7 @@ std::auto_ptr<Connection> create_connection_and_login
    , assistant_detail::authentication_info const& info
    , logger::logger& logging
    , boost::shared_ptr<assistant_detail::shared_state> state
-   , boost::function<void(std::string)> error
+   , login_error_callback_type error
    , boost::optional<boost::chrono::steady_clock::time_point> timeout);
 
 } } }

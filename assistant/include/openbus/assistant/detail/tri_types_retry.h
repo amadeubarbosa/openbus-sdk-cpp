@@ -10,46 +10,40 @@
 
 namespace openbus { namespace assistant { namespace assistant_detail {
 
+template <typename F>
 struct normal_error_handling
 {
-  normal_error_handling(boost::function<void(std::string)> f)
+  normal_error_handling(F f)
     : f(f) {}
 
   typedef void result_type;
   result_type operator()(CORBA::TRANSIENT const& e) const
   {
-    if(f)
-      f(exception_message(e));
+    f(e);
   }
   result_type operator()(CORBA::COMM_FAILURE const& e) const
   {
-    if(f)
-      f(exception_message(e));
+    f(e);
   }
   result_type operator()(CORBA::OBJECT_NOT_EXIST const& e) const
   {
-    if(f)
-      f(exception_message(e));
+    f(e);
   }
-  result_type operator()(CORBA::NO_PERMISSION const& e)
+  result_type operator()(CORBA::NO_PERMISSION const& e) const
   {
-    if(f)
-      f(exception_message(e));
+    f(e);
   }
-  result_type operator()(idl::services::ServiceFailure const& e)
+  result_type operator()(idl::services::ServiceFailure const& e) const
   {
-    if(f)
-      f(exception_message(e));
+    f(e);
   }
-  result_type operator()(idl::services::UnauthorizedOperation const& e)
+  result_type operator()(idl::services::UnauthorizedOperation const& e) const
   {
-    if(f)
-      f(exception_message(e));
+    f(e);
   }
-  result_type operator()(idl::services::offer_registry::UnauthorizedFacets const& e)
+  result_type operator()(idl::services::offer_registry::UnauthorizedFacets const& e) const
   {
-    if(f)
-      f(exception_message(e));
+    f(e);
   }
   template <typename E>
   result_type operator()(E const& e) const
@@ -57,7 +51,7 @@ struct normal_error_handling
     throw e;
   }
 
-  boost::function<void(std::string)> f;
+  F f;
 };
 
 #ifdef ASSISTANT_SDK_MULTITHREAD
@@ -78,10 +72,10 @@ typename boost::result_of<Op()>::type tri_types_retry_immediate
   return op();
 }
 
-template <typename Op>
+template <typename Op, typename E>
 typename boost::result_of<Op()>::type tri_types_retry_determinate_retries
  (Op op, boost::shared_ptr<assistant_detail::shared_state> state, int retries
-  , boost::function<void(std::string)> e)
+  , E e)
 {
   boost::unique_lock<boost::mutex> l(state->mutex);
   while(!state->connection_ready && retries > 0)
@@ -101,15 +95,15 @@ typename boost::result_of<Op()>::type tri_types_retry_determinate_retries
   // above and release semantics of the unlock after assignment of connection_ready)
   return assistant_detail::execute_with_retry
     (op
-     , assistant_detail::normal_error_handling_until_retry(retries, state, e)
+     , assistant_detail::normal_error_handling_until_retry<E>(retries, state, e)
      , assistant_detail::wait_until_timeout_and_signal_exit(state)
      , state->logging);
 }
 
-template <typename Op>
+template <typename Op, typename E>
 typename boost::result_of<Op()>::type tri_types_retry_infinitely
  (Op op, boost::shared_ptr<assistant_detail::shared_state> state
-  , boost::function<void(std::string)> e)
+  , E e)
 {
   {
     boost::unique_lock<boost::mutex> l(state->mutex);
@@ -124,7 +118,7 @@ typename boost::result_of<Op()>::type tri_types_retry_infinitely
   // above and release semantics of the unlock after assignment of connection_ready)
   return assistant_detail::execute_with_retry
     (op
-     , normal_error_handling(e)
+     , normal_error_handling<E>(e)
      , assistant_detail::wait_until_timeout_and_signal_exit(state)
      , state->logging);
 }
@@ -142,10 +136,10 @@ typename boost::result_of<Op()>::type tri_types_retry_immediate
   return op();
 }
 
-template <typename Op>
+template <typename Op, typename E>
 typename boost::result_of<Op()>::type tri_types_retry_infinitely
   (Op op, boost::shared_ptr<assistant_detail::shared_state> state
-  , boost::function<void(std::string)> e)
+  , E e)
 {
   logger::log_scope log(state->logging, logger::debug_level, "Executing task with infinity retries");
   log.vlog("Task %s", Op::name());
@@ -154,15 +148,15 @@ typename boost::result_of<Op()>::type tri_types_retry_infinitely
 
   return assistant_detail::execute_with_retry
     (op
-     , normal_error_handling(e)
+     , normal_error_handling<E>(e)
      , assistant_detail::wait_until_timeout_and_signal_exit(state)
      , state->logging);
 }
 
-template <typename Op>
+template <typename Op, typename E>
 typename boost::result_of<Op()>::type tri_types_retry_determinate_retries
  (Op op, boost::shared_ptr<assistant_detail::shared_state> state, int retries
-  , boost::function<void(std::string)> e)
+  , E e)
 {
   logger::log_scope log(state->logging, logger::debug_level, "Executing task with retries");
   log.vlog("Task %s", Op::name());
@@ -191,16 +185,16 @@ typename boost::result_of<Op()>::type tri_types_retry_determinate_retries
   assert(!CORBA::is_nil(state->connection->offers()));
   return assistant_detail::execute_with_retry
     (op
-     , assistant_detail::normal_error_handling_until_retry(retries, state, e)
+     , assistant_detail::normal_error_handling_until_retry<E>(retries, state, e)
      , assistant_detail::wait_until_timeout_and_signal_exit(state)
      , state->logging);
 }
 #endif
 
-template <typename Op>
+template <typename Op, typename E>
 typename boost::result_of<Op()>::type tri_types_retry
   (Op op, boost::shared_ptr<assistant_detail::shared_state> state, int retries
-   , boost::function<void(std::string)> f)
+   , E f)
 {
   if(retries < 0)
     return assistant_detail::tri_types_retry_infinitely(op, state, f);

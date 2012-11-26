@@ -41,21 +41,26 @@ struct invalid_login_callback
                          , boost::weak_ptr<assistant_detail::shared_state> state_weak) const;
 };
 
-struct error_creating_connection
+struct login_error
 {
-  boost::function<void(std::string /*error*/)> callback;
+  login_error_callback_type callback;
 
-  error_creating_connection(boost::function<void(std::string /*error*/)> callback)
+  login_error(login_error_callback_type callback)
     : callback(callback) {}
 
   typedef void result_type;
   template <typename Exception>
   result_type operator()(Exception const& e) const
   {
-    if(callback)
-      callback(assistant_detail::exception_message(e));
+    try
+    {
+      callback(e);
+    }
+    catch(...)
+    {}
   }
 };
+
 
 std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::string const& host
                                                    , unsigned short port, logger::logger& logging
@@ -77,19 +82,19 @@ std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::stri
 std::auto_ptr<Connection> create_connection(CORBA::ORB_var orb, std::string const& host, unsigned short port
                                             , logger::logger& logging
                                             , boost::shared_ptr<assistant_detail::shared_state> state
-                                            , boost::function<void(std::string)> callback
+                                            , login_error_callback_type callback
                                             , boost::optional<boost::chrono::steady_clock::time_point> timeout)
 {
   if(timeout)
     return assistant_detail::execute_with_retry
       (boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging), state)
-       , error_creating_connection(callback)
+       , login_error(callback)
        , *timeout
        , state->logging);
   else
     return assistant_detail::execute_with_retry
       (boost::bind(&create_connection_simple, orb, host, port, boost::ref(logging), state)
-       , error_creating_connection(callback)
+       , login_error(callback)
        , assistant_detail::wait_until_timeout_and_signal_exit(state)
        , state->logging);
 }
@@ -124,27 +129,6 @@ void login_simple(Connection& c, assistant_detail::authentication_info const& in
   }
 }
 
-struct login_error
-{
-  boost::function<void(std::string /*error*/)> callback;
-
-  login_error(boost::function<void(std::string /*error*/)> callback)
-    : callback(callback) {}
-
-  typedef void result_type;
-  template <typename Exception>
-  result_type operator()(Exception const& e) const
-  {
-    try
-    {
-      if(callback)
-        callback(assistant_detail::exception_message(e));
-    }
-    catch(...)
-    {}
-  }
-};
-
 void register_relogin(boost::shared_ptr<assistant_detail::shared_state>);
 
 void invalid_login_callback::operator()(Connection &c, idl_ac::LoginInfo old_login
@@ -171,7 +155,7 @@ std::auto_ptr<Connection> create_connection_and_login
    , assistant_detail::authentication_info const& info
    , logger::logger& logging
    , boost::shared_ptr<assistant_detail::shared_state> state
-   , boost::function<void(std::string)> error
+   , login_error_callback_type error
    , boost::optional<boost::chrono::steady_clock::time_point> timeout)
 {
   logger::log_scope log(state->logging, logger::debug_level, "create_connection_and_login function");

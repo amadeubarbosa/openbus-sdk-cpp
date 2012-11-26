@@ -3,6 +3,8 @@
 #ifndef OPENBUS_ASSISTANT_DETAIL_SHARED_STATE_H
 #define OPENBUS_ASSISTANT_DETAIL_SHARED_STATE_H
 
+#include <openbus/assistant/error_handler_types.h>
+
 #include <log/logger.h>
 #include <log/output/streambuf_output.h>
 
@@ -54,13 +56,6 @@ struct login_dispatcher;
 
 struct shared_state
 {
-  typedef boost::function<void(std::string)> login_error_callback_type;
-  typedef boost::function<void(scs::core::IComponent_var
-                               , idl_or::ServicePropertySeq
-                               , std::string)> register_error_callback_type;
-  typedef boost::function<void(const char*)> fatal_error_callback_type;
-  typedef boost::function<void(std::string)> find_error_callback_type;
-
   // connection_ready = true ==> (connection.get() != 0
   //  /\ connection.get() is never modified again)
   // attribution to connection 'happens before' connection_ready = true

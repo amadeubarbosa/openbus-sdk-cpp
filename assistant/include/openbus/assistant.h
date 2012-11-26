@@ -4,7 +4,23 @@
 #define OPENBUS_ASSISTANT_H
 
 #ifndef OPENBUS_ASSISTANT_DOXYGEN
+#ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
+#ifdef BOOST_PARAMETER_MAX_ARITY
+#if BOOST_PARAMETER_MAX_ARITY < 14
+#error The BOOST_PARAMETER_MAX_ARITY must be at least 14 before #including openbus/assistant.h or must not be defined at all. Add -DBOOST_PARAMETER_MAX_ARITY=14 to your build definitions
+#endif // #if BOOST_PARAMETER_MAX_ARITY < 14
+#else // #ifdef BOOST_PARAMETER_MAX_ARITY
+#define BOOST_PARAMETER_MAX_ARITY 14
+#endif // #ifdef BOOST_PARAMETER_MAX_ARITY
+#include <boost/parameter.hpp>
+#endif // #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
+#endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
+
+#ifndef OPENBUS_ASSISTANT_DOXYGEN
+#include <openbus/assistant/overloaded_error_handler.h>
+#include <openbus/assistant/exceptions.h>
 #include <openbus/assistant/detail/shared_state.h>
+#include <openbus/assistant/error_handler_types.h>
 #endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
 #include <scs/IComponent.h>
@@ -13,19 +29,7 @@
 #include <CORBA.h>
 
 #include <boost/mpl/void.hpp>
-
-#ifndef OPENBUS_ASSISTANT_DOXYGEN
-#ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
-#ifdef BOOST_PARAMETER_MAX_ARITY
-#if BOOST_PARAMETER_MAX_ARITY < 13
-#error The BOOST_PARAMETER_MAX_ARITY must be at least 13 before #including openbus/assistant.h or must not be defined at all. Add -DBOOST_PARAMETER_MAX_ARITY=13 to your build definitions
-#endif // #if BOOST_PARAMETER_MAX_ARITY < 13
-#else // #ifdef BOOST_PARAMETER_MAX_ARITY
-#define BOOST_PARAMETER_MAX_ARITY 13
-#endif // #ifdef BOOST_PARAMETER_MAX_ARITY
-#include <boost/parameter.hpp>
-#endif // #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
-#endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
+#include <boost/mpl/vector.hpp>
 
 namespace openbus { namespace assistant {
 
@@ -72,16 +76,12 @@ struct AssistantImpl
 struct Assistant
 #endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 {
-  static void dummy_login_error_callback(std::string) {}
-  static void dummy_register_error_callback(scs::core::IComponent_var, idl_or::ServicePropertySeq, std::string) {}
-  static void dummy_fatal_error_callback(const char*) {}
-  typedef boost::function<void(std::string)> login_error_callback_type;
-  typedef boost::function<void(scs::core::IComponent_var
-                               , idl_or::ServicePropertySeq
-                               , std::string)> register_error_callback_type;
-  typedef boost::function<void(const char*)> fatal_error_callback_type;
+  typedef assistant::login_error_callback_type login_error_callback_type;
+  typedef assistant::register_error_callback_type register_error_callback_type;
+  typedef assistant::fatal_error_callback_type fatal_error_callback_type;
+  typedef assistant::find_error_callback_type find_error_callback_type;
+
   typedef boost::function<std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq>()> shared_auth_callback_type;
-  typedef boost::function<void(std::string)> find_error_callback_type;
 
 #ifndef OPENBUS_ASSISTANT_DOXYGEN
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
@@ -202,9 +202,9 @@ protected:
        , args[_shared_auth_callback | void_()]
        , args[_argc | void_()]
        , args[_argv | void_()]
-       , args[_on_login_error | &dummy_login_error_callback]
-       , args[_on_register_error | &dummy_register_error_callback]
-       , args[_on_fatal_error | &dummy_fatal_error_callback]
+       , args[_on_login_error | login_error_callback_type()]
+       , args[_on_register_error | register_error_callback_type()]
+       , args[_on_fatal_error | fatal_error_callback_type()]
        , args[_on_find_error | find_error_callback_type()]
        , args[_log_level | logger::warning_level]
        );
@@ -595,11 +595,10 @@ struct Assistant : AssistantImpl
     (in_out(argc), (int&))
     (in_out(argv), (char**))
     (retry_wait, (unsigned int))
-    (on_login_error, (boost::function<void(std::string)>))
-    (on_register_error, (boost::function<void(scs::core::IComponent_var
-                                              , idl_or::ServicePropertySeq
-                                              , std::string /*error*/)>))
-    (on_fatal_error, (boost::function<void(const char* /*error*/)>))
+    (on_login_error, (login_error_callback_type))
+    (on_register_error, (register_error_callback_type))
+    (on_fatal_error, (fatal_error_callback_type))
+    (on_find_error, (find_error_callback_type))
    )
   )
 #endif // #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS

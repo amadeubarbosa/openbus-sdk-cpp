@@ -12,10 +12,11 @@ namespace openbus { namespace assistant {
 
 namespace assistant_detail {
 
+template <typename F>
 struct normal_error_handling_until_retry
 {
   normal_error_handling_until_retry(int& retry, boost::shared_ptr<assistant_detail::shared_state> state
-                                    , boost::function<void(std::string)> f)
+                                    , F f)
     : retry(&retry), state(state), f(f) {}
   typedef void result_type;
   template <typename E>
@@ -26,12 +27,12 @@ struct normal_error_handling_until_retry
     log.vlog("More %d retries to go", *retry);
     if(!*retry)
       throw e;
-    else if(f)
-      f(exception_message(e));
+    else
+      f(e);
   }
   int* retry;
   boost::shared_ptr<assistant_detail::shared_state> state;
-  boost::function<void(std::string)> f;
+  F f;
 };
 
 } } }

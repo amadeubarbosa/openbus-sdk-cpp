@@ -60,9 +60,8 @@ struct register_error_handler
   {
     if(!state->relogin) // i is still valid
     {
-      state->register_error(state->queued_components[*i].first
-                            , state->queued_components[*i].second
-                            , assistant_detail::exception_message(e));
+      state->register_error(e, state->queued_components[*i].first
+                            , state->queued_components[*i].second);
       ++*i;
     }
   }
@@ -232,7 +231,7 @@ public:
   {
     boost::shared_ptr<shared_state> state = state_.lock();
     assert(!!state);
-    state->login_error(assistant_detail::exception_message(e));
+    state->login_error(e);
   }
 
   void callback(CORBA::Dispatcher*, Event)

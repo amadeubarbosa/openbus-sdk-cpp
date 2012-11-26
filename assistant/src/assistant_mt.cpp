@@ -180,7 +180,7 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
       boost::function<void(const char*)> fatal_error = state->fatal_error;
       lock.unlock();
       if(fatal_error)
-        fatal_error(e.what());
+        fatal_error(e);
     }
     catch(...)
     {}
@@ -195,7 +195,7 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
       boost::function<void(const char*)> fatal_error = state->fatal_error;
       lock.unlock();
       if(fatal_error)
-        fatal_error("Unknown exception was thrown");
+        fatal_error(std::runtime_error("Unknown exception was thrown"));
     }
     catch(...)
     {}
