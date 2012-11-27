@@ -209,7 +209,7 @@ namespace openbus {
     Connection *_defaultConnection;
     BusidConnection _busidConnection;
     CallDispatchCallback _callDispatchCallback;
-    friend CORBA::ORB *openbus::ORBInitializer(int argc, char **argv);
+    friend CORBA::ORB *openbus::ORBInitializer(int& argc, char **argv);
   };
 }
 

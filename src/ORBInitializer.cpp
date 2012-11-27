@@ -20,7 +20,7 @@ log_type log;
 interceptors::ORBInitializer *orbInitializer;
 Mutex _mutex;
 
-CORBA::ORB *ORBInitializer(int argc, char **argv) {
+CORBA::ORB *ORBInitializer(int& argc, char **argv) {
   AutoLock m(&_mutex);
   log_scope l(log.general_logger(), info_level, "ORBInitializer");
   if (!orbInitializer) {
