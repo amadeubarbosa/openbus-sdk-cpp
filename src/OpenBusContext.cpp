@@ -62,35 +62,6 @@ Connection * OpenBusContext::getRequester() const {
   } else return 0;
 }
 
-void OpenBusContext::setDispatcher(Connection &c) {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::setDispatcher");
-  AutoLock m(&_mutex);
-  if (c._busid) _busidConnection[std::string(c._busid)] = &c;
-}
-
-Connection * OpenBusContext::getDispatcher(const char *busid) {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::getDispatcher");
-  l.vlog("getDispatcher do barramento %s", busid);
-  if (!busid) return 0;
-  AutoLock m(&_mutex);
-  BusidConnection::const_iterator it = _busidConnection.find(std::string(busid));
-  if (it != _busidConnection.end()) return it->second;
-  else return 0;
-}
-
-Connection * OpenBusContext::clearDispatcher(const char *busid) {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::clearDispatcher");
-  l.vlog("clearDispatcher para a conexão [busid:%s]", busid);
-  if (!busid) return 0;
-  AutoLock m(&_mutex);
-  BusidConnection::iterator it = _busidConnection.find(std::string(busid));
-  if (it != _busidConnection.end()) {
-    Connection *c = it->second;
-    _busidConnection.erase(it);
-    return c;
-  } else return 0;    
-}
-
 void OpenBusContext::onCallDispatch(CallDispatchCallback c) {
   AutoLock ctx_mutex(&_mutex);
   _callDispatchCallback = c;

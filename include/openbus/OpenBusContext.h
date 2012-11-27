@@ -127,58 +127,7 @@ namespace openbus {
      * desta função
      */
     Connection *getRequester() const;
-    
-    /**
-     * \brief Define uma a conexão como "Dispatcher" de barramento.
-     * 
-     * Define a conexão como "Dispatcher" do barramento ao qual ela está conectada, de forma que
-     * todas as chamadas originadas por entidades conectadas a este barramento serão validadas com
-     * essa conexão. Só pode haver uma conexão "Dispatcher" para cada barramento, portanto se já
-     * houver outra conexão "Dispatcher" para o mesmo barramento essa será substituída pela nova
-     * conexão.
-     * 
-     * @param[in] conn Conexão a ser definida como "Dispatcher". O 'ownership' da conexão não é
-     * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
-     * antes de destruida
-     */
-    void setDispatcher(Connection &conn);
-    
-    /**
-     * \brief Devolve a conexão "Dispatcher" do barramento indicado.
-     * 
-     * @param[in] busid Identificador do barramento ao qual a conexão está
-     * associada. OpenBusContext não possui ownership dessa conexão e o mesmo não é transferido
-     * para o código de usuário na execução desta função
-     * 
-     * @return Conexão "Dispatcher" do barramento indicado, ou 'null' caso não haja nenhuma conexão
-     *         "Dispatcher" associada ao barramento indicado. OpenBusContext não possui ownership
-     *         dessa conexão e o mesmo não é transferido para o código de usuário na execução desta
-     *         função
-     */
-    Connection * getDispatcher(const char *busid);
-    
-    /**
-     * \brief Remove a conexão "Dispatcher" associada ao barramento indicado.
-     * 
-     * \param busid Identificador do barramento ao qual a conexão está associada.
-     * 
-     * \return Conexão "Dispatcher" associada ao barramento ou 'null' se não houver nenhuma conexão
-     *         associada. OpenBusContext não possui ownership dessa conexão e o mesmo não é
-     *         transferido para o código de usuário na execução desta função
-     */
-    
-    /**
-     * \brief Devolve a conexão "Dispatcher" do barramento indicado.
-     * 
-     * \param busid Identificador do barramento ao qual a conexão está associada. OpenBusContext
-     * não possui ownership dessa conexão e o mesmo não é transferido para o código de usuário na
-     * execução desta função
-     * 
-     * \return Conexão "Dispatcher" do barramento indicado, ou 'null' caso não haja nenhuma conexão
-     *         "Dispatcher" associada ao barramento indicado.
-     */
-    Connection * clearDispatcher(const char *busid);
-    
+        
     /** 
      * ORB utilizado pela conexão. 
      */
