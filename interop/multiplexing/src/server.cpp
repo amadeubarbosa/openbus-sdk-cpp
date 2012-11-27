@@ -14,15 +14,42 @@
 
 const std::string entity("interop_multiplexing_cpp_server");
 
+class CallDispatchCallback {
+public:
+  CallDispatchCallback(openbus::Connection *c1, openbus::Connection *c2) {
+    _vconn.push_back(c1);
+    _vconn.push_back(c2);
+  }
+
+  openbus::Connection * operator()(openbus::OpenBusContext &context, const char *busId, 
+                         const char *loginId, const char *operation)
+  {
+    for (std::vector<openbus::Connection *>::const_iterator it = _vconn.begin(); 
+         it != _vconn.end(); ++it) 
+    {
+      if (!strcmp(busId, (*it)->busid())) {
+        return *it;
+      }
+    }
+    std::cerr << "Conexao de despacho nao encontrada." << std::endl;
+    return 0;
+  }
+private:
+  std::vector<openbus::Connection *> _vconn;
+};
+
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
   HelloImpl(std::vector<openbus::Connection *> l) : _connVec(l) { }
   char * sayHello() {
     std::string msg;
-    for (std::vector<openbus::Connection *>::iterator it = _connVec.begin(); it != _connVec.end(); ++it) {
+    for (std::vector<openbus::Connection *>::const_iterator it = _connVec.begin();
+         it != _connVec.end(); ++it) 
+    {
       openbus::CallerChain chain = (*it)->getCallerChain();
       if (chain != openbus::CallerChain()) {
         std::cout << "Hello " << chain.caller().entity.in() << "@" << chain.busid() << std::endl;
-        msg = "Hello " + std::string(chain.caller().entity.in()) + "@" + std::string((*it)->busid()) + "!";
+        msg = "Hello " + std::string(chain.caller().entity.in()) + "@" + 
+          std::string((*it)->busid()) + "!";
         break;
       }
     }
@@ -65,7 +92,8 @@ public:
       _conn->offers()->registerService(_ctx.getIComponent(), props);
     } catch (const CORBA::Exception &e) {
       #ifdef OPENBUS_SDK_MULTITHREAD
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " << e << std::endl;
+      std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " 
+                << e << std::endl;
       #else
       std::cout << "error (CORBA::Exception): " << e << std::endl;
       #endif
@@ -138,9 +166,8 @@ int main(int argc, char** argv) {
     conn3BusA->loginByPassword(entity.c_str(), entity.c_str());
     connBusB->loginByPassword(entity.c_str(), entity.c_str());
     
-    openbusContext->setDispatcher(*conn1BusA.get());
-    openbusContext->setDispatcher(*connBusB.get());
-    
+    openbusContext->onCallDispatch(CallDispatchCallback(conn1BusA.get(), connBusB.get()));
+
     #ifdef OPENBUS_SDK_MULTITHREAD
     RegisterThread *registerThread1 = new RegisterThread(openbusContext, ctx, conn1BusA.get());
     RegisterThread *registerThread2 = new RegisterThread(openbusContext, ctx, conn2BusA.get());
