@@ -11,26 +11,23 @@
 #include "stubs/hello.h"
 #include <CORBA.h>
 
-openbus::OpenBusContext *openbusContext;
 std::auto_ptr<openbus::Connection> conn;
 scs::core::ComponentContext *ctx;
 openbus::idl_or::ServicePropertySeq props;
 const std::string entity("interop_hello_cpp_server");
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
-  HelloImpl(openbus::Connection *c) : _conn(c) { }
+  HelloImpl(openbus::OpenBusContext &c) : _ctx(c) { }
   char * sayHello() {
-    openbus::CallerChain chain = _conn->getCallerChain();
-    if (chain != openbus::CallerChain())
-      std::cout << "Hello from " << chain.caller().entity.in() << "@" << chain.busid() 
-        << std::endl;
-    else std::cout << "Nao foi possivel obter uma CallerChain." << std::endl;
-    std::string msg = "Hello " + std::string(chain.caller().entity.in()) + "!";
+    openbus::CallerChain chain = _ctx.getCallerChain();
+    assert(chain != openbus::CallerChain());
+    std::string msg = "Hello " + std::string(chain.caller().entity) + "!";
+    std::cout << msg << std::endl;
     CORBA::String_var r = CORBA::string_dup(msg.c_str());
     return r._retn();
   }
 private:
-  openbus::Connection *_conn;
+  openbus::OpenBusContext &_ctx;
 };
 
 void loginAndRegister() {
@@ -97,7 +94,7 @@ int main(int argc, char** argv) {
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
     
-    openbusContext = dynamic_cast<openbus::OpenBusContext*>
+    openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
     conn = openbusContext->createConnection(host.c_str(), port);
     openbusContext->setDefaultConnection(conn.get());
@@ -123,7 +120,7 @@ int main(int argc, char** argv) {
     property.value = "Interoperability Tests";
     props[i] = property;
 
-    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(conn.get()));
+    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(*openbusContext));
     ctx->addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
     loginAndRegister();

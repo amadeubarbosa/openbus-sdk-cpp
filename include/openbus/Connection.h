@@ -25,7 +25,6 @@
 
 namespace openbus {
   class Connection;
-  struct CallerChain;
 }
 
 #include "openbus/interceptors/ORBInitializer_impl.h"
@@ -34,17 +33,6 @@ namespace openbus {
 #include "openbus/Connection_impl.h"
 #include "openbus/util/OpenSSL.h"
 #include "openbus/OpenBusContext.h"
-
-inline bool operator==(openbus::idl_ac::LoginInfo const &lhs, openbus::idl_ac::LoginInfo const &rhs)
-{
-  return lhs.id.in() == rhs.id.in() || 
-    (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
-}
-
-inline bool operator!=(openbus::idl_ac::LoginInfo const &lhs, openbus::idl_ac::LoginInfo const &rhs)
-{
-  return !(lhs == rhs);
-}
 
 /**
 * \brief openbus
@@ -83,72 +71,6 @@ struct InvalidPropertyValue : public std::exception {
 
 class Connection;
 
-/**
- * \brief Cadeia de chamadas oriundas de um barramento.
- * 
- * Coleção de informações dos logins que originaram chamadas em cadeia através de um
- * barramento. Cadeias de chamadas representam chamadas aninhadas dentro do barramento e são úteis
- * para que os sistemas que recebam essas chamadas possam identificar se a chamada foi originada por
- * entidades autorizadas ou não.
- */
-struct CallerChain {
-  /**
-  * Barramento através do qual as chamadas foram originadas.
-  */
-  const char *busid() const { return _busid.c_str(); }
-  
-  /**
-  * Lista de informações de login de todas as entidades que realizaram chamadas que originaram a
-  * cadeia de chamadas da qual essa chamada está inclusa.  Quando essa lista é vazia isso indica
-  * que a chamada não está inclusa em uma cadeia de chamadas.
-  * 
-  * A ordem da sequência retornada é começando da fonte da cadeia até o penúltimo da cadeia na
-  * chamada. Assim, originators()[0], se existir, é quem originou a chamada de cadeia.
-  */
-  const idl_ac::LoginInfoSeq &originators() const { return _originators; }
-  
-  /**
-   * Informação de login da entidade que realizou a última chamada da cadeia.
-   */
-  const idl_ac::LoginInfo &caller() const { return _caller; }
-
-  /**
-   * \brief Construtor default que indica o valor de CallChain "vazio"
-   *
-   * O valor de um CallerChain default-constructed pode ser usado para verificar a ausencia de
-   * CallerChain da seguinte forma:
-   * 
-   * CallerChain chain = connection.getCallerChain();
-   * if(chain != CallerChain())
-   *   // Possui CallerChain
-   * else
-   *   // Nao possui CallerChain
-   *
-   */
-  CallerChain() {}
-private:
-  CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c, 
-    const idl_cr::SignedCallChain &d) 
-    : _busid(busid), _originators(b), _caller(c), _signedCallChain(d) { }
-  
-  CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
-    : _busid(busid), _originators(b), _caller(c) { }
-  
-  std::string _busid;
-  idl_ac::LoginInfoSeq _originators;
-  idl_ac::LoginInfo _caller;
-  idl_cr::SignedCallChain _signedCallChain;
-  const idl_cr::SignedCallChain *signedCallChain() const { return &_signedCallChain; }
-  void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
-  friend class Connection;
-  friend class openbus::interceptors::ClientInterceptor;
-  friend inline bool operator==(CallerChain const &lhs, CallerChain const &rhs) {
-    return lhs._busid == rhs._busid && lhs._originators == rhs._originators
-      && lhs._caller == rhs._caller;
-  }
-};
-
-inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs) { return !(lhs == rhs); }
 
 /**
  * \brief Objeto que representa uma forma de acesso a um barramento.
@@ -284,73 +206,7 @@ public:
   * @throw CORBA::Exception
   */
   bool logout();
-  
-  /**
-   * \brief Devolve a cadeia de chamadas à qual a execução corrente pertence.
-   * 
-   * Caso a contexto corrente (e.g. definido pelo 'CORBA::PICurrent') seja o contexto de execução de
-   * uma chamada remota oriunda do barramento dessa conexão, essa operação devolve um objeto que
-   * representa a cadeia de chamadas do barramento que esta chamada faz parte. Caso contrário,
-   * devolve uma cadeia de chamadas 'vazia', representada por um CallerChain 'default-constructed'.
-   *
-   * Para verificar se a cadeia retornada é válida, o seguinte idioma
-   * é usado:
-   *
-   * CallerChain chain = connection.getCallerChain()
-   * if(chain != CallerChain())
-   *   // chain é válido
-   * else
-   *   // chain é inválido
-   * 
-   * \return Cadeia da chamada em execução.
-   */
-  CallerChain getCallerChain();
-  
-  /**
-   * \brief Associa uma cadeia de chamadas ao contexto corrente.
-   * 
-   * Associa uma cadeia de chamadas ao contexto corrente, de forma que todas as chamadas remotas
-   * seguintes neste mesmo contexto sejam feitas como parte dessa cadeia de chamadas.
-   * 
-   * \param chain Cadeia de chamadas a ser associada ao contexto corrente.
-   * @throw CORBA::NO_PERMISSION {minor = NoLoginCode}
-   * @throw CORBA::NO_PERMISSION {minor = InvalidChainCode}
-   * @throw CORBA::Exception
-   */
-  void joinChain(CallerChain const& chain);
-  
-  /**
-   * \brief Faz com que nenhuma cadeia de chamadas esteja associada ao contexto corrente.
-   * 
-   * Remove a associação da cadeia de chamadas ao contexto corrente, fazendo com que todas as
-   * chamadas seguintes feitas neste mesmo contexto deixem de fazer parte da cadeia de chamadas
-   * associada previamente. Ou seja, todas as chamadas passam a iniciar novas cadeias de chamada.
-   */
-  void exitChain();
-
-  /**
-   * \brief Devolve a cadeia de chamadas associada ao contexto corrente.
-   * 
-   * Devolve um objeto que representa a cadeia de chamadas associada ao contexto corrente nesta
-   * conexão.  A cadeia de chamadas informada foi associada previamente pela operação
-   * 'joinChain'. Caso o contexto corrente não tenha nenhuma cadeia associada, essa operação devolve
-   * uma cadeia 'vazia' 'default-constructed'
-   * 
-   * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
-   *
-   * CallerChain chain = connection.getCallerChain()
-   * if(chain != CallerChain())
-   *   // chain é válido
-   * else
-   *   // chain é inválido
-   * 
-   * \return Cadeia de chamadas associada ao contexto corrente ou uma cadeia 'vazia'.
-   *
-   * @throw CORBA::Exception
-   */
-  CallerChain getJoinedChain();
-  
-	
+  	
   /**
    * \brief Estabiliza a callback a ser chamada quando o login atual se tornar inválido.
    *

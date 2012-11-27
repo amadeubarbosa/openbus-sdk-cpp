@@ -127,7 +127,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     r->set_slot(_slotId_requesterConnection, connectionAddrAny);
 
     /* Disponibilização da conexão que está recebendo esta chamada. 
-    ** Uso em Connection::getCallerChain() */
+    ** Uso em OpenBusContext::getCallerChain() */
     r->set_slot(_slotId_receiveConnection, connectionAddrAny);
 
     /* definindo a conexão atual como a conexão a ser utilizada pelas chamadas remotas a serem 
