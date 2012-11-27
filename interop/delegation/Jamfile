@@ -1,0 +1,52 @@
+project openbus/interop/delegation ;
+
+path-constant here : . ;
+
+alias hello-idl : $(here)/idl/messages.idl ;
+
+exe delegation_client
+ : src/client.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <include>$(here)/../properties_reader/include
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+
+exe delegation_broadcaster
+ : src/broadcaster.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <include>$(here)/../properties_reader/include
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+
+exe delegation_forwarder
+ : src/forwarder.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <include>$(here)/../properties_reader/include
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+
+exe delegation_messenger
+ : src/messenger.cpp /openbus//openbus
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openbus//core-idls /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <include>$(here)/../properties_reader/include
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+
+alias delegation : 
+  delegation_client delegation_broadcaster delegation_forwarder delegation_messenger ;
