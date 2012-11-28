@@ -6,7 +6,7 @@ path-constant here : . ;
 alias chain-validation-idl : $(here)/idl/chain_validation.idl ;
 
 exe chain_validation_client
- : client/client.cpp /openbus//openbus
+ : client/client.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl chain-validation-idl
  : <implicit-dependency>/openbus//core-idls
@@ -15,7 +15,7 @@ exe chain_validation_client
    <implicit-dependency>chain-validation-idl
  ;
 exe chain_validation_executive
- : executive/executive.cpp /openbus//openbus
+ : executive/executive.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl chain-validation-idl
  : <implicit-dependency>/openbus//core-idls

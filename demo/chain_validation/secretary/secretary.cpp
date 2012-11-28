@@ -11,6 +11,9 @@
 #include <boost/bind.hpp>
 #endif
 
+#include <boost/program_options.hpp>
+#include <fstream>
+
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace services = tecgraf::openbus::core::v2_0::services;
@@ -26,8 +29,7 @@ struct MessageImpl : POA_Message
     std::cout << "Relaying message " << message << std::endl;
     try
     {
-      openbus::Connection& c = *openbusContext.getRequester();
-      c.joinChain(c.getCallerChain());
+      openbusContext.joinChain(openbusContext.getCallerChain());
       executive_message->sendMessage(message);
       std::cout << "Execution succesful" << std::endl;
     }
@@ -102,6 +104,32 @@ int main(int argc, char** argv)
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
+    CORBA::OctetSeq private_key;
+    {
+      namespace po = boost::program_options;
+      po::options_description desc("Allowed options");
+      desc.add_options()
+        ("help", "This help message")
+        ("private-key", po::value<std::string>(), "Path to private key")
+        ;
+      po::variables_map vm;
+      po::store(po::parse_command_line(argc, argv, desc), vm);
+      po::notify(vm);
+      
+      if(vm.count("help") || !vm.count("private-key"))
+      {
+        std::cout << desc << std::endl;
+        return 0;
+      }
+      std::string private_key_filename = vm["private-key"].as<std::string>();
+      std::ifstream f(private_key_filename.c_str());
+      f.seekg(0, std::ios::end);
+      std::size_t size = f.tellg();
+      f.seekg(0, std::ios::beg);
+      private_key.length(size);
+      f.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(private_key.get_buffer())), size);
+    }
+
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread orb_thread(boost::bind(&run_orb, orb));
 #endif
@@ -113,7 +141,7 @@ int main(int argc, char** argv)
     std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
     try
     {
-      conn->loginByPassword("secretary", "secretary");
+      conn->loginByCertificate("secretary", private_key);
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
     {

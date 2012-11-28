@@ -6,7 +6,7 @@ path-constant demo-hello : ../hello ;
 alias hello-idl : $(demo-hello)/idl/hello.idl ;
 
 exe audit_client
- : client/client.cpp /openbus//openbus
+ : client/client.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
@@ -15,7 +15,7 @@ exe audit_client
    <implicit-dependency>hello-idl
  ;
 exe audit_server
- : server/server.cpp /openbus//openbus
+ : server/server.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
@@ -25,7 +25,7 @@ exe audit_server
  ;
 
 exe audit_proxy
- : proxy/proxy.cpp /openbus//openbus
+ : proxy/proxy.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
