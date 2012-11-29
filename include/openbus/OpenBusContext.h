@@ -167,7 +167,7 @@ public:
    * 
    * Define uma conexão a ser utilizada como "Requester" e "Dispatcher" de chamadas sempre que não
    * houver uma conexão "Requester" e "Dispatcher" específica definida para o caso específico,
-   * como é feito através das operações 'setRequester' e 'setDispatcher'.
+   * como é feito através das operações 'setCurrentConnection' e 'setDispatcher'.
    * 
    * @param[in] conn Conexão a ser definida como conexão padrão. O 'ownership' da conexão não é
    * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
@@ -197,7 +197,7 @@ public:
    * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
    * antes de destruida
    */
-  void setRequester(Connection *conn);
+  Connection *setCurrentConnection(Connection *);
    
   /**
    * \brief Devolve a conexão associada ao contexto corrente.
@@ -208,7 +208,7 @@ public:
    * ownership dessa conexão e o mesmo não é transferido para o código de usuário na execução
    * desta função
    */
-  Connection *getRequester() const;
+  Connection *getCurrentConnection() const;
        
   /**
    * \brief Devolve a cadeia de chamadas à qual a execução corrente pertence.
@@ -281,6 +281,9 @@ public:
   CORBA::ORB * orb() const {
     return _orb;
   }
+  
+  idl_or::OfferRegistry_ptr getOfferRegistry() const;
+  idl_ac::LoginRegistry_ptr getLoginRegistry() const;
 private:
   /**
    * OpenBusContext deve ser adquirido através de:

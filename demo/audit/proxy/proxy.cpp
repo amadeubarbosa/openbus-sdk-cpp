@@ -153,7 +153,7 @@ int main(int argc, char** argv)
     props[0].value = "server";
     props[1].name  = "openbus.component.facet";
     props[1].value = "hello";
-    offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     // Pegando uma oferta valida
     simple::Hello_ptr hello = ::get_hello(offers);
     if(!CORBA::is_nil(hello))
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
       properties.length(1);
       properties[0].name = "offer.domain";
       properties[0].value = "Demos";
-      conn->offers()->registerService(hello_component.getIComponent(), properties);
+      openbusContext->getOfferRegistry()->registerService(hello_component.getIComponent(), properties);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
       orb_thread.join();

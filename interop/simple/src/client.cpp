@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     props[i].value = "Interoperability Tests";
     props[i+1].name  = "openbus.component.interface";
     props[i+1].value = "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
-    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     for (CORBA::ULong idx = 0; idx < offers->length(); ++idx) {
       CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 

@@ -188,7 +188,7 @@ int main(int argc, char** argv)
     {
       try
       {
-        conn->offers()->registerService(clock_component.getIComponent(), properties);
+        openbusContext->getOfferRegistry()->registerService(clock_component.getIComponent(), properties);
         break;
       }
       catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)

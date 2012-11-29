@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
   openbusContext->setDefaultConnection(conn.get());
   
   openbus::idl_or::ServicePropertySeq properties;
-  openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(properties);
+  openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);
 
   if(offers->length() == 1)
   {

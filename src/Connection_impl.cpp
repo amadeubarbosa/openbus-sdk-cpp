@@ -81,7 +81,7 @@ idl_ac::ValidityTime RenewLogin::renew() {
 
 void RenewLogin::_run(void*) {
   log_scope l(log.general_logger(), debug_level, "RenewLogin::_run");
-  _openbusContext->setRequester(_conn);
+  _openbusContext->setCurrentConnection(_conn);
   _mutex.lock();
   do {
     while (!_pause && _condVar.timedwait(_validityTime*1000)) {
@@ -146,13 +146,13 @@ idl_ac::ValidityTime RenewLogin::renew(CORBA::Dispatcher *dispatcher) {
   idl_ac::ValidityTime validityTime = _validityTime;
   Connection *c = 0;
   try {
-    c = _openbusContext->getRequester();
-    _openbusContext->setRequester(_conn);
+    c = _openbusContext->getCurrentConnection();
+    _openbusContext->setCurrentConnection(_conn);
     validityTime = _access_control->renew();
-    _openbusContext->setRequester(c);
+    _openbusContext->setCurrentConnection(c);
   } catch (CORBA::Exception &) {
     l.level_vlog(warning_level, "Falha na renovacao da credencial.");
-    _openbusContext->setRequester(c);
+    _openbusContext->setCurrentConnection(c);
   }
   return validityTime;
 }

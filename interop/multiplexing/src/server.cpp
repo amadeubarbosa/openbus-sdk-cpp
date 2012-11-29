@@ -81,8 +81,8 @@ public:
       property.name = "offer.domain";
       property.value = "Interoperability Tests";
       props[0] = property;
-      _openbusContext->setRequester(_conn);
-      _conn->offers()->registerService(_ctx.getIComponent(), props);
+      _openbusContext->setCurrentConnection(_conn);
+      _openbusContext->getOfferRegistry()->registerService(_ctx.getIComponent(), props);
     } catch (const CORBA::Exception &e) {
       #ifdef OPENBUS_SDK_MULTITHREAD
       std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " 

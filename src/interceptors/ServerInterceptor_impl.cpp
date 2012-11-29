@@ -117,7 +117,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
   if (hasContext && (any >>= credential)) {
     Connection *conn = getDispatcher(*_openbusContext, credential.bus, credential.login, operation);
 
-    /* disponibilizando a conexão atual para OpenBusContext::getRequester() */
+    /* disponibilizando a conexão atual para OpenBusContext::getCurrentConnection() */
     size_t bufSize = sizeof(Connection*);
     unsigned char buf[bufSize];
     memcpy(buf, &conn, bufSize);
@@ -132,7 +132,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
 
     /* definindo a conexão atual como a conexão a ser utilizada pelas chamadas remotas a serem 
     ** realizadas por este ponto de interceptação */
-    _openbusContext->setRequester(conn);
+    _openbusContext->setCurrentConnection(conn);
 
     AutoLock conn_mutex(&conn->_mutex);
     if (!conn->_login())

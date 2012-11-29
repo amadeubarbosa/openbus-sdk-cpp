@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     props[0].value = "proxy";
     props[1].name  = "openbus.component.facet";
     props[1].value = "hello";
-    offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     // Pegando uma oferta valida
     simple::Hello_ptr hello = ::get_hello(offers);
     if(!CORBA::is_nil(hello))

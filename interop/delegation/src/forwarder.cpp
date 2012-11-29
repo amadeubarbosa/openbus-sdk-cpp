@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
     properties[0].value = "Interoperability Tests";
     properties[1].name  = "openbus.component.interface";
     properties[1].value = tecgraf::openbus::interop::delegation::_tc_Messenger->id();
-    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(properties);
+    openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);
     
     if (offers->length() > 0)
     {
@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
       props[0].name = "offer.domain";
       props[0].value = "Interoperability Tests";
 
-      conn->offers()->registerService(forwarder_component.getIComponent(), props);
+      openbusContext->getOfferRegistry()->registerService(forwarder_component.getIComponent(), props);
       std::cout << "Forwarder no ar" << std::endl;
       runThread->wait();
     }

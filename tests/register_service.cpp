@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     property.name = "offer.domain";
     property.value = "OpenBus Demos";
     props[0] = property;
-    conn->offers()->registerService(ctx.getIComponent(), props);
+    openbusContext->getOfferRegistry()->registerService(ctx.getIComponent(), props);
   }
 
   conn->logout();

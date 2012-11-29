@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
 
     ::loginWithServerCredentials("interop_delegation_cpp_messenger", *conn);
 
-    conn->offers()->registerService(messenger_component.getIComponent(), props);
+    openbusContext->getOfferRegistry()->registerService(messenger_component.getIComponent(), props);
     std::cout << "Messenger no ar" << std::endl;
     runThread->wait();
   } catch(std::exception const& e) {

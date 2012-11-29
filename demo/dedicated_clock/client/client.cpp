@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 
   do
   {
-    offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     // Pegando uma oferta valida
     demo::Clock_ptr clock = ::get_clock(offers);
     if(!CORBA::is_nil(clock))

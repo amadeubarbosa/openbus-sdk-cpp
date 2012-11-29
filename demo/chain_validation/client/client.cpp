@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     props[0].value = "secretary";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     // Pegando uma oferta valida
     ::Message_var message = ::get_message(offers);
     if(!CORBA::is_nil(message))
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
     props[0].value = "executive";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    offers = conn->offers()->findServices(props);
+    offers = openbusContext->getOfferRegistry()->findServices(props);
     // Pegando uma oferta valida
     message = ::get_message(offers);
     if(!CORBA::is_nil(message))

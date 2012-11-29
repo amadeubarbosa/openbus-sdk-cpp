@@ -29,7 +29,7 @@ struct MessageImpl : POA_Message
     {
       openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
         (orb->resolve_initial_references("OpenBusContext"));
-      openbus::Connection& c = *openbusContext->getRequester();
+      openbus::Connection& c = *openbusContext->getCurrentConnection();
       c.joinChain(c.getCallerChain());
       executive_message->sendMessage(message);
       std::cout << "Execution succesful" << std::endl;

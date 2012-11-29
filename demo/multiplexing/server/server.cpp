@@ -115,7 +115,7 @@ int main(int argc, char** argv)
     german_greetings_component.addFacet
       ("greetings", _tc_Greetings->id(), &german_greetings_servant);
     
-    openbusContext->setRequester(conn1.get());
+    openbusContext->setCurrentConnection(conn1.get());
     offer_registry::ServicePropertySeq properties;
     properties.length(2);
     properties[0].name = "offer.domain";
@@ -124,12 +124,12 @@ int main(int argc, char** argv)
     properties[1].value = "english";
     conn1->offers()->registerService(english_greetings_component.getIComponent(), properties);
 
-    openbusContext->setRequester(conn2.get());
+    openbusContext->setCurrentConnection(conn2.get());
     properties[1].name = "language";
     properties[1].value = "portuguese";
     conn2->offers()->registerService(portuguese_greetings_component.getIComponent(), properties);
 
-    openbusContext->setRequester(conn3.get());
+    openbusContext->setCurrentConnection(conn3.get());
     properties[1].name = "language";
     properties[1].value = "german";
     conn3->offers()->registerService(german_greetings_component.getIComponent(), properties);

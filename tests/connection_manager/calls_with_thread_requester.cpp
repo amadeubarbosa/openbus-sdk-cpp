@@ -11,10 +11,10 @@ int main(int argc, char* argv[])
   CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenBusContext");
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
   std::auto_ptr<openbus::Connection> conn(openbusContext->createConnection(cfg.host().c_str(), cfg.port()));
-  openbusContext->setRequester(conn.get());
+  openbusContext->setCurrentConnection(conn.get());
   
   openbus::idl_or::ServicePropertySeq properties;
-  openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(properties);
+  openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);
 
   if(offers->length() == 1)
   {

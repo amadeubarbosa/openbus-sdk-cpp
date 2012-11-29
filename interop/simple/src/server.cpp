@@ -39,7 +39,7 @@ void loginAndRegister() {
   // 
   // conn->loginByCertificate("interop_hello_cpp_server", openbus::openssl::PrvKey2byteSeq(privateKey));
   conn->loginByPassword(entity.c_str(), entity.c_str());
-  conn->offers()->registerService(ctx->getIComponent(), props);
+  openbusContext->getOfferRegistry()->registerService(ctx->getIComponent(), props);
 }
 
 void onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l) {

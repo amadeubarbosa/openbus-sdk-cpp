@@ -251,12 +251,12 @@ std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> Connection::startSharedAuth(
   Connection *c = 0;
   idl_ac::LoginProcess_ptr loginProcess;
   try {
-    c = _openbusContext->getRequester();
-    _openbusContext->setRequester(this);
+    c = _openbusContext->getCurrentConnection();
+    _openbusContext->setCurrentConnection(this);
     loginProcess = _access_control->startLoginBySharedAuth(challenge);
-    _openbusContext->setRequester(c);
+    _openbusContext->setCurrentConnection(c);
   } catch (...) {
-    _openbusContext->setRequester(c);
+    _openbusContext->setCurrentConnection(c);
     throw;
   }
   CORBA::OctetSeq secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
@@ -338,14 +338,14 @@ bool Connection::_logout(bool local) {
     if (!local) {
       Connection *c = 0;
       try {
-        c = _openbusContext->getRequester();
-        _openbusContext->setRequester(this);
+        c = _openbusContext->getCurrentConnection();
+        _openbusContext->setCurrentConnection(this);
         _access_control->logout();
         sucess = true;
-        _openbusContext->setRequester(c);
+        _openbusContext->setCurrentConnection(c);
       } catch (...) { 
         sucess = false; 
-        _openbusContext->setRequester(c);
+        _openbusContext->setCurrentConnection(c);
       }
     }
     m.lock();

@@ -243,11 +243,6 @@ public:
    */
   const char *busid();
   
-  /**
-   * Referência ao serviço núcleo de registro de ofertas do barramento ao qual a conexão se refere.
-   */
-  idl_or::OfferRegistry_var offers() const { return _offer_registry; }
-  
   ~Connection();
 private:
   /**
@@ -305,6 +300,16 @@ private:
   openssl::pkey _buskey;
   LegacyDelegate _legacyDelegate;
   /**/
+  
+  idl_or::OfferRegistry_var getOfferRegistry() const
+  { 
+    return _offer_registry;
+  }
+
+  idl_ac::LoginRegistry_var getLoginRegistry() const
+  {
+    return _login_registry;
+  }
   
   friend class openbus::interceptors::ServerInterceptor;
   friend class openbus::interceptors::ClientInterceptor;

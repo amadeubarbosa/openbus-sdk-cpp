@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     properties.length(1);
     properties[0].name = "offer.domain";
     properties[0].value = "Demos";
-    conn->offers()->registerService(hello_component.getIComponent(), properties);
+    openbusContext->getOfferRegistry()->registerService(hello_component.getIComponent(), properties);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();

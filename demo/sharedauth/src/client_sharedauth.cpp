@@ -235,7 +235,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+      offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
       // Pegando uma oferta valida
       ::try_call_with_found_reference(offers, sayHello(try_again));
       continue;

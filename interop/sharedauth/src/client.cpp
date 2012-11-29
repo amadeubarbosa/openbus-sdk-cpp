@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     props[1].name  = "offer.domain";
     props[1].value = "Interoperability Tests";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     if (offers->length())
     {
       CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName(

@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     property.name = "offer.domain";
     property.value = "OpenBus Demos";
     props[0] = property;
-    conn->offers()->registerService(ctx.getIComponent(), props);
+    openbusContext->getOfferRegistry()->registerService(ctx.getIComponent(), props);
 
     props.length(3);
     props[0].name  = "openbus.offer.entity";
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
     props[1].value = "hello";
     props[2].name  = "offer.domain";
     props[2].value = "OpenBus Demos";
-    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     assert (offers->length() == 1);
     CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
     Hello* hello = Hello::_narrow(o);

@@ -81,7 +81,7 @@ int main(int argc, char** argv)
       props[1].value = entities[i];
       props[2].name  = "language";
       props[2].value = languages[i];
-      offer_registry::ServiceOfferDescSeq_var offers = conn->offers()->findServices(props);
+      offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
       // Pegando uma oferta valida
       ::Greetings_ptr greetings = ::get_greetings(offers);
       if(!CORBA::is_nil(greetings))

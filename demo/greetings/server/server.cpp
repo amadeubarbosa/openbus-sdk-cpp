@@ -244,19 +244,19 @@ int main(int argc, char** argv)
   properties[1].name = "language";
   properties[1].value = "english";
   if(!registerService(english_greetings_component.getIComponent(), properties
-                      , conn->offers()))
+                      , openbusContext->getOfferRegistry()))
     return -1;
 
   properties[1].name = "language";
   properties[1].value = "portuguese";
   if(!registerService(portuguese_greetings_component.getIComponent(), properties
-                      , conn->offers()))
+                      , openbusContext->getOfferRegistry()))
     return -1;
 
   properties[1].name = "language";
   properties[1].value = "german";
   if(!registerService(german_greetings_component.getIComponent(), properties
-                      , conn->offers()))
+                      , openbusContext->getOfferRegistry()))
     return -1;
 
 #ifdef OPENBUS_SDK_MULTITHREAD

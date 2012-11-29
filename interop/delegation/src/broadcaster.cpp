@@ -27,12 +27,12 @@ private:
 
 struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegation::Broadcaster
 {
-  BroadcasterImpl(openbus::Connection& c, delegation::Messenger_var messenger)
-    : connection(c), messenger(messenger) {}
+  BroadcasterImpl(openbus::OpenBusContext& c, delegation::Messenger_var messenger)
+    : ctx(c), messenger(messenger) {}
 
   void post(const char* message)
   {
-    connection.exitChain();
+    ctx.exitChain();
     boost::unique_lock<boost::mutex> lock(mutex);
     for(std::vector<std::string>::const_iterator
           first = subscribers.begin(), last = subscribers.end()
@@ -44,7 +44,7 @@ struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegatio
 
   void subscribe()
   {
-    std::string from(connection.getCallerChain().caller().entity);
+    std::string from(ctx.getCallerChain().caller().entity);
     boost::unique_lock<boost::mutex> lock(mutex);
     std::vector<std::string>::iterator iterator
       = std::find(subscribers.begin(), subscribers.end(), from);
@@ -55,14 +55,14 @@ struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegatio
   void unsubscribe()
   {
     boost::unique_lock<boost::mutex> lock(mutex);
-    std::string from(connection.getCallerChain().caller().entity);
+    std::string from(ctx.getCallerChain().caller().entity);
     std::vector<std::string>::iterator iterator
       = std::find(subscribers.begin(), subscribers.end(), from);
     if(iterator != subscribers.end())
       subscribers.erase(iterator);
   }
 
-  openbus::Connection& connection;
+  openbus::OpenBusContext& ctx;
   delegation::Messenger_var messenger;
   std::vector<std::string> subscribers;
   boost::mutex mutex;
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
     properties[0].value = "Interoperability Tests";
     properties[1].name  = "openbus.component.interface";
     properties[1].value = tecgraf::openbus::interop::delegation::_tc_Messenger->id();
-    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(properties);
+    openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);
     
     if (offers->length() > 0)
     {
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
       componentId.platform_spec = "C++";
       scs::core::ComponentContext broadcaster_component(openbusContext->orb(), componentId);
     
-      BroadcasterImpl broadcaster_servant(*conn.get(), m);
+      BroadcasterImpl broadcaster_servant(*openbusContext, m);
       broadcaster_component.addFacet("broadcaster", delegation::_tc_Broadcaster->id(), &broadcaster_servant);
     
       openbus::idl_or::ServicePropertySeq props;
@@ -136,9 +136,11 @@ int main(int argc, char** argv) {
       props[0].name = "offer.domain";
       props[0].value = "Interoperability Tests";
 
-      conn->offers()->registerService(broadcaster_component.getIComponent(), props);
+      openbusContext->getOfferRegistry()->registerService(broadcaster_component.getIComponent(), props);
       std::cout << "Broadcaster no ar" << std::endl;
+      #ifdef OPENBUS_SDK_MULTITHREAD
       runThread->wait();
+      #endif
     }
     else
     {

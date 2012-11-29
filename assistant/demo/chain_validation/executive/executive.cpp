@@ -26,7 +26,7 @@ struct MessageImpl : public POA_Message
   {
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
-    openbus::Connection* c = openbusContext->getRequester();
+    openbus::Connection* c = openbusContext->getCurrentConnection();
     openbus::CallerChain chain = c->getCallerChain();
     if(chain != openbus::CallerChain()
        && !std::strcmp(chain.caller().entity, "secretary"))

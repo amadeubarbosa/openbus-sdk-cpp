@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
     properties[0].value = "Interoperability Tests";
     properties[1].name  = "openbus.component.interface";
     properties[1].value = tecgraf::openbus::interop::delegation::_tc_Messenger->id();
-    openbus::idl_or::ServiceOfferDescSeq_var offers = conn->offers()->findServices(properties);
+    openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);
     if (offers->length() > 0)
     {
       CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("messenger");
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
         m = tecgraf::openbus::interop::delegation::Messenger::_narrow(o);
       
       properties[1].value = tecgraf::openbus::interop::delegation::_tc_Forwarder->id();
-      offers = conn->offers()->findServices(properties);
+      offers = openbusContext->getOfferRegistry()->findServices(properties);
       if(offers->length() > 0)
       {
         o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("forwarder");
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
           forwarder = tecgraf::openbus::interop::delegation::Forwarder::_narrow(o);
 
         properties[1].value = tecgraf::openbus::interop::delegation::_tc_Broadcaster->id();
-        offers = conn->offers()->findServices(properties);
+        offers = openbusContext->getOfferRegistry()->findServices(properties);
         if(offers->length() > 0)
         {
           o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("broadcaster");
