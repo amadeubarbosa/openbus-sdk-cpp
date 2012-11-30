@@ -19,19 +19,25 @@
   #include <it_ts/mutex.h>
   #include "stubs/orbix/access_control_service.hh"
   #include "stubs/orbix/registry_service.hh"
+  #ifdef OPENBUS_SDK_FT_ENABLED
   #include "stubs/orbix/fault_tolerance.hh"
+  #endif
 #else
   #include <CORBA.h>
   #include "stubs/mico/access_control_service.h"
   #include "stubs/mico/registry_service.h"
+  #ifdef OPENBUS_SDK_FT_ENABLED
   #include "stubs/mico/fault_tolerance.h"
+  #endif
 #endif
 
 #include <stdexcept>
 #include <string>
 #include <map>
 #include <set>
+#ifdef OPENBUS_SDK_FT_ENABLED
 #include <lua.hpp>
+#endif
 
 /**
  * \brief Stubs dos serviços básicos.
@@ -122,6 +128,7 @@ private:
    */
   static PortableServer::POA_var poa;
 
+  #ifdef OPENBUS_SDK_FT_ENABLED
   /**
    * Máquina virtual de Lua.
    */
@@ -131,6 +138,7 @@ private:
    * Nome do arquivo de configuração das réplicas.
    */
   static char *FTConfigFilename;
+  #endif
 
   /**
    * Parâmetro argc da linha de comando. 
@@ -162,10 +170,12 @@ private:
    */
   scs::core::IComponent_var iComponentAccessControlService;
 
+  #ifdef OPENBUS_SDK_FT_ENABLED
   /**
    * Ponteiro para o stub do serviço de tolerância a falhas.
    */
   tecgraf::openbus::fault_tolerance::v1_05::IFaultTolerantService_var iFaultTolerantService;
+  #endif
 
   /**
    * Gerenciador do POA. 
@@ -340,14 +350,14 @@ private:
     static RunThread *runThread;
 #endif
 #endif
-
+    Openbus();
+    #ifdef OPENBUS_SDK_FT_ENABLED
     /**
      * Flag que informa se o mecanismo de tolerância a falhas está ativado.
      */
     bool faultToleranceEnable;
-
-    Openbus();
     friend class FaultToleranceManager;
+    #endif
   public:
 
     static logger::Logger *logger;
@@ -641,6 +651,7 @@ private:
      */
     bool isInterceptable(std::string interfaceRepID, std::string method);
 
+    #ifdef OPENBUS_SDK_FT_ENABLED
     /**
      * Consulta se o mecanismo de tolerancia a falhas está ativado.
      *
@@ -648,6 +659,7 @@ private:
      * caso contrario.
      */
     bool isFaultToleranceEnable();
+    #endif
   };
 }
 

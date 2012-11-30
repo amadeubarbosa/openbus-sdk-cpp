@@ -31,7 +31,9 @@ else
         ${OPENBUSLIB}/liblogger-singlethread$(LIB_DEBUG).a
 endif
 
+ifeq "$(OPENBUS_SDK_FT_ENABLED)" "Yes"
 USE_LUA51= YES
+endif
 USE_NODEPEND= Yes
 
 SRC= server.cpp \

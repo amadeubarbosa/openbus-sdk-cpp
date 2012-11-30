@@ -2,7 +2,6 @@
 ** openbus.cpp
 */
 
-#include <lua.hpp>
 extern "C" {
   #include "auxiliar.h"
   #include <oilall.h>

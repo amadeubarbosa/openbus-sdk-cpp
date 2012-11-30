@@ -17,10 +17,12 @@ namespace openbus {
       Openbus::logger->log(logger::INFO, "ClientInterceptor::ClientInterceptor() BEGIN");
       Openbus::logger->indent();
       cdr_codec = pcdr_codec;
+      #ifdef OPENBUS_SDK_FT_ENABLED
       faultToleranceManager = FaultToleranceManager::getInstance();
       if (Openbus::FTConfigFilename) {
         faultToleranceManager->loadConfig(Openbus::FTConfigFilename);
       }
+      #endif
       Openbus::logger->dedent(logger::INFO, "ClientInterceptor::ClientInterceptor() END");
     }
 
@@ -84,7 +86,7 @@ namespace openbus {
 
     void ClientInterceptor::receive_exception( PortableInterceptor::ClientRequestInfo_ptr ri ) 
     {
-    #if 0
+    #ifdef OPENBUS_SDK_FT_ENABLED
       Openbus::logger->log(logger::INFO, "ClientInterceptor::receive_exception() BEGIN");
       Openbus::logger->indent();
       stringstream out;

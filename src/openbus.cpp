@@ -32,12 +32,16 @@
 namespace openbus {
   logger::Logger* Openbus::logger  = 0;
   char* Openbus::debugFile = 0;
+  #ifdef OPENBUS_SDK_FT_ENABLED
   char* Openbus::FTConfigFilename = 0;
+  #endif
   bool Openbus::orbRunning = true;
   interceptors::ORBInitializerImpl* Openbus::ini = 0;
   CORBA::ORB_var Openbus::orb = CORBA::ORB::_nil();
   PortableServer::POA_var Openbus::poa = PortableServer::POA::_nil();
+  #ifdef OPENBUS_SDK_FT_ENABLED
   lua_State* Openbus::luaState = 0;
+  #endif
   Openbus* Openbus::bus = 0;
   Openbus::LeaseExpiredCallback* Openbus::_leaseExpiredCallback = 0;
 #ifdef OPENBUS_ORBIX
@@ -310,9 +314,11 @@ void Openbus::RenewLogin::run() {
         } else if (!strcmp(credentialValidationPolicyStr, "CACHED")) { 
           credentialValidationPolicy = interceptors::CACHED;
         }
+      #ifdef OPENBUS_SDK_FT_ENABLED
       } else if (!strcmp(_argv[idx], "-OpenbusFTConfigFilename")) {
         faultToleranceEnable = true;
         FTConfigFilename = _argv[++idx];
+      #endif
       } else if (!strcmp(_argv[idx], "-OpenbusValidationTime")) {
           ini->getServerInterceptor()->setValidationTime(strtoul(_argv[++idx], 0, 10));
       } 
@@ -350,7 +356,9 @@ void Openbus::RenewLogin::run() {
   }
 
   void Openbus::newState() {
+    #ifdef OPENBUS_SDK_FT_ENABLED
     faultToleranceEnable = false;
+    #endif
     debugLevel = logger::OFF;
     connectionState = DISCONNECTED;
     credential = 0;
@@ -365,14 +373,16 @@ void Openbus::RenewLogin::run() {
   }
 
   Openbus::Openbus() {
+    #ifdef OPENBUS_SDK_FT_ENABLED
     luaState = lua_open();
     luaL_openlibs(luaState);
-  #ifdef OPENBUS_ORBIX
+    #ifdef OPENBUS_ORBIX
     luaopen_IOR(luaState);
-  #endif
-  #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
+    #endif
+    #endif
+    #if (!OPENBUS_ORBIX && OPENBUS_SDK_MULTITHREAD)
     MICOMT::Thread::create_key(threadKey, 0);
-  #endif
+    #endif
     newState();
     credentialValidationPolicy = openbus::interceptors::ALWAYS;
     registerInterceptors();
@@ -645,9 +655,11 @@ void Openbus::RenewLogin::run() {
       "IDL:tecgraf/openbus/core/v1_05/access_control_service/IAccessControlService:1.0");
     iAccessControlService = 
       tecgraf::openbus::core::v1_05::access_control_service::IAccessControlService::_narrow(objACS);
+    #ifdef OPENBUS_SDK_FT_ENABLED
     CORBA::Object_var objFT = iComponentAccessControlService->getFacet(
       "IDL:tecgraf/openbus/fault_tolerance/v1_05/IFaultTolerantService:1.0");
     iFaultTolerantService = tecgraf::openbus::fault_tolerance::v1_05::IFaultTolerantService::_narrow(objFT);
+    #endif
     logger->dedent(logger::INFO, "Openbus::createProxyToIAccessControlService() END");
   }
 
@@ -1063,7 +1075,9 @@ void Openbus::RenewLogin::run() {
     return true;
   }
 
+  #ifdef OPENBUS_SDK_FT_ENABLED
   bool Openbus::isFaultToleranceEnable() {
     return faultToleranceEnable;
   }
+  #endif
 }

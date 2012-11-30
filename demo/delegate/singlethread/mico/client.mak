@@ -25,7 +25,9 @@ SLIB= ${OPENBUSLIB}/libopenbusmicoST.a \
       ${OPENBUSLIB}/libscsmicoST.a \
       ${OPENBUSLIB}/liblogger.a
 
+ifeq "$(OPENBUS_SDK_FT_ENABLED)" "Yes"
 USE_LUA51= YES
+endif
 USE_NODEPEND= Yes
 
 SRC= client.cpp \

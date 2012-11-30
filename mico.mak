@@ -84,7 +84,6 @@ else
   LIBS= mico${MICOVERSION} scs-micosinglethread$(LIB_DEBUG) crypto dl logger-singlethread$(LIB_DEBUG)
 endif
 
-USE_LUA51= YES
 USE_NODEPEND= YES
 
 SRC= src/interceptors/ClientInterceptor.cpp \
@@ -93,11 +92,14 @@ SRC= src/interceptors/ClientInterceptor.cpp \
      stubs/mico/access_control_service.cc \
      stubs/mico/registry_service.cc \
      stubs/mico/session_service.cc \
-     stubs/mico/fault_tolerance.cc \
      stubs/mico/core.cc \
      src/openbus.cpp \
-     src/util/Helper.cpp \
-     src/FaultToleranceManager.cpp
+     src/util/Helper.cpp
+
+ifeq "$(OPENBUS_SDK_FT_ENABLED)" "Yes"
+  SRC+= stubs/mico/fault_tolerance.cc src/FaultToleranceManager.cpp
+  USE_LUA51= YES
+endif
 
 STUBS= stubs/mico/core.h stubs/mico/core.cc \
 stubs/mico/scs.h \
