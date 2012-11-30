@@ -445,28 +445,4 @@ idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOf
   return result_offers;
 }
 
-CallerChain AssistantImpl::getCallerChain()
-{
-  assistant::assistant_detail::wait_login(state);
-  return state->connection->getCallerChain();
-}
-
-void AssistantImpl::joinChain(CallerChain chain)
-{
-  assistant::assistant_detail::wait_login(state);
-  return state->connection->joinChain(chain);
-}
-
-void AssistantImpl::exitChain()
-{
-  assistant::assistant_detail::wait_login(state);
-  return state->connection->exitChain();
-}
-
-CallerChain AssistantImpl::getJoinedChain()
-{
-  assistant::assistant_detail::wait_login(state);
-  return state->connection->getJoinedChain();
-}
-
 } }

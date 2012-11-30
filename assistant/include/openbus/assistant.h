@@ -495,10 +495,6 @@ public:
     return state->logging;
   }
 
-  CallerChain getCallerChain();
-  void joinChain(CallerChain chain);
-  void exitChain();
-  CallerChain getJoinedChain();
 #ifndef OPENBUS_ASSISTANT_DOXYGEN
 protected:
   friend class assistant_access;
