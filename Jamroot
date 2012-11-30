@@ -274,7 +274,7 @@ rule stage-demos-location ( requirements * )
 local all-demos = [ MATCH demo/(.*)/Jamfile : [ glob demo/*/Jamfile ] ] ;
 for local d in $(all-demos)
 {
-  install stage-demo-$(d) : $(d) : <conditional>@stage-demos-location
+  install stage-demo-$(d) : demo/$(d)//$(d) : <conditional>@stage-demos-location
    : <openbus-stage-demo-name>$(d) ;
   explicit stage-demo-$(d) ;
 }
