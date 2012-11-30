@@ -6,7 +6,7 @@ path-constant here : . ;
 alias greetings-idl : $(here)/idl/greetings.idl ;
 
 exe multiplexing_client
- : client/client.cpp /openbus//openbus
+ : client/client.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl greetings-idl
  : <implicit-dependency>/openbus//core-idls
@@ -15,7 +15,7 @@ exe multiplexing_client
    <implicit-dependency>greetings-idl
  ;
 exe multiplexing_server
- : server/server.cpp /openbus//openbus
+ : server/server.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
    /openbus//core-idls /openssl//openssl greetings-idl
  : <implicit-dependency>/openbus//core-idls
