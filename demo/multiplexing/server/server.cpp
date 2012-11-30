@@ -37,6 +37,21 @@ void run_orb(CORBA::ORB_var orb)
 }
 #endif
 
+struct call_dispatcher
+{
+  openbus::Connection* c;
+
+  call_dispatcher(openbus::Connection* c)
+    : c(c) {}
+
+  typedef openbus::Connection* result_type;
+  result_type operator()(openbus::OpenBusContext& context, const char* bus_id
+                         , const char* login_id, const char* operation) const
+  {
+    return c;
+  }
+};
+
 int main(int argc, char** argv)
 {
   try
@@ -97,7 +112,7 @@ int main(int argc, char** argv)
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    openbusContext->setDispatcher(*conn2);
+    openbusContext->onCallDispatch(call_dispatcher(conn2.get()));
 
     scs::core::ComponentId componentId = { "Greetings", '1', '0', '0', "" };
     scs::core::ComponentContext english_greetings_component(orb, componentId);
@@ -122,17 +137,17 @@ int main(int argc, char** argv)
     properties[0].value = "Demos";
     properties[1].name = "language";
     properties[1].value = "english";
-    conn1->offers()->registerService(english_greetings_component.getIComponent(), properties);
+    openbusContext->getOfferRegistry()->registerService(english_greetings_component.getIComponent(), properties);
 
     openbusContext->setCurrentConnection(conn2.get());
     properties[1].name = "language";
     properties[1].value = "portuguese";
-    conn2->offers()->registerService(portuguese_greetings_component.getIComponent(), properties);
+    openbusContext->getOfferRegistry()->registerService(portuguese_greetings_component.getIComponent(), properties);
 
     openbusContext->setCurrentConnection(conn3.get());
     properties[1].name = "language";
     properties[1].value = "german";
-    conn3->offers()->registerService(german_greetings_component.getIComponent(), properties);
+    openbusContext->getOfferRegistry()->registerService(german_greetings_component.getIComponent(), properties);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
