@@ -11,16 +11,18 @@
 
 struct hello_impl : public POA_Hello
 {
-  openbus::Connection& conn;
+  CORBA::ORB_var orb;
 
-  hello_impl(openbus::Connection& conn
+  hello_impl(CORBA::ORB_var orb
              , bool& servant_called)
-    : conn(conn), servant_called(servant_called)
+    : orb(orb), servant_called(servant_called)
   {}
 
   void sayHello()
   {
-    const char* caller = conn.getCallerChain().caller().entity;
+    openbus::OpenBusContext& openbusContext = *dynamic_cast<openbus::OpenBusContext*>
+      (orb->resolve_initial_references("OpenBusContext"));
+    const char* caller = openbusContext.getCallerChain().caller().entity;
     std::cout << "Hello from '" << caller << "'." << std::endl;
     servant_called = true;
   }  
@@ -65,7 +67,7 @@ int main(int argc, char** argv)
     scs::core::ComponentContext ctx(openbusContext->orb(), componentId);
 
     bool servant_called = false;
-    hello_impl hello_servant (*conn, servant_called);
+    hello_impl hello_servant (orb, servant_called);
 
     ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
 

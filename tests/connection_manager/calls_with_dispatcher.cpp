@@ -4,6 +4,20 @@
 #include <configuration.h>
 #include <stubs/hello.h>
 
+struct dispatcher
+{
+  typedef openbus::Connection* result_type;
+  result_type r;
+  dispatcher(result_type r) : r(r) {}
+
+  result_type operator()(openbus::OpenBusContext &context, const char *busId
+                         , const char *loginId
+                         , const char *operation) const
+  {
+    return r;
+  }  
+};
+
 int main(int argc, char* argv[])
 {
   openbus::configuration cfg(argc, argv);
@@ -11,7 +25,7 @@ int main(int argc, char* argv[])
   CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenBusContext");
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
   std::auto_ptr<openbus::Connection> conn(openbusContext->createConnection(cfg.host().c_str(), cfg.port()));
-  openbusContext->setDispatcher(*conn);
+  openbusContext->onCallDispatch(dispatcher(conn.get()));
   
   openbus::idl_or::ServicePropertySeq properties;
   openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);
