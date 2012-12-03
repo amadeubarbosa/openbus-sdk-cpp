@@ -72,7 +72,6 @@ else
         ${OPENBUSLIB}/liblogger-singlethread$(LIB_DEBUG).a
 endif
 
-USE_LUA51= YES
 USE_NODEPEND= Yes
 
 OBJROOT= obj
