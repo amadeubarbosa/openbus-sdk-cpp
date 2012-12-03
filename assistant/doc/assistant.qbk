@@ -10,7 +10,7 @@
     [source-mode c++]
 ]
 
-[include auto_index_helpers.qbk]
+[/include auto_index_helpers.qbk]
 
 [def __Assistant__ [link assistant Assistant]]
 [def __Openbus__ Openbus]
@@ -21,6 +21,7 @@ Boost.Parameter] ]
 [def __CORBA__ ['CORBA]]
 [def __SCS__ ['SCS]]
 [def __TypeCode__ ['TypeCode]]
+[def __Cadeias__ [link Cadeias Cadeias]]
 
 [section Introdução]
 
@@ -511,6 +512,32 @@ com `findServices`, podemos mudar para o seguinte:
 
 [endsect]
 
+[section OpenbusContext]
+
+[classref openbus::OpenbusContext] é uma classe cuja instância
+representa o contexto atual da chamada. É através dessa função que
+temos acesso a várias informações do contexto atual. Como:
+
+* a conexão atual;
+* o registro atual, derivado da conexão atual ao barramento;
+* informações de cadeias
+* outras
+
+Para obter uma instância dessa classe, é necessário obtê-la do ORB
+através da função `resolve_initial_references`. Da seguinte maneira:
+
+[import offers_chain.cpp]
+[create_offers_get_openbus_context]
+
+O cast `dynamic_cast` é necessário porque essa classe pode ter uma
+herança virtual, que um `static_cast` não seria suficiente para
+executar.
+
+Com essa classe em mãos, podemos fazer uso de informações específicas
+de contexto, como o uso de __Cadeias__.
+
+[endsect]
+
 [section Cadeias]
 
 A maior evolução no barramento __Openbus__ na versão 2.0 foi a
@@ -533,8 +560,9 @@ Relembrando, nosso Servant foi implementado da seguinte maneira:
 
 [create_offers_servant_hello]
 
-O __Assistant__ oferece as seguintes funções relativas a Cadeias:
-`getCallerChain`, `joinChain`, `exitChain` e `getJoinedChain`.
+O [classref openbus::OpenBusContext] oferece as seguintes funções
+relativas a Cadeias: `getCallerChain`, `joinChain`, `exitChain` e
+`getJoinedChain`.
 
 Faremos uso da função `getCallerChain`. Mas para tal, precisamos ter
 acesso ao __Assistant__ de dentro do nosso ['Servant]. Poderíamos usar
@@ -543,7 +571,6 @@ __Assistant__, porém como variáveis globais trazem vários problemas,
 modificaremos o __Servant__ para receber como argumento de construção
 o próprio __Assistant__. Assim, criaremos um construtor:
 
-[import offers_chain.cpp]
 [create_offers_chain_servant_constructor]
 
 E mudamos a instanciação do ['Servant] para passar o __Assistant__
@@ -552,7 +579,9 @@ como argumento de construção:
 [create_offers_chain_instantiate_servant_hello]
 
 E assim, já podemos fazer a chamada de `getCallerChain` em `sayHello`
-usando a variável-membro `assistant` no ['Servant].
+usando a variável-membro `assistant` no ['Servant], para obter o
+[classref openbus::OpenBusContext] e com ele fazer a chamada a
+`getCallerChain`.
 
 [create_offers_chain_say_hello]
 
@@ -565,15 +594,18 @@ fez a chamada remota para nosso serviço. O exemplo inteiro:
 
 [endsect]
 
-[section:index Índices]
+[/section:index Índices]
 
-[named_index class_name Classes]
-[named_index typedef_name Typedefs]
-[named_index function_name Funções Livres]
-[named_index macro_name Macros]
+[/named_index class_name Classes]
+[/named_index typedef_name Typedefs]
+[/named_index function_name Funções Livres]
+[/named_index macro_name Macros]
 [/index]
 
-[endsect] 
+[/endsect] 
 
-[xinclude reference.xml]
+[xinclude assistant-reference.xml]
+[xinclude openbus-reference.xml]
+[xinclude openbus-idl-reference.xml]
+
 

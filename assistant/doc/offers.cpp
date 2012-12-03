@@ -37,7 +37,7 @@ int main()
   scs::core::ComponentContext component(assistant.orb(), id);
   //]
   //[create_offers_add_facet
-  component.addFacet("hello", &helloImpl, _tc_HelloImpl->id());
+  component.addFacet("hello", _tc_Hello->id(), &helloImpl);
   //]
   //]
   //[create_offers_register_service

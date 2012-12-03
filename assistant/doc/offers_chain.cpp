@@ -18,7 +18,11 @@ struct HelloImpl : ::POA_Hello
   //[create_offers_chain_say_hello
   void sayHello()
   {
-    openbus::CallerChain chain = assistant.getCallerChain();
+    //[create_offers_get_openbus_context
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (assistant.orb()->resolve_initial_references("OpenBusContext"));
+    //]
+    openbus::CallerChain chain = openbusContext->getCallerChain();
     std::cout << "Hello " << chain.caller().entity << std::endl;
   }
   //]
@@ -41,7 +45,7 @@ int main()
   scs::core::ComponentContext component(assistant.orb(), id);
   //]
   //[create_offers_chain_add_facet
-  component.addFacet("hello", &helloImpl, _tc_HelloImpl->id());
+  component.addFacet("hello", _tc_Hello->id(), &helloImpl);
   //]
   //[create_offers_chain_register_service
   assistant.registerService(component.getIComponent());
