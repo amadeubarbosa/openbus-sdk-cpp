@@ -182,7 +182,6 @@ typename boost::result_of<Op()>::type tri_types_retry_determinate_retries
   if(!state->connection_ready)
     throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
 
-  assert(!CORBA::is_nil(state->connection->offers()));
   return assistant_detail::execute_with_retry
     (op
      , assistant_detail::normal_error_handling_until_retry<E>(retries, state, e)

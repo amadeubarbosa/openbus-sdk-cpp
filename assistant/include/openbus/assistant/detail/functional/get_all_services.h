@@ -15,7 +15,9 @@ struct get_all_services
   typedef idl_or::ServiceOfferDescSeq result_type;
   result_type operator()() const
   {
-    return *state->connection->offers()->getAllServices();
+    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      (state->orb->resolve_initial_references("OpenBusContext"));
+    return *openbusContext->getOfferRegistry()->getAllServices();
   }
 
   boost::shared_ptr<assistant_detail::shared_state> state;

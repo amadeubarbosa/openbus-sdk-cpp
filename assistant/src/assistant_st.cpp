@@ -93,8 +93,10 @@ void register_queued_components(boost::shared_ptr<shared_state> state)
       assistant_detail::exception_logging ex_l(l);
 
       // This function can invalidate queued_components pointers and iterators
-      state->connection->offers()
-        ->registerService(queued_components[i].first, queued_components[i].second);
+
+      openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+        (state->orb->resolve_initial_references("OpenBusContext"));
+      openbusContext->getOfferRegistry()->registerService(queued_components[i].first, queued_components[i].second);
 
       if(state->relogin) // queued_components were modified
       {
@@ -318,7 +320,9 @@ void AssistantImpl::registerService(scs::core::IComponent_var component, idl_or:
     {
       logger::log_scope l(state->logging, logger::info_level, "Synchronous try registering one component");
       assistant_detail::exception_logging ex_l(l);
-      state->connection->offers()->registerService(component, properties);
+      openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+        (state->orb->resolve_initial_references("OpenBusContext"));
+      openbusContext->getOfferRegistry()->registerService(component, properties);
       state->components.push_back(std::make_pair(component, properties));
     }
     else
