@@ -27,10 +27,9 @@ struct MessageImpl : POA_Message
     std::cout << "Relaying message " << message << std::endl;
     try
     {
-      openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+      openbus::OpenBusContext& openbusContext = *dynamic_cast<openbus::OpenBusContext*>
         (orb->resolve_initial_references("OpenBusContext"));
-      openbus::Connection& c = *openbusContext->getCurrentConnection();
-      c.joinChain(c.getCallerChain());
+      openbusContext.joinChain(openbusContext.getCallerChain());
       executive_message->sendMessage(message);
       std::cout << "Execution succesful" << std::endl;
     }
