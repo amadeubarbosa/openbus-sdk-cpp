@@ -1,0 +1,46 @@
+
+project sdk ;
+
+lib sdk : src/openbus.cpp
+#    src/FaultToleranceManager.cpp
+    src/interceptors/ClientInterceptor.cpp
+    src/interceptors/ORBInitializerImpl.cpp src/interceptors/ServerInterceptor.cpp
+    src/util/Helper.cpp
+    stubs/mico/access_control_service.cc
+    stubs/mico/core.cc
+#    stubs/mico/fault_tolerance.cc
+    stubs/mico/registry_service.cc
+    stubs/mico/session_service.cc
+    stubs/mico/scs.cc
+    /mico//mico /scs//scs /logger//logger openssl
+ : <include>include <include>. <include>stubs/mico
+   <link>shared:<define>MICO_SHARED
+   <link>shared:<define>OPENBUS_SDK_SHARED
+   <link>shared:<define>OPENBUS_SDK_SOURCE
+   <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
+   <threading>multi:<source>/mico//pthreads
+ : : <include>include <include>. <include>stubs/mico
+   <link>shared:<define>MICO_SHARED
+   <link>shared:<define>OPENBUS_SDK_SHARED
+   <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
+   <threading>multi:<source>/mico//pthreads
+ ;
+explicit sdk ;
+
+install install : sdk : <install-dependencies>on <install-type>EXE <install-type>LIB ;
+
+exe hello_mico_server : demo/hello/mico/server.cpp stubs/hello.cc
+ /sdk//sdk /mico//mico /mico//pthreads /scs//scs
+ : <include>stubs
+ ;
+explicit hello_mico_server ;
+
+exe hello_mico_client : demo/hello/mico/client.cpp stubs/hello.cc
+ /sdk//sdk /mico//mico /mico//pthreads /scs//scs
+ : <include>stubs
+ ;
+explicit hello_mico_client ;
+
+install install-demos : hello_mico_server hello_mico_client
+ : <install-dependencies>on <install-type>EXE <install-type>SHARED_LIB
+ ;
