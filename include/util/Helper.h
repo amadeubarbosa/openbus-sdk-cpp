@@ -9,6 +9,7 @@
 #ifndef HELPER_H_
 #define HELPER_H_
 
+#include "openbus_decl.h"
 #ifdef OPENBUS_ORBIX
   #include "stubs/orbix/registry_service.hh"
 #else
@@ -34,7 +35,7 @@ namespace openbus {
   /**
   * \brief Auxilia na construção de uma lista de facetas.
   */
-    class FacetListHelper {
+    class OPENBUS_SDK_DECL FacetListHelper {
       private:
       tecgraf::openbus::core::v1_05::registry_service::FacetList_var facetList;
         CORBA::ULong numElements;
@@ -48,7 +49,7 @@ namespace openbus {
   /**
   * \brief Auxilia na construção de uma lista de propriedades.
   */
-    class PropertyListHelper {
+    class OPENBUS_SDK_DECL PropertyListHelper {
       private:
       tecgraf::openbus::core::v1_05::registry_service::PropertyList_var propertyList;
         CORBA::ULong numElements;

@@ -8,6 +8,7 @@
 
 #include "logger.h"
 #include "util/Helper.h"
+#include "openbus_decl.h"
 
 #include "interceptors/ORBInitializerImpl.h"
 
@@ -86,7 +87,7 @@ struct SECURITY_EXCEPTION : public std::runtime_error {
 /**
  * \brief Representa um barramento.
  */
-class Openbus {
+class OPENBUS_SDK_DECL Openbus {
 public:
   class LeaseExpiredCallback;
 
@@ -292,7 +293,7 @@ private:
    */
 #ifdef OPENBUS_ORBIX
   IT_Thread renewLeaseIT_Thread;
-  class RenewLeaseThread : public IT_ThreadBody {
+  class OPENBUS_SDK_DECL RenewLeaseThread : public IT_ThreadBody {
   public:
     void* run();
     bool runningLeaseExpiredCallback;
@@ -305,7 +306,7 @@ private:
   static RenewLeaseThread *renewLeaseThread;
 #else
   #ifdef OPENBUS_SDK_MULTITHREAD
-  class RenewLogin : public MICOMT::Thread {
+  class OPENBUS_SDK_DECL RenewLogin : public MICOMT::Thread {
   public:
     RenewLogin(const tecgraf::openbus::core::v1_05::access_control_service::ILeaseProvider_var, unsigned short);
     ~RenewLogin();
@@ -324,7 +325,7 @@ private:
   };
   static RenewLogin *renewLogin;
   #else
-  class RenewLeaseCallback : public CORBA::DispatcherCallback {
+  class OPENBUS_SDK_DECL RenewLeaseCallback : public CORBA::DispatcherCallback {
   public:
   RenewLeaseCallback();
     void callback(CORBA::Dispatcher *dispatcher, Event event);
@@ -341,7 +342,7 @@ private:
      */
 #ifndef OPENBUS_ORBIX
 #ifdef OPENBUS_SDK_MULTITHREAD
-    class RunThread : public MICOMT::Thread {
+    class OPENBUS_SDK_DECL RunThread : public MICOMT::Thread {
     public:
       void _run(void *);
     };
@@ -540,7 +541,7 @@ private:
     /**
      * Representa uma callback para a notificação de que um lease expirou.
      */
-    class LeaseExpiredCallback {
+    class OPENBUS_SDK_DECL LeaseExpiredCallback {
     public:
       virtual ~LeaseExpiredCallback() {};
       virtual void expired() = 0;

@@ -5,6 +5,8 @@
 #ifndef FAULTTOLERANCEMANAGER_H_
 #define FAULTTOLERANCEMANAGER_H_
 
+#include "openbus_decl.h"
+
 #include <list>
 
 namespace openbus {
@@ -14,7 +16,7 @@ namespace openbus {
     unsigned short port;
   };
       
-  class FaultToleranceManager {
+  class OPENBUS_SDK_DECL FaultToleranceManager {
     private:
     /**
     * Instancia singleton da classe FaultToleranceManager.
