@@ -12,7 +12,7 @@ MICO_PTHREAD_LIB= $(MICO_HOME)\lib\mico-2.3.13-multithread\pthreads.lib
 MICO_EAY32_LIB= $(MICO_HOME)\lib\mico-2.3.13-multithread\libeay32.lib
 PTHREADS_WIN32_INC= $(OPENBUS_HOME)\include\pthreadsWin32
 
-INCLUDE= $(INCLUDE).;stubs;$(MICO_INC);$(OPENBUS_INC)\openbus\cpp;$(OPENBUS_INC)\openbus\cpp\stubs\mico;$(OPENBUS_INC)\logger;$(OPENBUS_INC);$(OPENBUS_INC)\lua5.1.3;$(OPENBUS_INC)\openssl-0.9.9
+INCLUDE= $(INCLUDE).;stubs;$(MICO_INC);$(OPENBUS_INC)\openbus\cpp;$(OPENBUS_INC)\openbus\cpp\stubs\mico;$(OPENBUS_INC)\logger;$(OPENBUS_INC);$(OPENBUS_INC)\openssl-0.9.9
 CFLAGS= /nologo /EHsc
 
 IDLS= ..\idl\hello.idl
@@ -45,11 +45,11 @@ $(OBJ): $(SRC)
 
 server.exe: $(OBJ)
 	-mkdir lib\$(VISUAL_STUDIO_VERSION)
-	LINK /nologo -out:server.exe obj\$(VISUAL_STUDIO_VERSION)\server.obj obj\$(VISUAL_STUDIO_VERSION)\hello.obj $(MICO_LIB) $(MICO_PTHREAD_LIB) $(OPENBUS_LIB)\logger.lib $(OPENBUS_LIB)\lua5.1.lib $(MICO_EAY32_LIB) $(OPENBUS_LIB)\scsmico.lib $(OPENBUS_LIB)\openbusmico.lib wsock32.lib
+	LINK /nologo -out:server.exe obj\$(VISUAL_STUDIO_VERSION)\server.obj obj\$(VISUAL_STUDIO_VERSION)\hello.obj $(MICO_LIB) $(MICO_PTHREAD_LIB) $(OPENBUS_LIB)\logger.lib $(MICO_EAY32_LIB) $(OPENBUS_LIB)\scsmico.lib $(OPENBUS_LIB)\openbusmico.lib wsock32.lib
 
 client.exe: $(OBJ)
 	-mkdir lib\$(VISUAL_STUDIO_VERSION)
-	LINK /nologo -out:client.exe  obj\$(VISUAL_STUDIO_VERSION)\client.obj obj\$(VISUAL_STUDIO_VERSION)\hello.obj $(MICO_LIB) $(MICO_PTHREAD_LIB) $(OPENBUS_LIB)\logger.lib $(OPENBUS_LIB)\lua5.1.lib $(MICO_EAY32_LIB) $(OPENBUS_LIB)\scsmico.lib $(OPENBUS_LIB)\openbusmico.lib wsock32.lib
+	LINK /nologo -out:client.exe  obj\$(VISUAL_STUDIO_VERSION)\client.obj obj\$(VISUAL_STUDIO_VERSION)\hello.obj $(MICO_LIB) $(MICO_PTHREAD_LIB) $(OPENBUS_LIB)\logger.lib $(MICO_EAY32_LIB) $(OPENBUS_LIB)\scsmico.lib $(OPENBUS_LIB)\openbusmico.lib wsock32.lib
 
 clean:
 	-rmdir /S /Q stubs

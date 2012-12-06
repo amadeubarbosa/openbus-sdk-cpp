@@ -17,12 +17,11 @@ INCLUDES= -I. \
 				  -I${OPENBUSINC}/openbus/cpp \
 				  -I${OPENBUSINC}/openbus/cpp/stubs/mico \
 				  -I${OPENBUSINC} \
-				  -I${OPENBUSINC}/logger \
-          -I${OPENBUSINC}/lua5.1.3
+				  -I${OPENBUSINC}/logger
 
 LDIR= -L${OPENBUSLIB} -L${OPENBUSLIB}/mico-${MICOVERSION}-multithread
 
-LIBS= -lmico${MICOVERSION} -ldl -lcrypto -lssl -llua5.1 -lpthread
+LIBS= -lmico${MICOVERSION} -ldl -lcrypto -lssl -lpthread
 
 all: genstubs server client
 
