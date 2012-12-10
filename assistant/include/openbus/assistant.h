@@ -328,22 +328,20 @@ public:
   /** 
    * \brief Atribui uma funcao callback para erros de login
    */
-  void onLoginError(boost::function<void(std::string /*error*/)> f);
+  void onLoginError(login_error_callback_type f);
 
   /** 
    * \brief Atribui uma funcao callback para erros de registro
    *  de ofertas
    */
-  void onRegisterError(boost::function<void(scs::core::IComponent_var
-                                            , idl_or::ServicePropertySeq
-                                            , std::string /*error*/)> f);
+  void onRegisterError(register_error_callback_type f);
 
   /** 
    * \brief Atribui uma funcao callback para erros fatais
    *  que impossibilitam a continuacao da execucao
    *  do assistant
    */
-  void onFatalError(boost::function<void(const char* /*error*/)> f);
+  void onFatalError(fatal_error_callback_type f);
 
   /** 
    * \brief Solicita que o assistente registre um serviço no barramento.

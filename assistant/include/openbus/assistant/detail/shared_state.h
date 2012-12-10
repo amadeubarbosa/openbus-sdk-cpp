@@ -69,12 +69,12 @@ struct shared_state
   unsigned short const port;
   std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > components;
   std::vector<std::pair<scs::core::IComponent_var, idl_or::ServicePropertySeq> > queued_components;
-  login_error_callback_type login_error;
-  register_error_callback_type register_error;
-  fatal_error_callback_type fatal_error;
-  find_error_callback_type find_error;
   std::auto_ptr<openbus::Connection> connection;
   boost::chrono::steady_clock::duration retry_wait;
+  boost::shared_ptr<login_error_callback_type> login_error_;
+  boost::shared_ptr<register_error_callback_type> register_error_;
+  boost::shared_ptr<fatal_error_callback_type> fatal_error_;
+  boost::shared_ptr<find_error_callback_type> find_error_;
   bool work_exit;
   bool connection_ready;
   bool relogin;
@@ -99,8 +99,7 @@ struct shared_state
                , find_error_callback_type find_error
                , logger::level l)
     : logging(l), orb(orb), auth_info(auth_info), host(host), port(port)
-    , login_error(login_error), register_error(register_error)
-    , fatal_error(fatal_error), find_error(find_error), work_exit(false)
+    , work_exit(false)
     , connection_ready(false), relogin(false)
 #ifdef ASSISTANT_SDK_MULTITHREAD
     , new_queued_components(false)
@@ -110,6 +109,32 @@ struct shared_state
 #endif
   {
     logging.add_output(logger::output::make_streambuf_output(*std::cerr.rdbuf()));
+    this->login_error(login_error);
+    this->register_error(register_error);
+    this->fatal_error(fatal_error);
+    this->find_error(find_error);
+  }
+
+  login_error_callback_type login_error() const { return *login_error_; }
+  register_error_callback_type register_error() const { return *register_error_; }
+  fatal_error_callback_type fatal_error() const { return *fatal_error_; }
+  find_error_callback_type find_error() const { return *find_error_; }
+
+  void login_error(login_error_callback_type login_error)
+  { 
+    login_error_.reset(new login_error_callback_type(login_error));
+  }
+  void register_error(register_error_callback_type register_error)
+  {
+    register_error_.reset(new register_error_callback_type(register_error));
+  }
+  void fatal_error(fatal_error_callback_type fatal_error)
+  {
+    fatal_error_.reset(new fatal_error_callback_type(fatal_error));
+  }
+  void  find_error(find_error_callback_type find_error)
+  {
+    find_error_.reset(new find_error_callback_type(find_error));
   }
 };
 

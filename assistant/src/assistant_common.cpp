@@ -140,7 +140,7 @@ void invalid_login_callback::operator()(Connection &c, idl_ac::LoginInfo old_log
     assistant_detail::execute_with_retry
       (boost::bind(&login_simple, boost::ref(c), boost::ref(state->auth_info)
                    , boost::ref(state->logging))
-       , login_error(state->login_error)
+       , login_error(state->login_error())
        , assistant_detail::wait_until_timeout_and_signal_exit(state)
        , state->logging);
 
@@ -410,21 +410,21 @@ idl_or::ServiceOfferDescSeq AssistantImpl::findServices
 {
   return assistant_detail::tri_types_retry
     (assistant_detail::functional::find_services(state, properties)
-     , state, retries, state->find_error);
+     , state, retries, state->find_error());
 }
 
 idl_or::ServiceOfferDescSeq AssistantImpl::getAllServices (int retries) const
 {
   return assistant_detail::tri_types_retry
     (assistant_detail::functional::get_all_services(state)
-     , state, retries, state->find_error);
+     , state, retries, state->find_error());
 }
 
 std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq> AssistantImpl::startSharedAuth(int retries)
 {
   return assistant_detail::tri_types_retry
     (assistant_detail::functional::start_shared_auth(state)
-     , state, retries, state->find_error);
+     , state, retries, state->find_error());
 }
 
 idl_or::ServiceOfferDescSeq AssistantImpl::filterWorkingOffers(idl_or::ServiceOfferDescSeq offers)

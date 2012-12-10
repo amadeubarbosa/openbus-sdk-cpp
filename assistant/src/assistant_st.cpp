@@ -60,8 +60,8 @@ struct register_error_handler
   {
     if(!state->relogin) // i is still valid
     {
-      state->register_error(e, state->queued_components[*i].first
-                            , state->queued_components[*i].second);
+      state->register_error()(e, state->queued_components[*i].first
+                              , state->queued_components[*i].second);
       ++*i;
     }
   }
@@ -172,7 +172,7 @@ void wait_login(boost::shared_ptr<assistant_detail::shared_state> state
   log.log("Creating connection and logging");
   std::auto_ptr<Connection> connection = assistant_detail::create_connection_and_login
     (state->orb, state->host, state->port, state->auth_info
-     , state->logging, state, state->login_error, timeout);
+     , state->logging, state, state->login_error(), timeout);
   {
     log.log("Registering connection as default");
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
@@ -233,7 +233,7 @@ public:
   {
     boost::shared_ptr<shared_state> state = state_.lock();
     assert(!!state);
-    state->login_error(e);
+    state->login_error()(e);
   }
 
   void callback(CORBA::Dispatcher*, Event)

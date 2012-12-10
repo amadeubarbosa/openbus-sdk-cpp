@@ -19,13 +19,10 @@ typedef register_container::iterator register_iterator;
 
 struct register_fail
 {
-  boost::function<void(scs::core::IComponent_var
-                       , idl_or::ServicePropertySeq, std::string /*error*/)> register_error_callback;
+  register_error_callback_type register_error_callback;
   register_iterator* next_current;
 
-  register_fail(boost::function<void(scs::core::IComponent_var
-                                     , idl_or::ServicePropertySeq
-                                     , std::string /*error*/)> register_error_callback
+  register_fail(register_error_callback_type register_error_callback
                 , register_iterator& next_current)
     : register_error_callback(register_error_callback), next_current(&next_current) {}
 
@@ -35,12 +32,8 @@ struct register_fail
   {
     try
     {
-      if(register_error_callback)
-      {
-        register_iterator current = boost::prior(*next_current);
-        register_error_callback(current->component, current->properties
-                                , exception_message(e));
-      }
+      register_iterator current = boost::prior(*next_current);
+      register_error_callback(e, current->component, current->properties);
     }
     catch(...) {}
   }

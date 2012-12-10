@@ -63,17 +63,17 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
   try
   {
     {
-      boost::function<void(std::string /*error*/)> login_error_callback;
+      boost::shared_ptr<login_error_callback_type> login_error_callback;
       {
         boost::unique_lock<boost::mutex> lock(state->mutex);
-        login_error_callback = state->login_error;
+        login_error_callback.reset(new login_error_callback_type(state->login_error()));
       }
 
       work_thread_log.level_log(logger::debug_level, "Creating connection and logging");
       std::auto_ptr<Connection> connection = assistant_detail::create_connection_and_login
         (state->orb, state->host, state->port, state->auth_info
          , state->logging, state
-         , login_error_callback, boost::none);
+         , *login_error_callback, boost::none);
       {
         work_thread_log.level_log(logger::debug_level, "Registering connection as default");
         openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
@@ -114,9 +114,7 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
                   <scs::core::IComponent_var, idl_or::ServicePropertySeq> > >(state->components));
         state->queued_components.clear();
 
-        boost::function<void(scs::core::IComponent_var, idl_or::ServicePropertySeq
-                             , std::string /*error*/)> register_error_callback
-          = state->register_error;
+        register_error_callback_type register_error_callback = state->register_error();
 
         do
         {
@@ -125,8 +123,10 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
           {
             work_thread_log.level_log(logger::debug_level, "Registering some components");
             register_iterator current = components.begin();
+            openbus::OpenBusContext& openbusContext = *dynamic_cast<openbus::OpenBusContext*>
+              (state->orb->resolve_initial_references("OpenBusContext"));
             assistant_detail::execute_with_retry
-              (boost::bind(&register_component, state->connection->offers()
+              (boost::bind(&register_component, openbusContext.getOfferRegistry()
                            , boost::ref(current), components.end()
                            , boost::ref(state->logging))
                , register_fail(register_error_callback, current)
@@ -177,10 +177,9 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
     try
     {
       boost::unique_lock<boost::mutex> lock(state->mutex);
-      boost::function<void(const char*)> fatal_error = state->fatal_error;
+      fatal_error_callback_type fatal_error = state->fatal_error();
       lock.unlock();
-      if(fatal_error)
-        fatal_error(e);
+      fatal_error(e);
     }
     catch(...)
     {}
@@ -192,10 +191,9 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
     try
     {
       boost::unique_lock<boost::mutex> lock(state->mutex);
-      boost::function<void(const char*)> fatal_error = state->fatal_error;
+      fatal_error_callback_type fatal_error = state->fatal_error();
       lock.unlock();
-      if(fatal_error)
-        fatal_error(std::runtime_error("Unknown exception was thrown"));
+      fatal_error(std::runtime_error("Unknown exception was thrown"));
     }
     catch(...)
     {}
@@ -252,27 +250,25 @@ void waitLogin(Assistant a)
   assistant_detail::wait_login(assistant_access::state(a));
 }
 
-void AssistantImpl::onLoginError(boost::function<void(std::string /*error*/)> f)
+void AssistantImpl::onLoginError(login_error_callback_type f)
 {
   assert(!!state);
   boost::unique_lock<boost::mutex> lock(state->mutex);
-  state->login_error = f;
+  state->login_error(f);
 }
 
-void AssistantImpl::onRegisterError(boost::function<void(scs::core::IComponent_var
-                                                         , idl_or::ServicePropertySeq
-                                                         , std::string /*error*/)> f)
+void AssistantImpl::onRegisterError(register_error_callback_type f)
 {
   assert(!!state);
   boost::unique_lock<boost::mutex> lock(state->mutex);
-  state->register_error = f;
+  state->register_error(f);
 }
 
-void AssistantImpl::onFatalError(boost::function<void(const char* /*error*/)> f)
+void AssistantImpl::onFatalError(fatal_error_callback_type f)
 {
   assert(!!state);
   boost::unique_lock<boost::mutex> lock(state->mutex);
-  state->fatal_error = f;
+  state->fatal_error(f);
 }
 
 } }
