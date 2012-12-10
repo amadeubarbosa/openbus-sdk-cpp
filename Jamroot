@@ -78,17 +78,17 @@ rule tag ( name : type ? : property-set )
     local debug ;
     if <variant>debug in [ $(property-set).raw ]
     {
-      debug = -debug ;
+      debug = -d ;
     }
     if <threading>multi in [ $(property-set).raw ]
     {
       result = [ common.format-name <base> -mico
-        multithread $(debug) : $(name) : $(type) : $(property-set) ] ;
+        -mt $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     else
     {
       result = [ common.format-name <base> -mico
-        singlethread $(debug) : $(name) : $(type) : $(property-set) ] ;
+        $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     return $(result) ;
   }
@@ -128,7 +128,7 @@ mico-idl.cpp-h cpp-h-stub : [ alias cpp-h-stub-idl : $(openbus-idl-path)/access_
  ;
 install stage-stubs : cpp-h-stub : <location>stage/stubs
  <install-dependencies>on <install-type>CPP <install-type>H
- <link>static
+ <link>static <variant>release <threading>single
  ;
 explicit stage-stubs ;
 alias stage : stage-libs stage-stubs ;
