@@ -42,7 +42,9 @@ lib openssl : crypto : <name>ssl <search>$(openssl-lib-path)
  : : <include>$(openssl-include-path)
  ;
 
-project openbus : build-dir bin ;
+project openbus : build-dir bin
+ : requirements <tag>@tag
+ ;
 
 path-constant here : . ;
 
@@ -106,7 +108,6 @@ lib openbus : src/Connection.cpp src/OpenBusContext.cpp
    <include>include
    <threading>multi:<source>/boost//thread
    <implicit-dependency>core-idls
-   <tag>@tag
  :
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
    <include>include
@@ -300,7 +301,7 @@ for local d in $(all-assistant-demos)
 alias stage-assistant-demos : stage-assistant-$(all-assistant-demos) ;
 explicit stage-assistant-demos ;
 
-install stage-assistant : assistant//assistant ;
+install stage-assistant : assistant//assistant : <location>stage ;
 explicit stage-assistant ;
 
 rule stage-assistant-tests-location ( requirements * )

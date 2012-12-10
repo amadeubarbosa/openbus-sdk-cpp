@@ -47,7 +47,6 @@ lib assistant : src/assistant_common.cpp
    <threading>single:<source>src/assistant_st.cpp 
    <threading>multi:<source>/boost//thread
    <implicit-dependency>/openbus//core-idls
-   <tag>@tag
  : :
    <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
    <include>include
