@@ -3,7 +3,7 @@ project openbus/assistant/demos ;
 
 path-constant here : . ;
 
-alias hello-idl : $(here)/idl/hello.idl ;
+obj hello-idl : $(here)/idl/hello.idl /mico//mico ;
 
 exe hello_client
  : client/client.cpp /openbus//openbus

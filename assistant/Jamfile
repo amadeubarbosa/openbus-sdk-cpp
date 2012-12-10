@@ -7,30 +7,6 @@ import modules ;
 
 project openbus/assistant ;
 
-rule tag ( name : type ? : property-set )
-{
-  if $(type) in STATIC_LIB SHARED_LIB IMPORT_LIB
-  {
-    local result ;
-    local debug ;
-    if <variant>debug in [ $(property-set).raw ]
-    {
-      debug = -debug ;
-    }
-    if <threading>multi in [ $(property-set).raw ]
-    {
-      result = [ common.format-name <base> -mico
-        multithread $(debug) : $(name) : $(type) : $(property-set) ] ;
-    }
-    else
-    {
-      result = [ common.format-name <base> -mico
-        singlethread $(debug) : $(name) : $(type) : $(property-set) ] ;
-    }
-    return $(result) ;
-  }
-}
-
 project rt ;
 
 lib real_rt : : <name>rt <link>shared ;

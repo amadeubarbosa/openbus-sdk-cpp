@@ -3,7 +3,7 @@ project openbus/demos ;
 
 path-constant here : . ;
 
-alias chain-validation-idl : $(here)/idl/chain_validation.idl ;
+obj chain-validation-idl : $(here)/idl/chain_validation.idl /mico//mico ;
 
 exe chain_validation_client
  : client/client.cpp /openbus//openbus
@@ -11,7 +11,7 @@ exe chain_validation_client
    /openbus//core-idls /openssl//openssl chain-validation-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <link>static:<source>/dl//dl
    <implicit-dependency>chain-validation-idl
  ;
 exe chain_validation_executive
@@ -20,7 +20,7 @@ exe chain_validation_executive
    /openbus//core-idls /openssl//openssl chain-validation-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <link>static:<source>/dl//dl
    <implicit-dependency>chain-validation-idl
  ;
 
@@ -30,7 +30,7 @@ exe chain_validation_secretary
    /openbus//core-idls /openssl//openssl chain-validation-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <link>static:<source>/dl//dl
    <implicit-dependency>chain-validation-idl
  ;
 

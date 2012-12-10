@@ -68,16 +68,23 @@ obj credential_v1_5.obj : $(here)/legacy/idl/credential_v1_5.idl
  : <include>$(openbus-idl-path) <implicit-dependency>/scs//idls
  : : <include>$(openbus-idl-path)
  ;
+explicit credential_v1_5.obj ;
 
 alias core-idls : access_control.obj core.obj credential.obj
  offer_registry.obj credential_v1_5.obj ;
+explicit core-idls ;
 
 rule tag ( name : type ? : property-set )
 {
-  if $(type) in STATIC_LIB SHARED_LIB IMPORT_LIB
+  if $(type) in STATIC_LIB SHARED_LIB IMPORT_LIB EXE
   {
     local result ;
     local debug ;
+    local static ;
+    if <link>static in [ $(property-set).raw ]
+    {
+      static = -s ;
+    }
     if <variant>debug in [ $(property-set).raw ]
     {
       debug = -d ;
@@ -85,12 +92,12 @@ rule tag ( name : type ? : property-set )
     if <threading>multi in [ $(property-set).raw ]
     {
       result = [ common.format-name <base> -mico
-        -mt $(debug) : $(name) : $(type) : $(property-set) ] ;
+        -mt $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     else
     {
       result = [ common.format-name <base> -mico
-        $(debug) : $(name) : $(type) : $(property-set) ] ;
+        $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     return $(result) ;
   }
@@ -212,30 +219,6 @@ exe-test register_service
 
 feature.feature <openbus-stage-demo-name> : : free ;
 
-local rule requirements-location-suffix ( requirements * )
-{
-  local mt = ;
-  local dbg = ;
-  if <threading>multi in $(requirements)
-  {
-    mt = -multi ;
-  }
-  else
-  {
-    mt = -single ;
-  }
-  if <variant>debug in $(requirements)
-  {
-    dbg = -debug ;
-  }
-  return $(mt)$(dbg) ;
-}
-rule stage-tests-location ( requirements * )
-{
-  local suffix = [ requirements-location-suffix $(requirements) ] ;
-  return <location>stage-tests$(suffix) ;
-}
-
 install stage-tests : connect_host_port_connect_to_right_host_and_port
  connect_host_port_connect_to_wrong_host_and_port
  connect_orb_connect_getting_orb_with_createORB
@@ -257,7 +240,7 @@ install stage-tests : connect_host_port_connect_to_right_host_and_port
  fail_user_created_orb
  get_offer
  register_service
- : <conditional>@stage-tests-location
+ : <location>stage-tests
  ;
 explicit stage-tests ;
 
@@ -268,8 +251,7 @@ rule stage-demos-location ( requirements * )
 {
   local ps = [ new property-set $(requirements) ] ;
   local name = [ $(ps).get <openbus-stage-demo-name> ] ;
-  local suffix = [ requirements-location-suffix $(requirements) ] ;
-  return <location>stage-demos$(suffix)/$(name) ;
+  return <location>stage-demos/$(name) ;
 }
 
 local all-demos = [ MATCH demo/(.*)/Jamfile : [ glob demo/*/Jamfile ] ] ;
@@ -286,8 +268,7 @@ rule stage-assistant-demos-location ( requirements * )
 {
   local ps = [ new property-set $(requirements) ] ;
   local name = [ $(ps).get <openbus-stage-demo-name> ] ;
-  local suffix = [ requirements-location-suffix $(requirements) ] ;
-  return <location>stage-assistant-demos$(suffix)/$(name) ;
+  return <location>stage-demos/assistant/$(name) ;
 }
 
 local all-assistant-demos = [ MATCH assistant/demo/(.*)/Jamfile : [ glob assistant/demo/*/Jamfile ] ] ;
@@ -304,12 +285,8 @@ explicit stage-assistant-demos ;
 install stage-assistant : assistant//assistant : <location>stage ;
 explicit stage-assistant ;
 
-rule stage-assistant-tests-location ( requirements * )
-{
-  local suffix = [ requirements-location-suffix $(requirements) ] ;
-  return <location>stage-assistant-tests$(suffix) ;
-}
-install stage-assistant-tests : assistant/tests//tests : <conditional>@stage-assistant-tests-location ;
+install stage-assistant-tests : assistant/tests//tests
+ : <location>stage-tests/assistant ;
 explicit stage-assistant-tests ;
 
 alias assistant-doc-onehtml : assistant/doc//documentation-html/<location>assistant-doc

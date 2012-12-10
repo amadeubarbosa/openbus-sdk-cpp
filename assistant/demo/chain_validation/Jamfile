@@ -3,7 +3,7 @@ project openbus/assistant/demos ;
 
 path-constant here : . ;
 
-alias chain-validation-idl : $(here)/idl/chain_validation.idl ;
+obj chain-validation-idl : $(here)/idl/chain_validation.idl /mico//mico ;
 
 exe chain_validation_client
  : client/client.cpp /openbus//openbus

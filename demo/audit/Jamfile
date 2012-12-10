@@ -3,7 +3,7 @@ project openbus/demos ;
 
 path-constant demo-hello : ../hello ;
 
-alias hello-idl : $(demo-hello)/idl/hello.idl ;
+obj hello-idl : $(demo-hello)/idl/hello.idl /mico//mico ;
 
 exe audit_client
  : client/client.cpp /openbus//openbus /boost//program_options
@@ -11,7 +11,7 @@ exe audit_client
    /openbus//core-idls /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <link>static:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 exe audit_server
@@ -20,7 +20,7 @@ exe audit_server
    /openbus//core-idls /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <link>static:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 
@@ -30,7 +30,7 @@ exe audit_proxy
    /openbus//core-idls /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <link>static:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 

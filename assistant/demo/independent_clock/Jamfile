@@ -3,7 +3,7 @@ project openbus/assistant/demos ;
 
 path-constant here : . ;
 
-alias independent-clock-idl : $(here)/idl/independent_clock.idl ;
+obj independent-clock-idl : $(here)/idl/independent_clock.idl /mico//mico ;
 
 exe independent_clock_client
  : client/client.cpp /openbus//openbus
