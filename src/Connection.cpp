@@ -96,7 +96,20 @@ Connection::Connection(
 
 Connection::~Connection() { 
   log_scope l(log.general_logger(), info_level, "Connection::~Connection");
-  _logout(true);
+  try
+  {
+    _logout(true);
+  }
+  catch(...)
+  {
+    try
+    {
+      l.log("Exception thrown in destructor. Ignoring exception");
+    }
+    catch(...)
+    {
+    }
+  }
   #ifdef OPENBUS_SDK_MULTITHREAD
   if (_renewLogin.get()) {
     _renewLogin->stop();
@@ -325,7 +338,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 }
 
 bool Connection::_logout(bool local) {
-  bool sucess = false;
+  bool success = false;
   AutoLock m(&_mutex);
   bool state = _state;
   m.unlock();
@@ -335,17 +348,34 @@ bool Connection::_logout(bool local) {
     #else
     _renewLogin.reset();
     #endif
-    if (!local) {
-      Connection *c = 0;
-      try {
-        c = _openbusContext->getCurrentConnection();
-        _openbusContext->setCurrentConnection(this);
+    if (!local)
+    {
+      struct save_connection
+      {
+        save_connection(OpenBusContext& context, Connection* self)
+          : context(context), old(context.getCurrentConnection())
+        {
+          context.setCurrentConnection(self);
+        }
+        ~save_connection()
+        {
+          context.setCurrentConnection(old);
+        }
+
+        OpenBusContext& context;
+        Connection* old;
+      } save_connection_(*_openbusContext, this);
+      static_cast<void>(save_connection_); // avoid warnings
+      try
+      {
         _access_control->logout();
-        sucess = true;
-        _openbusContext->setCurrentConnection(c);
-      } catch (...) { 
-        sucess = false; 
-        _openbusContext->setCurrentConnection(c);
+        success = true;
+      }
+      catch (CORBA::NO_PERMISSION const& e)
+      { 
+        success = false; 
+        if(e.minor() != idl_ac::NoLoginCode)
+          throw;
       }
     }
     m.lock();
@@ -358,7 +388,7 @@ bool Connection::_logout(bool local) {
     _state = UNLOGGED;
     m.unlock();
   } else return false;
-  return sucess;    
+  return success;    
 }
 
 bool Connection::logout() { 
