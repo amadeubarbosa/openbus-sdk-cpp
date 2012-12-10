@@ -22,6 +22,7 @@ Boost.Parameter] ]
 [def __SCS__ ['SCS]]
 [def __TypeCode__ ['TypeCode]]
 [def __Cadeias__ [link Cadeias Cadeias]]
+[def __DownloadSDK__ [@https://jira.tecgraf.puc-rio.br/confluence/display/OPENBUS020/SDK Download]]
 
 [section Introdução]
 
@@ -42,7 +43,15 @@ __Openbus__ dentro do escopo dessa API.
 
 [section Instalação]
 
-Incluir aqui quando criar o pacote
+Para usar o SDK, primeiro você precisa fazer o seu
+__DownloadSDK__. Baixe a versão binária que seja mais próxima de sua
+configuração e descompacte-a em alguma pasta aonde será feito o
+seu desenvolvimento.
+
+Para usar o __Assistant__, você precisa ligar sua aplicação com as
+seguintes bibliotecas:
+
+* 
 
 [endsect]
 
