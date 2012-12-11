@@ -32,6 +32,14 @@ std::auto_ptr<Connection> OpenBusContext::createConnection(const char *host, sho
   return conn;
 }
 
+Connection *OpenBusContext::setDefaultConnection(Connection *c)
+{
+  AutoLock _(&_mutex);
+  Connection *old = _defaultConnection;
+  _defaultConnection = c;
+  return old;
+}
+
 Connection * OpenBusContext::getDefaultConnection() const 
 {
   AutoLock _(&_mutex);

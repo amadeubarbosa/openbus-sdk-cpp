@@ -12,6 +12,7 @@
 #include <CORBA.h>
 
 std::auto_ptr<openbus::Connection> conn;
+openbus::OpenBusContext *openBusContext;
 scs::core::ComponentContext *ctx;
 openbus::idl_or::ServicePropertySeq props;
 const std::string entity("interop_hello_cpp_server");
@@ -39,7 +40,7 @@ void loginAndRegister() {
   // 
   // conn->loginByCertificate("interop_hello_cpp_server", openbus::openssl::PrvKey2byteSeq(privateKey));
   conn->loginByPassword(entity.c_str(), entity.c_str());
-  openbusContext->getOfferRegistry()->registerService(ctx->getIComponent(), props);
+  openBusContext->getOfferRegistry()->registerService(ctx->getIComponent(), props);
 }
 
 void onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l) {
@@ -94,14 +95,14 @@ int main(int argc, char** argv) {
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
     
-    openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
+    openBusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
-    conn = openbusContext->createConnection(host.c_str(), port);
-    openbusContext->setDefaultConnection(conn.get());
+    conn = openBusContext->createConnection(host.c_str(), port);
+    openBusContext->setDefaultConnection(conn.get());
     conn->onInvalidLogin(&onInvalidLogin);
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread *runThread = new RunThread(openbusContext);
+    RunThread *runThread = new RunThread(openBusContext);
     runThread->start();
     #endif
     
@@ -111,7 +112,7 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "c++";
-    ctx = new scs::core::ComponentContext(openbusContext->orb(), componentId);
+    ctx = new scs::core::ComponentContext(openBusContext->orb(), componentId);
 
     props.length(1);
     openbus::idl_or::ServiceProperty property;
@@ -120,7 +121,7 @@ int main(int argc, char** argv) {
     property.value = "Interoperability Tests";
     props[i] = property;
 
-    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(*openbusContext));
+    std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(*openBusContext));
     ctx->addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
     loginAndRegister();
@@ -128,7 +129,7 @@ int main(int argc, char** argv) {
     #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
     #else
-    openbusContext->orb()->run();
+    openBusContext->orb()->run();
     #endif
   } catch (const CORBA::Exception &e) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;

@@ -173,9 +173,7 @@ public:
    * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
    * antes de destruida
    */
-  void setDefaultConnection(Connection *conn) { 
-    _defaultConnection = conn; 
-  }
+  Connection *setDefaultConnection(Connection *);
    
   /**
    * \brief Devolve a conexão padrão.
