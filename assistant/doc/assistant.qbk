@@ -16,6 +16,12 @@
 [def __Openbus__ Openbus]
 [def __BoostParameters__ [@http://www.boost.org/doc/libs/1_51_0/libs/parameter/doc/html/index.html
 Boost.Parameter] ]
+[def __BoostThread__ [@http://www.boost.org/doc/libs/1_51_0/doc/html/thread.html
+Boost.Thread] ]
+[def __BoostChrono__ [@http://www.boost.org/doc/libs/1_51_0/doc/html/chrono.html
+Boost.Chrono] ]
+[def __BoostSystem__ [@http://www.boost.org/doc/libs/1_51_0/libs/system/doc/index.html
+Boost.System] ]
 [def __SharedAuthentication__ ['Shared Authentication]]
 [def __MICO__ ['Mico]]
 [def __CORBA__ ['CORBA]]
@@ -48,10 +54,128 @@ __DownloadSDK__. Baixe a versão binária que seja mais próxima de sua
 configuração e descompacte-a em alguma pasta aonde será feito o
 seu desenvolvimento.
 
+[section Dependencias]
+
 Para usar o __Assistant__, você precisa ligar sua aplicação com as
 seguintes bibliotecas:
 
-* 
+* OpenSSL
+* Mico
+* SCS
+* Biblioteca de Log
+* __BoostThread__
+* __BoostChrono__
+* __BoostSystem__
+* API Básica do Openbus
+* Assistant
+
+[endsect]
+
+[section Nomenclatura]
+
+Os arquivos e diretórios tem o seguinte padrão de nomenclatura, com exceção da biblioteca OpenSSL:
+
+[table Padrão de nomenclatura de bibliotecas
+  [[Simbolo] [Descrição]]
+  [
+        [`-mico`]
+[Se a biblioteca for compilada para o ORB Mico. É o caso para todas as bibliotecas que usam CORBA na versão 2.0.0. É possível que outros ORBs venham a ser suportados no futuro.]
+  ]
+  [
+        [`-mt`]
+[Se a biblioteca for compilada com suporte a múltiplas threads]
+  ]
+  [
+        [`-s`]
+[Se a biblioteca for compilada estaticamente. Em linux isso também significa que o arquivo termina em `.a` ao invés de `.so`, e em Windows a biblioteca dinâmica possui tanto um arquivo de extensão `.lib` como de extensão `.dll`]
+  ]
+  [
+        [`-d`]
+[Se a biblioteca for compilada com simbolos de debug e sem otimização.]
+  ]
+]
+
+Dessa forma, a biblioteca da API básica compilada em multithread, com debug e em compilação estática teria o nome, no linux: `libopenbus-mico-mt-s-d.a`.
+
+Para a biblioteca MICO, como não definimos seu processo de compilação, ele não segue esse mesmo padrão. Porém, para que os vários binários, resultado da compilação do mico, não conflitem um com o outro, separamos eles em diretórios diferentes. O nome desses diretórios seguem esse padrão. Portanto, o caminho, no pacote binário do __Assistant__, encontramos a biblioteca MICO, compilada para multithread, em static e com debug em: `lib/mico-mt-d/mico-2.3.13.a`. Veja que no nome do diretório, o `-s` não aparece. Isso é porque a compilação é feita em conjunto entre static e shared e o resultado dessa compilação é colocado na mesma pasta.
+
+[endsect]
+
+[section Macros]
+
+Algumas macros personalizam o comportamento da biblioteca de acesso padrão e do __Assistant__. Algumas são opcionais, e outras obrigatórias para que os headers possam levar determinada configuração em conta. Iremos aqui documentar, também as macros de todos os projetos desenvolvidos no Openbus que são dependencia do __Assistant__.
+
+[table Padrão de nomenclatura de bibliotecas
+  [[Projeto] [Macro] [Descrição]]
+  [
+        [Logger - Biblioteca de Log]
+        [`LOGGER_DISABLE_THREADS`]
+        [Macro que deve ser definida sempre que usando um dos pacotes da biblioteca logger sem o prefixo `-mt`. Desabilita sua dependência com a biblioteca __BoostThread__ e não leva em consideração acesso concorrente aos loggers.]
+  ]               
+  [
+        [SCS]
+        [`SCS_THREADING_ENABLED`]
+        [Macro que deve ser definida sempre que usando um dos pacotes da biblioteca SCS com o prefixo `-mt`. Cria a dependência do SCS a biblioteca __BoostThread__ e assegura o uso concorrente de um ComponentContext por multiplas threads e o acesso concorrente às facetas básicas por chamadas simultâneos pelo ORB.]
+  ]
+  [
+        [API Básica]
+        [`OPENBUS_SDK_MULTITHREAD`]
+        [Macro que deve ser definida sempre que usando um dos pacotes da biblioteca Openbus com o prefixo `-mt`. Assegura o uso concorrente da biblioteca pelo ORB e pelo usuário.]
+  ]
+  [
+        [__Assistant__]
+        [`ASSISTANT_SDK_MULTITHREAD`]
+        [Macro que deve ser definida sempre que usando um dos pacotes da biblioteca __Assistant__ com o prefixo `-mt`. Cria a dependência do __Assistant__ à biblioteca __BoostThread__ e assegura o uso concorrente da biblioteca pelo ORB e pelo usuário.]
+  ]
+  [
+        [__Assistant__]
+        [`OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS`]
+        [Macro que pode ser definida para eliminar a dependência do __Assistant__ com a biblioteca __BoostParameters__. Remove a interface de Named Parameters do construtor de [classref openbus::assistant::Assistant].]
+  ]
+]
+
+[endsect]
+
+[section Compilação do demo Hello]
+
+Iremos aqui fazer a construção de um `Makefile` que faça a compilação
+do demo Hello usando a configuração multithread, static e com
+debug. Usaremos o compilador gcc como exemplo.
+
+
+[important A construção desse
+`Makefile` não representa uma indicação de como fazer o build de
+código de cliente usando o __Assistant__. É apenas uma demonstração
+que serve como documentação para que o usuário se sinta mais
+confortável ao incluir o Openbus no seu próprio sistema de build,
+levando em consideração quais bibliotecas deve selecionar para
+determinada configuração e quais macros devem estar definidas em
+seu próprio código para fazer uso da biblioteca de acesso do Openbus.]
+
+Primeiramente, encontramos no pacote o demo hello no caminho `demo/hello`.
+Lá, temos as seguintes pastas:
+
+[table Árvore do demo Hello
+  [[Diretório] [Descrição]]
+  [
+    [`bin`]
+    [Se o pacote contiver os demos compilados]
+  ]
+  [
+    [`server`]
+    [Diretório que contém o arquivo `server.cpp`. Código fonte do servidor do demo Hello]
+  ]
+  [
+    [`client`]
+    [Diretório que contém o arquivo `client.cpp`. Código fonte do cliente do demo Hello]
+  ]
+  [
+    [`idl`]
+    [Diretório que contém o arquivo `hello.idl`. Interface usada para comunicação CORBA entre cliente e servidor.]
+  ]
+]
+
+[endsect]
 
 [endsect]
 
