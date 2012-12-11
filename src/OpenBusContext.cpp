@@ -22,11 +22,12 @@ OpenBusContext::OpenBusContext(CORBA::ORB *o, IOP::Codec *c,
 OpenBusContext::~OpenBusContext() { }
 
 std::auto_ptr<Connection> OpenBusContext::createConnection(const char *host, short port, 
-                                                              std::vector<std::string> props)
+                                                           std::vector<std::string> props)
 {
   log_scope l(log.general_logger(), debug_level, "OpenBusContext::createConnection");
   l.vlog("createConnection para host %s:%hi", host, port);
-  std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, _slotId_joinedCallChain, 
+  std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, 
+                                                _slotId_joinedCallChain, 
     _slotId_signedCallChain, _slotId_legacyCallChain, _slotId_receiveConnection, this, props));
   l.vlog("connection: %p", conn.get());
   return conn;

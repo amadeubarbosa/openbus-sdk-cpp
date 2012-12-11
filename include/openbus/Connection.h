@@ -48,10 +48,6 @@ struct AlreadyLoggedIn : public std::exception {
   const char *what() const throw() { return "openbus::AlreadyLoggedIn"; } 
 };
 
-struct InvalidBusAddress : public std::exception { 
-  const char *what() const throw() { return "openbus::InvalidBusAddress"; }
-};
-
 struct InvalidPrivateKey : public std::exception { 
   const char *what() const throw() { return "openbus::InvalidPrivateKey";} 
 };
@@ -63,7 +59,7 @@ struct InvalidLoginProcess : public std::exception {
 struct InvalidPropertyValue : public std::exception {
   InvalidPropertyValue(std::string p, std::string v) : property(p), value(v) { }
   ~InvalidPropertyValue() throw() { }
-  const char *what() const throw() { return "openbus::InvalidBusAddress"; }
+  const char *what() const throw() { return "openbus::InvalidPropertyValue"; }
   std::string property;
   std::string value;
 };

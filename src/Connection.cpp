@@ -47,15 +47,10 @@ Connection::Connection(
   assert(!CORBA::is_nil(_piCurrent.in()));
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
   CORBA::Object_var obj;
-  try {
-    obj = _orb->string_to_object(corbaloc.str().c_str());
-  } catch (CORBA::BAD_PARAM &){
-    throw InvalidBusAddress();
-  }
+  obj = _orb->string_to_object(corbaloc.str().c_str());
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     _iComponent = scs::core::IComponent::_narrow(obj);
-    if (CORBA::is_nil(_iComponent)) throw InvalidBusAddress();
     obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
     _access_control = idl_ac::AccessControl::_narrow(obj);
     assert(!CORBA::is_nil(_access_control.in()));

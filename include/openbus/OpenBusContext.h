@@ -152,7 +152,6 @@ public:
    *            login do campo 'originators' ou o campo 'caller' quando este
    *            é vazio.
    *   
-   * @throw InvalidBusAddress Os parâmetros 'host' e 'port' não são válidos.
    * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
    * @throw CORBA::Exception
    *
