@@ -185,7 +185,7 @@ intermediários com as bibliotecas nos executáveis finais `client` e
 [demo_hello_mak_compile_idl]
 
 Esse comando faz a compilação de `hello.idl` para `bin/hello.cc` e
-bin/hello.h` com os stubs da interface CORBA, que serão usados nos
+`bin/hello.h` com os stubs da interface CORBA, que serão usados nos
 códigos fontes `server/server.cpp` e `client/client.cpp`. Usamos aqui
 as variáveis `MICO_BIN` e `MICO_LIB` para parametrizar a localidade da
 biblioteca compartilhada do mico e o diretório aonde estão as
@@ -244,6 +244,60 @@ que expande para a primeira dependencia, no caso
 que no caso é `bin/server.o`. Definimos também a variável CXXFLAGS,
 que deverá conter todos os parâmetros de compilação que deverão ser
 passados ao compilador, como os caminhos de inclusão, e etc.
+
+Agora, atribuimos então à variável `CXXFLAGS`
+
+[demo_hello_mak_set_cxxflags]
+
+Adicionamos o diretório de include do mico de configuração que
+queremos, e então os includes de cada projeto que está também no
+pacote. Como iremos compilar em debug, não estamos usando nenhuma
+otimização, passando `-O0`, e passando `-g` para inclusão de simbolos
+de depuração na compilação do demo.
+
+E para a compilação do cliente, fazemos o mesmo que na compilação do
+servidor, mas trocando o arquivo alvo e o arquivo fonte:
+
+[demo_hello_mak_compile_client_cpp]
+
+Assim, temos a compilação dos arquivos `server.cpp` e client.cpp` e a
+compilação da idl `hello.idl`. Falta ainda fazer a compilação dos stubs
+para arquivo objeto também.
+
+[demo_hello_mak_compile_hello_cc]
+
+Agora temos todos os arquivos objetos que precisamos para gerar os
+executáveis, falta apenas fazer o ligamento dos objetos com as
+dependências e gerar o executável final do servidor e cliente:
+
+[demo_hello_mak_binaries]
+
+O simbolo `$^` representa todas as dependencias, queremos fazer o
+ligamento de todos os dois objetos, e não fazer uso apenas do primeiro
+como estávamos fazendo na compilação. Também, acrescentamos a variável
+`LDFLAGS`, que deve conter as flags de ligamento que serão passadas ao
+ligador. Elas devem incluir as bibliotecas que serão ligadas, e levar
+em conta a configuração que se deseja gerar, para pegar as versões
+corretas de cada dependência.
+
+[demo_hello_mak_set_ldflags]
+
+Passamos, com o parâmetro `-L`, dois diretórios de busca de
+bibliotecas. Uma do mico da configuração que queremos, e o outro de
+todo o diretório lib do pacote com as outras bibliotecas.
+
+Passamos o resto dos argumentos diretamente ao ligador com a opção
+`-Wl` e como nossa configuração final é de ligamento estático,
+passamos também a opção `-Bstatic` para determinar que estamos
+querendo somente as versões estáticas das bibliotecas, e então
+passamos uma a uma as dependências, usando o padrão de nomenclatura
+no início do documento.
+
+Para finalizar, definimos o alvo chamado `all`, que irá construir os dois executáveis.
+
+[demo_hello_mak_all]
+
+E então podemos compilar o demo fazendo um `make all`
 
 [endsect]
 
