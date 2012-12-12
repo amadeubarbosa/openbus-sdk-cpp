@@ -175,6 +175,76 @@ Lá, temos as seguintes pastas:
   ]
 ]
 
+Para compilarmos o demo, precisamos antes compilar a IDL `hello.idl` e
+os arquivos `client.cpp` e `server.cpp` e depois ligar os
+intermediários com as bibliotecas nos executáveis finais `client` e
+`server`.
+
+[import demo-hello.mak]
+
+[demo_hello_mak_compile_idl]
+
+Esse comando faz a compilação de `hello.idl` para `bin/hello.cc` e
+bin/hello.h` com os stubs da interface CORBA, que serão usados nos
+códigos fontes `server/server.cpp` e `client/client.cpp`. Usamos aqui
+as variáveis `MICO_BIN` e `MICO_LIB` para parametrizar a localidade da
+biblioteca compartilhada do mico e o diretório aonde estão as
+ferramentas do mico, como o compilador idl.
+
+Veja que, o compilador idl do mico, faz uso de outra ferramenta
+chamada mico-cpp, que se encontra no mesmo diretório que o próprio
+compilador idl. Por isso, definimos a variável de ambiente `PATH` com
+o caminho para o compilador IDL, para que o mesmo possa encontrar a
+ferramenta `mico-cpp`.
+
+Também, o compilador IDL depende da biblioteca compartilhada do
+próprio mico. E então definimos a variável de ambiente LD_LIBRARY_PATH
+com o caminho para a mesma.
+
+Os parâmetros de linha de comando `--typecode`, `--poa` e `--no-paths`
+significam respectivamente:
+
+[table Parâmetros de linha de comando básicos do compilador IDL
+       [[Parâmetro][Descrição]]
+       [
+        [`--typecode`]
+        [Faz geração de código para os objetos globais de typecode de cada interface gerada pelo compilador IDL]
+       ]
+       [
+        [`--poa`]
+        [Faz geração de código para uso do Portable Object Adapter]
+       ]
+       [
+        [`--no-paths`]
+        [Não leva em consideração o caminho dos arquivos para construção das directivas de `#include` no código gerado]
+       ]
+]
+
+Como sabemos nossa configuração, podemos definir as variáveis `MICO_LIB` e `MICO_BIN` para o seguinte no início de nosso Makefile
+
+[demo_hello_mak_set_mico_bin]
+
+A variável `CURDIR` é uma variável especial para o make que representa
+o path corrente de onde o make foi executado. Estamos aqui assumindo
+que o Makefile está sendo construído dentro do diretório do demo. Como
+as pastas `bin` e `lib` se encontram na raiz do pacote, precisamos
+voltar dois diretórios, e como estamos usando a configuração
+multithread, static e debug, o diretório do mico é então `mico-mt-d`.
+
+Para compilação do servidor para um arquivo objeto, intermediário, fazemos
+o seguinte
+
+[demo_hello_mak_compile_server_cpp]
+
+Para compilarmos o `server/server.cpp`, precisamos do header
+`bin/hello.h` já gerado pelo compilador IDL. Porém, não alimentamos o
+header no comando de compilação. O simbolo `$<` é um simbolo especial
+que expande para a primeira dependencia, no caso
+`server/server.cpp`. Enquanto que o simbolo `$@` expande para o alvo,
+que no caso é `bin/server.o`. Definimos também a variável CXXFLAGS,
+que deverá conter todos os parâmetros de compilação que deverão ser
+passados ao compilador, como os caminhos de inclusão, e etc.
+
 [endsect]
 
 [endsect]
