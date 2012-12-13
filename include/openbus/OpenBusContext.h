@@ -52,7 +52,12 @@ struct CallerChain {
   const char *busid() const {
     return _busid.c_str();
   }
-  
+
+  const idl_ac::LoginInfo &target() const
+  {
+    return _target;
+  }
+
   /**
   * Lista de informações de login de todas as entidades que realizaram chamadas que originaram a
   * cadeia de chamadas da qual essa chamada está inclusa.  Quando essa lista é vazia isso indica
@@ -87,14 +92,20 @@ struct CallerChain {
    */
   CallerChain() {}
 private:
-  CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c, 
-    const idl_cr::SignedCallChain &d) 
-    : _busid(busid), _originators(b), _caller(c), _signedCallChain(d) { }
+  CallerChain(const char *busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
+              const idl_ac::LoginInfo &c, const idl_cr::SignedCallChain &d) 
+    : _busid(busid), _target(t), _originators(b), _caller(c), _signedCallChain(d) 
+  {
+  }
   
-  CallerChain(const char *busid, const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
-    : _busid(busid), _originators(b), _caller(c) { }
+  CallerChain(const char *busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
+              const idl_ac::LoginInfo &c) 
+    : _busid(busid), _target(t), _originators(b), _caller(c) 
+  { 
+  }
   
   std::string _busid;
+  idl_ac::LoginInfo _target;
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
@@ -296,6 +307,7 @@ private:
   void orb(CORBA::ORB *o) {
     _orb = o;
   }
+  Connection *getDispatchConnection();
   typedef std::map<std::string, Connection*> BusidConnection;
   mutable Mutex _mutex;
   CORBA::ORB *_orb;
