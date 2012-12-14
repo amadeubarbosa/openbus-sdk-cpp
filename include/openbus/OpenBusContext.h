@@ -7,6 +7,8 @@
 #ifndef _TECGRAF_MANAGER_H_
 #define _TECGRAF_MANAGER_H_
 
+#include <openbus/ORBInitializer.h>
+
 #include <CORBA.h>
 #include <string>
 #include <vector>
@@ -19,19 +21,22 @@ namespace openbus {
 #include "openbus/interceptors/ORBInitializer_impl.h"
 #include "openbus/Connection.h"
 
+namespace tecgraf { namespace openbus { namespace core { namespace v2_0 { namespace services { namespace access_control {
 
-inline bool operator==(openbus::idl_ac::LoginInfo const &lhs, 
-                       openbus::idl_ac::LoginInfo const &rhs)
+inline bool operator==(LoginInfo const &lhs, 
+                       LoginInfo const &rhs)
 {
   return lhs.id.in() == rhs.id.in() || 
     (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
 }
 
-inline bool operator!=(openbus::idl_ac::LoginInfo const &lhs, 
-                       openbus::idl_ac::LoginInfo const &rhs)
+inline bool operator!=(LoginInfo const &lhs, 
+                       LoginInfo const &rhs)
 {
   return !(lhs == rhs);
 }
+
+} } } } } }
 
 /**
 * \brief openbus
