@@ -94,12 +94,12 @@ CallerChain OpenBusContext::getCallerChain() {
     CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
                                                        idl_ac::_tc_CallChain);
     *callChainAny >>= callChain;
-    return CallerChain(c->_busid(), callChain.target, callChain.originators, callChain.caller, 
+    return CallerChain(c->busid(), callChain.target, callChain.originators, callChain.caller, 
                        sigCallChain);
   } else {
     CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_slotId_legacyCallChain);
     if (legacyChainAny >>= callChain)
-      return CallerChain(0, callChain.target, callChain.originators, callChain.caller);
+      return CallerChain(c->busid() callChain.target, callChain.originators, callChain.caller);
     else return CallerChain();
   }
   return CallerChain();
