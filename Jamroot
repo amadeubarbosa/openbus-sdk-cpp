@@ -156,7 +156,9 @@ local rule exe-test ( test-name : filename : idl ? )
    core-idls /openssl//openssl ;
   local test-requirements = <implicit-dependency>core-idls
     <threading>multi:<source>/boost//thread <include>tests
-    <implicit-dependency>$(idl) <link>static:<source>dl ;
+    <implicit-dependency>$(idl) <target-os>linux,<link>static:<source>dl
+    <target-os>linux,<toolset>clang:<source>dl
+  ;
   exe $(test-name) : tests/$(filename) $(idl) $(test-dependencies)
    : $(test-requirements) ;
   explicit $(test-name) ;
