@@ -51,6 +51,7 @@ lib dl : : <name>dl <link>shared ;
 
 project openbus : build-dir bin
  : requirements <tag>@tag
+ : default-build <threading>multi <variant>debug <link>shared
  ;
 
 path-constant here : . ;
