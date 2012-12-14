@@ -6,9 +6,8 @@ import feature ;
 import modules ;
 import "class" : new ;
 import property-set ;
-import mico-idl ;
 
-if [ option.get with-openbus-puts ]
+if [ option.get openbus-with-puts : : 1 ]
 {
   local scs-idl-path-env = [ os.environ SCS_IDL_PATH ] ;
   local scs-path-env = [ os.environ SCS_PATH ] ;
@@ -30,7 +29,6 @@ if [ option.get with-openbus-puts ]
   search_path += $(scs-path) ;
   modules.poke : BOOST_BUILD_PATH : $(search_path) ;
 
-
   project openssl ;
 
   lib crypto : : <name>crypto <search>$(openssl-lib-path)
@@ -45,6 +43,8 @@ else
   path-constant scs-idl-path : [ scs-idl-path ] ;
   path-constant openbus-idl-path : [ openbus-idl-path ] ;
 }
+
+import mico-idl ;
 
 project dl ;
 lib dl : : <name>dl <link>shared ;
