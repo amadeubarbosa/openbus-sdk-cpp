@@ -495,7 +495,7 @@ public:
 
 #ifndef OPENBUS_ASSISTANT_DOXYGEN
 protected:
-  friend class assistant_access;
+  friend struct assistant_access;
   AssistantImpl() {}
   void InitWithPassword(std::string const& hostname, unsigned short port
                         , std::string const& username, std::string const& password
@@ -579,14 +579,14 @@ struct Assistant : AssistantImpl
   (Assistant, (AssistantImpl), keywords::tag
    , (required
       (host, OPENBUS_ASSISTANT_STRING_LAMBDA())
-      (port, (unsigned short)))
+      (port, *(boost::is_integral<boost::mpl::_>)))
    (optional
     (log_level, (logger::level))
     (username, OPENBUS_ASSISTANT_STRING_LAMBDA())
     (entity, OPENBUS_ASSISTANT_STRING_LAMBDA())
     (password, OPENBUS_ASSISTANT_STRING_LAMBDA())
     (private_key, (CORBA::OctetSeq))
-    (in_out(argc), (int&))
+    (in_out(argc), (int))
     (in_out(argv), (char**))
     (retry_wait, (unsigned int))
     (on_login_error, (login_error_callback_type))
