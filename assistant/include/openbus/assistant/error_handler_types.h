@@ -69,24 +69,24 @@ typedef boost::mpl::vector<BOOST_PP_SEQ_ENUM(OPENBUS_ASSISTANT_FATAL_EXCEPTIONS(
 typedef boost::mpl::vector<BOOST_PP_SEQ_ENUM(OPENBUS_ASSISTANT_FIND_EXCEPTIONS())> find_exception_types;
 
 typedef assistant::overloaded_error_handler
-<typename boost::mpl::transform
+<boost::mpl::transform
  <login_exception_types, detail::prepend_to_signature
   <boost::add_reference<boost::add_const<mpl::_> >, void()> >::type
   , detail::dummy_login_error_callback> login_error_callback_type;
 typedef assistant::overloaded_error_handler
-<typename boost::mpl::transform
+<boost::mpl::transform
  <register_exception_types, detail::prepend_to_signature
   <boost::add_reference<boost::add_const<mpl::_> >
    , void(scs::core::IComponent_var
           , idl_or::ServicePropertySeq)> >::type
  , detail::dummy_register_error_callback> register_error_callback_type;
 typedef assistant::overloaded_error_handler
-<typename boost::mpl::transform
+<boost::mpl::transform
  <fatal_exception_types, detail::prepend_to_signature
   <boost::add_reference<boost::add_const<mpl::_> >, void()> >::type
  , detail::dummy_fatal_error_callback> fatal_error_callback_type;
 typedef assistant::overloaded_error_handler
-<typename boost::mpl::transform
+<boost::mpl::transform
  <find_exception_types, detail::prepend_to_signature
   <boost::add_reference<boost::add_const<mpl::_> >, void()> >::type
  , detail::dummy_find_error_callback> find_error_callback_type;
