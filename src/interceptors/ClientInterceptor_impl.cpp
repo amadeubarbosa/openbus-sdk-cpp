@@ -42,14 +42,17 @@ Connection & ClientInterceptor::getCurrentConnection(PortableInterceptor::Client
   return *conn;
 }
 
-CallerChain * ClientInterceptor::getJoinedChain(PortableInterceptor::ClientRequestInfo *r) {
+  CallerChain * ClientInterceptor::getJoinedChain(Connection &c, 
+                                                  PortableInterceptor::ClientRequestInfo *r)
+  {
   CORBA::Any_var signedCallChainAny= r->get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) {
     CORBA::Any_var callChainAny = _cdrCodec->decode_value(signedCallChain.encoded, 
                                                           idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
-    if (callChainAny >>= callChain) return new CallerChain(callChain.target, callChain.originators, 
+    if (callChainAny >>= callChain) return new CallerChain(c.busid(), *c.login(), 
+                                                           callChain.originators, 
                                                            callChain.caller, signedCallChain);
     else return 0;
   } else return 0;
@@ -119,7 +122,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r){
         memcpy(pBuf+22, operation, strlen(operation));
         SHA256(pBuf, bufSize, credential.hash);
         
-        callerChain = getJoinedChain(r);
+        callerChain = getJoinedChain(conn, r);
         if (strcmp(idl::BusLogin, session.remoteId.in())) {
           /* esta requisição não é para o barramento, então preciso assinar essa cadeia. */
           /* montando uma hash para consultar o cache de cadeias assinadas. */

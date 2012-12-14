@@ -30,7 +30,7 @@ namespace interceptors {
     void destroy() { }
     void openbusContext(OpenBusContext *m) { _openbusContext = m; }
     Connection & getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
-    openbus::CallerChain * getJoinedChain(PortableInterceptor::ClientRequestInfo *r);
+    openbus::CallerChain * getJoinedChain(Connection &, PortableInterceptor::ClientRequestInfo *r);
     static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
   private:
 

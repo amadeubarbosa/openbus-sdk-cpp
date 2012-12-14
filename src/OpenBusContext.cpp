@@ -94,12 +94,12 @@ CallerChain OpenBusContext::getCallerChain() {
     CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
                                                        idl_ac::_tc_CallChain);
     *callChainAny >>= callChain;
-    return CallerChain(c->busid(), callChain.target, callChain.originators, callChain.caller, 
+    return CallerChain(c->busid(), *c->login(), callChain.originators, callChain.caller, 
                        sigCallChain);
   } else {
     CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_slotId_legacyCallChain);
     if (legacyChainAny >>= callChain)
-      return CallerChain(c->busid() callChain.target, callChain.originators, callChain.caller);
+      return CallerChain(c->busid(), *c->login(), callChain.originators, callChain.caller);
     else return CallerChain();
   }
   return CallerChain();
@@ -130,7 +130,7 @@ CallerChain OpenBusContext::getJoinedChain() {
   if (*sigCallChainAny >>= sigCallChain) {
     CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded, idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
-    if (callChainAny >>= callChain) return CallerChain(c->busid(), callChain.target, 
+    if (callChainAny >>= callChain) return CallerChain(c->busid(), *c->login(), 
                                                        callChain.originators, 
                                                        callChain.caller, sigCallChain);
     else return CallerChain();
@@ -169,6 +169,7 @@ idl_ac::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
 
 Connection *OpenBusContext::getDispatchConnection()
 {
+  log_scope l(log.general_logger(), info_level, "OpenBusContext::getDispatchConnection");
   CORBA::Any_var connectionAddrAny = _piCurrent->get_slot(_slotId_receiveConnection);
   idl::OctetSeq connectionAddrOctetSeq;
   Connection *c = 0;
