@@ -32,14 +32,19 @@ private:
 };
 
 void loginAndRegister() {
-  // FILE* privateKeyFile = fopen("DemoCppHello.key", "r");
-  // if (!privateKeyFile) throw openbus::InvalidPrivateKey();
-  // EVP_PKEY* privateKey = PEM_read_PrivateKey(privateKeyFile, 0, 0, 0);
-  // fclose(privateKeyFile);
-  // if (!privateKey) throw openbus::InvalidPrivateKey();
-  // 
-  // conn->loginByCertificate("interop_hello_cpp_server", openbus::openssl::PrvKey2byteSeq(privateKey));
-  conn->loginByPassword(entity.c_str(), entity.c_str());
+  FILE *privateKeyFile = fopen("interop_hello_cpp_server.key", "r");
+  if (!privateKeyFile)
+  {
+    throw openbus::InvalidPrivateKey();
+  }
+  EVP_PKEY *privateKey = PEM_read_PrivateKey(privateKeyFile, 0, 0, 0);
+  fclose(privateKeyFile);
+  if (!privateKey)
+  {
+    throw openbus::InvalidPrivateKey();
+  }
+  openbus::openssl::pkey p(privateKey);
+  conn->loginByCertificate("interop_hello_cpp_server", openbus::openssl::PrvKey2byteSeq(p));
   openBusContext->getOfferRegistry()->registerService(ctx->getIComponent(), props);
 }
 
