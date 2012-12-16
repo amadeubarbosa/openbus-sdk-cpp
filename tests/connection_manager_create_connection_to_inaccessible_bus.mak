@@ -1,6 +1,0 @@
-PROJNAME= SDKTest
-APPNAME= connection_manager_create_connection_to_inaccessible_bus
-
-include config.mak
-
-SRC= connection_manager/create_connection_to_inaccessible_bus.cpp
