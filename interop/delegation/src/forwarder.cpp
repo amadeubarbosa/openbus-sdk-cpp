@@ -29,9 +29,9 @@ private:
 struct forwarding_thread
 {
   forwarding_thread(const char* to, openbus::CallerChain const& caller_chain, delegation::Messenger_var messenger
-                    , openbus::Connection& connection)
+                    , openbus::OpenBusContext& c)
     : to(to), caller_chain(caller_chain), canceled(false), messenger(messenger)
-    , connection(connection) {}
+    , ctx(c) {}
   std::string to;
   openbus::CallerChain caller_chain;
   boost::thread thread;
@@ -39,7 +39,7 @@ struct forwarding_thread
   boost::condition_variable c;
   bool canceled;
   delegation::Messenger_var messenger;
-  openbus::Connection& connection;
+  openbus::OpenBusContext& ctx;
 
   void run()
   {
@@ -54,10 +54,10 @@ struct forwarding_thread
         {
           std::string from (caller_chain.caller().entity);
           std::cout << "Checking messages of " << from << std::endl;
-          connection.joinChain(caller_chain);
+          ctx.joinChain(caller_chain);
           delegation::PostDescSeq_var posts = messenger->receivePosts();
           std::cout << "Found " << posts->length() << " messages" << std::endl;
-          connection.exitChain();
+          ctx.exitChain();
           for(std::size_t i = 0; i != posts->length(); ++i)
           {
             std::cout << "Has message" << std::endl;
@@ -95,22 +95,22 @@ struct forwarding_thread
 };
 
 struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation::Forwarder {
-  ForwarderImpl(openbus::Connection& c, delegation::Messenger_var messenger)
-    : connection(c), messenger(messenger) {}
+  ForwarderImpl(openbus::OpenBusContext& c, delegation::Messenger_var messenger)
+    : ctx(c), messenger(messenger) {}
 
   std::map<std::string, boost::shared_ptr<forwarding_thread> > threads;
 
   void setForward(const char* to)
   {
     boost::unique_lock<boost::mutex> lock(mutex);
-    std::string from(connection.getCallerChain().caller().entity);
+    std::string from(ctx.getCallerChain().caller().entity);
     std::cout << "setup forward to " << to << " by " << from << std::endl;
     std::map<std::string, boost::shared_ptr<forwarding_thread> >::const_iterator
       iterator = threads.find(from);
     if(iterator == threads.end())
     {
       boost::shared_ptr<forwarding_thread> t
-        (new forwarding_thread(to, connection.getCallerChain(), messenger, connection));
+        (new forwarding_thread(to, ctx.getCallerChain(), messenger, ctx));
       threads.insert(std::make_pair(from, t));
       t->thread = boost::thread(boost::bind(&forwarding_thread::run, t));
     }
@@ -121,7 +121,7 @@ struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation:
   void cancelForward(const char* to)
   {
     boost::unique_lock<boost::mutex> lock(mutex);
-    std::string from(connection.getCallerChain().caller().entity);
+    std::string from(ctx.getCallerChain().caller().entity);
     std::cout << "cancel forward to " << to << " by " << from << std::endl;
     std::map<std::string, boost::shared_ptr<forwarding_thread> >::iterator
       iterator = threads.find(from);
@@ -149,7 +149,7 @@ struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation:
     std::abort();
   }
 
-  openbus::Connection& connection;
+  openbus::OpenBusContext& ctx;
   delegation::Messenger_var messenger;
   boost::mutex mutex;
 };
@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
       componentId.platform_spec = "C++";
       scs::core::ComponentContext forwarder_component(openbusContext->orb(), componentId);
     
-      ForwarderImpl forwarder_servant(*conn.get(), m);
+      ForwarderImpl forwarder_servant(*openbusContext, m);
       forwarder_component.addFacet("forwarder", tecgraf::openbus::interop::delegation::_tc_Forwarder->id(), &forwarder_servant);
     
       openbus::idl_or::ServicePropertySeq props;

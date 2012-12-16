@@ -26,21 +26,21 @@ private:
 
 struct MessengerImpl : virtual public POA_tecgraf::openbus::interop::delegation::Messenger
 {
-  MessengerImpl(openbus::Connection& connection)
-    : connection(connection) {}
+  MessengerImpl(openbus::OpenBusContext& c)
+    : ctx(c) {}
 
   void post(const char* to, const char* message) 
   {
-    std::cout << "post to " << to << " by " << connection.getCallerChain().caller().entity
+    std::cout << "post to " << to << " by " << ctx.getCallerChain().caller().entity
               << std::endl;
     std::cout << " Message content: " << message << std::endl;
-    delegation::PostDesc desc = {connection.getCallerChain().caller().entity, message};
+    delegation::PostDesc desc = {ctx.getCallerChain().caller().entity, message};
     inbox.insert(std::make_pair(to, desc));
   }
 
   delegation::PostDescSeq* receivePosts()
   {
-    std::string from (connection.getCallerChain().caller().entity);
+    std::string from (ctx.getCallerChain().caller().entity);
     std::cout << "Retrieving messages for " << from << std::endl;
     typedef std::multimap<std::string, delegation::PostDesc>::const_iterator iterator;
     std::pair<iterator, iterator> range = inbox.equal_range(from);
@@ -55,7 +55,7 @@ struct MessengerImpl : virtual public POA_tecgraf::openbus::interop::delegation:
     return posts._retn();
   }
 
-  openbus::Connection& connection;
+  openbus::OpenBusContext& ctx;
   std::multimap<std::string, delegation::PostDesc> inbox;
 };
 
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
     componentId.patch_version = '0';
     componentId.platform_spec = "C++";
     scs::core::ComponentContext messenger_component(openbusContext->orb(), componentId);
-    MessengerImpl messenger_servant(*conn.get());
+    MessengerImpl messenger_servant(*openbusContext);
     messenger_component.addFacet("messenger", tecgraf::openbus::interop::delegation::_tc_Messenger->id(), &messenger_servant);
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
