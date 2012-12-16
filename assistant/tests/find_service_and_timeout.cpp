@@ -12,9 +12,6 @@ int main(int argc, char** argv)
 
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 
-  boost::chrono::steady_clock::time_point before
-    = boost::chrono::steady_clock::now();
-
   idl_or::ServiceOfferDescSeq offers
     = assistant.findServices(assistant.createFacetAndEntityProperty("hello", "notexistantentity")
                              , 1);

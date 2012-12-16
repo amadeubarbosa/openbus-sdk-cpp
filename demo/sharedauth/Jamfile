@@ -9,7 +9,7 @@ alias hello-idl : $(here)/idl/hello.idl ;
 exe sharedauth_client
  : src/client.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl sharedauth-idl
+   /openssl//openssl sharedauth-idl
    hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
@@ -20,7 +20,7 @@ exe sharedauth_client
 exe sharedauth_server
  : src/server.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl sharedauth-idl
+   /openssl//openssl sharedauth-idl
    hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
@@ -32,7 +32,7 @@ exe sharedauth_server
 exe sharedauth_client_sharedauth 
  : src/client_sharedauth.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl sharedauth-idl
+   /openssl//openssl sharedauth-idl
    hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests

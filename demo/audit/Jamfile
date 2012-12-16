@@ -8,7 +8,7 @@ obj hello-idl : $(demo-hello)/idl/hello.idl /mico//mico ;
 exe audit_client
  : client/client.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
+   /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
    <link>static:<source>/dl//dl
@@ -17,7 +17,7 @@ exe audit_client
 exe audit_server
  : server/server.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
+   /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
    <link>static:<source>/dl//dl
@@ -27,7 +27,7 @@ exe audit_server
 exe audit_proxy
  : proxy/proxy.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
+   /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
    <link>static:<source>/dl//dl
