@@ -1,27 +1,14 @@
-project openbus/interop/simple ;
 
-path-constant here : . ;
+exe client
+    : src/client.cpp
+      stubs/hello.cc
+      /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
+    : <threading>multi:<define>/boost//thread <include>stubs <include>.
+    ;
 
-alias hello-idl : $(here)/idl/hello.idl ;
-
-exe simple_client
- : src/client.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
-
-exe simple_server
- : src/server.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
-
-alias simple : simple_client simple_server ;
+exe server
+    : src/server.cpp
+      stubs/hello.cc
+      /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
+    : <threading>multi:<define>/boost//thread <include>stubs <include>.
+    ;
