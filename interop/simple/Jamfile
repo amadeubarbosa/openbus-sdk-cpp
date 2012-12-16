@@ -1,14 +1,15 @@
-
 exe client
     : src/client.cpp
       stubs/hello.cc
       /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
-    : <threading>multi:<source>/boost//thread <include>stubs <include>.
+    : <implicit-dependency>/openbus//core-idls
+      <threading>multi:<source>/boost//thread <include>stubs <include>.
     ;
 
 exe server
     : src/server.cpp
       stubs/hello.cc
       /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
-    : <threading>multi:<source>/boost//thread <include>stubs <include>.
+    : <implicit-dependency>/openbus//core-idls
+      <threading>multi:<source>/boost//thread <include>stubs <include>.
     ;

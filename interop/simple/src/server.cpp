@@ -32,7 +32,8 @@ private:
 };
 
 void loginAndRegister() {
-  FILE *privateKeyFile = fopen("interop_hello_cpp_server.key", "r");
+  std::string keyPath = entity + ".key";
+  FILE *privateKeyFile = fopen(keyPath.c_str(), "r");
   if (!privateKeyFile)
   {
     throw openbus::InvalidPrivateKey();
