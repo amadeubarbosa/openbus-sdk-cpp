@@ -1,15 +1,29 @@
-exe client
-    : src/client.cpp
-      stubs/hello.cc
-      /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
-    : <implicit-dependency>/openbus//core-idls
-      <threading>multi:<source>/boost//thread <include>stubs <include>.
+project openbus/interop ;
+
+path-constant here : . ;
+
+obj hello-idl : $(here)/idl/hello.idl /mico//mico ;
+
+exe simple_client
+    : src/client.cpp hello-idl
+      /openbus//openbus /scs//scs /logger//logger /mico//mico
+      /boost//headers /openssl//openssl
+    : <threading>multi:<source>/boost//thread
+      <include>../properties_reader/include
+      <implicit-dependency>/openbus//core-idls
+      <implicit-dependency>hello-idl
+      <link>static:<source>/dl//dl
     ;
 
-exe server
-    : src/server.cpp
-      stubs/hello.cc
-      /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
-    : <implicit-dependency>/openbus//core-idls
-      <threading>multi:<source>/boost//thread <include>stubs <include>.
+exe simple_server
+    : src/server.cpp hello-idl
+      /openbus//openbus /scs//scs /logger//logger /mico//mico
+      /boost//headers /openssl//openssl
+    : <threading>multi:<source>/boost//thread
+      <include>../properties_reader/include
+      <implicit-dependency>/openbus//core-idls
+      <implicit-dependency>hello-idl
+      <link>static:<source>/dl//dl
     ;
+
+alias simple : simple_client simple_server test.properties admin/interop_hello_cpp_server.key ;

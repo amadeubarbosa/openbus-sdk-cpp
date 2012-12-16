@@ -171,6 +171,22 @@ for local d in $(all-demos)
 alias stage-demos : stage-demo-$(all-demos) : <conditional>@stage-demos-location ;
 #explicit stage-demos ;
 
+rule stage-interop-location ( requirements * )
+{
+  local ps = [ new property-set $(requirements) ] ;
+  local name = [ $(ps).get <openbus-stage-demo-name> ] ;
+  return <location>stage-interop/$(name) ;
+}
+
+local all-interops = [ MATCH interop/(.*)/Jamfile : [ glob interop/*/Jamfile ] ] ;
+for local d in $(all-interops)
+{
+  install stage-interop-$(d) : interop/$(d)//$(d) : <conditional>@stage-interop-location
+   : <openbus-stage-demo-name>$(d) ;
+  explicit stage-interop-$(d) ;
+}
+alias stage-interops : stage-interop-$(all-interops) ;
+
 rule stage-assistant-demos-location ( requirements * )
 {
   local ps = [ new property-set $(requirements) ] ;
