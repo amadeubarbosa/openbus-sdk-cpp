@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     std::cout << "Returned " << offers->length() << " offers" << std::endl;
     assert (offers->length() == 1);
-    CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
+    CORBA::Object_var o = offers[0u].service_ref->getFacetByName("hello");
     Hello* hello = Hello::_narrow(o);
 
     assert(!servant_called);

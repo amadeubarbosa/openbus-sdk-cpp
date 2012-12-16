@@ -62,7 +62,7 @@ int main(int argc, char** argv)
   props[2].value = "OpenBus Demos";
   openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
   assert (offers->length() == 1);
-  CORBA::Object_var o = offers[0].service_ref->getFacetByName("hello");
+  CORBA::Object_var o = offers[0u].service_ref->getFacetByName("hello");
   Hello* hello = Hello::_narrow(o);
 
   conn->logout();
