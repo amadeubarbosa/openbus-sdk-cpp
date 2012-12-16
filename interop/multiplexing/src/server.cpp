@@ -154,10 +154,24 @@ int main(int argc, char** argv) {
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(*openbusContext));
     ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
-    conn1BusA->loginByPassword(entity.c_str(), entity.c_str());
-    conn2BusA->loginByPassword(entity.c_str(), entity.c_str());
-    conn3BusA->loginByPassword(entity.c_str(), entity.c_str());
-    connBusB->loginByPassword(entity.c_str(), entity.c_str());
+    const std::string keyPath = "admin/" + entity + ".key";
+    FILE *privateKeyFile = fopen(keyPath.c_str(), "r");
+    if (!privateKeyFile)
+    {
+      throw openbus::InvalidPrivateKey();
+    }
+    EVP_PKEY *privateKey = PEM_read_PrivateKey(privateKeyFile, 0, 0, 0);
+    fclose(privateKeyFile);
+    if (!privateKey)
+    {
+      throw openbus::InvalidPrivateKey();
+    }
+    openbus::openssl::pkey p(privateKey);
+
+    conn1BusA->loginByCertificate(entity.c_str(), openbus::openssl::PrvKey2byteSeq(p));
+    conn2BusA->loginByCertificate(entity.c_str(), openbus::openssl::PrvKey2byteSeq(p));
+    conn3BusA->loginByCertificate(entity.c_str(), openbus::openssl::PrvKey2byteSeq(p));
+    connBusB->loginByCertificate(entity.c_str(), openbus::openssl::PrvKey2byteSeq(p));
     
     openbusContext->onCallDispatch(CallDispatchCallback(conn1BusA.get(), connBusB.get()));
 
