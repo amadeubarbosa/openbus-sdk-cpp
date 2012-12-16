@@ -3,7 +3,7 @@ exe client
     : src/client.cpp
       stubs/hello.cc
       /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
-    : <threading>multi:<define>/boost//thread <include>stubs <include>. 
+    : <threading>multi:<source>/boost//thread <include>stubs <include>. 
       <include>../properties_reader/include
     ;
 
@@ -11,6 +11,6 @@ exe server
     : src/server.cpp
       stubs/hello.cc
       /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
-    : <threading>multi:<define>/boost//thread <include>stubs <include>.
+    : <threading>multi:<source>/boost//thread <include>stubs <include>.
       <include>../properties_reader/include
     ;
