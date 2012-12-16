@@ -7,7 +7,7 @@ local rule exe-test ( test-name : filename : idl ? )
 {
   local test-dependencies = /openbus//openbus
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl ;
+   /openssl//openssl ;
   local test-requirements = <implicit-dependency>/openbus//core-idls
     <threading>multi:<source>/boost//thread <include>.
     <implicit-dependency>$(idl) <target-os>linux,<link>static:<source>/dl//dl
