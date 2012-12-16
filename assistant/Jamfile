@@ -15,7 +15,7 @@ alias rt : : : : <target-os>linux:<source>real_rt ;
 
 lib assistant : src/assistant_common.cpp
  /mico//mico /scs//scs /boost//headers /logger//logger
- /openssl//openssl /openbus//openbus /openbus//core-idls
+ /openssl//openssl /openbus//openbus
  /boost//chrono /boost//system rt
  : <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
    <include>include

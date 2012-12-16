@@ -8,7 +8,7 @@ obj chain-validation-idl : $(here)/idl/chain_validation.idl /mico//mico ;
 exe chain_validation_client
  : client/client.cpp /openbus//openbus
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl chain-validation-idl
+   /openssl//openssl chain-validation-idl
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
@@ -18,7 +18,7 @@ exe chain_validation_client
 exe chain_validation_executive
  : executive/executive.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl chain-validation-idl
+   /openssl//openssl chain-validation-idl
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
@@ -29,7 +29,7 @@ exe chain_validation_executive
 exe chain_validation_secretary
  : secretary/secretary.cpp /openbus//openbus /boost//program_options
    /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl chain-validation-idl
+   /openssl//openssl chain-validation-idl
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
