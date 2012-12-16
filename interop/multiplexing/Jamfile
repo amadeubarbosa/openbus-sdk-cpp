@@ -1,29 +1,16 @@
-project openbus/interop/multiplexing ;
 
-path-constant here : . ;
+exe client
+    : src/client.cpp
+      stubs/hello.cc
+      /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
+    : <threading>multi:<define>/boost//thread <include>stubs <include>. 
+      <include>../properties_reader/include
+    ;
 
-alias hello-idl : $(here)/idl/hello.idl ;
-
-exe multiplexing_client
- : src/client.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <include>$(here)/../properties_reader/include
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
-
-exe multiplexing_server
- : src/server.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <include>$(here)/../properties_reader/include
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
-
-alias multiplexing : multiplexing_client multiplexing_server ;
+exe server
+    : src/server.cpp
+      stubs/hello.cc
+      /openbus//openbus /scs//scs /logger//logger /mico//mico /boost//headers /openssl//openssl
+    : <threading>multi:<define>/boost//thread <include>stubs <include>.
+      <include>../properties_reader/include
+    ;
