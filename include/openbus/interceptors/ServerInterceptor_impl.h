@@ -1,5 +1,5 @@
-#ifndef TECGRAF_SERVERINTERCEPTOR_IMPL_H_
-#define TECGRAF_SERVERINTERCEPTOR_IMPL_H_
+#ifndef TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
+#define TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
 
 #include <CORBA.h>
 
@@ -9,8 +9,8 @@
 extern "C" {
   #include "openbus/util/Ticket_impl.h"
 }
-#ifndef TECGRAF_LRUCACHE_H_
-#define TECGRAF_LRUCACHE_H_
+#ifndef TECGRAF_SDK_LRUCACHE_H_
+#define TECGRAF_SDK_LRUCACHE_H_
 #include "openbus/util/LRUCache_impl.h"
 #endif
 

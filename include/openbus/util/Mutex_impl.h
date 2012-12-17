@@ -1,5 +1,5 @@
-#ifndef TECGRAF_MUTEX_H_
-#define TECGRAF_MUTEX_H_
+#ifndef TECGRAF_SDK_MUTEX_H_
+#define TECGRAF_SDK_MUTEX_H_
 
 #include <CORBA.h>
 

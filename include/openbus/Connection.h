@@ -6,8 +6,8 @@
 * 
 */
 
-#ifndef TECGRAF_CONNECTION_H_
-#define TECGRAF_CONNECTION_H_
+#ifndef TECGRAF_SDK_CONNECTION_H_
+#define TECGRAF_SDK_CONNECTION_H_
 
 #include <CORBA.h>
 #include <memory>

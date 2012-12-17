@@ -1,5 +1,5 @@
-#ifndef TECGRAF_AUTO_LOCK_H_
-#define TECGRAF_AUTO_LOCK_H_
+#ifndef TECGRAF_SDK_AUTO_LOCK_H_
+#define TECGRAF_SDK_AUTO_LOCK_H_
 
 #include <CORBA.h>
 

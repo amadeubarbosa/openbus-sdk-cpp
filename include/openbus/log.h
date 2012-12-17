@@ -4,8 +4,8 @@
 * \file openbus/log.h
 */
 
-#ifndef TECGRAF_OPENBUS_LOG_H_
-#define TECGRAF_OPENBUS_LOG_H_
+#ifndef TECGRAF_SDK_OPENBUS_LOG_H_
+#define TECGRAF_SDK_OPENBUS_LOG_H_
 
 #include <CORBA.h>
 #include <log/output/streambuf_output.h>

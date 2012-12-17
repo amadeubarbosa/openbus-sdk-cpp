@@ -4,8 +4,8 @@
 * \file openbus/OpenBusContext.h
 */
 
-#ifndef _TECGRAF_MANAGER_H_
-#define _TECGRAF_MANAGER_H_
+#ifndef _TECGRAF_SDK_MANAGER_H_
+#define _TECGRAF_SDK_MANAGER_H_
 
 #include <openbus/ORBInitializer.h>
 

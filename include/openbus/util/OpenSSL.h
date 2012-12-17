@@ -1,5 +1,5 @@
-#ifndef _TECGRAF_OPENSSL_H_
-#define _TECGRAF_OPENSSL_H_
+#ifndef _TECGRAF_SDK_OPENSSL_H_
+#define _TECGRAF_SDK_OPENSSL_H_
 
 #include <openssl/pem.h>
 #include <boost/shared_ptr.hpp>
