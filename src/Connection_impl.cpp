@@ -17,12 +17,11 @@ LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
 { 
 }
 
-Login *LoginCache::validateLogin(char *id) 
+Login *LoginCache::validateLogin(const std::string id) 
 {
-  std::string sid(id);
   /* este login está no cache? */
   AutoLock m(&_mutex);
-  Login *login = _loginLRUCache.fetch(sid);
+  Login *login = _loginLRUCache.fetch(id);
   if (!login) 
   {
     m.unlock();
@@ -30,7 +29,7 @@ Login *LoginCache::validateLogin(char *id)
     login->time2live = -1;
     try 
     {
-      login->loginInfo = _login_registry->getLoginInfo(id, login->encodedCallerPubKey);
+      login->loginInfo = _login_registry->getLoginInfo(id.c_str(), login->encodedCallerPubKey);
     } 
     catch (const idl_ac::InvalidLogins &e) 
     { 
@@ -44,7 +43,7 @@ Login *LoginCache::validateLogin(char *id)
     }
     login->timeUpdated = time(0);
     m.lock();
-    _loginLRUCache.insert(sid, login);
+    _loginLRUCache.insert(id, login);
   }
   m.unlock();
   
@@ -62,7 +61,7 @@ Login *LoginCache::validateLogin(char *id)
   else 
   {
     /* preciso consultar o barramento para validar o login. */
-    idl_ac::ValidityTime validity = _login_registry->getLoginValidity(id);
+    idl_ac::ValidityTime validity = _login_registry->getLoginValidity(id.c_str());
     login->time2live = validity;
     login->timeUpdated = time(0);
     /* o login de interesse, após atualização da cache, ainda é válido? */

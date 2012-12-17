@@ -58,7 +58,7 @@ class LoginCache
 {
 public:
   LoginCache(idl_ac::LoginRegistry_ptr);
-  Login *validateLogin(char *id);
+  Login *validateLogin(const std::string id);
 private:
   idl_ac::LoginRegistry_ptr _login_registry;
   LoginLRUCache _loginLRUCache;

@@ -13,8 +13,8 @@ namespace openbus
 {
 namespace interceptors 
 {
-Session::Session(CORBA::ULong i, const char *login) 
-  : id(i), remoteId(CORBA::string_dup(login))
+Session::Session(CORBA::ULong i, const std::string login) 
+  : id(i), remoteId(login)
 {
   tickets_init(&tickets);
   for (short i=0;i<SECRET_SIZE;++i) 
@@ -45,7 +45,7 @@ void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller,
   idl_cr::CredentialReset credentialReset;
 
   AutoLock m(&_mutex);
-  Session session(_sessionLRUCache.size()+1, caller->loginInfo->id); 
+  Session session(_sessionLRUCache.size()+1, std::string(caller->loginInfo->id));
   _sessionLRUCache.insert(session.id, session);
   credentialReset.session = session.id;
 
@@ -168,7 +168,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     try 
     {
       l.vlog("Validando login: %s", credential.login.in());
-      caller = conn->_loginCache->validateLogin(credential.login);
+      caller = conn->_loginCache->validateLogin(std::string(credential.login));
     }
     catch (const CORBA::NO_PERMISSION &e) 
     {
@@ -201,7 +201,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     m.unlock();
 
     tickets_History *t = 0;
-    const char *remoteId = 0;
+    std::string remoteId;
     if (hasSession) 
     {
       /* montando uma hash com os dados da credencial recebida e da sessão existente. */
@@ -224,7 +224,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     }
 
     if (!(hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
-          !strcmp(remoteId, credential.login.in()) && tickets_check(t, credential.ticket))) 
+          !strcmp(remoteId.c_str(), credential.login.in()) && tickets_check(t, credential.ticket))) 
     {
       l.level_vlog(debug_level, "credential not valid, try to reset credetial session");
       sendCredentialReset(conn, caller, r);

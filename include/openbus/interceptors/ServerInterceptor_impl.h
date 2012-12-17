@@ -22,11 +22,11 @@ namespace interceptors
 {
 struct Session 
 {
-  Session(CORBA::ULong, const char *);
+  Session(CORBA::ULong, const std::string);
   CORBA::ULong id;
   tickets_History tickets;
   unsigned char secret[SECRET_SIZE];
-  char *remoteId;
+  std::string remoteId;
 };
 
 class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor 
