@@ -14,6 +14,7 @@ extern "C" {
 #endif
 
 #include <CORBA.h>
+#include <string>
 
 namespace openbus 
 {
@@ -21,11 +22,11 @@ namespace interceptors
 {
 struct Session 
 {
-Session(CORBA::ULong, const char *);
-CORBA::ULong id;
-tickets_History tickets;
-unsigned char secret[SECRET_SIZE];
-char *remoteId;
+  Session(CORBA::ULong, const char *);
+  CORBA::ULong id;
+  tickets_History tickets;
+  unsigned char secret[SECRET_SIZE];
+  char *remoteId;
 };
 
 class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor 
@@ -79,8 +80,8 @@ private:
   PortableInterceptor::SlotId _slotId_legacyCallChain;
   IOP::Codec *_cdrCodec;
   OpenBusContext *_openbusContext;
-  Connection *getDispatcher(OpenBusContext &context, const char *busId, const char *loginId, 
-                            const char *operation);
+  Connection *getDispatcher(OpenBusContext &context, const std::string busId, 
+                            const std::string loginId, const std::string operation);
   void sendCredentialReset(Connection *, Login *, PortableInterceptor::ServerRequestInfo *);
 
   typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;

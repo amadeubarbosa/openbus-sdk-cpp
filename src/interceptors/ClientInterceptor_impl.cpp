@@ -114,7 +114,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
 
       /* montando uma credencial com os dados(busid e login) da conexão. */
       idl_cr::CredentialData credential;
-      credential.bus = CORBA::string_dup(conn._busid);
+      credential.bus = CORBA::string_dup(conn._busid.c_str());
       conn_mutex.lock();
       credential.login = CORBA::string_dup(conn._login()->id);
       conn_mutex.unlock();

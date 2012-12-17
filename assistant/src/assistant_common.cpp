@@ -72,7 +72,7 @@ std::auto_ptr<Connection> create_connection_simple(CORBA::ORB_var orb, std::stri
     (orb->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
 
-  std::auto_ptr<openbus::Connection> c = openbusContext->createConnection(host.c_str(), port);
+  std::auto_ptr<openbus::Connection> c = openbusContext->createConnection(host, port);
   l.log("Connection created");
   boost::weak_ptr<assistant_detail::shared_state> weak_state = state;
   c->onInvalidLogin(boost::bind(invalid_login_callback(), _1, _2, weak_state));

@@ -74,8 +74,8 @@ void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller,
 
 ServerInterceptor::~ServerInterceptor() { }
 
-Connection *ServerInterceptor::getDispatcher(OpenBusContext &context, const char *busId, 
-                                             const char *loginId, const char *operation)
+Connection *ServerInterceptor::getDispatcher(OpenBusContext &context, const std::string busId, 
+                                             const std::string loginId, const std::string operation)
 {
   Connection *conn = 0;
   log_scope l(log.general_logger(), debug_level,"ServerInterceptor::getDispatcher");
@@ -93,7 +93,7 @@ Connection *ServerInterceptor::getDispatcher(OpenBusContext &context, const char
   }
   if (conn) 
   {
-    if (!conn->login() || (strcmp(conn->busid(), busId))) 
+    if (!conn->login() || (conn->busid() != busId)) 
     {
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     } 
@@ -132,7 +132,8 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
   idl_cr::CredentialData credential;
   if (hasContext && (any >>= credential)) 
   {
-    Connection *conn = getDispatcher(*_openbusContext, credential.bus, credential.login, operation);
+    Connection *conn = getDispatcher(*_openbusContext, std::string(credential.bus), 
+                                     std::string(credential.login), std::string(operation));
 
     /* disponibilizando a conexão atual para OpenBusContext::getCurrentConnection() */
     size_t bufSize = sizeof(Connection*);
@@ -159,7 +160,7 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     Login *caller;
     /* consulta ao cache de logins para saber se este login é valido. 
     ** obtenção da estrutura Login referente a este login id. (caller) */
-    if (strcmp(credential.bus.in(), conn->_busid)) 
+    if (strcmp(credential.bus.in(), conn->_busid.c_str())) 
     {
       l.log("Login diferente daquele que iniciou a sessão.");
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);

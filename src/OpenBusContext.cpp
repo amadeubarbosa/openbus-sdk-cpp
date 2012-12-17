@@ -22,11 +22,11 @@ OpenBusContext::~OpenBusContext()
 { 
 }
 
-std::auto_ptr<Connection> OpenBusContext::createConnection(const char *host, short port, 
+std::auto_ptr<Connection> OpenBusContext::createConnection(const std::string host, short port, 
                                                            std::vector<std::string> props)
 {
   log_scope l(log.general_logger(), debug_level, "OpenBusContext::createConnection");
-  l.vlog("createConnection para host %s:%hi", host, port);
+  l.vlog("createConnection para host %s:%hi", host.c_str(), port);
   std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, _slotId_joinedCallChain, 
                                                 _slotId_signedCallChain, _slotId_legacyCallChain, 
                                                 _slotId_receiveConnection, this, props));
@@ -202,7 +202,7 @@ Connection *OpenBusContext::getDispatchConnection()
   {
     assert(connectionAddrOctetSeq.length() == sizeof(Connection*));
     std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection*));
-    l.vlog("Connection.busid: %s", c->busid());
+    l.vlog("Connection.busid: %s", c->busid().c_str());
   } 
   return c;
 }

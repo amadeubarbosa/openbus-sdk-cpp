@@ -45,8 +45,8 @@ struct call_dispatcher
     : c(c) {}
 
   typedef openbus::Connection* result_type;
-  result_type operator()(openbus::OpenBusContext& context, const char* bus_id
-                         , const char* login_id, const char* operation) const
+  result_type operator()(openbus::OpenBusContext& context, const std::string bus_id
+                         , const std::string login_id, const std::string operation) const
   {
     return c;
   }

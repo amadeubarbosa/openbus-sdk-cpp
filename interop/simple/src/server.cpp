@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     
     openBusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
-    conn = openBusContext->createConnection(host.c_str(), port);
+    conn = openBusContext->createConnection(host, port);
     openBusContext->setDefaultConnection(conn.get());
     conn->onInvalidLogin(&onInvalidLogin);
     

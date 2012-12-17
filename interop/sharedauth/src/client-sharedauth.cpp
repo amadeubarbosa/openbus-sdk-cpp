@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
     std::auto_ptr <openbus::Connection> conn
-      (openbusContext->createConnection(bus.host.c_str(), bus.port));
+      (openbusContext->createConnection(bus.host, bus.port));
 
     {
       CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");

@@ -21,13 +21,13 @@ public:
     _vconn.push_back(c2);
   }
 
-  openbus::Connection * operator()(openbus::OpenBusContext &context, const char *busId, 
-                         const char *loginId, const char *operation)
+  openbus::Connection * operator()(openbus::OpenBusContext &context, const std::string busId, 
+                                   const std::string loginId, const std::string operation)
   {
     for (std::vector<openbus::Connection *>::const_iterator it = _vconn.begin(); 
          it != _vconn.end(); ++it) 
     {
-      if (!strcmp(busId, (*it)->busid())) {
+      if (busId == (*it)->busid()) {
         return *it;
       }
     }
@@ -44,7 +44,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello {
     openbus::CallerChain chain = _ctx.getCallerChain();
     assert(chain != openbus::CallerChain());
     std::string msg = "Hello " + std::string(chain.caller().entity) + "@"
-      + std::string(chain.busid()) + "!";
+      + chain.busid() + "!";
     std::cout << msg << std::endl;
     CORBA::String_var r = CORBA::string_dup(msg.c_str());
     return r._retn();
@@ -125,13 +125,13 @@ int main(int argc, char** argv) {
     openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
     std::auto_ptr <openbus::Connection> connBusB
-      (openbusContext->createConnection(buses[0].host.c_str(), buses[0].port));
+      (openbusContext->createConnection(buses[0].host, buses[0].port));
     std::auto_ptr <openbus::Connection> conn1BusA
-      (openbusContext->createConnection(buses[1].host.c_str(), buses[1].port));
+      (openbusContext->createConnection(buses[1].host, buses[1].port));
     std::auto_ptr <openbus::Connection> conn2BusA
-      (openbusContext->createConnection(buses[1].host.c_str(), buses[1].port));
+      (openbusContext->createConnection(buses[1].host, buses[1].port));
     std::auto_ptr <openbus::Connection> conn3BusA
-      (openbusContext->createConnection(buses[1].host.c_str(), buses[1].port));
+      (openbusContext->createConnection(buses[1].host, buses[1].port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());

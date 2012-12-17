@@ -72,9 +72,9 @@ struct CallerChain
   /**
   * Barramento através do qual as chamadas foram originadas.
   */
-  const char *busid() const 
+  const std::string busid() const 
   {
-    return _busid.c_str();
+    return _busid;
   }
 
   const idl_ac::LoginInfo &target() const
@@ -120,13 +120,13 @@ struct CallerChain
   {
   }
 private:
-  CallerChain(const char *busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
+  CallerChain(const std::string busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
               const idl_ac::LoginInfo &c, const idl_cr::SignedCallChain &d) 
     : _busid(busid), _target(t), _originators(b), _caller(c), _signedCallChain(d) 
   {
   }
   
-  CallerChain(const char *busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
+  CallerChain(const std::string busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
               const idl_ac::LoginInfo &c) 
     : _busid(busid), _target(t), _originators(b), _caller(c) 
   { 
@@ -162,9 +162,9 @@ inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs)
 class OpenBusContext : public CORBA::LocalObject 
 {
 public:
-  typedef boost::function<Connection* (OpenBusContext &context, const char *busId, 
-                                       const char *loginId, 
-                                       const char *operation)> CallDispatchCallback;
+  typedef boost::function<Connection* (OpenBusContext &context, const std::string busId, 
+                                       const std::string loginId, 
+                                       const std::string operation)> CallDispatchCallback;
 
   void onCallDispatch(CallDispatchCallback c);
 
@@ -205,7 +205,7 @@ public:
    *
    * @return Conexão criada.
    */
-  std::auto_ptr<Connection> createConnection(const char *host, short port,
+  std::auto_ptr<Connection> createConnection(const std::string host, short port,
                                              std::vector<std::string> props 
                                              = std::vector<std::string>());
    

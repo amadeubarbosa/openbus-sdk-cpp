@@ -142,7 +142,7 @@ public:
   *        conexão.
   * @throw CORBA::Exception
   */
-  void loginByPassword(const char *entity, const char *password);
+  void loginByPassword(std::string entity, std::string password);
   
  /**
   * \brief Efetua login de uma entidade usando autenticação por certificado.
@@ -166,7 +166,7 @@ public:
   *        conexão.
   * @throw CORBA::Exception
   */
-  void loginByCertificate(const char *entity, const idl::OctetSeq &privKey);
+  void loginByCertificate(std::string entity, const idl::OctetSeq &privKey);
   
   /**
   * \brief Inicia o processo de login por autenticação compartilhada.
@@ -261,7 +261,7 @@ public:
   /**
    * Identificador do barramento ao qual essa conexão se refere.
    */
-  const char *busid();
+  const std::string busid();
   
   ~Connection();
 private:
@@ -336,7 +336,7 @@ private:
   idl_ac::LoginRegistry_var _login_registry;
   idl_or::OfferRegistry_var _offer_registry;
   std::auto_ptr<LoginCache> _loginCache;
-  const char *_busid;
+  std::string _busid;
   openssl::pkey _buskey;
   LegacyDelegate _legacyDelegate;
   /**/

@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
   assert(openbusContext != 0);
   try
   {
-    std::auto_ptr<openbus::Connection> conn(openbusContext->createConnection(cfg.host().c_str(), 2090));
+    std::auto_ptr<openbus::Connection> conn(openbusContext->createConnection(cfg.host(), 2090));
   }
   catch(...)
   {

@@ -25,7 +25,10 @@ openssl::pkey Connection::fetchBusKey()
 
 void Connection::checkBusid() const 
 {
-  if (strcmp(_busid, _access_control->busid())) throw BusChanged();
+  if (strcmp(_busid.c_str(), _access_control->busid())) 
+  {
+    throw BusChanged();
+  }
 }
 
 Connection::Connection(const std::string h, const unsigned short p, CORBA::ORB *orb, IOP::Codec *c, 
@@ -36,7 +39,7 @@ Connection::Connection(const std::string h, const unsigned short p, CORBA::ORB *
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
     _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), _slotId_receiveConnection(s4), 
     _renewLogin(0), _loginInfo(0), _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m), 
-    _busid(0), _legacyDelegate(CALLER)
+    _legacyDelegate(CALLER)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -131,7 +134,7 @@ Connection::~Connection()
   #endif
 }
 
-void Connection::loginByPassword(const char *entity, const char *password) 
+void Connection::loginByPassword(std::string entity, std::string password) 
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
   AutoLock m(&_mutex);
@@ -147,9 +150,9 @@ void Connection::loginByPassword(const char *entity, const char *password)
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
   /* representação do password em uma cadeia de bytes. */
-  CORBA::ULong passSize = static_cast<CORBA::ULong> (strlen(password));
-  idl::OctetSeq_var passOctetSeq = new idl::OctetSeq(passSize, passSize, 
-                                                     (CORBA::Octet *) CORBA::string_dup(password));
+  CORBA::ULong passSize = static_cast<CORBA::ULong> (password.size());
+  idl::OctetSeq_var passOctetSeq = 
+    new idl::OctetSeq(passSize, passSize, (CORBA::Octet *) CORBA::string_dup(password.c_str()));
   loginAuthenticationInfo.data = passOctetSeq;
   
   /* representação da minha chave em uma cadeia de bytes. */
@@ -174,7 +177,8 @@ void Connection::loginByPassword(const char *entity, const char *password)
   idl_ac::LoginInfo *loginInfo;
   try 
   {
-    loginInfo = _access_control->loginByPassword(entity, bufKey, encryptedBlock, validityTime);
+    loginInfo = _access_control->loginByPassword(entity.c_str(), bufKey, encryptedBlock, 
+                                                 validityTime);
   } 
   catch (const idl_ac::WrongEncoding &) 
   {
@@ -212,7 +216,7 @@ void Connection::loginByPassword(const char *entity, const char *password)
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &privKey) 
+void Connection::loginByCertificate(std::string entity, const idl::OctetSeq &privKey) 
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
   AutoLock m(&_mutex);
@@ -228,7 +232,7 @@ void Connection::loginByCertificate(const char *entity, const idl::OctetSeq &pri
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     checkBusid();
-    loginProcess = _access_control->startLoginByCertificate(entity,challenge);
+    loginProcess = _access_control->startLoginByCertificate(entity.c_str(),challenge);
   }
   
   openssl::pkey privateKey = openssl::byteSeq2PrvKey(privKey.get_buffer(), privKey.length());
@@ -490,17 +494,18 @@ const idl_ac::LoginInfo *Connection::login()
   }
 }
 
-const char *Connection::busid() 
+const std::string Connection::busid() 
 { 
   AutoLock m(&_mutex);
+//[DOUBT] isso e necessario?
   if (_state == INVALID)
   {
-    return 0;
+    std::string empty;
+    return empty;
   }
   else
   {
-    return CORBA::string_dup(_busid);
+    return _busid;
   }
 }
 }
-

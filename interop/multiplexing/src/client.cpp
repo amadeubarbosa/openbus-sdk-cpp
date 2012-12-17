@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     for (std::size_t bus_index = 0; bus_index != 2; ++bus_index)
     {
       std::auto_ptr <openbus::Connection> 
-        conn (openbusContext->createConnection(properties_file.buses[bus_index].host.c_str()
+        conn (openbusContext->createConnection(properties_file.buses[bus_index].host
                                         , properties_file.buses[bus_index].port));
       openbusContext->setDefaultConnection(conn.get());
       conn->loginByPassword(entity.c_str(), entity.c_str());
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
         tecgraf::openbus::interop::simple::Hello *hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
         char *msg = hello->sayHello();
-        std::string s = "Hello " + entity + "@" + std::string(conn->busid()) + "!";
+        std::string s = "Hello " + entity + "@" + conn->busid() + "!";
         assert(!strcmp(msg, s.c_str()));
       }
     }
