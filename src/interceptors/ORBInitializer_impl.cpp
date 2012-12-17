@@ -1,19 +1,25 @@
+// -*- coding: iso-8859-1 -*-
 #include "openbus/interceptors/ORBInitializer_impl.h"
 #include "openbus/interceptors/ClientInterceptor_impl.h"
 #include "openbus/interceptors/ServerInterceptor_impl.h"
 #include "openbus/log.h"
 
-namespace openbus {
-namespace interceptors {
-
-ORBInitializer::ORBInitializer() {
+namespace openbus 
+{
+namespace interceptors 
+{
+ORBInitializer::ORBInitializer() 
+{
   log_scope l(log.general_logger(), debug_level, 
-    "openbus::interceptors::ORBInitializer::ORBInitializer");
+              "openbus::interceptors::ORBInitializer::ORBInitializer");
 }
 
-ORBInitializer::~ORBInitializer() { }
+ORBInitializer::~ORBInitializer() 
+{ 
+}
 
-void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo *info) {
+void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo *info) 
+{
   IOP::CodecFactory_var codec_factory = info->codec_factory();
   IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
   _codec = codec_factory->create_codec(cdr_encoding);
@@ -32,10 +38,9 @@ void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo *info) {
   _slotId_legacyCallChain = info->allocate_slot_id();
   _serverInterceptor = std::auto_ptr<ServerInterceptor> 
     (new ServerInterceptor(piCurrent.in(), _slotId_requesterConnection, _slotId_receiveConnection, 
-                          _slotId_joinedCallChain, _slotId_signedCallChain, _slotId_legacyCallChain,
-                          _codec.in()));
+                           _slotId_joinedCallChain, _slotId_signedCallChain, 
+                           _slotId_legacyCallChain, _codec.in()));
   info->add_server_request_interceptor(_serverInterceptor.get());
 }
-
 }
 }
