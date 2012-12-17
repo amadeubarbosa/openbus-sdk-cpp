@@ -10,10 +10,12 @@
 #include <openbus/ORBInitializer.h>
 
 #include <CORBA.h>
+#include <boost/function.hpp>
 #include <string>
 #include <vector>
 
-namespace openbus {
+namespace openbus 
+{
   class OpenBusContext;
   struct CallerChain;
 }
@@ -21,27 +23,42 @@ namespace openbus {
 #include "openbus/interceptors/ORBInitializer_impl.h"
 #include "openbus/Connection.h"
 
-namespace tecgraf { namespace openbus { namespace core { namespace v2_0 { namespace services { namespace access_control {
+namespace tecgraf 
+{ 
+namespace openbus 
+{ 
+namespace core 
+{ 
+namespace v2_0 
+{ 
+namespace services 
+{ 
+namespace access_control 
+{
 
-inline bool operator==(LoginInfo const &lhs, 
-                       LoginInfo const &rhs)
+inline bool operator==(LoginInfo const &lhs, LoginInfo const &rhs)
 {
   return lhs.id.in() == rhs.id.in() || 
     (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
 }
 
-inline bool operator!=(LoginInfo const &lhs, 
-                       LoginInfo const &rhs)
+inline bool operator!=(LoginInfo const &lhs, LoginInfo const &rhs)
 {
   return !(lhs == rhs);
 }
 
-} } } } } }
+} 
+} 
+} 
+} 
+} 
+}
 
 /**
 * \brief openbus
 */
-namespace openbus {
+namespace openbus 
+{
 /**
  * \brief Cadeia de chamadas oriundas de um barramento.
  * 
@@ -50,11 +67,13 @@ namespace openbus {
  * para que os sistemas que recebam essas chamadas possam identificar se a chamada foi originada por
  * entidades autorizadas ou não.
  */
-struct CallerChain {
+struct CallerChain 
+{
   /**
   * Barramento através do qual as chamadas foram originadas.
   */
-  const char *busid() const {
+  const char *busid() const 
+  {
     return _busid.c_str();
   }
 
@@ -71,14 +90,16 @@ struct CallerChain {
   * A ordem da sequência retornada é começando da fonte da cadeia até o penúltimo da cadeia na
   * chamada. Assim, originators()[0], se existir, é quem originou a chamada de cadeia.
   */
-  const idl_ac::LoginInfoSeq &originators() const {
+  const idl_ac::LoginInfoSeq &originators() const 
+  {
     return _originators;
   }
   
   /**
    * Informação de login da entidade que realizou a última chamada da cadeia.
    */
-  const idl_ac::LoginInfo &caller() const {
+  const idl_ac::LoginInfo &caller() const 
+  {
     return _caller;
   }
 
@@ -95,7 +116,9 @@ struct CallerChain {
    *   // Nao possui CallerChain
    *
    */
-  CallerChain() {}
+  CallerChain() 
+  {
+  }
 private:
   CallerChain(const char *busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
               const idl_ac::LoginInfo &c, const idl_cr::SignedCallChain &d) 
@@ -114,21 +137,30 @@ private:
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
-  const idl_cr::SignedCallChain *signedCallChain() const { return &_signedCallChain; }
-  void signedCallChain(idl_cr::SignedCallChain p) { _signedCallChain = p; }
+  const idl_cr::SignedCallChain *signedCallChain() const 
+  { 
+    return &_signedCallChain; 
+  }
+  void signedCallChain(idl_cr::SignedCallChain p) 
+  { 
+    _signedCallChain = p; 
+  }
   friend class OpenBusContext;
   friend class openbus::interceptors::ClientInterceptor;
-  friend inline bool operator==(CallerChain const &lhs, CallerChain const &rhs) {
+  friend inline bool operator==(CallerChain const &lhs, CallerChain const &rhs) 
+  {
     return lhs._busid == rhs._busid && lhs._originators == rhs._originators
       && lhs._caller == rhs._caller;
   }
 };
 
-inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs) {
+inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs) 
+{
   return !(lhs == rhs);
 }
 
-class OpenBusContext : public CORBA::LocalObject {
+class OpenBusContext : public CORBA::LocalObject 
+{
 public:
   typedef boost::function<Connection* (OpenBusContext &context, const char *busId, 
                                        const char *loginId, 
@@ -198,7 +230,7 @@ public:
    * \return Conexão definida como conexão padrão. OpenBusContext não possui ownership dessa
    * conexão e o mesmo não é transferido para o código de usuário na execução desta função
    */
-  Connection * getDefaultConnection() const;
+  Connection *getDefaultConnection() const;
    
   /**
    * \brief Define a conexão "Requester" do contexto corrente.
@@ -291,7 +323,8 @@ public:
   /** 
    * ORB utilizado pela conexão. 
    */
-  CORBA::ORB * orb() const {
+  CORBA::ORB *orb() const 
+  {
     return _orb;
   }
   
@@ -309,11 +342,12 @@ private:
                  PortableInterceptor::SlotId slotId_requesterConnection,
                  PortableInterceptor::SlotId slotId_receiveConnection);
   ~OpenBusContext();
-  void orb(CORBA::ORB *o) {
+  void orb(CORBA::ORB *o) 
+  {
     _orb = o;
   }
   Connection *getDispatchConnection();
-  typedef std::map<std::string, Connection*> BusidConnection;
+  typedef std::map<std::string, Connection *> BusidConnection;
   mutable Mutex _mutex;
   CORBA::ORB *_orb;
   PortableInterceptor::Current_var _piCurrent;
@@ -326,8 +360,9 @@ private:
   Connection *_defaultConnection;
   BusidConnection _busidConnection;
   CallDispatchCallback _callDispatchCallback;
-  friend CORBA::ORB *openbus::ORBInitializer(int& argc, char **argv);
+  friend CORBA::ORB *openbus::ORBInitializer(int &argc, char **argv);
 };
 }
 
 #endif
+

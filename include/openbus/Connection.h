@@ -9,23 +9,14 @@
 #ifndef TECGRAF_SDK_CONNECTION_H_
 #define TECGRAF_SDK_CONNECTION_H_
 
-#include <CORBA.h>
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <openssl/evp.h>
-#include <cstring>
-
-#include <boost/function.hpp>
+namespace openbus 
+{
+  class Connection;
+}
 
 #ifndef OPENBUS_DOXYGEN
 #define SECRET_SIZE 16
 #endif
-
-namespace openbus {
-  class Connection;
-}
 
 #include "openbus/interceptors/ORBInitializer_impl.h"
 #include "openbus/interceptors/ClientInterceptor_impl.h"
@@ -34,39 +25,71 @@ namespace openbus {
 #include "openbus/util/OpenSSL.h"
 #include "openbus/OpenBusContext.h"
 
+#include <boost/function.hpp>
+#include <CORBA.h>
+#include <openssl/evp.h>
+
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include <cstring>
+
 /**
 * \brief openbus
 */
-namespace openbus {
+namespace openbus 
+{
   
-/* exceptions */
-struct BusChanged : public std::exception { 
-  const char *what() const throw() { return "openbus::BusChanged"; }
+struct BusChanged : public std::exception 
+{ 
+  const char *what() const throw()
+  { 
+    return "openbus::BusChanged";
+  }
 };
 
-struct AlreadyLoggedIn : public std::exception { 
-  const char *what() const throw() { return "openbus::AlreadyLoggedIn"; } 
+struct AlreadyLoggedIn : public std::exception 
+{ 
+  const char *what() const throw()
+  { 
+    return "openbus::AlreadyLoggedIn"; 
+  }
 };
 
-struct InvalidPrivateKey : public std::exception { 
-  const char *what() const throw() { return "openbus::InvalidPrivateKey";} 
+struct InvalidPrivateKey : public std::exception
+{ 
+  const char *what() const throw() 
+  { 
+    return "openbus::InvalidPrivateKey";
+  } 
 };
 
-struct InvalidLoginProcess : public std::exception { 
-  const char *what() const throw() { return "openbus::InvalidLoginProcess"; }
+struct InvalidLoginProcess : public std::exception 
+{
+  const char *what() const throw()
+  { 
+    return "openbus::InvalidLoginProcess"; 
+  }
 };
 
-struct InvalidPropertyValue : public std::exception {
-  InvalidPropertyValue(std::string p, std::string v) : property(p), value(v) { }
-  ~InvalidPropertyValue() throw() { }
-  const char *what() const throw() { return "openbus::InvalidPropertyValue"; }
+struct InvalidPropertyValue : public std::exception 
+{
+  InvalidPropertyValue(std::string p, std::string v) : property(p), value(v) 
+  { 
+  }
+  ~InvalidPropertyValue() throw() 
+  { 
+  }
+  const char *what() const throw() 
+  { 
+    return "openbus::InvalidPropertyValue"; 
+  }
   std::string property;
   std::string value;
 };
-/**/
 
 class Connection;
-
 
 /**
  * \brief Objeto que representa uma forma de acesso a um barramento.
@@ -86,7 +109,8 @@ class Connection;
  * um ORB. As conexções que são efetivamente usadas nas chamadas do ORB são definidas através do
  * OpenBusContext associado ao ORB.
  */
-class Connection {
+class Connection 
+{
 public:
   /**
    * \brief Callback de login inválido.
@@ -101,7 +125,7 @@ public:
    * \param conn Conexão que recebeu a notificação de login inválido.
    * \param login Informações do login que se tornou inválido.
    */
-  typedef boost::function<void (Connection&, idl_ac::LoginInfo)> InvalidLoginCallback_t;
+  typedef boost::function<void (Connection &, idl_ac::LoginInfo)> InvalidLoginCallback_t;
   
   /**
   * Efetua login no barramento como uma entidade usando autenticação por senha.
@@ -232,7 +256,7 @@ public:
    * \brief Informações do login dessa conexão ou 'null' se a conexão não está autenticada, ou seja,
    * não tem um login válido no barramento.
    */
-  const idl_ac::LoginInfo* login();
+  const idl_ac::LoginInfo *login();
   
   /**
    * Identificador do barramento ao qual essa conexão se refere.
@@ -244,21 +268,39 @@ private:
   /**
   * Connection deve ser adquirido através de: OpenBusContext::createConnection()
   */
-  Connection(const std::string host, const unsigned short port, CORBA::ORB*, IOP::Codec*, 
+  Connection(const std::string host, const unsigned short port, CORBA::ORB *, IOP::Codec *, 
     PortableInterceptor::SlotId slotId_joinedCallChain, 
     PortableInterceptor::SlotId slotId_signedCallChain, 
     PortableInterceptor::SlotId slotId_legacyCallChain, 
     PortableInterceptor::SlotId slotId_receiveConnection, 
-    OpenBusContext*, std::vector<std::string> props);
+    OpenBusContext *, std::vector<std::string> props);
   openssl::pkey fetchBusKey();
   void checkBusid() const;
   bool _logout(bool local);
-  openssl::pkey __key() const { return _key; }
-  openssl::pkey __buskey() const { return _buskey; }
-  CORBA::ORB *orb() const { return _orb; }
-  idl_ac::LoginRegistry_var login_registry() const { return _login_registry; }
-  idl_ac::AccessControl_var access_control() const { return _access_control; }
-  const idl_ac::LoginInfo *_login() const { return _loginInfo.get(); }
+  openssl::pkey __key() const 
+  { 
+    return _key; 
+  }
+  openssl::pkey __buskey() const 
+  { 
+    return _buskey; 
+  }
+  CORBA::ORB *orb() const 
+  { 
+    return _orb; 
+  }
+  idl_ac::LoginRegistry_var login_registry() const 
+  { 
+    return _login_registry; 
+  }
+  idl_ac::AccessControl_var access_control() const 
+  { 
+    return _access_control; 
+  }
+  const idl_ac::LoginInfo *_login() const 
+  { 
+    return _loginInfo.get(); 
+  }
   const std::string _host;
   const unsigned short _port;
   CORBA::ORB *_orb;
@@ -272,12 +314,14 @@ private:
   InvalidLoginCallback_t _onInvalidLogin;
   Mutex _mutex;
   
-  enum LegacyDelegate {
+  enum LegacyDelegate 
+  {
     CALLER,
     ORIGINATOR
   };
   
-  enum State {
+  enum State 
+  {
     LOGGED,
     UNLOGGED,
     INVALID
@@ -315,3 +359,4 @@ private:
 }
 
 #endif
+

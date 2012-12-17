@@ -11,9 +11,8 @@
 #include <log/output/streambuf_output.h>
 #include <log/logger.h>
 
-#include <CORBA.h>
-
-namespace openbus {
+namespace openbus 
+{
 #ifndef OPENBUS_DOXYGEN
 typedef logger::log_scope log_scope;
 typedef logger::scope_token scope_token;
@@ -24,20 +23,23 @@ using logger::info_level;
 using logger::debug_level;
 #ifndef OPENBUS_DOXYGEN
 #ifdef OPENBUS_SDK_MULTITHREAD
-namespace detail {
 
+namespace detail 
+{
 struct mico_thread_formatter : logger::formatter_base
 {
-  void format(logger::logger const&, logger::level, scope_token const&, std::string& string) const
+  void format(logger::logger const &, logger::level, scope_token const&, std::string &string) const
   {
     std::stringstream s;
     s << "(thread " << reinterpret_cast<void*>(MICOMT::Thread::self()) << ") ";
     std::string tmp = s.str();
     string.insert(string.begin(), tmp.begin(), tmp.end());
   }
-  mico_thread_formatter* clone() const { return new mico_thread_formatter(*this); }
+  mico_thread_formatter *clone() const 
+  { 
+    return new mico_thread_formatter(*this); 
+  }
 };
-
 }
 #endif
 #endif
@@ -48,18 +50,18 @@ struct mico_thread_formatter : logger::formatter_base
  */
 struct log_type
 {
-#ifndef OPENBUS_DOXYGEN
+  #ifndef OPENBUS_DOXYGEN
   log_type()
   {
     set_level(error_level);
     add_output(logger::output::make_streambuf_output(std::cout));
-#ifdef OPENBUS_SDK_MULTITHREAD
-    std::auto_ptr<logger::formatter_base> mico_thread_formatter
-      (new detail::mico_thread_formatter);
+    #ifdef OPENBUS_SDK_MULTITHREAD
+    std::auto_ptr<logger::formatter_base> mico_thread_formatter (new detail::mico_thread_formatter);
     add_formatter(mico_thread_formatter);
-#endif
+    #endif
   }
-#endif
+  #endif
+
   /**
    * \brief Adiciona um output de log. Esses outputs podem ser
    * construidos com as bibliotecas de log
@@ -72,6 +74,7 @@ struct log_type
     ci_log.add_output(tmp1);
     si_log.add_output(tmp2);
   }
+
   /**
    * \brief Adiciona um formatador de log. Esses formatadores podem ser
    * construidos com as bibliotecas de log
@@ -84,6 +87,7 @@ struct log_type
     ci_log.add_formatter(tmp1);
     si_log.add_formatter(tmp2);
   }
+
   /**
    * \brief Modifica o nível de log para o Openbus
    */
@@ -94,11 +98,22 @@ struct log_type
     si_log.set_level(lev);
   }
 
-#ifndef OPENBUS_DOXYGEN
-  logger::logger& general_logger() { return general_log; }
-  logger::logger& client_interceptor_logger() { return ci_log; }
-  logger::logger& server_interceptor_logger() { return si_log; }
-#endif
+  #ifndef OPENBUS_DOXYGEN
+  logger::logger &general_logger() 
+  { 
+    return general_log; 
+  }
+
+  logger::logger &client_interceptor_logger() 
+  { 
+    return ci_log; 
+  }
+
+  logger::logger &server_interceptor_logger() 
+  { 
+    return si_log; 
+  }
+  #endif
 private:
   logger::logger general_log, ci_log, si_log;
 };

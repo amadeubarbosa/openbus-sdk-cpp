@@ -1,5 +1,6 @@
-#ifndef TICKET_HISTORY_H
-#define TICKET_HISTORY_H
+// -*- coding: iso-8859-1 -*-
+#ifndef TECGRAF_SDK_TICKET_HISTORY_H_
+#define TECGRAF_SDK_TICKET_HISTORY_H_
 
 #include <limits.h>
 
@@ -9,7 +10,8 @@ typedef unsigned long tickets_BitMap;
 typedef unsigned long tickets_Value;
 typedef unsigned char bitidx;
 
-struct tickets_HistoryData {
+struct tickets_HistoryData 
+{
 	tickets_Value base;
 	tickets_BitMap bits;
 	bitidx index;
@@ -17,9 +19,8 @@ struct tickets_HistoryData {
 
 typedef struct tickets_HistoryData tickets_History;
 
-void tickets_init(tickets_History *h);
-int tickets_check(tickets_History *h, tickets_Value id);
-
-void tickets_print(tickets_History *h);
+void tickets_init(tickets_History *);
+int tickets_check(tickets_History *, tickets_Value id);
+void tickets_print(tickets_History *);
 
 #endif
