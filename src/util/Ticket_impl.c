@@ -38,7 +38,6 @@ int tickets_check(tickets_History *h, tickets_Value id)
 		discardBase(h);
 		return 1;
 	} else { /* id > h->base */
-		bitidx i;
 		tickets_Value shift = id - h->base - 1;
 		if (shift < TICKETS_SIZE) {
 			bitidx index = (h->index + shift) % TICKETS_SIZE;

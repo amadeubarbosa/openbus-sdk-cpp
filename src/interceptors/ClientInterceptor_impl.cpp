@@ -220,7 +220,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       if (ex->minor() == idl_ac::InvalidCredentialCode) {
         l.level_vlog(debug_level, "creating credential session");
         IOP::ServiceContext_var sctx;
-        if (sctx = r->get_request_service_context(idl_cr::CredentialContextId)) {
+        if ((sctx = r->get_request_service_context(idl_cr::CredentialContextId))) {
           /* montando CredentialReset que foi enviado por quem está respondendo a um pedido de 
           ** inicialização de uma sessão. */
           CORBA::ULong len = sctx->context_data.length();
