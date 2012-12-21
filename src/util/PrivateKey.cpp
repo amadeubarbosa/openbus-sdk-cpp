@@ -18,7 +18,7 @@ PrivateKey::PrivateKey(const char *key)
 
 PrivateKey::PrivateKey(const std::string filename)
 {
-  std::ifstream key(filename, std::fstream::binary);
+  std::ifstream key(filename.c_str(), std::fstream::binary);
   if (!key)
   {
     throw openbus::InvalidPrivateKey();

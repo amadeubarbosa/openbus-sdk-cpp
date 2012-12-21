@@ -2,7 +2,6 @@
 #ifndef TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
 #define TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
 
-#include "openbus/Connection.h"
 #include "openbus/Connection_impl.h"
 #include "openbus/OpenBusContext.h"
 extern "C" {

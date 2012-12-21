@@ -1,4 +1,5 @@
 // -*- coding: iso-8859-1 -*-
+#include "openbus/Connection.h"
 #include "openbus/ORBInitializer.h"
 #include "openbus/log.h"
 #include "openbus/util/AutoLock_impl.h"

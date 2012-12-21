@@ -21,7 +21,6 @@ namespace openbus
 }
 
 #include "openbus/interceptors/ORBInitializer_impl.h"
-#include "openbus/Connection.h"
 
 namespace tecgraf 
 { 

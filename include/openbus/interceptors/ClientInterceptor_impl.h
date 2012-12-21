@@ -4,7 +4,6 @@
 
 #include "openbus/Connection_impl.h"
 #include "openbus/OpenBusContext.h"
-#include "openbus/Connection.h"
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
 #include "openbus/util/LRUCache_impl.h"

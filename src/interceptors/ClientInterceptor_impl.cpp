@@ -1,4 +1,5 @@
 // -*- coding: iso-8859-1 -*-
+#include "openbus/Connection.h"
 #include "openbus/interceptors/ClientInterceptor_impl.h"
 #include "stubs/credential_v1_5.h"
 #include "openbus/log.h"
