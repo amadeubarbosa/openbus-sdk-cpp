@@ -33,19 +33,18 @@ private:
 
 void loginAndRegister() {
   std::string keyPath = entity + ".key";
-  FILE *privateKeyFile = fopen(keyPath.c_str(), "r");
-  if (!privateKeyFile)
+  std::ifstream key(keyPath, std::fstream::binary);
+  if (!key)
   {
     throw openbus::InvalidPrivateKey();
   }
-  EVP_PKEY *privateKey = PEM_read_PrivateKey(privateKeyFile, 0, 0, 0);
-  fclose(privateKeyFile);
-  if (!privateKey)
-  {
-    throw openbus::InvalidPrivateKey();
-  }
-  openbus::openssl::pkey p(privateKey);
-  conn->loginByCertificate("interop_hello_cpp_server", openbus::openssl::PrvKey2byteSeq(p));
+  key.seekg(0, std::ios::end);
+  std::size_t size = key.tellg();
+  CORBA::OctetSeq o;
+  o.length(size);
+  key.seekg(0, std::ios::beg);
+  key.read(static_cast<char*> (static_cast<void*> (o.get_buffer())), size);
+  conn->loginByCertificate(entity, o);
   openBusContext->getOfferRegistry()->registerService(ctx->getIComponent(), props);
 }
 

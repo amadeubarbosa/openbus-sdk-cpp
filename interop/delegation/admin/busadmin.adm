@@ -27,6 +27,21 @@ Entity {
   name = "Entidade gerada pelo script",
 }
 
+Certificate {
+  id = "interop_delegation_cpp_forwarder",
+  certificate = "interop_delegation_cpp_forwarder.crt",
+}
+
+Certificate {
+  id = "interop_delegation_cpp_messenger",
+  certificate = "interop_delegation_cpp_messenger.crt",
+}
+
+Certificate {
+  id = "interop_delegation_cpp_broadcaster",
+  certificate = "interop_delegation_cpp_broadcaster.crt",
+}
+
 Interface {
   id = "IDL:tecgraf/openbus/interop/delegation/Forwarder:1.0"
 }
@@ -38,6 +53,7 @@ Interface {
 Interface {
   id = "IDL:tecgraf/openbus/interop/delegation/Messenger:1.0"
 }
+
 
 Grant {
   id = "interop_delegation_cpp_forwarder",
