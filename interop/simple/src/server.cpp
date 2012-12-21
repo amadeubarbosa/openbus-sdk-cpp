@@ -1,5 +1,6 @@
 #include <openbus/ORBInitializer.h>
 #include <openbus/OpenBusContext.h>
+#include <openbus/Connection.h>
 #include <openbus/log.h>
 #include <openbus/util/OpenSSL.h>
 #include <scs/ComponentContext.h>

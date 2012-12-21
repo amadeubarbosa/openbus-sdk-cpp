@@ -7,7 +7,11 @@
 #ifndef _TECGRAF_SDK_MANAGER_H_
 #define _TECGRAF_SDK_MANAGER_H_
 
-#include <openbus/ORBInitializer.h>
+#include "openbus/ORBInitializer.h"
+#include "openbus/util/Mutex_impl.h"
+#include "stubs/core.h"
+#include "stubs/access_control.h"
+#include "stubs/offer_registry.h"
 
 #include <CORBA.h>
 #include <boost/function.hpp>
@@ -17,7 +21,11 @@
 namespace openbus 
 {
   class OpenBusContext;
+  class Connection;
   struct CallerChain;
+  namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
+  namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
+  namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 }
 
 #include "openbus/interceptors/ORBInitializer_impl.h"
