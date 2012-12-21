@@ -154,23 +154,12 @@ int main(int argc, char** argv) {
     std::auto_ptr<PortableServer::ServantBase> helloServant(new HelloImpl(*openbusContext));
     ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", helloServant);
     
-    std::string keyPath = entity + ".key";
-    std::ifstream key(keyPath, std::fstream::binary);
-    if (!key)
-    {
-      throw openbus::InvalidPrivateKey();
-    }
-    key.seekg(0, std::ios::end);
-    std::size_t size = key.tellg();
-    CORBA::OctetSeq keySeq;
-    keySeq.length(size);
-    key.seekg(0, std::ios::beg);
-    key.read(static_cast<char*> (static_cast<void*> (keySeq.get_buffer())), size);
+    const openbus::PrivateKey pKey(entity + ".key");
 
-    conn1BusA->loginByCertificate(entity, keySeq);
-    conn2BusA->loginByCertificate(entity, keySeq);
-    conn3BusA->loginByCertificate(entity, keySeq);
-    connBusB->loginByCertificate(entity, keySeq);
+    conn1BusA->loginByCertificate(entity, pKey);
+    conn2BusA->loginByCertificate(entity, pKey);
+    conn3BusA->loginByCertificate(entity, pKey);
+    connBusB->loginByCertificate(entity, pKey);
     
     openbusContext->onCallDispatch(CallDispatchCallback(conn1BusA.get(), connBusB.get()));
 

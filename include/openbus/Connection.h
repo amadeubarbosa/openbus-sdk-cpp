@@ -23,6 +23,7 @@ namespace openbus
 #include "openbus/interceptors/ServerInterceptor_impl.h"
 #include "openbus/Connection_impl.h"
 #include "openbus/util/OpenSSL.h"
+#include "openbus/util/PrivateKey.h"
 #include "openbus/OpenBusContext.h"
 
 #include <boost/function.hpp>
@@ -166,7 +167,7 @@ public:
   *        conexão.
   * @throw CORBA::Exception
   */
-  void loginByCertificate(std::string entity, const idl::OctetSeq &privKey);
+  void loginByCertificate(std::string entity, const PrivateKey &);
   
   /**
   * \brief Inicia o processo de login por autenticação compartilhada.

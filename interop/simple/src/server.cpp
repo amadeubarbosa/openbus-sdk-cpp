@@ -32,19 +32,8 @@ private:
 };
 
 void loginAndRegister() {
-  std::string keyPath = entity + ".key";
-  std::ifstream key(keyPath, std::fstream::binary);
-  if (!key)
-  {
-    throw openbus::InvalidPrivateKey();
-  }
-  key.seekg(0, std::ios::end);
-  std::size_t size = key.tellg();
-  CORBA::OctetSeq o;
-  o.length(size);
-  key.seekg(0, std::ios::beg);
-  key.read(static_cast<char*> (static_cast<void*> (o.get_buffer())), size);
-  conn->loginByCertificate(entity, o);
+  const openbus::PrivateKey pKey(entity + ".key");
+  conn->loginByCertificate(entity, pKey);
   openBusContext->getOfferRegistry()->registerService(ctx->getIComponent(), props);
 }
 

@@ -216,7 +216,7 @@ void Connection::loginByPassword(std::string entity, std::string password)
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-void Connection::loginByCertificate(std::string entity, const idl::OctetSeq &privKey) 
+void Connection::loginByCertificate(std::string entity, const PrivateKey &privKey) 
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByCertificate");
   AutoLock m(&_mutex);
@@ -235,7 +235,8 @@ void Connection::loginByCertificate(std::string entity, const idl::OctetSeq &pri
     loginProcess = _access_control->startLoginByCertificate(entity.c_str(),challenge);
   }
   
-  openssl::pkey privateKey = openssl::byteSeq2PrvKey(privKey.get_buffer(), privKey.length());
+  const CORBA::OctetSeq &keySeq = privKey.octetSeq();
+  openssl::pkey privateKey = openssl::byteSeq2PrvKey(keySeq.get_buffer(), keySeq.length());
   
   /* decifrar o desafio usando a chave privada do usuário. */
   CORBA::OctetSeq secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 
@@ -265,6 +266,7 @@ void Connection::loginByCertificate(std::string entity, const idl::OctetSeq &pri
   try 
   {
     loginInfo = loginProcess->login(bufKey, encryptedBlock, validityTime);
+
   } 
   catch (idl_ac::WrongEncoding&) 
   {
