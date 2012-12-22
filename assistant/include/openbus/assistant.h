@@ -276,8 +276,10 @@ protected:
                            , find_error_callback_type find_error
                            , logger::level l) const
     {
-      self->InitWithPrivateKeyFile(hostname, port, entity, private_key_filename, argc, argv
-                                   , login_error, register_error, fatal_error, find_error, l);
+      self->InitWithPrivateKey(hostname, port, entity
+                               , PrivateKey(private_key_filename), argc, argv
+                               , login_error, register_error, fatal_error
+                               , find_error, l);
     }
     result_type operator()(AssistantImpl* self
                            , std::string hostname, unsigned short port, void_, void_
@@ -288,8 +290,10 @@ protected:
                            , find_error_callback_type find_error
                            , logger::level l) const
     {
-      self->InitWithPrivateKeyFile(hostname, port, entity, private_key_filename
-                                   , login_error, register_error, fatal_error, find_error, l);
+      self->InitWithPrivateKey(hostname, port, entity
+                               , PrivateKey(private_key_filename)
+                               , login_error, register_error, fatal_error
+                               , find_error, l);
     }
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
                            , void_, void_, void_
@@ -513,7 +517,8 @@ protected:
                         , find_error_callback_type find_error
                         , logger::level l);
   void InitWithPrivateKey(std::string const& hostname, unsigned short port
-                          , std::string const& entity, CORBA::OctetSeq const& private_key
+                          , std::string const& entity
+                          , PrivateKey const& private_key
                           , int& argc, char** argv
                           , login_error_callback_type login_error
                           , register_error_callback_type register_error
@@ -521,27 +526,13 @@ protected:
                           , find_error_callback_type find_error
                           , logger::level l);
   void InitWithPrivateKey(std::string const& hostname, unsigned short port
-                          , std::string const& entity, CORBA::OctetSeq const& private_key
+                          , std::string const& entity
+                          , PrivateKey const& private_key
                           , login_error_callback_type login_error
                           , register_error_callback_type register_error
                           , fatal_error_callback_type fatal_error
                           , find_error_callback_type find_error
                           , logger::level l);
-  void InitWithPrivateKeyFile(std::string const& hostname, unsigned short port
-                              , std::string const& entity, std::string const& private_key_file
-                              , int& argc, char** argv
-                              , login_error_callback_type login_error
-                              , register_error_callback_type register_error
-                              , fatal_error_callback_type fatal_error
-                              , find_error_callback_type find_error
-                              , logger::level l);
-  void InitWithPrivateKeyFile(std::string const& hostname, unsigned short port
-                              , std::string const& entity, std::string const& private_key_file
-                              , login_error_callback_type login_error
-                              , register_error_callback_type register_error
-                              , fatal_error_callback_type fatal_error
-                              , find_error_callback_type find_error
-                              , logger::level l);
   void InitWithSharedAuth(std::string const& hostname, unsigned short port
                           , shared_auth_callback_type shared_auth_callback
                           , int& argc, char** argv

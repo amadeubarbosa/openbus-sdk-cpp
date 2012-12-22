@@ -38,7 +38,7 @@ struct password_authentication_info
 struct certificate_authentication_info
 {
   std::string entity;
-  idl::OctetSeq private_key;
+  PrivateKey private_key;
 };
 
 struct shared_auth_authentication_info
