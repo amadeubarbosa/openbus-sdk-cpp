@@ -25,6 +25,7 @@ struct hello_impl : public POA_Hello
     const char* caller = openbusContext.getCallerChain().caller().entity;
     std::cout << "Hello from '" << caller << "'." << std::endl;
     servant_called = true;
+    orb->shutdown(true);
   }  
 
   bool servant_called;
@@ -52,6 +53,7 @@ int main(int argc, char** argv)
   conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
   openbusContext->setDefaultConnection(conn.get());
   
+  bool servant_called = false;
   scs::core::ComponentId componentId;
   componentId.name = "Hello";
   componentId.major_version = '1';
@@ -66,7 +68,6 @@ int main(int argc, char** argv)
 
     scs::core::ComponentContext ctx(openbusContext->orb(), componentId);
 
-    bool servant_called = false;
     hello_impl hello_servant (orb, servant_called);
 
     ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
@@ -75,7 +76,8 @@ int main(int argc, char** argv)
     props.length(1);
     openbus::idl_or::ServiceProperty property;
     property.name = "offer.domain";
-    property.value = "OpenBus Demos";
+    std::string key = cfg.key();
+    property.value = key.c_str();
     props[0] = property;
     openbusContext->getOfferRegistry()->registerService(ctx.getIComponent(), props);
   }
@@ -84,7 +86,8 @@ int main(int argc, char** argv)
   conn.reset();
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-  orb->shutdown(true);
   orb_thread.join();
+
+  assert(servant_called == true);
 #endif
 }

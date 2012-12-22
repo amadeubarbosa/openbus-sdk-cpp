@@ -59,7 +59,8 @@ int main(int argc, char** argv)
   props[1].name  = "openbus.component.facet";
   props[1].value = "hello";
   props[2].name  = "offer.domain";
-  props[2].value = "OpenBus Demos";
+  std::string key = cfg.key();
+  props[2].value = key.c_str();
   openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
   assert (offers->length() == 1);
   CORBA::Object_var o = offers[0u].service_ref->getFacetByName("hello");

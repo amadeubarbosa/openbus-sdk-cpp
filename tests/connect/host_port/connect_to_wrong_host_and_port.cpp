@@ -15,7 +15,8 @@ int main(int argc, char* argv[])
       dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
     std::auto_ptr<openbus::Connection> 
       conn(openbusContext->createConnection(cfg.host(),
-                                            9999 /* Nenhum barramento nesta porta */));
+                                            cfg.wrong_port()
+                                            /* Nenhum barramento nesta porta */));
     std::cout << "No exception was thrown, exception COMM_FAILURE was expected" << std::endl;
     std::abort();
   }

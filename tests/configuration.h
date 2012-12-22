@@ -33,6 +33,22 @@ struct configuration
         else
           std::cout << "Command -port requires an argument" << std::endl;
       }
+      else if(!std::strcmp("-wrong-port", argv[i]))
+      {
+        if(++i != argc)
+        {
+          try
+          {
+            wrong_port_ = boost::lexical_cast<unsigned short>(argv[i]);
+          }
+          catch(std::exception const& e)
+          {
+            std::cout << "Invalid argument for -wrong-port: " << argv[i] << std::endl;
+          }
+        }
+        else
+          std::cout << "Command -wrong-port requires an argument" << std::endl;
+      }
       else if(!std::strcmp("-host", argv[i]))
       {
         if(++i != argc)
@@ -60,6 +76,13 @@ struct configuration
           certificate_user_ = argv[i];
         else
           std::cout << "Command -certificate-user requires an argument" << std::endl;
+      }
+      else if(!std::strcmp("-key", argv[i]))
+      {
+        if(++i != argc)
+          key_ = argv[i];
+        else
+          std::cout << "Command -key requires an argument" << std::endl;
       }
       else if(!std::strcmp("-log", argv[i]))
       {
@@ -97,7 +120,10 @@ struct configuration
   {
     return port_;
   }
-
+  unsigned short wrong_port() const
+  {
+    return wrong_port_;
+  }
   std::string host() const
   {
     return host_;
@@ -115,10 +141,14 @@ struct configuration
   {
     return certificate_user_;
   }
+  std::string key() const
+  {
+    return key_;
+  }
 
 private:
-  unsigned short port_;
-  std::string host_, user_, password_, certificate_user_;
+  unsigned short port_, wrong_port_;
+  std::string host_, user_, password_, certificate_user_, key_;
 };
 
 }

@@ -223,3 +223,5 @@ explicit assistant-doc ;
 install stage-libs-deps : stage-demo-$(all-demos) stage-interop-$(all-interops)
  : <install-dependencies>on <install-type>SHARED_LIB <location>stage ;
 
+alias run-tests : tests//run-tests ;
+explicit run-tests ;
