@@ -27,10 +27,10 @@ namespace openbus
   struct Login;
   class LoginCache;
   class RenewLogin;
+  class OpenBusContext;
 }
 
 #include "openbus/util/Mutex_impl.h"
-#include "openbus/OpenBusContext.h"
 #include "openbus/util/OpenSSL.h"
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_

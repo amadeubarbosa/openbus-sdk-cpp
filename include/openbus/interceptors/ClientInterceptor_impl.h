@@ -3,7 +3,6 @@
 #define TECGRAF_SDK_CLIENTINTERCEPTOR_IMPL_H_
 
 #include "openbus/Connection_impl.h"
-#include "openbus/OpenBusContext.h"
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
 #include "openbus/util/LRUCache_impl.h"
@@ -13,6 +12,9 @@
 
 namespace openbus 
 {
+
+class CallerChain;
+
 namespace interceptors 
 {
 class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 

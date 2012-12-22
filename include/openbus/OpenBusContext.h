@@ -7,6 +7,7 @@
 #ifndef _TECGRAF_SDK_MANAGER_H_
 #define _TECGRAF_SDK_MANAGER_H_
 
+#include "openbus/Connection.h"
 #include "openbus/ORBInitializer.h"
 #include "openbus/util/Mutex_impl.h"
 #include "stubs/core.h"

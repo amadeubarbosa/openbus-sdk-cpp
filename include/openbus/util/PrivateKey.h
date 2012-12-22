@@ -5,15 +5,22 @@
 #include "stubs/core.h"
 
 #include <string>
+#include <cstring>
 
 namespace openbus
 {
 class PrivateKey
 {
 public:
-  PrivateKey();
-  PrivateKey(const char *key);
-  PrivateKey(const std::string filename);
+  PrivateKey() {}
+  PrivateKey(CORBA::OctetSeq const& key)
+    : _keySeq(key) {}
+  PrivateKey(const char *key, std::size_t size)
+  {
+    _keySeq.length(size);
+    std::memcpy(_keySeq.get_buffer(), key, size);
+  }
+  explicit PrivateKey(std::string const& filename);
   
   const CORBA::OctetSeq &octetSeq() const
   {

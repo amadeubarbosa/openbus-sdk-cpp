@@ -1,5 +1,6 @@
 // -*- coding: iso-8859-1 -*-
 #include "openbus/Connection.h"
+#include "openbus/OpenBusContext.h"
 #include "openbus/interceptors/ServerInterceptor_impl.h"
 #include "stubs/credential_v1_5.h"
 #include "openbus/util/OpenSSL.h"

@@ -24,7 +24,6 @@ namespace openbus
 #include "openbus/Connection_impl.h"
 #include "openbus/util/OpenSSL.h"
 #include "openbus/util/PrivateKey.h"
-#include "openbus/OpenBusContext.h"
 
 #include <boost/function.hpp>
 #include <CORBA.h>

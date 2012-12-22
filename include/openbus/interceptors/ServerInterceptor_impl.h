@@ -3,7 +3,6 @@
 #define TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
 
 #include "openbus/Connection_impl.h"
-#include "openbus/OpenBusContext.h"
 extern "C" {
   #include "openbus/util/Ticket_impl.h"
 }
