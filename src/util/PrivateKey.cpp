@@ -1,5 +1,4 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/Connection.h"
 #include "openbus/util/PrivateKey.h"
 
 #include <fstream>
@@ -12,7 +11,7 @@ PrivateKey::PrivateKey(std::string const& filename)
   std::ifstream key(filename.c_str(), std::fstream::binary);
   if (!key)
   {
-    throw openbus::InvalidPrivateKey();
+    throw InvalidPrivateKey();
   }
   key.seekg(0, std::ios::end);
   const std::size_t size = key.tellg();

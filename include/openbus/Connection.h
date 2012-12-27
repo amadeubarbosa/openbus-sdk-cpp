@@ -57,14 +57,6 @@ struct AlreadyLoggedIn : public std::exception
   }
 };
 
-struct InvalidPrivateKey : public std::exception
-{ 
-  const char *what() const throw() 
-  { 
-    return "openbus::InvalidPrivateKey";
-  } 
-};
-
 struct InvalidLoginProcess : public std::exception 
 {
   const char *what() const throw()

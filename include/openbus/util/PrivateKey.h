@@ -6,9 +6,18 @@
 
 #include <string>
 #include <cstring>
+#include <exception>
 
 namespace openbus
 {
+struct InvalidPrivateKey : public std::exception
+{ 
+  const char *what() const throw() 
+  { 
+    return "openbus::InvalidPrivateKey";
+  } 
+};
+
 class PrivateKey
 {
 public:
