@@ -3,6 +3,7 @@
 #include "openbus/Connection.h"
 #include "openbus/OpenBusContext.h"
 #include "openbus/log.h"
+#include "openbus/util/PrivateKey.h"
 
 #include <sstream>
 #include <unistd.h>

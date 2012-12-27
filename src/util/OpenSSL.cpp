@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1 -*-
 #include "openbus/util/OpenSSL.h"
-#include "openbus/Connection.h"
+#include "openbus/util/PrivateKey.h"
 
 #include <cassert>
 #include <cstdlib>

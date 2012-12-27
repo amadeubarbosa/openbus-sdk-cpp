@@ -66,12 +66,15 @@ Connection::Connection(const std::string h, const unsigned short p, CORBA::ORB *
 	
   /* criando um par de chaves para esta conexão. */
   {
-    openssl::pkey_ctx ctx ( EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0) );
-    if (!ctx) throw InvalidPrivateKey();
-    if(EVP_PKEY_keygen_init(ctx.get()) <= 0) throw InvalidPrivateKey();
-    if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), RSASize) <= 0) throw InvalidPrivateKey();
+    openssl::pkey_ctx ctx (EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0));
+    assert(ctx.get());
+    int r = EVP_PKEY_keygen_init(ctx.get());
+    assert(r == 1);
+    r = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), RSASize);
+    assert(r == 1);
     EVP_PKEY *key = 0;
-    if(EVP_PKEY_keygen(ctx.get(), &key) <= 0 || !key) throw InvalidPrivateKey();
+    r = EVP_PKEY_keygen(ctx.get(), &key);
+    assert((r == 1) && key);
     _key = openssl::pkey(key);
   }
 
