@@ -19,8 +19,10 @@ namespace openbus
 {
 class OpenBusContext;
 class Connection;
+
 namespace interceptors 
 {
+
 struct Session 
 {
   Session(CORBA::ULong, const std::string);
@@ -82,10 +84,12 @@ private:
   PortableInterceptor::SlotId _slotId_legacyCallChain;
   IOP::Codec *_cdrCodec;
   OpenBusContext *_openbusContext;
-  Connection *getDispatcher(OpenBusContext &context, const std::string busId, 
-                            const std::string loginId, 
-                            const std::string operation);
-  void sendCredentialReset(Connection *, Login *, 
+  Connection *getDispatcher(OpenBusContext &context, 
+                            const std::string &busId,
+                            const std::string &loginId, 
+                            const std::string &operation);
+
+  void sendCredentialReset(Connection &, Login &, 
                            PortableInterceptor::ServerRequestInfo *);
 
   typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;

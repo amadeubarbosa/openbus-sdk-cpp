@@ -20,7 +20,7 @@ class RenewLogin : public MICOMT::Thread
 {
 public:
   RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, 
-                         OpenBusContext *m, idl_ac::ValidityTime t)
+             OpenBusContext *m, idl_ac::ValidityTime t)
     : _conn(c), _access_control(a), _openbusContext(m), 
       _validityTime(t), _pause(false), _stop(false), _condVar(_mutex.mutex())
   {
@@ -184,13 +184,12 @@ Connection::Connection(const std::string h, const unsigned short p,
     _legacyDelegate(CALLER)
 {
   log_scope l(log.general_logger(), info_level, "Connection::Connection");
-  std::stringstream corbaloc;
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent.in()));
+  std::stringstream corbaloc;
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
-  CORBA::Object_var obj;
-  obj = _orb->string_to_object(corbaloc.str().c_str());
+  CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     _iComponent = scs::core::IComponent::_narrow(obj);
@@ -267,7 +266,8 @@ Connection::~Connection()
   #endif
 }
 
-void Connection::loginByPassword(std::string entity, std::string password) 
+void Connection::loginByPassword(const std::string &entity, 
+                                 const std::string &password) 
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
   AutoLock m(&_mutex);
@@ -353,7 +353,7 @@ void Connection::loginByPassword(std::string entity, std::string password)
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-void Connection::loginByCertificate(std::string entity, 
+void Connection::loginByCertificate(const std::string &entity, 
                                     const PrivateKey &privKey) 
 {
   log_scope l(log.general_logger(), info_level, 
@@ -654,8 +654,7 @@ const std::string Connection::busid()
 //[DOUBT] isso e necessario?
   if (_state == INVALID)
   {
-    std::string empty;
-    return empty;
+    return std::string();
   }
   else
   {

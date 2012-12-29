@@ -141,7 +141,7 @@ public:
   *        autenticação da conexão.
   * @throw CORBA::Exception
   */
-  void loginByPassword(std::string entity, std::string password);
+  void loginByPassword(const std::string &entity, const std::string &password);
   
  /**
   * \brief Efetua login de uma entidade usando autenticação por certificado.
@@ -166,7 +166,7 @@ public:
   *        autenticação da conexão.
   * @throw CORBA::Exception
   */
-  void loginByCertificate(std::string entity, const PrivateKey &);
+  void loginByCertificate(const std::string &entity, const PrivateKey &);
   
   /**
   * \brief Inicia o processo de login por autenticação compartilhada.

@@ -16,11 +16,11 @@ namespace openbus
 namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
 class OpenBusContext;
 class Connection;
-
 struct CallerChain;
 
 namespace interceptors 
 {
+
 class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 
 {
 public:
@@ -57,7 +57,7 @@ public:
     _openbusContext = m; 
   }
 
-  Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
+  Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo *);
   openbus::CallerChain *getJoinedChain(Connection &, 
                                        PortableInterceptor::ClientRequestInfo*);
   static PortableInterceptor::SlotId _slotId_ignoreInterceptor;

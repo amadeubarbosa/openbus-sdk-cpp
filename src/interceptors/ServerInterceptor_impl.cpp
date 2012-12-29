@@ -20,7 +20,7 @@ Session::Session(CORBA::ULong i, const std::string login)
   : id(i), remoteId(login)
 {
   tickets_init(&tickets);
-  for (std::size_t i = 0; i < SECRET_SIZE; ++i) 
+  for (std::size_t i = 0; i != SECRET_SIZE; ++i) 
   {
     secret[i] = rand() % 255;
   }
@@ -48,24 +48,23 @@ ServerInterceptor::ServerInterceptor(
 }
 
 void ServerInterceptor::sendCredentialReset(
-  Connection *conn, Login *caller, 
-  PortableInterceptor::ServerRequestInfo *r) 
+  Connection &conn, Login &caller, PortableInterceptor::ServerRequestInfo *r) 
 {
   idl_cr::CredentialReset credentialReset;
 
   AutoLock m(&_mutex);
-  Session session(_sessionLRUCache.size()+1, 
-                  std::string(caller->loginInfo->id));
+  Session session(_sessionLRUCache.size() + 1,
+                  std::string(caller.loginInfo->id));
   _sessionLRUCache.insert(session.id, session);
   credentialReset.session = session.id;
 
   /* cifrando o segredo com a chave pública do cliente. */
   CORBA::OctetSeq encrypted =
-    caller->pubKey->encrypt(session.secret, SECRET_SIZE); 
+    caller.pubKey->encrypt(session.secret, SECRET_SIZE); 
   m.unlock();
 
-  AutoLock conn_mutex(&conn->_mutex);
-  credentialReset.login = conn->_login()->id;
+  AutoLock conn_mutex(&conn._mutex);
+  credentialReset.login = conn._login()->id;
   conn_mutex.unlock();
   memcpy(credentialReset.challenge, encrypted.get_buffer(),
          idl::EncryptedBlockSize);
@@ -89,9 +88,9 @@ void ServerInterceptor::sendCredentialReset(
 ServerInterceptor::~ServerInterceptor() { }
 
 Connection *ServerInterceptor::getDispatcher(OpenBusContext &context,
-                                             const std::string busId, 
-                                             const std::string loginId,
-                                             const std::string operation)
+                                             const std::string &busId, 
+                                             const std::string &loginId,
+                                             const std::string &operation)
 {
   Connection *conn = 0;
   log_scope l(log.general_logger(), debug_level,
@@ -256,7 +255,7 @@ void ServerInterceptor::receive_request_service_contexts(
     {
       l.level_vlog(debug_level, 
                    "credential not valid, try to reset credetial session");
-      sendCredentialReset(conn, caller, r);
+      sendCredentialReset(*conn, *caller, r);
     }
 
     /* a credencial recebida é válida. */
@@ -290,7 +289,7 @@ void ServerInterceptor::receive_request_service_contexts(
       if (res) 
       { 
         /* a cadeia tem como destino(target) outro login. */
-        sendCredentialReset(conn, caller, r);
+        sendCredentialReset(*conn, *caller, r);
       }
       else if (strcmp(callChain.caller.id, caller->loginInfo->id)) 
       {
