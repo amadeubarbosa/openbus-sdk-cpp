@@ -4,25 +4,14 @@
 #include "openbus/OpenBusContext.h"
 #include "openbus/util/AutoLock_impl.h"
 
-#include <openbus/util/OpenSSL.h>
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
 #include <ctime>
-#include <openssl/x509.h>
-#include <openssl/sha.h>
 #include <CORBA.h>
 
 namespace openbus 
 {
-const size_t RSASize = 2048;
-
-openssl::pkey Connection::fetchBusKey() 
-{
-  /* armazenando a chave pública do barramento. */
-  idl::OctetSeq_var _buskeyOctetSeq = _access_control->buskey();
-  return openssl::byteSeq2PubKey(_buskeyOctetSeq->get_buffer(), _buskeyOctetSeq->length());
-}
 
 void Connection::checkBusid() const 
 {
@@ -64,25 +53,12 @@ Connection::Connection(const std::string h, const unsigned short p, CORBA::ORB *
     assert(!CORBA::is_nil(_login_registry.in()));
   }
 	
-  /* criando um par de chaves para esta conexão. */
-  {
-    openssl::pkey_ctx ctx (EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0));
-    assert(ctx.get());
-    int r = EVP_PKEY_keygen_init(ctx.get());
-    assert(r == 1);
-    r = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), RSASize);
-    assert(r == 1);
-    EVP_PKEY *key = 0;
-    r = EVP_PKEY_keygen(ctx.get(), &key);
-    assert((r == 1) && key);
-    _key = openssl::pkey(key);
-  }
-
   _loginCache = std::auto_ptr<LoginCache> (new LoginCache(_login_registry));
   {
     interceptors::IgnoreInterceptor _i(_piCurrent);
     _busid = _access_control->busid();
-    _buskey = fetchBusKey();
+    CORBA::OctetSeq_var o = _access_control->buskey();
+    _buskey = std::auto_ptr<PublicKey> (new PublicKey(o));
   }
   
   for (std::vector<std::string>::const_iterator it = props.begin(); it != props.end(); ++it)
@@ -160,7 +136,7 @@ void Connection::loginByPassword(std::string entity, std::string password)
   loginAuthenticationInfo.data = passOctetSeq;
   
   /* representação da minha chave em uma cadeia de bytes. */
-  CORBA::OctetSeq bufKey = openssl::PubKey2byteSeq(_key);
+  CORBA::OctetSeq bufKey = _key.pubKey();
   
   /* criando uma hash da minha chave. */
   SHA256(bufKey.get_buffer(), bufKey.length(), loginAuthenticationInfo.hash);
@@ -171,9 +147,9 @@ void Connection::loginByPassword(std::string entity, std::string password)
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _codec->encode_value(any);
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  CORBA::OctetSeq encrypted = openssl::encrypt(_buskey, 
-                                               encodedLoginAuthenticationInfo->get_buffer(), 
-                                               encodedLoginAuthenticationInfo->length());
+  CORBA::OctetSeq encrypted = _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
+                                              encodedLoginAuthenticationInfo->length());
+
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
     
@@ -239,18 +215,15 @@ void Connection::loginByCertificate(std::string entity, const PrivateKey &privKe
     loginProcess = _access_control->startLoginByCertificate(entity.c_str(),challenge);
   }
   
-  const CORBA::OctetSeq &keySeq = privKey.octetSeq();
-  openssl::pkey privateKey = openssl::byteSeq2PrvKey(keySeq.get_buffer(), keySeq.length());
-  
   /* decifrar o desafio usando a chave privada do usuário. */
-  CORBA::OctetSeq secret = openssl::decrypt(privateKey, (unsigned char*) challenge, 
-                                            idl::EncryptedBlockSize);
+  CORBA::OctetSeq secret = privKey.decrypt((unsigned char*) challenge, 
+                                           idl::EncryptedBlockSize);
 
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
   
   /* representação da minha chave em uma cadeia de bytes. */
-  CORBA::OctetSeq bufKey = openssl::PubKey2byteSeq(_key);
+  CORBA::OctetSeq bufKey = _key.pubKey();
   SHA256(bufKey.get_buffer(), bufKey.length(), loginAuthenticationInfo.hash);
   
   CORBA::Any any;
@@ -258,9 +231,9 @@ void Connection::loginByCertificate(std::string entity, const PrivateKey &privKe
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
   
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  CORBA::OctetSeq encrypted = openssl::encrypt(_buskey, 
-                                               encodedLoginAuthenticationInfo->get_buffer(), 
-                                               encodedLoginAuthenticationInfo->length());
+  CORBA::OctetSeq encrypted = _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
+                                              encodedLoginAuthenticationInfo->length());
+
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
   
@@ -326,7 +299,7 @@ std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> Connection::startSharedAuth(
     _openbusContext->setCurrentConnection(c);
     throw;
   }
-  CORBA::OctetSeq secretBuf = openssl::decrypt(_key, challenge, idl::EncryptedBlockSize);
+  CORBA::OctetSeq secretBuf = _key.decrypt(challenge, idl::EncryptedBlockSize);
   return std::make_pair(loginProcess, secretBuf);
 }
   
@@ -348,7 +321,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   loginAuthenticationInfo.data = secret;
   
   /* representação da minha chave em uma cadeia de bytes. */
-  CORBA::OctetSeq bufKey = openssl::PubKey2byteSeq(_key);
+  CORBA::OctetSeq bufKey = _key.pubKey();
   SHA256(bufKey.get_buffer(), bufKey.length(), loginAuthenticationInfo.hash);
 
   CORBA::Any any;
@@ -356,9 +329,9 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
   /* cifrando a estrutura LoginAuthenticationInfo com a chave pública do barramento. */
-  CORBA::OctetSeq encrypted = openssl::encrypt(_buskey, 
-                                               encodedLoginAuthenticationInfo->get_buffer(), 
-                                               encodedLoginAuthenticationInfo->length());
+  CORBA::OctetSeq encrypted = _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
+                                              encodedLoginAuthenticationInfo->length());
+
   idl::EncryptedBlock encryptedBlock;
   memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
 

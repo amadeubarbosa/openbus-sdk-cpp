@@ -117,7 +117,7 @@ lib openbus : src/Connection.cpp src/OpenBusContext.cpp
  src/interceptors/ORBInitializer_impl.cpp
  src/interceptors/ServerInterceptor_impl.cpp
  src/util/OpenSSL.cpp src/util/PrivateKey.cpp 
- src/util/Ticket_impl.c
+ src/util/PublicKey.cpp src/util/Ticket_impl.c
  /mico//mico /scs//scs /boost//headers /logger//logger
  core-idls /openssl//openssl
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD

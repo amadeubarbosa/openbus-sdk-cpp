@@ -7,8 +7,8 @@
 #include "stubs/credential.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
+#include "openbus/util/PublicKey.hpp"
 
-#include <openssl/evp.h>
 #include <CORBA.h>
 
 namespace openbus 
@@ -31,7 +31,6 @@ namespace openbus
 }
 
 #include "openbus/util/Mutex_impl.h"
-#include "openbus/util/OpenSSL.h"
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
 #include "openbus/util/LRUCache_impl.h"
@@ -46,7 +45,7 @@ struct Login
 {
   idl_ac::LoginInfo *loginInfo;
   idl::OctetSeq_var encodedCallerPubKey;
-  openssl::pkey key;
+  std::auto_ptr<PublicKey> pubKey;
   long time2live;
   time_t timeUpdated;
 };

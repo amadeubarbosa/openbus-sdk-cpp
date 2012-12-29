@@ -22,12 +22,11 @@ namespace openbus
 #include "openbus/interceptors/ClientInterceptor_impl.h"
 #include "openbus/interceptors/ServerInterceptor_impl.h"
 #include "openbus/Connection_impl.h"
-#include "openbus/util/OpenSSL.h"
 #include "openbus/util/PrivateKey.h"
+#include "openbus/util/PublicKey.hpp"
 
 #include <boost/function.hpp>
 #include <CORBA.h>
-#include <openssl/evp.h>
 
 #include <memory>
 #include <stdexcept>
@@ -266,17 +265,8 @@ private:
     PortableInterceptor::SlotId slotId_legacyCallChain, 
     PortableInterceptor::SlotId slotId_receiveConnection, 
     OpenBusContext *, std::vector<std::string> props);
-  openssl::pkey fetchBusKey();
   void checkBusid() const;
   bool _logout(bool local);
-  openssl::pkey __key() const 
-  { 
-    return _key; 
-  }
-  openssl::pkey __buskey() const 
-  { 
-    return _buskey; 
-  }
   CORBA::ORB *orb() const 
   { 
     return _orb; 
@@ -321,7 +311,7 @@ private:
   
   /* Variáveis que são modificadas somente no construtor. */
   OpenBusContext *_openbusContext;
-  openssl::pkey _key;
+  PrivateKey _key;
   PortableInterceptor::Current_var _piCurrent;
   scs::core::IComponent_var _iComponent;
   idl_ac::AccessControl_var _access_control;
@@ -329,7 +319,7 @@ private:
   idl_or::OfferRegistry_var _offer_registry;
   std::auto_ptr<LoginCache> _loginCache;
   std::string _busid;
-  openssl::pkey _buskey;
+  std::auto_ptr<PublicKey> _buskey;
   LegacyDelegate _legacyDelegate;
   /**/
   

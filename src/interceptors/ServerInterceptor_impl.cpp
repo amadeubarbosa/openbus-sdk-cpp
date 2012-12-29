@@ -2,14 +2,12 @@
 #include "openbus/Connection.h"
 #include "openbus/OpenBusContext.h"
 #include "openbus/interceptors/ServerInterceptor_impl.h"
-#include "stubs/credential_v1_5.h"
-#include "openbus/util/OpenSSL.h"
 #include "openbus/log.h"
 #include "openbus/util/AutoLock_impl.h"
+#include "stubs/credential_v1_5.h"
 
 #include <iostream>
-#include <openssl/sha.h>
-#include <openssl/x509.h>
+#include <string>
 
 namespace openbus 
 {
@@ -52,7 +50,7 @@ void ServerInterceptor::sendCredentialReset(Connection *conn, Login *caller,
   credentialReset.session = session.id;
 
   /* cifrando o segredo com a chave pública do cliente. */
-  CORBA::OctetSeq encrypted = openssl::encrypt(caller->key, session.secret, SECRET_SIZE); 
+  CORBA::OctetSeq encrypted = caller->pubKey->encrypt(session.secret, SECRET_SIZE); 
   m.unlock();
 
   AutoLock conn_mutex(&conn->_mutex);
@@ -243,17 +241,9 @@ void ServerInterceptor::receive_request_service_contexts(PortableInterceptor::Se
     idl::HashValue hashChain;
     SHA256(credential.chain.encoded.get_buffer(), credential.chain.encoded.length(), hashChain);
 
-    openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(conn->__buskey().get(), 0));
-    if(!ctx) 
-    {
-      l.level_log(info_level, "Failed creating a OpenSSL public key context (EVP_PKEY_CTX_new)");
-      return;
-    }
-
-    int status = EVP_PKEY_verify_init(ctx.get());
-    assert(status);
-    if (EVP_PKEY_verify(ctx.get(), credential.chain.signature, idl::EncryptedBlockSize, hashChain, 
-                        idl::HashValueSize) != 1)
+    if (!conn->_buskey->verify(credential.chain.signature, 
+                               idl::EncryptedBlockSize, hashChain, 
+                               idl::HashValueSize))
     {
       throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
     }

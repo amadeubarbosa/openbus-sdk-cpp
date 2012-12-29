@@ -3,15 +3,11 @@
 #include "openbus/Connection.h"
 #include "openbus/OpenBusContext.h"
 #include "openbus/log.h"
-#include "openbus/util/PrivateKey.h"
 
 #include <sstream>
 #include <unistd.h>
 #include <cstring>
 #include <ctime>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
-#include <openssl/sha.h>
 
 namespace openbus {
 LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
@@ -37,12 +33,7 @@ Login *LoginCache::validateLogin(const std::string id)
     { 
       return 0; 
     }
-    const unsigned char *buf = login->encodedCallerPubKey->get_buffer();
-    login->key = openssl::pkey
-      (d2i_PUBKEY(0, &buf, login->encodedCallerPubKey->length()));
-    if(!login->key) {
-      throw InvalidPrivateKey();
-    }
+    login->pubKey = std::auto_ptr<PublicKey> (new PublicKey(login->encodedCallerPubKey));
     login->timeUpdated = time(0);
     m.lock();
     _loginLRUCache.insert(id, login);

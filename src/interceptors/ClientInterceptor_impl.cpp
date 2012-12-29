@@ -4,7 +4,6 @@
 #include "openbus/interceptors/ClientInterceptor_impl.h"
 #include "stubs/credential_v1_5.h"
 #include "openbus/log.h"
-#include "openbus/util/OpenSSL.h"
 #include "openbus/util/AutoLock_impl.h"
 
 #include <openssl/sha.h>
@@ -307,9 +306,8 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         
           /* decifrar o segredo usando a chave do usuário. */
           CORBA::OctetSeq_var secret (new 
-                                      CORBA::OctetSeq (openssl::decrypt(conn.__key(), 
-                                                                        credentialReset.challenge,
-                                                                        idl::EncryptedBlockSize)));
+                                      CORBA::OctetSeq (conn._key.decrypt(credentialReset.challenge,
+                                                                         idl::EncryptedBlockSize)));
 
           /* adquirindo uma chave para a sessão que corresponde a esta requisição. */
           std::string sessionKey = getSessionKey(r);
