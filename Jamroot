@@ -112,7 +112,7 @@ rule tag ( name : type ? : property-set )
 }
 
 lib openbus : src/Connection.cpp src/OpenBusContext.cpp
- src/Connection_impl.cpp src/ORBInitializer.cpp
+ src/util/LoginCache.cpp src/ORBInitializer.cpp
  src/interceptors/ClientInterceptor_impl.cpp
  src/interceptors/ORBInitializer_impl.cpp
  src/interceptors/ServerInterceptor_impl.cpp

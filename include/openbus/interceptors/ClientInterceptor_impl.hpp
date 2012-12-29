@@ -2,18 +2,22 @@
 #ifndef TECGRAF_SDK_CLIENTINTERCEPTOR_IMPL_H_
 #define TECGRAF_SDK_CLIENTINTERCEPTOR_IMPL_H_
 
-#include "openbus/Connection_impl.hpp"
+#include "openbus/OpenBusContext.hpp"
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
 #include "openbus/util/LRUCache_impl.hpp"
 #endif
+#include "openbus/util/AutoLock_impl.hpp"
 
 #include <CORBA.h>
 
 namespace openbus 
 {
+namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
+class OpenBusContext;
+class Connection;
 
-class CallerChain;
+struct CallerChain;
 
 namespace interceptors 
 {
@@ -48,7 +52,7 @@ public:
   { 
   }
 
-  void openbusContext(OpenBusContext *m) 
+  void openbusContext(openbus::OpenBusContext *m) 
   { 
     _openbusContext = m; 
   }

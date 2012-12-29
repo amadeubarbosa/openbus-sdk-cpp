@@ -21,12 +21,10 @@
 
 namespace openbus 
 {
-  class OpenBusContext;
-  class Connection;
-  struct CallerChain;
   namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
   namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+  class Connection;
 }
 
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
@@ -70,10 +68,11 @@ namespace openbus
 /**
  * \brief Cadeia de chamadas oriundas de um barramento.
  * 
- * Coleção de informações dos logins que originaram chamadas em cadeia através de um
- * barramento. Cadeias de chamadas representam chamadas aninhadas dentro do barramento e são úteis
- * para que os sistemas que recebam essas chamadas possam identificar se a chamada foi originada por
- * entidades autorizadas ou não.
+ * Coleção de informações dos logins que originaram chamadas em cadeia
+ * através de um barramento. Cadeias de chamadas representam chamadas
+ * aninhadas dentro do barramento e são úteis para que os sistemas que
+ * recebam essas chamadas possam identificar se a chamada foi
+ * originada por entidades autorizadas ou não.
  */
 struct CallerChain 
 {
@@ -91,12 +90,14 @@ struct CallerChain
   }
 
   /**
-  * Lista de informações de login de todas as entidades que realizaram chamadas que originaram a
-  * cadeia de chamadas da qual essa chamada está inclusa.  Quando essa lista é vazia isso indica
-  * que a chamada não está inclusa em uma cadeia de chamadas.
+  * Lista de informações de login de todas as entidades que realizaram
+  * chamadas que originaram a cadeia de chamadas da qual essa chamada
+  * está inclusa.  Quando essa lista é vazia isso indica que a chamada
+  * não está inclusa em uma cadeia de chamadas.
   * 
-  * A ordem da sequência retornada é começando da fonte da cadeia até o penúltimo da cadeia na
-  * chamada. Assim, originators()[0], se existir, é quem originou a chamada de cadeia.
+  * A ordem da sequência retornada é começando da fonte da cadeia até
+  * o penúltimo da cadeia na chamada. Assim, originators()[0], se
+  * existir, é quem originou a chamada de cadeia.
   */
   const idl_ac::LoginInfoSeq &originators() const 
   {
@@ -114,8 +115,8 @@ struct CallerChain
   /**
    * \brief Construtor default que indica o valor de CallChain "vazio"
    *
-   * O valor de um CallerChain default-constructed pode ser usado para verificar a ausencia de
-   * CallerChain da seguinte forma:
+   * O valor de um CallerChain default-constructed pode ser usado para
+   * verificar a ausencia de CallerChain da seguinte forma:
    * 
    * CallerChain chain = openbusContext.getCallerChain();
    * if(chain != CallerChain())
@@ -128,13 +129,16 @@ struct CallerChain
   {
   }
 private:
-  CallerChain(const std::string busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
+  CallerChain(const std::string busid, const idl_ac::LoginInfo &t,
+              const idl_ac::LoginInfoSeq &b, 
               const idl_ac::LoginInfo &c, const idl_cr::SignedCallChain &d) 
-    : _busid(busid), _target(t), _originators(b), _caller(c), _signedCallChain(d) 
+    : _busid(busid), _target(t), _originators(b), _caller(c),
+      _signedCallChain(d) 
   {
   }
   
-  CallerChain(const std::string busid, const idl_ac::LoginInfo &t, const idl_ac::LoginInfoSeq &b, 
+  CallerChain(const std::string busid, const idl_ac::LoginInfo &t,
+              const idl_ac::LoginInfoSeq &b, 
               const idl_ac::LoginInfo &c) 
     : _busid(busid), _target(t), _originators(b), _caller(c) 
   { 
@@ -170,9 +174,11 @@ inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs)
 class OpenBusContext : public CORBA::LocalObject 
 {
 public:
-  typedef boost::function<Connection* (OpenBusContext &context, const std::string busId, 
+  typedef boost::function<Connection* (OpenBusContext &context, 
+                                       const std::string busId, 
                                        const std::string loginId, 
-                                       const std::string operation)> CallDispatchCallback;
+                                       const std::string operation)> 
+  CallDispatchCallback;
 
   void onCallDispatch(CallDispatchCallback c);
 
@@ -181,12 +187,14 @@ public:
   /**
    * \brief Cria uma conexão para um barramento.
    * 
-   * Cria uma conexão para um barramento. O barramento é indicado por um nome ou endereço de rede
-   * e um número de porta, onde os serviços núcleo daquele barramento estão executando.
+   * Cria uma conexão para um barramento. O barramento é indicado por
+   * um nome ou endereço de rede e um número de porta, onde os
+   * serviços núcleo daquele barramento estão executando.
    * 
-   * @param[in] host Endereço ou nome de rede onde os serviços núcleo do barramento estão 
+   * @param[in] host Endereço ou nome de rede onde os serviços núcleo do 
+   *            barramento estao executando.
+   * @param[in] port Porta onde os serviços núcleo do barramento estão 
    *            executando.
-   * @param[in] port Porta onde os serviços núcleo do barramento estão executando.
    * @param[in] props Lista opcional de propriedades que definem algumas
    *        configurações sobre a forma que as chamadas realizadas ou validadas
    *        com essa conexão são feitas. A seguir são listadas as propriedades
@@ -220,13 +228,15 @@ public:
   /**
    * \brief Define a conexão padrão a ser usada nas chamadas.
    * 
-   * Define uma conexão a ser utilizada como "Requester" e "Dispatcher" de chamadas sempre que não
-   * houver uma conexão "Requester" e "Dispatcher" específica definida para o caso específico,
-   * como é feito através das operações 'setCurrentConnection' e 'setDispatcher'.
+   * Define uma conexão a ser utilizada como "Requester" e
+   * "Dispatcher" de chamadas sempre que não houver uma conexão
+   * "Requester" e "Dispatcher" específica definida para o caso
+   * específico, como é feito através das operações
+   * 'setCurrentConnection' e 'setDispatcher'.
    * 
-   * @param[in] conn Conexão a ser definida como conexão padrão. O 'ownership' da conexão não é
-   * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
-   * antes de destruida
+   * @param[in] conn Conexão a ser definida como conexão padrão. O
+   * 'ownership' da conexão não é transferida para o OpenBusContext, e
+   * a conexão deve ser removida do OpenBusContext antes de destruida
    */
   Connection *setDefaultConnection(Connection *);
    
@@ -235,20 +245,22 @@ public:
    * 
    * Veja operação 'setDefaultConnection'.
    * 
-   * \return Conexão definida como conexão padrão. OpenBusContext não possui ownership dessa
-   * conexão e o mesmo não é transferido para o código de usuário na execução desta função
+   * \return Conexão definida como conexão padrão. OpenBusContext não
+   * possui ownership dessa conexão e o mesmo não é transferido para o
+   * código de usuário na execução desta função
    */
   Connection *getDefaultConnection() const;
    
   /**
    * \brief Define a conexão "Requester" do contexto corrente.
    * 
-   * Define a conexão "Requester" a ser utilizada em todas as chamadas feitas no contexto
-   * atual. Quando 'conn' é 'null' o contexto passa a ficar sem nenhuma conexão associada.
+   * Define a conexão "Requester" a ser utilizada em todas as chamadas
+   * feitas no contexto atual. Quando 'conn' é 'null' o contexto passa
+   * a ficar sem nenhuma conexão associada.
    * 
-   * @param[in] conn Conexão a ser associada ao contexto corrente. O 'ownership' da conexão não é
-   * transferida para o OpenBusContext, e a conexão deve ser removida do OpenBusContext
-   * antes de destruida
+   * @param[in] conn Conexão a ser associada ao contexto corrente. O
+   * 'ownership' da conexão não é transferida para o OpenBusContext, e
+   * a conexão deve ser removida do OpenBusContext antes de destruida
    */
   Connection *setCurrentConnection(Connection *);
    
@@ -257,8 +269,9 @@ public:
    * 
    * @throw CORBA::Exception
    *
-   * @return Conexão a barramento associada a thread corrente. OpenBusContext não possui
-   * ownership dessa conexão e o mesmo não é transferido para o código de usuário na execução
+   * @return Conexão a barramento associada a thread
+   * corrente. OpenBusContext não possui ownership dessa conexão e o
+   * mesmo não é transferido para o código de usuário na execução
    * desta função
    */
   Connection *getCurrentConnection() const;
@@ -266,10 +279,12 @@ public:
   /**
    * \brief Devolve a cadeia de chamadas à qual a execução corrente pertence.
    * 
-   * Caso a contexto corrente (e.g. definido pelo 'CORBA::PICurrent') seja o contexto de execução de
-   * uma chamada remota oriunda do barramento dessa conexão, essa operação devolve um objeto que
-   * representa a cadeia de chamadas do barramento que esta chamada faz parte. Caso contrário,
-   * devolve uma cadeia de chamadas 'vazia', representada por um CallerChain 'default-constructed'.
+   * Caso a contexto corrente (e.g. definido pelo 'CORBA::PICurrent')
+   * seja o contexto de execução de uma chamada remota oriunda do
+   * barramento dessa conexão, essa operação devolve um objeto que
+   * representa a cadeia de chamadas do barramento que esta chamada
+   * faz parte. Caso contrário, devolve uma cadeia de chamadas
+   * 'vazia', representada por um CallerChain 'default-constructed'.
    *
    * Para verificar se a cadeia retornada é válida, o seguinte idioma
    * é usado:
@@ -287,8 +302,9 @@ public:
   /**
    * \brief Associa uma cadeia de chamadas ao contexto corrente.
    * 
-   * Associa uma cadeia de chamadas ao contexto corrente, de forma que todas as chamadas remotas
-   * seguintes neste mesmo contexto sejam feitas como parte dessa cadeia de chamadas.
+   * Associa uma cadeia de chamadas ao contexto corrente, de forma que
+   * todas as chamadas remotas seguintes neste mesmo contexto sejam
+   * feitas como parte dessa cadeia de chamadas.
    * 
    * \param chain Cadeia de chamadas a ser associada ao contexto corrente.
    * @throw CORBA::NO_PERMISSION {minor = NoLoginCode}
@@ -298,21 +314,26 @@ public:
   void joinChain(CallerChain const& chain);
   
   /**
-   * \brief Faz com que nenhuma cadeia de chamadas esteja associada ao contexto corrente.
+   * \brief Faz com que nenhuma cadeia de chamadas esteja associada ao
+   * contexto corrente.
    * 
-   * Remove a associação da cadeia de chamadas ao contexto corrente, fazendo com que todas as
-   * chamadas seguintes feitas neste mesmo contexto deixem de fazer parte da cadeia de chamadas
-   * associada previamente. Ou seja, todas as chamadas passam a iniciar novas cadeias de chamada.
+   * Remove a associação da cadeia de chamadas ao contexto corrente,
+   * fazendo com que todas as chamadas seguintes feitas neste mesmo
+   * contexto deixem de fazer parte da cadeia de chamadas associada
+   * previamente. Ou seja, todas as chamadas passam a iniciar novas
+   * cadeias de chamada.
    */
   void exitChain();
 
   /**
    * \brief Devolve a cadeia de chamadas associada ao contexto corrente.
    * 
-   * Devolve um objeto que representa a cadeia de chamadas associada ao contexto corrente nesta
-   * conexão.  A cadeia de chamadas informada foi associada previamente pela operação
-   * 'joinChain'. Caso o contexto corrente não tenha nenhuma cadeia associada, essa operação devolve
-   * uma cadeia 'vazia' 'default-constructed'
+   * Devolve um objeto que representa a cadeia de chamadas associada
+   * ao contexto corrente nesta conexão.  A cadeia de chamadas
+   * informada foi associada previamente pela operação
+   * 'joinChain'. Caso o contexto corrente não tenha nenhuma cadeia
+   * associada, essa operação devolve uma cadeia 'vazia'
+   * 'default-constructed'
    * 
    * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
    *
@@ -322,7 +343,8 @@ public:
    * else
    *   // chain é inválido
    * 
-   * \return Cadeia de chamadas associada ao contexto corrente ou uma cadeia 'vazia'.
+   * \return Cadeia de chamadas associada ao contexto corrente ou uma
+   * cadeia 'vazia'.
    *
    * @throw CORBA::Exception
    */

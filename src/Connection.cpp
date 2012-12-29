@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/log.hpp"
 #include "openbus/Connection.hpp"
+#include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/util/AutoLock_impl.hpp"
 
@@ -12,6 +12,155 @@
 
 namespace openbus 
 {
+//[DOUBT]: eh necessario?
+class Connection;
+
+#ifdef OPENBUS_SDK_MULTITHREAD
+class RenewLogin : public MICOMT::Thread 
+{
+public:
+  RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, 
+                         OpenBusContext *m, idl_ac::ValidityTime t)
+    : _conn(c), _access_control(a), _openbusContext(m), 
+      _validityTime(t), _pause(false), _stop(false), _condVar(_mutex.mutex())
+  {
+    log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
+  }
+
+  ~RenewLogin() 
+  { 
+    log_scope l(log.general_logger(), info_level, "RenewLogin::~RenewLogin");
+  }
+
+  idl_ac::ValidityTime renew() 
+  {
+    log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
+    assert(_access_control);
+    idl_ac::ValidityTime validityTime = _validityTime;
+    try 
+    {
+      l.level_log(debug_level, "access_control()->renew()");
+      validityTime = _access_control->renew();
+    } 
+    catch (const CORBA::Exception &) 
+    {
+      l.level_vlog(warning_level, "Falha na renovacao da credencial.");
+    }
+    return validityTime;
+  }
+
+  void _run(void *) 
+  {
+    log_scope l(log.general_logger(), debug_level, "RenewLogin::_run");
+    _openbusContext->setCurrentConnection(_conn);
+    _mutex.lock();
+    do 
+    {
+      while (!_pause && _condVar.timedwait(_validityTime * 1000)) 
+      {
+        _mutex.unlock();
+        l.log("chamando RenewLogin::renew() ...");
+        _validityTime = renew();
+        _mutex.lock();
+      }
+    } 
+    while (!_stop && _condVar.wait());
+    _mutex.unlock();
+  }
+
+  void stop() 
+  {
+    log_scope l(log.general_logger(), debug_level, "RenewLogin::stop");
+    _mutex.lock();
+    _stop = true;
+    l.log("condVar.signal()");
+    _condVar.signal();
+    _mutex.unlock();
+  }
+
+  void pause() 
+  {
+    log_scope l(log.general_logger(), debug_level, "RenewLogin::pause");
+    _mutex.lock();
+    _pause = true;
+    l.log("condVar.signal()");
+    _condVar.signal();
+    _mutex.unlock();
+  }
+
+  void run() 
+  {
+    log_scope l(log.general_logger(), debug_level, "RenewLogin::run");
+    _mutex.lock();
+    _pause = false;
+    l.log("condVar.signal()");
+    _condVar.signal();
+    _mutex.unlock();
+  }
+private:
+  Mutex _mutex;
+  Connection *_conn;
+  idl_ac::AccessControl_ptr _access_control;
+  OpenBusContext *_openbusContext;
+  idl_ac::ValidityTime _validityTime;
+  bool _pause;
+  bool _stop;
+  MICOMT::CondVar _condVar;
+};
+#else
+class RenewLogin : public CORBA::DispatcherCallback 
+{
+public:
+  RenewLogin(CORBA::ORB_ptr o, Connection *c, 
+                         idl_ac::AccessControl_ptr a, OpenBusContext *m, 
+                         idl_ac::ValidityTime t)
+   : _orb(o), _conn(c), _access_control(a), _openbusContext(m), 
+     _validityTime(t) 
+  { 
+    log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
+    _orb->dispatcher()->tm_event(this, _validityTime*1000);
+  }
+
+  ~RenewLogin() 
+  {
+    _orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);    
+  }
+
+  void callback(CORBA::Dispatcher *dispatcher, Event event) 
+  {
+    _validityTime = renew(dispatcher);
+    dispatcher->tm_event(this, _validityTime*1000);
+  }
+
+  idl_ac::ValidityTime renew(CORBA::Dispatcher *dispatcher) 
+  {
+    log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
+    assert(_access_control);
+    idl_ac::ValidityTime validityTime = _validityTime;
+    Connection *c = 0;
+    try 
+    {
+      c = _openbusContext->getCurrentConnection();
+      _openbusContext->setCurrentConnection(_conn);
+      validityTime = _access_control->renew();
+      _openbusContext->setCurrentConnection(c);
+    } 
+    catch (const CORBA::Exception &) 
+    {
+      l.level_vlog(warning_level, "Falha na renovacao da credencial.");
+      _openbusContext->setCurrentConnection(c);
+    }
+    return validityTime;
+  }
+private:
+  CORBA::ORB_ptr _orb;
+  Connection *_conn;
+  idl_ac::AccessControl_ptr _access_control;
+  OpenBusContext *_openbusContext;
+  idl_ac::ValidityTime _validityTime;
+  idl_ac::ValidityTime renew(CORBA::Dispatcher *);
+};
+#endif
 
 void Connection::checkBusid() const 
 {

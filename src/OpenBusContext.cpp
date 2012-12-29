@@ -1,5 +1,4 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/log.hpp"
 #include "openbus/util/AutoLock_impl.hpp"

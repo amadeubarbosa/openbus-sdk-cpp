@@ -9,19 +9,16 @@
 #ifndef TECGRAF_SDK_CONNECTION_H_
 #define TECGRAF_SDK_CONNECTION_H_
 
-namespace openbus 
-{
-  class Connection;
-}
-
 #ifndef OPENBUS_DOXYGEN
 #define SECRET_SIZE 16
 #endif
 
+#include "stubs/scs.h"
+#include "stubs/access_control.h"
+#include "stubs/offer_registry.h"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
-#include "openbus/Connection_impl.hpp"
 #include "openbus/util/PrivateKey.hpp"
 #include "openbus/util/PublicKey.hpp"
 
@@ -39,6 +36,11 @@ namespace openbus
 */
 namespace openbus 
 {
+namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
+namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+//[DOUBT]: eh necessario?
+class OpenBusContext;
+class RenewLogin;
   
 struct BusChanged : public std::exception 
 { 
@@ -79,8 +81,6 @@ struct InvalidPropertyValue : public std::exception
   std::string property;
   std::string value;
 };
-
-class Connection;
 
 /**
  * \brief Objeto que representa uma forma de acesso a um barramento.

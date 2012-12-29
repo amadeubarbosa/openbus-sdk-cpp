@@ -1,12 +1,9 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/Connection.hpp"
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/log.hpp"
 #include "openbus/util/AutoLock_impl.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
-#include "openbus/interceptors/ClientInterceptor_impl.hpp"
-#include "openbus/interceptors/ServerInterceptor_impl.hpp"
 
 #include <memory>
 
@@ -43,7 +40,7 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
     orb->resolve_initial_references("OpenBusContext");
     l.log("Este ORB ja foi criado.");
   } 
-  catch(const CORBA::ORB_InvalidName &) 
+  catch (const CORBA::ORB_InvalidName &) 
   {
     OpenBusContext *openbusContext = 
       new OpenBusContext(orb, orbInitializer->codec(), 

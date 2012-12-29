@@ -9,6 +9,8 @@
 #include <iostream>
 #include <string>
 
+#define LOGINCACHE_LRU_SIZE 128
+
 namespace openbus 
 {
 namespace interceptors 
