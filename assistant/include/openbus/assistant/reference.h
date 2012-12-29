@@ -4,8 +4,8 @@
 #define OPENBUS_ASSISTANT_REFERENCE_H
 
 #include <scs/IComponent.h>
-#include <openbus/OpenBusContext.h>
-#include <openbus/ORBInitializer.h>
+#include <openbus/OpenBusContext.hpp>
+#include <openbus/ORBInitializer.hpp>
 #include <CORBA.h>
 
 #include <boost/shared_ptr.hpp>

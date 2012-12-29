@@ -1,8 +1,8 @@
 #ifndef OPENBUS_CPP_INTEROP_DELEGATION_SERVER_LOGIN_H
 #define OPENBUS_CPP_INTEROP_DELEGATION_SERVER_LOGIN_H
 
-#include "openbus/Connection.h"
-#include "openbus/util/PrivateKey.h"
+#include "openbus/Connection.hpp"
+#include "openbus/util/PrivateKey.hpp"
 
 #include <fstream>
 

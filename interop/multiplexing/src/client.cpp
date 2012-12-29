@@ -1,7 +1,7 @@
-#include <openbus/ORBInitializer.h>
-#include <openbus/log.h>
-#include <openbus/OpenBusContext.h>
-#include <openbus/Connection.h>
+#include <openbus/ORBInitializer.hpp>
+#include <openbus/log.hpp>
+#include <openbus/OpenBusContext.hpp>
+#include <openbus/Connection.hpp>
 #include <iostream>
 #include "stubs/hello.h"
 

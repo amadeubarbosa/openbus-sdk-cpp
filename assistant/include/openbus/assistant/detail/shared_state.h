@@ -9,8 +9,8 @@
 #include <log/output/streambuf_output.h>
 
 #include <scs/IComponent.h>
-#include <openbus/OpenBusContext.h>
-#include <openbus/ORBInitializer.h>
+#include <openbus/OpenBusContext.hpp>
+#include <openbus/ORBInitializer.hpp>
 
 #ifdef ASSISTANT_SDK_MULTITHREAD
 #include <boost/thread.hpp>

@@ -30,10 +30,10 @@ namespace openbus
   class OpenBusContext;
 }
 
-#include "openbus/util/Mutex_impl.h"
+#include "openbus/util/Mutex_impl.hpp"
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
-#include "openbus/util/LRUCache_impl.h"
+#include "openbus/util/LRUCache_impl.hpp"
 #endif
 
 #define LOGINCACHE_LRU_SIZE 128

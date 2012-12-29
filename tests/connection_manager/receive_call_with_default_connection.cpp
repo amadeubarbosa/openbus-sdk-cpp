@@ -1,6 +1,6 @@
 
-#include <openbus/OpenBusContext.h>
-#include <openbus/ORBInitializer.h>
+#include <openbus/OpenBusContext.hpp>
+#include <openbus/ORBInitializer.hpp>
 #include "stubs/hello.h"
 #include <scs/ComponentContext.h>
 #include <configuration.h>

@@ -6,7 +6,7 @@
 #include <openbus/assistant/overloaded_error_handler.h>
 #include <openbus/assistant/exceptions.h>
 
-#include <openbus/Connection.h>
+#include <openbus/Connection.hpp>
 
 #include <boost/mpl/void.hpp>
 #include <boost/mpl/vector.hpp>

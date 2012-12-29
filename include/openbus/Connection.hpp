@@ -2,7 +2,7 @@
 
 /**
 * API - SDK Openbus C++
-* \file openbus/Connection.h
+* \file openbus/Connection.hpp
 * 
 */
 
@@ -18,11 +18,11 @@ namespace openbus
 #define SECRET_SIZE 16
 #endif
 
-#include "openbus/interceptors/ORBInitializer_impl.h"
-#include "openbus/interceptors/ClientInterceptor_impl.h"
-#include "openbus/interceptors/ServerInterceptor_impl.h"
-#include "openbus/Connection_impl.h"
-#include "openbus/util/PrivateKey.h"
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
+#include "openbus/interceptors/ClientInterceptor_impl.hpp"
+#include "openbus/interceptors/ServerInterceptor_impl.hpp"
+#include "openbus/Connection_impl.hpp"
+#include "openbus/util/PrivateKey.hpp"
 #include "openbus/util/PublicKey.hpp"
 
 #include <boost/function.hpp>

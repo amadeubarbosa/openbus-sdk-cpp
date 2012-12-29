@@ -1,12 +1,12 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/Connection.h"
-#include "openbus/ORBInitializer.h"
-#include "openbus/log.h"
-#include "openbus/util/AutoLock_impl.h"
-#include "openbus/OpenBusContext.h"
-#include "openbus/interceptors/ORBInitializer_impl.h"
-#include "openbus/interceptors/ClientInterceptor_impl.h"
-#include "openbus/interceptors/ServerInterceptor_impl.h"
+#include "openbus/Connection.hpp"
+#include "openbus/ORBInitializer.hpp"
+#include "openbus/log.hpp"
+#include "openbus/util/AutoLock_impl.hpp"
+#include "openbus/OpenBusContext.hpp"
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
+#include "openbus/interceptors/ClientInterceptor_impl.hpp"
+#include "openbus/interceptors/ServerInterceptor_impl.hpp"
 
 #include <memory>
 

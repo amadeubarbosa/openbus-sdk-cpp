@@ -1,6 +1,6 @@
-#include <openbus/ORBInitializer.h>
-#include <openbus/log.h>
-#include <openbus/OpenBusContext.h>
+#include <openbus/ORBInitializer.hpp>
+#include <openbus/log.hpp>
+#include <openbus/OpenBusContext.hpp>
 #include <iostream>
 #include "stubs/hello.h"
 #include "stubs/encoding.h"

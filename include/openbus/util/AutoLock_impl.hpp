@@ -2,7 +2,7 @@
 #ifndef TECGRAF_SDK_AUTO_LOCK_H_
 #define TECGRAF_SDK_AUTO_LOCK_H_
 
-#include "Mutex_impl.h"
+#include "Mutex_impl.hpp"
 
 #include <CORBA.h>
 

@@ -1,9 +1,9 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/Connection.h"
-#include "openbus/interceptors/ORBInitializer_impl.h"
-#include "openbus/interceptors/ClientInterceptor_impl.h"
-#include "openbus/interceptors/ServerInterceptor_impl.h"
-#include "openbus/log.h"
+#include "openbus/Connection.hpp"
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
+#include "openbus/interceptors/ClientInterceptor_impl.hpp"
+#include "openbus/interceptors/ServerInterceptor_impl.hpp"
+#include "openbus/log.hpp"
 
 namespace openbus 
 {

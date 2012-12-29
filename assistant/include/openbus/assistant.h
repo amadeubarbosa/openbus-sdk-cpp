@@ -24,8 +24,8 @@
 #endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
 #include <scs/IComponent.h>
-#include <openbus/OpenBusContext.h>
-#include <openbus/ORBInitializer.h>
+#include <openbus/OpenBusContext.hpp>
+#include <openbus/ORBInitializer.hpp>
 #include <CORBA.h>
 
 #include <boost/mpl/void.hpp>

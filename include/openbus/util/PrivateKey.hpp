@@ -4,7 +4,7 @@
 #define TECGRAF_SDK_PRIVATE_KEY_H_
 
 #include "stubs/core.h"
-#include "openbus/util/OpenSSL.h"
+#include "openbus/util/OpenSSL.hpp"
 
 #include <string>
 #include <exception>

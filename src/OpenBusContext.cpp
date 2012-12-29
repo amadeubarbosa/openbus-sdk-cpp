@@ -1,8 +1,8 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/Connection.h"
-#include "openbus/OpenBusContext.h"
-#include "openbus/log.h"
-#include "openbus/util/AutoLock_impl.h"
+#include "openbus/Connection.hpp"
+#include "openbus/OpenBusContext.hpp"
+#include "openbus/log.hpp"
+#include "openbus/util/AutoLock_impl.hpp"
 
 namespace openbus 
 {

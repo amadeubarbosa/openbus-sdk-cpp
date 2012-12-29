@@ -1,15 +1,15 @@
 // -*- coding: iso-8859-1 -*-
 /**
 * API - SDK Openbus C++
-* \file openbus/OpenBusContext.h
+* \file openbus/OpenBusContext.hpp
 */
 
 #ifndef _TECGRAF_SDK_MANAGER_H_
 #define _TECGRAF_SDK_MANAGER_H_
 
-#include "openbus/Connection.h"
-#include "openbus/ORBInitializer.h"
-#include "openbus/util/Mutex_impl.h"
+#include "openbus/Connection.hpp"
+#include "openbus/ORBInitializer.hpp"
+#include "openbus/util/Mutex_impl.hpp"
 #include "stubs/core.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
@@ -29,7 +29,7 @@ namespace openbus
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 }
 
-#include "openbus/interceptors/ORBInitializer_impl.h"
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
 
 namespace tecgraf 
 { 

@@ -2,13 +2,13 @@
 #ifndef TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
 #define TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
 
-#include "openbus/Connection_impl.h"
+#include "openbus/Connection_impl.hpp"
 extern "C" {
   #include "openbus/util/Ticket_impl.h"
 }
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
-#include "openbus/util/LRUCache_impl.h"
+#include "openbus/util/LRUCache_impl.hpp"
 #endif
 
 #include <CORBA.h>

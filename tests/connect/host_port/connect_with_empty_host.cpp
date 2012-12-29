@@ -1,6 +1,6 @@
 
-#include <openbus/OpenBusContext.h>
-#include <openbus/ORBInitializer.h>
+#include <openbus/OpenBusContext.hpp>
+#include <openbus/ORBInitializer.hpp>
 #include <cstdlib>
 
 int main(int argc, char* argv[])
