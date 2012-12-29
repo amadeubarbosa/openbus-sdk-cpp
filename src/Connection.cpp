@@ -19,8 +19,8 @@ class Connection;
 class RenewLogin : public MICOMT::Thread 
 {
 public:
-  RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, 
-             OpenBusContext *m, idl_ac::ValidityTime t)
+  RenewLogin(Connection &c, idl_ac::AccessControl_ptr a, 
+             OpenBusContext &m, idl_ac::ValidityTime t)
     : _conn(c), _access_control(a), _openbusContext(m), 
       _validityTime(t), _pause(false), _stop(false), _condVar(_mutex.mutex())
   {
@@ -52,7 +52,7 @@ public:
   void _run(void *) 
   {
     log_scope l(log.general_logger(), debug_level, "RenewLogin::_run");
-    _openbusContext->setCurrentConnection(_conn);
+    _openbusContext.setCurrentConnection(&_conn);
     _mutex.lock();
     do 
     {
@@ -99,9 +99,9 @@ public:
   }
 private:
   Mutex _mutex;
-  Connection *_conn;
+  Connection &_conn;
   idl_ac::AccessControl_ptr _access_control;
-  OpenBusContext *_openbusContext;
+  OpenBusContext &_openbusContext;
   idl_ac::ValidityTime _validityTime;
   bool _pause;
   bool _stop;
@@ -111,9 +111,9 @@ private:
 class RenewLogin : public CORBA::DispatcherCallback 
 {
 public:
-  RenewLogin(CORBA::ORB_ptr o, Connection *c, 
-                         idl_ac::AccessControl_ptr a, OpenBusContext *m, 
-                         idl_ac::ValidityTime t)
+  RenewLogin(CORBA::ORB_ptr o, Connection &c, 
+             idl_ac::AccessControl_ptr a, OpenBusContext &m, 
+             idl_ac::ValidityTime t)
    : _orb(o), _conn(c), _access_control(a), _openbusContext(m), 
      _validityTime(t) 
   { 
@@ -140,23 +140,23 @@ public:
     Connection *c = 0;
     try 
     {
-      c = _openbusContext->getCurrentConnection();
-      _openbusContext->setCurrentConnection(_conn);
+      c = _openbusContext.getCurrentConnection();
+      _openbusContext.setCurrentConnection(&_conn);
       validityTime = _access_control->renew();
-      _openbusContext->setCurrentConnection(c);
+      _openbusContext.setCurrentConnection(c);
     } 
     catch (const CORBA::Exception &) 
     {
       l.level_vlog(warning_level, "Falha na renovacao da credencial.");
-      _openbusContext->setCurrentConnection(c);
+      _openbusContext.setCurrentConnection(c);
     }
     return validityTime;
   }
 private:
   CORBA::ORB_ptr _orb;
-  Connection *_conn;
+  Connection &_conn;
   idl_ac::AccessControl_ptr _access_control;
-  OpenBusContext *_openbusContext;
+  OpenBusContext &_openbusContext;
   idl_ac::ValidityTime _validityTime;
   idl_ac::ValidityTime renew(CORBA::Dispatcher *);
 };
@@ -339,7 +339,7 @@ void Connection::loginByPassword(const std::string &entity,
   else 
   {
     _renewLogin = std::auto_ptr<RenewLogin> 
-      (new RenewLogin(this, _access_control, _openbusContext, validityTime));
+      (new RenewLogin(*this, _access_control, *_openbusContext, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
@@ -347,7 +347,7 @@ void Connection::loginByPassword(const std::string &entity,
   #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
-    (new RenewLogin(_orb, this, _access_control, _openbusContext, 
+    (new RenewLogin(_orb, *this, _access_control, *_openbusContext, 
                     validityTime));
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
@@ -430,10 +430,8 @@ void Connection::loginByCertificate(const std::string &entity,
   } 
   else 
   {
-    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, 
-                                                            _access_control, 
-                                                            _openbusContext, 
-                                                            validityTime));
+    _renewLogin = std::auto_ptr<RenewLogin> (
+      new RenewLogin(*this, _access_control, *_openbusContext, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
@@ -441,8 +439,8 @@ void Connection::loginByCertificate(const std::string &entity,
   #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
-    (new RenewLogin(_orb, this, _access_control, _openbusContext, 
-                    validityTime));
+    new RenewLogin(_orb, *this, _access_control, *_openbusContext, 
+                   validityTime));
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -534,20 +532,17 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   } 
   else 
   {
-    _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(this, 
-                                                            _access_control, 
-                                                            _openbusContext, 
-                                                            validityTime));
+    _renewLogin = std::auto_ptr<RenewLogin> (
+      new RenewLogin(*this, _access_control, *_openbusContext, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
   }
   #else
   assert(!_renewLogin.get());
-  _renewLogin = std::auto_ptr<RenewLogin> (new RenewLogin(_orb, this, 
-                                                          _access_control, 
-                                                          _openbusContext, 
-                                                          validityTime));
+  _renewLogin = std::auto_ptr<RenewLogin> (
+    new RenewLogin(_orb, *this, _access_control, *_openbusContext,
+                   validityTime));
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
