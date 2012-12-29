@@ -67,7 +67,8 @@ private:
 class RenewLogin : public MICOMT::Thread 
 {
 public:
-  RenewLogin(Connection *, idl_ac::AccessControl_ptr, OpenBusContext *, idl_ac::ValidityTime);
+  RenewLogin(Connection *, idl_ac::AccessControl_ptr, OpenBusContext *, 
+             idl_ac::ValidityTime);
   ~RenewLogin();
   void _run(void *);
   void stop();
@@ -88,8 +89,8 @@ private:
 class RenewLogin : public CORBA::DispatcherCallback 
 {
 public:
-  RenewLogin(CORBA::ORB_ptr, Connection *, idl_ac::AccessControl_ptr, OpenBusContext *, 
-             idl_ac::ValidityTime);
+  RenewLogin(CORBA::ORB_ptr, Connection *, idl_ac::AccessControl_ptr, 
+             OpenBusContext *, idl_ac::ValidityTime);
   ~RenewLogin();
   void callback(CORBA::Dispatcher *, Event);
 private:

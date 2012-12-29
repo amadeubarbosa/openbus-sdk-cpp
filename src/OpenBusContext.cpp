@@ -6,14 +6,19 @@
 
 namespace openbus 
 {
-OpenBusContext::OpenBusContext(CORBA::ORB *o, IOP::Codec *c, PortableInterceptor::SlotId s1, 
-                               PortableInterceptor::SlotId s2, PortableInterceptor::SlotId s3,
-                               PortableInterceptor::SlotId s4, PortableInterceptor::SlotId s5) 
-  : _orb(o), _codec(c), _slotId_joinedCallChain(s1), _slotId_signedCallChain(s2), 
-    _slotId_legacyCallChain(s3), _slotId_requesterConnection(s4), _slotId_receiveConnection(s5),
+OpenBusContext::OpenBusContext(CORBA::ORB *o, IOP::Codec *c, 
+                               PortableInterceptor::SlotId s1, 
+                               PortableInterceptor::SlotId s2, 
+                               PortableInterceptor::SlotId s3,
+                               PortableInterceptor::SlotId s4, 
+                               PortableInterceptor::SlotId s5) 
+  : _orb(o), _codec(c), _slotId_joinedCallChain(s1), 
+    _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), 
+    _slotId_requesterConnection(s4), _slotId_receiveConnection(s5),
     _defaultConnection(0), _callDispatchCallback(0)
 {
-  log_scope l(log.general_logger(), debug_level, "OpenBusContext::OpenBusContext");
+  log_scope l(log.general_logger(), debug_level, 
+              "OpenBusContext::OpenBusContext");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent));
@@ -23,14 +28,19 @@ OpenBusContext::~OpenBusContext()
 { 
 }
 
-std::auto_ptr<Connection> OpenBusContext::createConnection(const std::string host, short port, 
-                                                           std::vector<std::string> props)
+std::auto_ptr<Connection> 
+OpenBusContext::createConnection(const std::string host, short port, 
+                                 std::vector<std::string> props)
 {
-  log_scope l(log.general_logger(), debug_level, "OpenBusContext::createConnection");
+  log_scope l(log.general_logger(), debug_level, 
+              "OpenBusContext::createConnection");
   l.vlog("createConnection para host %s:%hi", host.c_str(), port);
-  std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, _slotId_joinedCallChain, 
-                                                _slotId_signedCallChain, _slotId_legacyCallChain, 
-                                                _slotId_receiveConnection, this, props));
+  std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, 
+                                                _slotId_joinedCallChain, 
+                                                _slotId_signedCallChain, 
+                                                _slotId_legacyCallChain, 
+                                                _slotId_receiveConnection, 
+                                                this, props));
   l.vlog("connection: %p", conn.get());
   return conn;
 }
@@ -51,7 +61,8 @@ Connection * OpenBusContext::getDefaultConnection() const
 
 Connection *OpenBusContext::setCurrentConnection(Connection *c) 
 {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::setCurrentConnection");
+  log_scope l(log.general_logger(), info_level, 
+              "OpenBusContext::setCurrentConnection");
   l.vlog("connection:%p", c); 
   size_t size = sizeof(Connection *);
   unsigned char buf[size];
@@ -66,8 +77,10 @@ Connection *OpenBusContext::setCurrentConnection(Connection *c)
 
 Connection *OpenBusContext::getCurrentConnection() const 
 {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::getCurrentConnection");
-  CORBA::Any_var connectionAddrAny = _piCurrent->get_slot(_slotId_requesterConnection);
+  log_scope l(log.general_logger(), info_level, 
+              "OpenBusContext::getCurrentConnection");
+  CORBA::Any_var connectionAddrAny = 
+    _piCurrent->get_slot(_slotId_requesterConnection);
   idl::OctetSeq connectionAddrOctetSeq;
   Connection *c = 0;
   if (*connectionAddrAny >>= connectionAddrOctetSeq)
@@ -83,7 +96,8 @@ Connection *OpenBusContext::getCurrentConnection() const
 
 CallerChain OpenBusContext::getCallerChain() 
 {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::getCallerChain");
+  log_scope l(log.general_logger(), info_level, 
+              "OpenBusContext::getCallerChain");
   Connection *c = getDispatchConnection();
   if (!c)
   {
@@ -98,15 +112,17 @@ CallerChain OpenBusContext::getCallerChain()
     CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
                                                        idl_ac::_tc_CallChain);
     *callChainAny >>= callChain;
-    return CallerChain(c->busid(), *c->login(), callChain.originators, callChain.caller, 
-                       sigCallChain);
+    return CallerChain(c->busid(), *c->login(), callChain.originators, 
+                       callChain.caller, sigCallChain);
   } 
   else 
   {
-    CORBA::Any_var legacyChainAny = _piCurrent->get_slot(_slotId_legacyCallChain);
+    CORBA::Any_var legacyChainAny = 
+      _piCurrent->get_slot(_slotId_legacyCallChain);
     if (legacyChainAny >>= callChain)
     {
-      return CallerChain(c->busid(), *c->login(), callChain.originators, callChain.caller);
+      return CallerChain(c->busid(), *c->login(), callChain.originators, 
+                         callChain.caller);
     }
     else 
     {
@@ -133,7 +149,8 @@ void OpenBusContext::exitChain()
 
 CallerChain OpenBusContext::getJoinedChain() 
 {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::getJoinedChain");
+  log_scope l(log.general_logger(), info_level, 
+              "OpenBusContext::getJoinedChain");
   Connection *c = getDispatchConnection();
   if (!c)
   {
@@ -143,12 +160,13 @@ CallerChain OpenBusContext::getJoinedChain()
   idl_cr::SignedCallChain sigCallChain;
   if (*sigCallChainAny >>= sigCallChain) 
   {
-    CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded, idl_ac::_tc_CallChain);
+    CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded, 
+                                                       idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
     if (callChainAny >>= callChain) 
     {
-      return CallerChain(c->busid(), *c->login(), callChain.originators, callChain.caller, 
-                         sigCallChain);
+      return CallerChain(c->busid(), *c->login(), callChain.originators, 
+                         callChain.caller, sigCallChain);
     } 
     else
     { 
@@ -195,8 +213,10 @@ idl_ac::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
 
 Connection *OpenBusContext::getDispatchConnection()
 {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::getDispatchConnection");
-  CORBA::Any_var connectionAddrAny = _piCurrent->get_slot(_slotId_receiveConnection);
+  log_scope l(log.general_logger(), info_level, 
+              "OpenBusContext::getDispatchConnection");
+  CORBA::Any_var connectionAddrAny = 
+    _piCurrent->get_slot(_slotId_receiveConnection);
   idl::OctetSeq connectionAddrOctetSeq;
   Connection *c = 0;
   if (*connectionAddrAny >>= connectionAddrOctetSeq)

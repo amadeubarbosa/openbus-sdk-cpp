@@ -27,13 +27,16 @@ Login *LoginCache::validateLogin(const std::string id)
     login->time2live = -1;
     try 
     {
-      login->loginInfo = _login_registry->getLoginInfo(id.c_str(), login->encodedCallerPubKey);
+      login->loginInfo = 
+        _login_registry->getLoginInfo(id.c_str(), 
+                                      login->encodedCallerPubKey);
     } 
     catch (const idl_ac::InvalidLogins &e) 
     { 
       return 0; 
     }
-    login->pubKey = std::auto_ptr<PublicKey> (new PublicKey(login->encodedCallerPubKey));
+    login->pubKey = 
+      std::auto_ptr<PublicKey> (new PublicKey(login->encodedCallerPubKey));
     login->timeUpdated = time(0);
     m.lock();
     _loginLRUCache.insert(id, login);
@@ -46,7 +49,8 @@ Login *LoginCache::validateLogin(const std::string id)
     return 0;
   }
   
-  /* se time2live é maior do que o intervalo de tempo de atualização, o login é válido. */
+  /* se time2live é maior do que o intervalo de tempo de atualização,
+   * o login é válido. */
   if (login->time2live > (time(0) - login->timeUpdated)) 
   {
     return login;
@@ -54,7 +58,8 @@ Login *LoginCache::validateLogin(const std::string id)
   else 
   {
     /* preciso consultar o barramento para validar o login. */
-    idl_ac::ValidityTime validity = _login_registry->getLoginValidity(id.c_str());
+    idl_ac::ValidityTime validity = 
+      _login_registry->getLoginValidity(id.c_str());
     login->time2live = validity;
     login->timeUpdated = time(0);
     /* o login de interesse, após atualização da cache, ainda é válido? */
@@ -67,10 +72,11 @@ Login *LoginCache::validateLogin(const std::string id)
 }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-RenewLogin::RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, OpenBusContext *m, 
+RenewLogin::RenewLogin(Connection *c, idl_ac::AccessControl_ptr a, 
+                       OpenBusContext *m, 
                        idl_ac::ValidityTime t)
-  : _conn(c), _access_control(a), _openbusContext(m), _validityTime(t), _pause(false), 
-    _stop(false), _condVar(_mutex.mutex())
+  : _conn(c), _access_control(a), _openbusContext(m), 
+    _validityTime(t), _pause(false), _stop(false), _condVar(_mutex.mutex())
 {
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
 }
@@ -148,8 +154,9 @@ void RenewLogin::run()
 
 #else
 
-RenewLogin::RenewLogin(CORBA::ORB_ptr o, Connection *c, idl_ac::AccessControl_ptr a, 
-                       OpenBusContext *m, idl_ac::ValidityTime t)
+RenewLogin::RenewLogin(CORBA::ORB_ptr o, Connection *c, 
+                       idl_ac::AccessControl_ptr a, OpenBusContext *m, 
+                       idl_ac::ValidityTime t)
   : _orb(o), _conn(c), _access_control(a), _openbusContext(m), _validityTime(t) 
 { 
   log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");

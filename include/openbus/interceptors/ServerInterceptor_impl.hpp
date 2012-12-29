@@ -38,7 +38,8 @@ public:
                     PortableInterceptor::SlotId slotId_legacyCallChain,
                     IOP::Codec *cdr_codec);
   ~ServerInterceptor();
-  void receive_request_service_contexts(PortableInterceptor::ServerRequestInfo *);
+  void 
+  receive_request_service_contexts(PortableInterceptor::ServerRequestInfo *);
   void receive_request(PortableInterceptor::ServerRequestInfo *) 
   { 
   }
@@ -79,8 +80,10 @@ private:
   IOP::Codec *_cdrCodec;
   OpenBusContext *_openbusContext;
   Connection *getDispatcher(OpenBusContext &context, const std::string busId, 
-                            const std::string loginId, const std::string operation);
-  void sendCredentialReset(Connection *, Login *, PortableInterceptor::ServerRequestInfo *);
+                            const std::string loginId, 
+                            const std::string operation);
+  void sendCredentialReset(Connection *, Login *, 
+                           PortableInterceptor::ServerRequestInfo *);
 
   typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;
   SessionLRUCache _sessionLRUCache;

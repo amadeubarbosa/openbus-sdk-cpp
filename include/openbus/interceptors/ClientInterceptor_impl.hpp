@@ -54,7 +54,8 @@ public:
   }
 
   Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo*);
-  openbus::CallerChain *getJoinedChain(Connection &, PortableInterceptor::ClientRequestInfo *);
+  openbus::CallerChain *getJoinedChain(Connection &, 
+                                       PortableInterceptor::ClientRequestInfo*);
   static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
 private:
 
@@ -73,10 +74,12 @@ private:
   };
 
   typedef LRUCache<std::string, SecretSession> SessionLRUCache;
-  typedef LRUCache<std::string, const idl_cr::SignedCallChain> CallChainLRUCache;
+  typedef LRUCache<std::string, const idl_cr::SignedCallChain> 
+    CallChainLRUCache;
 
-  /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão que me permite uma
-   * comunicação com o objeto CORBA que está sendo requisitado.
+  /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão
+   * que me permite uma comunicação com o objeto CORBA que está sendo
+   * requisitado.
    */
   SessionLRUCache _sessionLRUCache;    
     
@@ -92,19 +95,22 @@ public:
   {
     CORBA::Any ignoreInterceptorAny;
     ignoreInterceptorAny <<= CORBA::Any::from_boolean(true);
-    _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, ignoreInterceptorAny);
+    _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, 
+                         ignoreInterceptorAny);
   }
 
   ~IgnoreInterceptor() 
   {
     CORBA::Any ignoreInterceptorAny;
     ignoreInterceptorAny <<= CORBA::Any::from_boolean(false);
-    _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, ignoreInterceptorAny);      
+    _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, 
+                         ignoreInterceptorAny); 
   }
 
   static bool status(PortableInterceptor::ClientRequestInfo *r) 
   {
-    CORBA::Any_var any = r->get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
+    CORBA::Any_var any = 
+      r->get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
     CORBA::Boolean b = 0;
     if (*any >>= CORBA::Any::to_boolean(b))
     {

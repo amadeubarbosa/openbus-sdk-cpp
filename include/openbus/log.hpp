@@ -28,7 +28,8 @@ namespace detail
 {
 struct mico_thread_formatter : logger::formatter_base
 {
-  void format(logger::logger const &, logger::level, scope_token const&, std::string &string) const
+  void format(logger::logger const &, logger::level, scope_token const&, 
+              std::string &string) const
   {
     std::stringstream s;
     s << "(thread " << reinterpret_cast<void*>(MICOMT::Thread::self()) << ") ";
@@ -56,7 +57,8 @@ struct log_type
     set_level(error_level);
     add_output(logger::output::make_streambuf_output(std::cout));
     #ifdef OPENBUS_SDK_MULTITHREAD
-    std::auto_ptr<logger::formatter_base> mico_thread_formatter (new detail::mico_thread_formatter);
+    std::auto_ptr<logger::formatter_base> mico_thread_formatter 
+      (new detail::mico_thread_formatter);
     add_formatter(mico_thread_formatter);
     #endif
   }
