@@ -84,7 +84,7 @@ private:
   PortableInterceptor::SlotId _slotId_legacyCallChain;
   IOP::Codec *_cdrCodec;
   OpenBusContext *_openbusContext;
-  Connection *getDispatcher(OpenBusContext &context, 
+  Connection &getDispatcher(OpenBusContext &context, 
                             const std::string &busId,
                             const std::string &loginId, 
                             const std::string &operation);

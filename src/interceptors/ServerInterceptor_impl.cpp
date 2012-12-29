@@ -87,7 +87,7 @@ void ServerInterceptor::sendCredentialReset(
 
 ServerInterceptor::~ServerInterceptor() { }
 
-Connection *ServerInterceptor::getDispatcher(OpenBusContext &context,
+Connection &ServerInterceptor::getDispatcher(OpenBusContext &context,
                                              const std::string &busId, 
                                              const std::string &loginId,
                                              const std::string &operation)
@@ -121,7 +121,7 @@ Connection *ServerInterceptor::getDispatcher(OpenBusContext &context,
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
   }
-  return conn;
+  return *conn;
 }
 
 void ServerInterceptor::receive_request_service_contexts(
@@ -151,7 +151,7 @@ void ServerInterceptor::receive_request_service_contexts(
   idl_cr::CredentialData credential;
   if (hasContext && (any >>= credential)) 
   {
-    Connection *conn = getDispatcher(*_openbusContext,
+    Connection &conn = getDispatcher(*_openbusContext,
                                      std::string(credential.bus), 
                                      std::string(credential.login),
                                      std::string(operation));
@@ -160,7 +160,8 @@ void ServerInterceptor::receive_request_service_contexts(
      * OpenBusContext::getCurrentConnection() */
     size_t bufSize = sizeof(Connection*);
     unsigned char buf[bufSize];
-    memcpy(buf, &conn, bufSize);
+    Connection *_c = &conn;
+    memcpy(buf, &_c, bufSize);
     idl::OctetSeq_var connectionAddrOctetSeq =
       new idl::OctetSeq(bufSize, bufSize, buf);
     CORBA::Any connectionAddrAny;
@@ -174,17 +175,17 @@ void ServerInterceptor::receive_request_service_contexts(
     /* definindo a conexão atual como a conexão a ser utilizada pelas
     ** chamadas remotas a serem realizadas por este ponto de
     ** interceptação */
-    _openbusContext->setCurrentConnection(conn);
+    _openbusContext->setCurrentConnection(&conn);
 
-    AutoLock conn_mutex(&conn->_mutex);
-    if (!conn->_login())
+    AutoLock conn_mutex(&conn._mutex);
+    if (!conn._login())
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     conn_mutex.unlock();
 
     Login *caller;
     /* consulta ao cache de logins para saber se este login é valido. 
     ** obtenção da estrutura Login referente a este login id. (caller) */
-    if (strcmp(credential.bus.in(), conn->_busid.c_str())) 
+    if (strcmp(credential.bus.in(), conn._busid.c_str())) 
     {
       l.log("Login diferente daquele que iniciou a sessão.");
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
@@ -192,7 +193,7 @@ void ServerInterceptor::receive_request_service_contexts(
     try 
     {
       l.vlog("Validando login: %s", credential.login.in());
-      caller = conn->_loginCache->validateLogin(std::string(credential.login));
+      caller = conn._loginCache->validateLogin(std::string(credential.login));
     }
     catch (const CORBA::NO_PERMISSION &e) 
     {
@@ -255,7 +256,7 @@ void ServerInterceptor::receive_request_service_contexts(
     {
       l.level_vlog(debug_level, 
                    "credential not valid, try to reset credetial session");
-      sendCredentialReset(*conn, *caller, r);
+      sendCredentialReset(conn, *caller, r);
     }
 
     /* a credencial recebida é válida. */
@@ -270,7 +271,7 @@ void ServerInterceptor::receive_request_service_contexts(
     SHA256(credential.chain.encoded.get_buffer(),
            credential.chain.encoded.length(), hashChain);
 
-    if (!conn->_buskey->verify(credential.chain.signature, 
+    if (!conn._buskey->verify(credential.chain.signature, 
                                idl::EncryptedBlockSize, hashChain, 
                                idl::HashValueSize))
     {
@@ -284,12 +285,12 @@ void ServerInterceptor::receive_request_service_contexts(
       idl_ac::CallChain callChain;
       callChainAny >>= callChain;
       conn_mutex.lock();
-      int res = strcmp(callChain.target, conn->_login()->id);
+      int res = strcmp(callChain.target, conn._login()->id);
       conn_mutex.unlock();
       if (res) 
       { 
         /* a cadeia tem como destino(target) outro login. */
-        sendCredentialReset(*conn, *caller, r);
+        sendCredentialReset(conn, *caller, r);
       }
       else if (strcmp(callChain.caller.id, caller->loginInfo->id)) 
       {
