@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1 -*-
+#include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
-#include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "stubs/credential_v1_5.h"
 #include "openbus/log.hpp"
 #include "openbus/util/AutoLock_impl.hpp"
@@ -9,7 +9,7 @@
 #include <openssl/sha.h>
 #include <sstream>
 
-#define LOGINCACHE_LRU_SIZE 128
+#define CACHE_LRU_SIZE 128
 
 namespace openbus 
 {
@@ -94,8 +94,8 @@ ClientInterceptor::ClientInterceptor(
   : _cdrCodec(cdr_codec), 
     _slotId_requesterConnection(slotId_requesterConnection), 
     _slotId_joinedCallChain(slotId_joinedCallChain), 
-    _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE)),
-    _callChainLRUCache(CallChainLRUCache(LOGINCACHE_LRU_SIZE)), 
+    _sessionLRUCache(SessionLRUCache(CACHE_LRU_SIZE)),
+    _callChainLRUCache(CallChainLRUCache(CACHE_LRU_SIZE)), 
     _openbusContext(0)
 { 
   log_scope l(log.general_logger(), info_level, 
