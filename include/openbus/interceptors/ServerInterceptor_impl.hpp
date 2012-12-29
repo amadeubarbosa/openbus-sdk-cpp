@@ -3,11 +3,11 @@
 #define TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
 
 extern "C" {
-  #include "openbus/util/Ticket_impl.h"
+  #include "openbus/Ticket_impl.h"
 }
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
-#include "openbus/util/LRUCache_impl.hpp"
+#include "openbus/LRUCache_impl.hpp"
 #endif
 #include "openbus/LoginCache.hpp"
 #include "openbus/OpenBusContext.hpp"

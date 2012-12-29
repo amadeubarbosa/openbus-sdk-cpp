@@ -5,9 +5,9 @@
 #include "openbus/OpenBusContext.hpp"
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
-#include "openbus/util/LRUCache_impl.hpp"
+#include "openbus/LRUCache_impl.hpp"
 #endif
-#include "openbus/util/AutoLock_impl.hpp"
+#include "openbus/lock/AutoLock_impl.hpp"
 
 #include <CORBA.h>
 

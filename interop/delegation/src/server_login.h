@@ -2,7 +2,7 @@
 #define OPENBUS_CPP_INTEROP_DELEGATION_SERVER_LOGIN_H
 
 #include "openbus/Connection.hpp"
-#include "openbus/util/PrivateKey.hpp"
+#include "openbus/crypto/PrivateKey.hpp"
 
 #include <fstream>
 

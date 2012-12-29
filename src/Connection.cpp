@@ -2,7 +2,7 @@
 #include "openbus/Connection.hpp"
 #include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
-#include "openbus/util/AutoLock_impl.hpp"
+#include "openbus/lock/AutoLock_impl.hpp"
 
 #include <sstream>
 #include <unistd.h>

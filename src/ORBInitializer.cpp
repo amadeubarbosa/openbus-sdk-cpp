@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1 -*-
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/log.hpp"
-#include "openbus/util/AutoLock_impl.hpp"
+#include "openbus/lock/AutoLock_impl.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 

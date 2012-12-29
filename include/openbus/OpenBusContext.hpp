@@ -4,18 +4,20 @@
 * \file openbus/OpenBusContext.hpp
 */
 
-#ifndef _TECGRAF_SDK_MANAGER_H_
-#define _TECGRAF_SDK_MANAGER_H_
+#ifndef TECGRAF_SDK_OPENBUS_CONTEXT_H_
+#define TECGRAF_SDK_OPENBUS_CONTEXT_H_
 
 #include "openbus/Connection.hpp"
 #include "openbus/ORBInitializer.hpp"
-#include "openbus/util/Mutex_impl.hpp"
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
+#include "openbus/lock/Mutex_impl.hpp"
 #include "stubs/core.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
 
 #include <CORBA.h>
 #include <boost/function.hpp>
+
 #include <string>
 #include <vector>
 
@@ -26,8 +28,6 @@ namespace openbus
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
   class Connection;
 }
-
-#include "openbus/interceptors/ORBInitializer_impl.hpp"
 
 namespace tecgraf 
 { 
@@ -130,16 +130,15 @@ struct CallerChain
   }
 private:
   CallerChain(const std::string busid, const idl_ac::LoginInfo &t,
-              const idl_ac::LoginInfoSeq &b, 
-              const idl_ac::LoginInfo &c, const idl_cr::SignedCallChain &d) 
-    : _busid(busid), _target(t), _originators(b), _caller(c),
+              const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c,
+              const idl_cr::SignedCallChain &d) 
+    : _busid(busid), _target(t), _originators(b), _caller(c), 
       _signedCallChain(d) 
   {
   }
   
   CallerChain(const std::string busid, const idl_ac::LoginInfo &t,
-              const idl_ac::LoginInfoSeq &b, 
-              const idl_ac::LoginInfo &c) 
+              const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
     : _busid(busid), _target(t), _originators(b), _caller(c) 
   { 
   }

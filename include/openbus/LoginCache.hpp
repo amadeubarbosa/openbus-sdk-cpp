@@ -4,13 +4,13 @@
 
 #include "stubs/core.h"
 #include "stubs/access_control.h"
-#include "openbus/util/Mutex_impl.hpp"
+#include "openbus/lock/Mutex_impl.hpp"
 #ifndef TECGRAF_SDK_LRUCACHE_H_
 #define TECGRAF_SDK_LRUCACHE_H_
-#include "openbus/util/LRUCache_impl.hpp"
+#include "openbus/LRUCache_impl.hpp"
 #endif
-#include "openbus/util/PublicKey.hpp"
-#include "openbus/util/AutoLock_impl.hpp"
+#include "openbus/crypto/PublicKey.hpp"
+#include "openbus/lock/AutoLock_impl.hpp"
 
 #include <string>
 

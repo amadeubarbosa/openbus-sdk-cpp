@@ -19,8 +19,8 @@
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
-#include "openbus/util/PrivateKey.hpp"
-#include "openbus/util/PublicKey.hpp"
+#include "openbus/crypto/PrivateKey.hpp"
+#include "openbus/crypto/PublicKey.hpp"
 
 #include <boost/function.hpp>
 #include <CORBA.h>

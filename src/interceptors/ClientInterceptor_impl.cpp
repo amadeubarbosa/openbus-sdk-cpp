@@ -4,7 +4,7 @@
 #include "openbus/OpenBusContext.hpp"
 #include "stubs/credential_v1_5.h"
 #include "openbus/log.hpp"
-#include "openbus/util/AutoLock_impl.hpp"
+#include "openbus/lock/AutoLock_impl.hpp"
 
 #include <openssl/sha.h>
 #include <sstream>

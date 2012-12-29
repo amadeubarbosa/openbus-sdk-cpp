@@ -3,9 +3,10 @@
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/log.hpp"
-#include "openbus/util/AutoLock_impl.hpp"
+#include "openbus/lock/AutoLock_impl.hpp"
 #include "stubs/credential_v1_5.h"
 
+#include <cstddef>
 #include <iostream>
 #include <string>
 
@@ -19,9 +20,9 @@ Session::Session(CORBA::ULong i, const std::string login)
   : id(i), remoteId(login)
 {
   tickets_init(&tickets);
-  for (short i=0;i<SECRET_SIZE;++i) 
+  for (std::size_t i = 0; i < SECRET_SIZE; ++i) 
   {
-    secret[i] = rand()%255;
+    secret[i] = rand() % 255;
   }
 }
 
@@ -279,7 +280,7 @@ void ServerInterceptor::receive_request_service_contexts(
     else
     {
       CORBA::Any_var callChainAny =
-        _cdrCodec->decode_value(credential.chain.encoded, 
+        _cdrCodec->decode_value(credential.chain.encoded,
                                 idl_ac::_tc_CallChain);
       idl_ac::CallChain callChain;
       callChainAny >>= callChain;

@@ -112,12 +112,12 @@ rule tag ( name : type ? : property-set )
 }
 
 lib openbus : src/Connection.cpp src/OpenBusContext.cpp
- src/util/LoginCache.cpp src/ORBInitializer.cpp
+ src/LoginCache.cpp src/ORBInitializer.cpp
  src/interceptors/ClientInterceptor_impl.cpp
  src/interceptors/ORBInitializer_impl.cpp
  src/interceptors/ServerInterceptor_impl.cpp
- src/util/OpenSSL.cpp src/util/PrivateKey.cpp 
- src/util/PublicKey.cpp src/util/Ticket_impl.c
+ src/crypto/OpenSSL.cpp src/crypto/PrivateKey.cpp 
+ src/crypto/PublicKey.cpp src/Ticket_impl.c
  /mico//mico /scs//scs /boost//headers /logger//logger
  core-idls /openssl//openssl
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
