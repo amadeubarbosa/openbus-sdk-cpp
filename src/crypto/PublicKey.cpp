@@ -1,5 +1,4 @@
 // -*- coding: iso-8859-1 -*-
-
 #include "openbus/crypto/PublicKey.hpp"
 
 namespace openbus

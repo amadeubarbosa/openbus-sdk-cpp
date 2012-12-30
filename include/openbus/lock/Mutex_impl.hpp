@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1 -*-
-#ifndef TECGRAF_SDK_MUTEX_H_
-#define TECGRAF_SDK_MUTEX_H_
+#ifndef TECGRAF_SDK_OPENBUS_MUTEX_H_
+#define TECGRAF_SDK_OPENBUS_MUTEX_H_
 
 #include <CORBA.h>
 

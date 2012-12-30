@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1 -*-
-#ifndef TECGRAF_SDK_AUTO_LOCK_H_
-#define TECGRAF_SDK_AUTO_LOCK_H_
+#ifndef TECGRAF_SDK_OPENBUS_AUTO_LOCK_H_
+#define TECGRAF_SDK_OPENBUS_AUTO_LOCK_H_
 
 #include "Mutex_impl.hpp"
 

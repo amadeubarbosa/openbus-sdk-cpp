@@ -1,9 +1,8 @@
 
 // -*- coding: iso-8859-1 -*-
-#ifndef TECGRAF_SDK_PRIVATE_KEY_H_
-#define TECGRAF_SDK_PRIVATE_KEY_H_
+#ifndef TECGRAF_SDK_OPENBUS_PRIVATE_KEY_H_
+#define TECGRAF_SDK_OPENBUS_PRIVATE_KEY_H_
 
-#include "stubs/core.h"
 #include "openbus/crypto/OpenSSL.hpp"
 
 #include <string>

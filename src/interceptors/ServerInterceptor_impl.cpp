@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1 -*-
+#include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
-#include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/log.hpp"
 #include "openbus/lock/AutoLock_impl.hpp"
 #include "stubs/credential_v1_5.h"
@@ -16,11 +16,12 @@ namespace openbus
 {
 namespace interceptors 
 {
+
 Session::Session(CORBA::ULong i, const std::string login) 
   : id(i), remoteId(login)
 {
   tickets_init(&tickets);
-  for (std::size_t i = 0; i != SECRET_SIZE; ++i) 
+  for (std::size_t i = 0; i != secretSize; ++i) 
   {
     secret[i] = rand() % 255;
   }
@@ -60,7 +61,7 @@ void ServerInterceptor::sendCredentialReset(
 
   /* cifrando o segredo com a chave pública do cliente. */
   CORBA::OctetSeq encrypted =
-    caller.pubKey->encrypt(session.secret, SECRET_SIZE); 
+    caller.pubKey->encrypt(session.secret, secretSize); 
   m.unlock();
 
   AutoLock conn_mutex(&conn._mutex);
@@ -239,7 +240,7 @@ void ServerInterceptor::receive_request_service_contexts(
       pBuf[0] = idl::MajorVersion;
       pBuf[1] = idl::MinorVersion;
       m.lock();
-      memcpy(pBuf+2, session->secret, SECRET_SIZE);
+      memcpy(pBuf+2, session->secret, secretSize);
       m.unlock();
       memcpy(pBuf+18, &credential.ticket, 4);
       memcpy(pBuf+22, r->operation(), operationSize);

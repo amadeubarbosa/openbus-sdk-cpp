@@ -1,16 +1,15 @@
 // -*- coding: iso-8859-1 -*-
-#ifndef TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
-#define TECGRAF_SDK_SERVERINTERCEPTOR_IMPL_H_
+#ifndef TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_IMPL_H_
+#define TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_IMPL_H_
 
 extern "C" {
   #include "openbus/Ticket_impl.h"
 }
-#ifndef TECGRAF_SDK_LRUCACHE_H_
-#define TECGRAF_SDK_LRUCACHE_H_
+#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
+#define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
 #endif
 #include "openbus/LoginCache.hpp"
-#include "openbus/OpenBusContext.hpp"
 
 #include <CORBA.h>
 #include <string>
@@ -23,12 +22,14 @@ class Connection;
 namespace interceptors 
 {
 
+const unsigned int secretSize = 16;
+
 struct Session 
 {
   Session(CORBA::ULong, const std::string);
   CORBA::ULong id;
   tickets_History tickets;
-  unsigned char secret[SECRET_SIZE];
+  unsigned char secret[secretSize];
   std::string remoteId;
 };
 

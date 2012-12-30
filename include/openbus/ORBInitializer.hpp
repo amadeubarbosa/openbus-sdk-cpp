@@ -4,8 +4,8 @@
 * \file openbus/ORBInitializer.h
 */
 
-#ifndef TECGRAF_SDK_OPENBUS_H_
-#define TECGRAF_SDK_OPENBUS_H_
+#ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_H_
+#define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_H_
 
 #include <CORBA.h>
 

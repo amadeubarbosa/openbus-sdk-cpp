@@ -1,16 +1,16 @@
 // -*- coding: iso-8859-1 -*-
-#ifndef TECGRAF_SDK_LOGIN_CACHE_H_
-#define TECGRAF_SDK_LOGIN_CACHE_H_
+#ifndef TECGRAF_SDK_OPENBUS_LOGIN_CACHE_H_
+#define TECGRAF_SDK_OPENBUS_LOGIN_CACHE_H_
 
 #include "stubs/core.h"
 #include "stubs/access_control.h"
 #include "openbus/lock/Mutex_impl.hpp"
-#ifndef TECGRAF_SDK_LRUCACHE_H_
-#define TECGRAF_SDK_LRUCACHE_H_
+#include "openbus/lock/AutoLock_impl.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
+#define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
 #endif
 #include "openbus/crypto/PublicKey.hpp"
-#include "openbus/lock/AutoLock_impl.hpp"
 
 #include <string>
 

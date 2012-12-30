@@ -4,12 +4,12 @@
 * \file openbus/OpenBusContext.hpp
 */
 
-#ifndef TECGRAF_SDK_OPENBUS_CONTEXT_H_
-#define TECGRAF_SDK_OPENBUS_CONTEXT_H_
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
+#define TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
 
 #include "openbus/Connection.hpp"
 #include "openbus/ORBInitializer.hpp"
-#include "openbus/interceptors/ORBInitializer_impl.hpp"
+#include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "openbus/lock/Mutex_impl.hpp"
 #include "stubs/core.h"
 #include "stubs/access_control.h"
@@ -26,7 +26,6 @@ namespace openbus
   namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
   namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
-  class Connection;
 }
 
 namespace tecgraf 

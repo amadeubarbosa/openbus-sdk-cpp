@@ -1,9 +1,8 @@
 // -*- coding: iso-8859-1 -*-
-#ifndef _TECGRAF_SDK_OPENSSL_H_
-#define _TECGRAF_SDK_OPENSSL_H_
+#ifndef TECGRAF_SDK_OPENBUS_OPENSSL_H_
+#define TECGRAF_SDK_OPENBUS_OPENSSL_H_
 
-#include "stubs/core.h"
-
+#include <CORBA.h>
 #include <openssl/pem.h>
 #include <boost/shared_ptr.hpp>
 

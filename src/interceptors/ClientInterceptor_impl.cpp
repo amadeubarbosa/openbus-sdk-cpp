@@ -2,6 +2,7 @@
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
+#include "stubs/core.h"
 #include "stubs/credential_v1_5.h"
 #include "openbus/log.hpp"
 #include "openbus/lock/AutoLock_impl.hpp"
@@ -13,6 +14,8 @@
 
 namespace openbus 
 {
+namespace idl = tecgraf::openbus::core::v2_0;
+
 namespace interceptors 
 { 
 
@@ -157,7 +160,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
         unsigned char *pBuf = buf.get();
         pBuf[0] = idl::MajorVersion;
         pBuf[1] = idl::MinorVersion;
-        memcpy(pBuf+2, session.secret->get_buffer(), SECRET_SIZE);
+        memcpy(pBuf+2, session.secret->get_buffer(), 16);
         memcpy(pBuf+18, &credential.ticket, 4);
         memcpy(pBuf+22, operation, strlen(operation));
         SHA256(pBuf, bufSize, credential.hash);

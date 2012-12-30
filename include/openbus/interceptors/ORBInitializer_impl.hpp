@@ -1,6 +1,9 @@
 // -*- coding: iso-8859-1 -*-
-#ifndef TECGRAF_SDK_ORBINITIALIZER_IMPL_H_
-#define TECGRAF_SDK_ORBINITIALIZER_IMPL_H_
+#ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
+#define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
+
+#include "openbus/interceptors/ClientInterceptor_impl.hpp"
+#include "openbus/interceptors/ServerInterceptor_impl.hpp"
 
 #include <memory>
 #include <CORBA.h>
@@ -9,8 +12,6 @@ namespace openbus
 {
 namespace interceptors 
 {
-class ClientInterceptor;
-class ServerInterceptor;
 class ORBInitializer : public PortableInterceptor::ORBInitializer 
 {
 public:

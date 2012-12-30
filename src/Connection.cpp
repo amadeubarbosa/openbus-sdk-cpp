@@ -4,11 +4,11 @@
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/lock/AutoLock_impl.hpp"
 
+#include <CORBA.h>
+
 #include <sstream>
 #include <unistd.h>
-#include <cstring>
 #include <ctime>
-#include <CORBA.h>
 
 namespace openbus 
 {

@@ -1,15 +1,16 @@
 // -*- coding: iso-8859-1 -*-
-#ifndef TECGRAF_SDK_CLIENTINTERCEPTOR_IMPL_H_
-#define TECGRAF_SDK_CLIENTINTERCEPTOR_IMPL_H_
+#ifndef TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_IMPL_H_
+#define TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_IMPL_H_
 
-#include "openbus/OpenBusContext.hpp"
-#ifndef TECGRAF_SDK_LRUCACHE_H_
-#define TECGRAF_SDK_LRUCACHE_H_
+#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
+#define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
 #endif
 #include "openbus/lock/AutoLock_impl.hpp"
+#include "stubs/credential.h"
 
 #include <CORBA.h>
+#include <string>
 
 namespace openbus 
 {
