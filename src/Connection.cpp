@@ -158,7 +158,6 @@ private:
   idl_ac::AccessControl_ptr _access_control;
   OpenBusContext &_openbusContext;
   idl_ac::ValidityTime _validityTime;
-  idl_ac::ValidityTime renew(CORBA::Dispatcher *);
 };
 #endif
 
@@ -430,8 +429,8 @@ void Connection::loginByCertificate(const std::string &entity,
   } 
   else 
   {
-    _renewLogin = std::auto_ptr<RenewLogin> (
-      new RenewLogin(*this, _access_control, *_openbusContext, validityTime));
+    _renewLogin = std::auto_ptr<RenewLogin>
+      (new RenewLogin(*this, _access_control, *_openbusContext, validityTime));
     m.unlock();
     _renewLogin->start();
     m.lock();
@@ -439,7 +438,7 @@ void Connection::loginByCertificate(const std::string &entity,
   #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
-    new RenewLogin(_orb, *this, _access_control, *_openbusContext, 
+    (new RenewLogin(_orb, *this, _access_control, *_openbusContext, 
                    validityTime));
   #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());

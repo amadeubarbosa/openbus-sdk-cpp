@@ -224,7 +224,9 @@ int main(int argc, char** argv) {
 
       openbusContext->getOfferRegistry()->registerService(forwarder_component.getIComponent(), props);
       std::cout << "Forwarder no ar" << std::endl;
+      #ifdef OPENBUS_SDK_MULTITHREAD
       runThread->wait();
+      #endif
     }
     else
     {

@@ -114,7 +114,9 @@ int main(int argc, char** argv) {
 
     openbusContext->getOfferRegistry()->registerService(messenger_component.getIComponent(), props);
     std::cout << "Messenger no ar" << std::endl;
+    #ifdef OPENBUS_SDK_MULTITHREAD
     runThread->wait();
+    #endif
   } catch(std::exception const& e) {
     std::cout << "[error (std::exception)] " << e.what() << std::endl;
   } catch (const CORBA::Exception& e) {
