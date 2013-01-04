@@ -35,6 +35,7 @@ public:
     return _keySeq;
   }
 private:
+  void set_pkey(const CORBA::OctetSeq &key);
   openssl::pkey _key;
   CORBA::OctetSeq _keySeq;
 };

@@ -8,6 +8,13 @@ namespace openbus
 
 const std::size_t RSASize = 2048;
 
+void PrivateKey::set_pkey(const CORBA::OctetSeq &key)
+{
+  const unsigned char *buf = key.get_buffer();
+  _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, key.length()));
+  assert(_key.get());
+}  
+
 PrivateKey::PrivateKey()
 {
   openssl::pkey_ctx ctx (EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0));
@@ -26,20 +33,16 @@ PrivateKey::PrivateKey()
   _keySeq = CORBA::OctetSeq(len, len, buf);
 }
 
-PrivateKey::PrivateKey(const CORBA::OctetSeq &key) : _keySeq(key) 
+PrivateKey::PrivateKey(const CORBA::OctetSeq &key) : _keySeq(key)
 {
-  const unsigned char *buf = _keySeq.get_buffer();
-  _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, _keySeq.length()));
-  assert(_key.get());
+  set_pkey(_keySeq);
 }
 
 PrivateKey::PrivateKey(const char *key, std::size_t size)
 {
   _keySeq.length(size);
   std::memcpy(_keySeq.get_buffer(), key, size);
-  const unsigned char *buf = _keySeq.get_buffer();
-  _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, _keySeq.length()));
-  assert(_key.get());
+  set_pkey(_keySeq);
 }
  
 PrivateKey::PrivateKey(const std::string &filename)
