@@ -1,4 +1,3 @@
-
 // -*- coding: iso-8859-1 -*-
 #ifndef TECGRAF_SDK_OPENBUS_PRIVATE_KEY_H_
 #define TECGRAF_SDK_OPENBUS_PRIVATE_KEY_H_
@@ -24,19 +23,13 @@ class PrivateKey
 {
 public:
   PrivateKey();
-  PrivateKey(CORBA::OctetSeq const& key)
-    : _keySeq(key) 
-  {
-  }
-  PrivateKey(const char *key, std::size_t size)
-  {
-    _keySeq.length(size);
-    std::memcpy(_keySeq.get_buffer(), key, size);
-  }
-  explicit PrivateKey(std::string const& filename);
-  
+  PrivateKey(const CORBA::OctetSeq &key);
+  PrivateKey(const char *key, std::size_t size);
+  explicit PrivateKey(const std::string &filename);
+
+  CORBA::OctetSeq decrypt(const unsigned char *data, std::size_t len) const;
+
   CORBA::OctetSeq pubKey();
-  CORBA::OctetSeq decrypt(const unsigned char* data, std::size_t len) const;
   const CORBA::OctetSeq &octetSeq() const
   {
     return _keySeq;

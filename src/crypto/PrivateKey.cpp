@@ -26,6 +26,22 @@ PrivateKey::PrivateKey()
   _keySeq = CORBA::OctetSeq(len, len, buf);
 }
 
+PrivateKey::PrivateKey(const CORBA::OctetSeq &key) : _keySeq(key) 
+{
+  const unsigned char *buf = _keySeq.get_buffer();
+  _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, _keySeq.length()));
+  assert(_key.get());
+}
+
+PrivateKey::PrivateKey(const char *key, std::size_t size)
+{
+  _keySeq.length(size);
+  std::memcpy(_keySeq.get_buffer(), key, size);
+  const unsigned char *buf = _keySeq.get_buffer();
+  _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, _keySeq.length()));
+  assert(_key.get());
+}
+ 
 PrivateKey::PrivateKey(const std::string &filename)
 {
   std::ifstream key(filename.c_str(), std::fstream::binary);
@@ -52,7 +68,7 @@ CORBA::OctetSeq PrivateKey::pubKey()
   return CORBA::OctetSeq (len, len, buf);
 }
 
-CORBA::OctetSeq PrivateKey::decrypt(const unsigned char* data, 
+CORBA::OctetSeq PrivateKey::decrypt(const unsigned char *data, 
                                     std::size_t len) const
 {
   size_t secretLen;
