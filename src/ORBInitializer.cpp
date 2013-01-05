@@ -1,9 +1,12 @@
 // -*- coding: iso-8859-1 -*-
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/log.hpp"
-#include "openbus/lock/AutoLock_impl.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
+
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
 
 #include <memory>
 
@@ -19,11 +22,15 @@ log_type log;
  * objeto.
 */
 interceptors::ORBInitializer *orbInitializer;
-Mutex _mutex;
+#ifdef OPENBUS_SDK_MULTITHREAD
+boost::mutex _mutex;
+#endif
 
 CORBA::ORB *ORBInitializer(int &argc, char **argv) 
 {
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> lock(_mutex);
+#endif
   log_scope l(log.general_logger(), info_level, "ORBInitializer");
   if (!orbInitializer) 
   {

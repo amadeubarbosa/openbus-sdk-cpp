@@ -5,7 +5,6 @@
 #include "stubs/core.h"
 #include "stubs/credential_v1_5.h"
 #include "openbus/log.hpp"
-#include "openbus/lock/AutoLock_impl.hpp"
 
 #include <openssl/sha.h>
 #include <sstream>
@@ -121,11 +120,15 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
   if (!IgnoreInterceptor::status(r)) 
   {
     Connection &conn = getCurrentConnection(r);
-    AutoLock conn_mutex(&conn._mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::unique_lock<boost::mutex> conn_lock(conn._mutex);
+#endif
     if (conn._login()) 
     {
       l.vlog("login: %s", conn._login()->id.in());
-      conn_mutex.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      conn_lock.unlock();
+#endif
       CallerChain *callerChain = 0;
       IOP::ServiceContext serviceContext;
       serviceContext.context_id = idl_cr::CredentialContextId;
@@ -133,22 +136,30 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
       /* montando uma credencial com os dados(busid e login) da conexão. */
       idl_cr::CredentialData credential;
       credential.bus = CORBA::string_dup(conn._busid.c_str());
-      conn_mutex.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      conn_lock.lock();
+#endif
       credential.login = CORBA::string_dup(conn._login()->id);
-      conn_mutex.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      conn_lock.unlock();
+#endif
       
       /* adquirindo uma chave para a sessão que corresponde a esta
        * requisição. */
       std::string sessionKey = getSessionKey(r);
     
       SecretSession session;
-      AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+      boost::unique_lock<boost::mutex> lock(_mutex);
+#endif
       bool b = _sessionLRUCache.exists(sessionKey);
       if (b)
       {
         session = _sessionLRUCache.fetch(sessionKey);
       }
-      m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      lock.unlock();
+#endif
       if (b) 
       {
         /* recuperando uma sessão para esta requisição. */
@@ -172,9 +183,13 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
            * assinar essa cadeia. */
           /* montando uma hash para consultar o cache de cadeias assinadas. */
           idl::HashValue hash;
-          conn_mutex.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+          conn_lock.lock();
+#endif
           CORBA::String_var connId = CORBA::string_dup(conn._login()->id);
-          conn_mutex.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+          conn_lock.unlock();
+#endif
           size_t idSize = strlen(connId);
           size_t remoteIdSize = strlen(session.remoteId.in());
           bufSize = idSize + remoteIdSize + idl::EncryptedBlockSize;
@@ -195,13 +210,17 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
           SHA256(pBuf, bufSize, hash);
           std::string shash((const char*) hash, idl::HashValueSize);
           idl_cr::SignedCallChain signedCallChain;
-          m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+          lock.lock();
+#endif
           bool b2 = _callChainLRUCache.exists(shash);
           if (b2)
           {
             signedCallChain = _callChainLRUCache.fetch(shash);
           }
-          m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+          lock.unlock();
+#endif
           if (b2) 
           {
             l.level_vlog(debug_level,
@@ -213,9 +232,13 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
           {
             credential.chain = 
               *conn.access_control()->signChainFor(session.remoteId.in());
-            m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+            lock.lock();
+#endif
             _callChainLRUCache.insert(shash, credential.chain);
-            m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+            lock.unlock();
+#endif
           }
         } 
         else
@@ -254,10 +277,14 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
       IOP::ServiceContext legacyContext;
       legacyContext.context_id = 1234;
       legacy::v1_5::Credential legacyCredential;
-      conn_mutex.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      conn_lock.lock();
+#endif
       legacyCredential.identifier = CORBA::string_dup(conn._login()->id);
       legacyCredential.owner = CORBA::string_dup(conn._login()->entity);
-      conn_mutex.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      conn_lock.unlock();
+#endif
       if (callerChain)
       {
         if (conn._legacyDelegate == Connection::ORIGINATOR 
@@ -356,7 +383,9 @@ void ClientInterceptor::receive_exception(
           session.secret = secret;
           session.ticket = 0;
           {
-            AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+            boost::lock_guard<boost::mutex> lock(_mutex);
+#endif
             _sessionLRUCache.insert(sessionKey, session);
           }
           l.log("Retransmissao da requisicao...");
@@ -374,10 +403,14 @@ void ClientInterceptor::receive_exception(
       }
       else if (ex->minor() == idl_ac::InvalidLoginCode) 
       {
-        AutoLock conn_mutex(&conn._mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+        boost::unique_lock<boost::mutex> conn_lock(conn._mutex);
+#endif
         idl_ac::LoginInfo oldLogin = *conn._loginInfo;
         conn._state = Connection::INVALID;
-        conn_mutex.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+        conn_lock.unlock();
+#endif
         Connection::InvalidLoginCallback_t callback = conn.onInvalidLogin();
         try 
         {

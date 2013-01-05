@@ -6,8 +6,11 @@
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
 #endif
-#include "openbus/lock/AutoLock_impl.hpp"
 #include "stubs/credential.h"
+
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
 
 #include <CORBA.h>
 #include <string>
@@ -90,7 +93,9 @@ private:
     
   CallChainLRUCache _callChainLRUCache;
   OpenBusContext *_openbusContext;
-  Mutex _mutex;
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::mutex _mutex;
+#endif
 };
 
 class IgnoreInterceptor 

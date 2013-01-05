@@ -2,9 +2,12 @@
 #include "openbus/Connection.hpp"
 #include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
-#include "openbus/lock/AutoLock_impl.hpp"
 
 #include <CORBA.h>
+#include <boost/bind.hpp>
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
 
 #include <sstream>
 #include <unistd.h>
@@ -12,102 +15,36 @@
 
 namespace openbus 
 {
-//[DOUBT]: eh necessario?
 class Connection;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-class RenewLogin : public MICOMT::Thread 
+void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
+                            OpenBusContext &ctx, idl_ac::ValidityTime t)
 {
-public:
-  RenewLogin(Connection &c, idl_ac::AccessControl_ptr a, 
-             OpenBusContext &m, idl_ac::ValidityTime t)
-    : _conn(c), _access_control(a), _openbusContext(m), 
-      _validityTime(t), _pause(false), _stop(false), _condVar(_mutex.mutex())
+  log_scope l(log.general_logger(), info_level, "Connection::renewLogin()");
+  ctx.setCurrentConnection(&conn);
+  while (true)
   {
-    log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
-  }
-
-  ~RenewLogin() 
-  { 
-    log_scope l(log.general_logger(), info_level, "RenewLogin::~RenewLogin");
-  }
-
-  idl_ac::ValidityTime renew() 
-  {
-    log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
-    assert(_access_control);
-    idl_ac::ValidityTime validityTime = _validityTime;
-    try 
+    try
     {
-      l.level_log(debug_level, "access_control()->renew()");
-      validityTime = _access_control->renew();
+      boost::this_thread::sleep(boost::posix_time::seconds(t));
+      t = acs->renew();
+      l.level_log(info_level, "Credencial renovada.");
     } 
-    catch (const CORBA::Exception &) 
+    catch (const CORBA::Exception &)
     {
-      l.level_vlog(warning_level, "Falha na renovacao da credencial.");
+      l.level_log(warning_level, "Falha na renovacao da credencial.");
     }
-    return validityTime;
-  }
-
-  void _run(void *) 
-  {
-    log_scope l(log.general_logger(), debug_level, "RenewLogin::_run");
-    _openbusContext.setCurrentConnection(&_conn);
-    _mutex.lock();
-    do 
+    catch (const boost::thread_interrupted &)
     {
-      while (!_pause && _condVar.timedwait(_validityTime * 1000)) 
-      {
-        _mutex.unlock();
-        l.log("chamando RenewLogin::renew() ...");
-        _validityTime = renew();
-        _mutex.lock();
-      }
-    } 
-    while (!_stop && _condVar.wait());
-    _mutex.unlock();
+      l.level_log(info_level, "Thread Connection::renewLogin encerrada.");
+      break;
+    }
   }
-
-  void stop() 
-  {
-    log_scope l(log.general_logger(), debug_level, "RenewLogin::stop");
-    _mutex.lock();
-    _stop = true;
-    l.log("condVar.signal()");
-    _condVar.signal();
-    _mutex.unlock();
-  }
-
-  void pause() 
-  {
-    log_scope l(log.general_logger(), debug_level, "RenewLogin::pause");
-    _mutex.lock();
-    _pause = true;
-    l.log("condVar.signal()");
-    _condVar.signal();
-    _mutex.unlock();
-  }
-
-  void run() 
-  {
-    log_scope l(log.general_logger(), debug_level, "RenewLogin::run");
-    _mutex.lock();
-    _pause = false;
-    l.log("condVar.signal()");
-    _condVar.signal();
-    _mutex.unlock();
-  }
-private:
-  Mutex _mutex;
-  Connection &_conn;
-  idl_ac::AccessControl_ptr _access_control;
-  OpenBusContext &_openbusContext;
-  idl_ac::ValidityTime _validityTime;
-  bool _pause;
-  bool _stop;
-  MICOMT::CondVar _condVar;
-};
+}
+  
 #else
+
 class RenewLogin : public CORBA::DispatcherCallback 
 {
 public:
@@ -178,7 +115,7 @@ Connection::Connection(const std::string h, const unsigned short p,
                        OpenBusContext *m, std::vector<std::string> props) 
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
     _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), 
-    _slotId_receiveConnection(s4), _renewLogin(0), _loginInfo(0), 
+    _slotId_receiveConnection(s4), _loginInfo(0), 
     _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m), 
     _legacyDelegate(CALLER)
 {
@@ -256,22 +193,22 @@ Connection::~Connection()
     {
     }
   }
-  #ifdef OPENBUS_SDK_MULTITHREAD
-  if (_renewLogin.get()) 
-  {
-    _renewLogin->stop();
-    _renewLogin->wait();
-  }
-  #endif
+#ifdef OPENBUS_SDK_MULTITHREAD
+  _renewLogin.interrupt();
+#endif
 }
 
 void Connection::loginByPassword(const std::string &entity, 
                                  const std::string &password) 
 {
   log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::unique_lock<boost::mutex> lock(_mutex);
+#endif
   bool state = _state;
-  m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.unlock();
+#endif
   if (state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -320,7 +257,9 @@ void Connection::loginByPassword(const std::string &entity,
     throw idl::services::ServiceFailure();
   }
 
-  m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.lock();
+#endif
   if (_state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -328,27 +267,16 @@ void Connection::loginByPassword(const std::string &entity,
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _state = LOGGED;
 
-  #ifdef OPENBUS_SDK_MULTITHREAD
-  if (_renewLogin.get()) 
-  {
-    m.unlock();
-    _renewLogin->run();
-    m.lock();
-  } 
-  else 
-  {
-    _renewLogin = std::auto_ptr<RenewLogin> 
-      (new RenewLogin(*this, _access_control, *_openbusContext, validityTime));
-    m.unlock();
-    _renewLogin->start();
-    m.lock();
-  }
-  #else
+#ifdef OPENBUS_SDK_MULTITHREAD
+  _renewLogin = boost::thread(
+    boost::bind(renewLogin, boost::ref(*this), _access_control, 
+                boost::ref(*_openbusContext), validityTime));
+#else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
     (new RenewLogin(_orb, *this, _access_control, *_openbusContext, 
                     validityTime));
-  #endif
+#endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
@@ -357,9 +285,13 @@ void Connection::loginByCertificate(const std::string &entity,
 {
   log_scope l(log.general_logger(), info_level, 
               "Connection::loginByCertificate");
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::unique_lock<boost::mutex> lock(_mutex);;
+#endif
   bool state = _state;
-  m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.unlock();
+#endif
   if (state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -412,7 +344,9 @@ void Connection::loginByCertificate(const std::string &entity,
     throw idl_ac::AccessDenied();
   }
   
-  m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.lock();
+#endif
   if (_state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -420,27 +354,16 @@ void Connection::loginByCertificate(const std::string &entity,
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _state = LOGGED;
 
-  #ifdef OPENBUS_SDK_MULTITHREAD
-  if (_renewLogin.get()) 
-  {
-    m.unlock();
-    _renewLogin->run();
-    m.lock();
-  } 
-  else 
-  {
-    _renewLogin = std::auto_ptr<RenewLogin>
-      (new RenewLogin(*this, _access_control, *_openbusContext, validityTime));
-    m.unlock();
-    _renewLogin->start();
-    m.lock();
-  }
-  #else
+#ifdef OPENBUS_SDK_MULTITHREAD
+  _renewLogin = boost::thread(
+    boost::bind(renewLogin, boost::ref(*this), _access_control, 
+                boost::ref(*_openbusContext), validityTime));
+#else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
     (new RenewLogin(_orb, *this, _access_control, *_openbusContext, 
                    validityTime));
-  #endif
+#endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
@@ -472,9 +395,13 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 {
   log_scope l(log.general_logger(), info_level, 
               "Connection::loginBySharedAuth");
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::unique_lock<boost::mutex> lock(_mutex);
+#endif
   bool state = _state;
-  m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.unlock();
+#endif
   if (state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -514,7 +441,9 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
     throw idl_ac::AccessDenied();
   }
 
-  m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.lock();
+#endif
   if (_state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -522,40 +451,33 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (loginInfo);
   _state = LOGGED;
 
-  #ifdef OPENBUS_SDK_MULTITHREAD
-  if (_renewLogin.get()) 
-  {
-    m.unlock();
-    _renewLogin->run();
-    m.lock();
-  } 
-  else 
-  {
-    _renewLogin = std::auto_ptr<RenewLogin> (
-      new RenewLogin(*this, _access_control, *_openbusContext, validityTime));
-    m.unlock();
-    _renewLogin->start();
-    m.lock();
-  }
-  #else
+#ifdef OPENBUS_SDK_MULTITHREAD
+  _renewLogin = boost::thread(
+    boost::bind(renewLogin, boost::ref(*this), _access_control, 
+                boost::ref(*_openbusContext), validityTime));
+#else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> (
     new RenewLogin(_orb, *this, _access_control, *_openbusContext,
                    validityTime));
-  #endif
+#endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
 bool Connection::_logout(bool local) 
 {
   bool success = false;
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::unique_lock<boost::mutex> lock(_mutex);
+#endif
   bool state = _state;
-  m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.unlock();
+#endif
   if (state == LOGGED) 
   {
     #ifdef OPENBUS_SDK_MULTITHREAD
-    _renewLogin->pause();
+    _renewLogin.interrupt();
     #else
     _renewLogin.reset();
     #endif
@@ -592,17 +514,25 @@ bool Connection::_logout(bool local)
         }
       }
     }
-    m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    lock.lock();
+#endif
     _loginInfo.reset();
     _state = UNLOGGED;
-    m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    lock.unlock();
+#endif
   } 
   else if (state == INVALID) 
   {
-    m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    lock.lock();
+#endif
     _loginInfo.reset();
     _state = UNLOGGED;
-    m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    lock.unlock();
+#endif
   } 
   else 
   {
@@ -619,19 +549,25 @@ bool Connection::logout()
 
 void Connection::onInvalidLogin(Connection::InvalidLoginCallback_t p) 
 { 
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
   _onInvalidLogin = p; 
 }
 
 Connection::InvalidLoginCallback_t Connection::onInvalidLogin() 
 { 
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
   return _onInvalidLogin; 
 }
 
 const idl_ac::LoginInfo *Connection::login() 
 {
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
   if (_state == INVALID) 
   {
     return 0;
@@ -644,7 +580,9 @@ const idl_ac::LoginInfo *Connection::login()
 
 const std::string Connection::busid() 
 { 
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
 //[DOUBT] isso e necessario?
   if (_state == INVALID)
   {

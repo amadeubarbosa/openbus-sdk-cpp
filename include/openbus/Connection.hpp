@@ -17,8 +17,11 @@
 #include "openbus/crypto/PrivateKey.hpp"
 #include "openbus/crypto/PublicKey.hpp"
 
-#include <boost/function.hpp>
 #include <CORBA.h>
+#include <boost/function.hpp>
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
 
 #include <memory>
 #include <stdexcept>
@@ -269,8 +272,7 @@ public:
    * Identificador do barramento ao qual essa conexão se refere.
    */
   const std::string busid();
-  
-  ~Connection();
+  ~Connection();  
 private:
   /**
   * Connection deve ser adquirido através de: OpenBusContext::createConnection()
@@ -281,6 +283,8 @@ private:
              PortableInterceptor::SlotId slotId_legacyCallChain, 
              PortableInterceptor::SlotId slotId_receiveConnection, 
              OpenBusContext *, std::vector<std::string> props);
+  static void renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
+                         OpenBusContext &ctx, idl_ac::ValidityTime t);
   void checkBusid() const;
   bool _logout(bool local);
   CORBA::ORB *orb() const 
@@ -307,10 +311,14 @@ private:
   PortableInterceptor::SlotId _slotId_signedCallChain;
   PortableInterceptor::SlotId _slotId_legacyCallChain;
   PortableInterceptor::SlotId _slotId_receiveConnection;
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::thread _renewLogin;
+  boost::mutex _mutex;
+#else
   std::auto_ptr<RenewLogin> _renewLogin;
+#endif
   std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
   InvalidLoginCallback_t _onInvalidLogin;
-  Mutex _mutex;
   
   enum LegacyDelegate 
   {

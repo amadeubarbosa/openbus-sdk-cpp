@@ -2,7 +2,6 @@
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/log.hpp"
-#include "openbus/lock/AutoLock_impl.hpp"
 
 namespace openbus 
 {
@@ -47,7 +46,9 @@ OpenBusContext::createConnection(const std::string host, short port,
 
 Connection *OpenBusContext::setDefaultConnection(Connection *c)
 {
-  AutoLock _(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> l(_mutex);
+#endif
   Connection *old = _defaultConnection;
   _defaultConnection = c;
   return old;
@@ -55,7 +56,9 @@ Connection *OpenBusContext::setDefaultConnection(Connection *c)
 
 Connection * OpenBusContext::getDefaultConnection() const 
 {
-  AutoLock _(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> l(_mutex);
+#endif
   return _defaultConnection;
 }
 
@@ -181,13 +184,17 @@ CallerChain OpenBusContext::getJoinedChain()
 
 void OpenBusContext::onCallDispatch(CallDispatchCallback c) 
 {
-  AutoLock ctx_mutex(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> l(_mutex);
+#endif
   _callDispatchCallback = c;
 }
 
 OpenBusContext::CallDispatchCallback OpenBusContext::onCallDispatch() const 
 {
-  AutoLock ctx_mutex(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> l(_mutex);
+#endif
   return _callDispatchCallback;
 }
 

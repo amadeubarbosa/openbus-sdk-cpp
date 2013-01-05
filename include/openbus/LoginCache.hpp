@@ -4,13 +4,15 @@
 
 #include "stubs/core.h"
 #include "stubs/access_control.h"
-#include "openbus/lock/Mutex_impl.hpp"
-#include "openbus/lock/AutoLock_impl.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
 #endif
 #include "openbus/crypto/PublicKey.hpp"
+
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
 
 #include <string>
 
@@ -38,7 +40,9 @@ public:
 private:
   idl_ac::LoginRegistry_ptr _login_registry;
   LoginLRUCache _loginLRUCache;
-  Mutex _mutex;
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::mutex _mutex;
+#endif
 };
 }
 #endif

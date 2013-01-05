@@ -1,17 +1,23 @@
+#include "properties_reader.h"
+#include "stubs/hello.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 #include <scs/ComponentContext.h>
+#include <log/output/file_output.h>
+
+#include <CORBA.h>
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
+#include <boost/bind.hpp>
+
 #include <iostream>
 #include <sstream>
 #include <typeinfo>
 #include <vector>
 
-#include "stubs/hello.h"
-#include <CORBA.h>
-#include "properties_reader.h"
-#include <log/output/file_output.h>
 
 const std::string entity("interop_multiplexing_cpp_server");
 
@@ -55,49 +61,32 @@ private:
 };
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-class RunThread : public MICOMT::Thread {
-public:
-  RunThread(openbus::OpenBusContext *m) : _openbusContext(m) {}
-  void _run(void*) { _openbusContext->orb()->run(); }
-private:
-  openbus::OpenBusContext *_openbusContext;
-};
-
-class RegisterThread : public MICOMT::Thread {
-public:
-  RegisterThread(openbus::OpenBusContext *m, scs::core::ComponentContext &ctx, 
-    openbus::Connection *c) : _openbusContext(m), _conn(c), _ctx(ctx) {}
-  void _run(void*) {
-#else
-class Register {
-public:
-  Register(openbus::OpenBusContext *m, scs::core::ComponentContext &ctx,
-           openbus::Connection *c) : _openbusContext(m), _conn(c), _ctx(ctx) 
-  {
+void ORBRun(CORBA::ORB_ptr orb)
+{
+ orb->run();
+}
 #endif
-    try {
-      openbus::idl_or::ServicePropertySeq props;
-      props.length(1);
-      openbus::idl_or::ServiceProperty property;
-      property.name = "offer.domain";
-      property.value = "Interoperability Tests";
-      props[0] = property;
-      _openbusContext->setCurrentConnection(_conn);
-      _openbusContext->getOfferRegistry()->registerService(_ctx.getIComponent(), props);
-    } catch (const CORBA::Exception &e) {
-      #ifdef OPENBUS_SDK_MULTITHREAD
-      std::cout << "[thread: " << MICOMT::Thread::self() << "] error (CORBA::Exception): " 
-                << e << std::endl;
-      #else
-      std::cout << "error (CORBA::Exception): " << e << std::endl;
-      #endif
-    }
+
+void registerOffer(openbus::OpenBusContext &ctx, openbus::Connection &conn, 
+                   scs::core::ComponentContext &componentCtx)
+{
+  try 
+  {
+    openbus::idl_or::ServicePropertySeq props;
+    props.length(1);
+    openbus::idl_or::ServiceProperty property;
+    property.name = "offer.domain";
+    property.value = "Interoperability Tests";
+    props[0] = property;
+    ctx.setCurrentConnection(&conn);
+    ctx.getOfferRegistry()->registerService(componentCtx.getIComponent(), 
+                                            props);
+  } 
+  catch (const CORBA::Exception &e) 
+  {
+    std::cout << "error (CORBA::Exception): " << e << std::endl;
   }
-private:
-  openbus::OpenBusContext *_openbusContext;
-  openbus::Connection *_conn;
-  scs::core::ComponentContext &_ctx;
-};
+}
 
 int main(int argc, char** argv) {
   try {
@@ -140,8 +129,7 @@ int main(int argc, char** argv) {
     connVec.push_back(connBusB.get());
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread *runThread = new RunThread(openbusContext);
-    runThread->start();
+    boost::thread orbRun(ORBRun, openbusContext->orb());
     #endif
     
     scs::core::ComponentId componentId;
@@ -165,20 +153,24 @@ int main(int argc, char** argv) {
     openbusContext->onCallDispatch(CallDispatchCallback(conn1BusA.get(), connBusB.get()));
 
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RegisterThread *registerThread1 = new RegisterThread(openbusContext, ctx, conn1BusA.get());
-    RegisterThread *registerThread2 = new RegisterThread(openbusContext, ctx, conn2BusA.get());
-    RegisterThread *registerThread3 = new RegisterThread(openbusContext, ctx, conn3BusA.get());
-    RegisterThread *registerThread4 = new RegisterThread(openbusContext, ctx, connBusB.get());
-    registerThread1->start();
-    registerThread2->start();
-    registerThread3->start();
-    registerThread4->start();
-    runThread->wait();
+    boost::thread register1(
+      boost::bind(registerOffer, boost::ref(*openbusContext), 
+                  boost::ref(*(conn1BusA.get())), boost::ref(ctx)));
+    boost::thread register2(
+      boost::bind(registerOffer, boost::ref(*openbusContext), 
+                  boost::ref(*(conn2BusA.get())), boost::ref(ctx)));
+    boost::thread register3(
+      boost::bind(registerOffer, boost::ref(*openbusContext), 
+                  boost::ref(*(conn3BusA.get())), boost::ref(ctx)));
+    boost::thread register4(
+      boost::bind(registerOffer, boost::ref(*openbusContext), 
+                  boost::ref(*(connBusB.get())), boost::ref(ctx)));
+    orbRun.join();
     #else
-    Register(openbusContext, ctx, conn1BusA.get());
-    Register(openbusContext, ctx, conn2BusA.get());
-    Register(openbusContext, ctx, conn3BusA.get());
-    Register(openbusContext, ctx, connBusB.get());
+    registerOffer(*openbusContext, *(conn1BusA.get()), ctx);
+    registerOffer(*openbusContext, *(conn2BusA.get()), ctx);
+    registerOffer(*openbusContext, *(conn3BusA.get()), ctx);
+    registerOffer(*openbusContext, *(connBusB.get()), ctx);
     openbusContext->orb()->run();
     #endif
   } catch(std::exception const& e) {

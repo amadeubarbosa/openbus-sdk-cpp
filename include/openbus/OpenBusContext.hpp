@@ -10,13 +10,15 @@
 #include "openbus/Connection.hpp"
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
-#include "openbus/lock/Mutex_impl.hpp"
 #include "stubs/core.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
 
 #include <CORBA.h>
 #include <boost/function.hpp>
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
 
 #include <string>
 #include <vector>
@@ -358,6 +360,7 @@ public:
   
   idl_or::OfferRegistry_ptr getOfferRegistry() const;
   idl_ac::LoginRegistry_ptr getLoginRegistry() const;
+  ~OpenBusContext();
 private:
   /**
    * OpenBusContext deve ser adquirido através de:
@@ -369,14 +372,15 @@ private:
                  PortableInterceptor::SlotId slotId_legacyCallChain,
                  PortableInterceptor::SlotId slotId_requesterConnection,
                  PortableInterceptor::SlotId slotId_receiveConnection);
-  ~OpenBusContext();
   void orb(CORBA::ORB *o) 
   {
     _orb = o;
   }
   Connection *getDispatchConnection();
   typedef std::map<std::string, Connection *> BusidConnection;
-  mutable Mutex _mutex;
+#ifdef OPENBUS_SDK_MULTITHREAD
+  mutable boost::mutex _mutex;
+#endif
   CORBA::ORB *_orb;
   PortableInterceptor::Current_var _piCurrent;
   IOP::Codec *_codec;

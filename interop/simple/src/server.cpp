@@ -1,15 +1,20 @@
+#include "stubs/hello.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 #include <openbus/log.hpp>
 #include <scs/ComponentContext.h>
+
+#include <CORBA.h>
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
+#include <boost/bind.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <typeinfo>
-
-#include "stubs/hello.h"
-#include <CORBA.h>
 
 std::auto_ptr<openbus::Connection> conn;
 openbus::OpenBusContext *openBusContext;
@@ -47,13 +52,10 @@ void onInvalidLogin(openbus::Connection &c, openbus::idl_ac::LoginInfo l) {
 }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-class RunThread : public MICOMT::Thread {
-public:
-  RunThread(openbus::OpenBusContext *m) : _openbusContext(m) {}
-  void _run(void*) { _openbusContext->orb()->run(); }
-private:
-  openbus::OpenBusContext *_openbusContext;
-};
+void ORBRun(CORBA::ORB_ptr orb)
+{
+ orb->run();
+}
 #endif
 
 int main(int argc, char** argv) {
@@ -96,8 +98,7 @@ int main(int argc, char** argv) {
     conn->onInvalidLogin(&onInvalidLogin);
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread *runThread = new RunThread(openBusContext);
-    runThread->start();
+    boost::thread orbRun(boost::bind(ORBRun, openBusContext->orb()));
     #endif
     
     scs::core::ComponentId componentId;
@@ -121,7 +122,7 @@ int main(int argc, char** argv) {
     loginAndRegister();
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    runThread->wait();
+    orbRun.join();
     #else
     openBusContext->orb()->run();
     #endif

@@ -11,6 +11,10 @@ extern "C" {
 #endif
 #include "openbus/LoginCache.hpp"
 
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
+
 #include <CORBA.h>
 #include <string>
 
@@ -76,7 +80,9 @@ public:
     _openbusContext = m; 
   }
 private:
-  Mutex _mutex;
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::mutex _mutex;
+#endif
   PortableInterceptor::Current *_piCurrent;
   PortableInterceptor::SlotId _slotId_requesterConnection;
   PortableInterceptor::SlotId _slotId_receiveConnection;

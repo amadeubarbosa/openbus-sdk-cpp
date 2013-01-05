@@ -13,11 +13,15 @@ LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
 Login *LoginCache::validateLogin(const std::string id) 
 {
   /* este login está no cache? */
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::unique_lock<boost::mutex> lock(_mutex);
+#endif
   Login *login = _loginLRUCache.fetch(id);
   if (!login) 
   {
-    m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    lock.unlock();
+#endif
     login = new Login;
     login->time2live = -1;
     try 
@@ -33,10 +37,14 @@ Login *LoginCache::validateLogin(const std::string id)
     login->pubKey = 
       std::auto_ptr<PublicKey> (new PublicKey(login->encodedCallerPubKey));
     login->timeUpdated = time(0);
-    m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    lock.lock();
+#endif
     _loginLRUCache.insert(id, login);
   }
-  m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.unlock();
+#endif
   
   /* se time2live é zero então o login é inválido. */
   if (!login->time2live) 

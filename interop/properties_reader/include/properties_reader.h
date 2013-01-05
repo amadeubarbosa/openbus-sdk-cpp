@@ -2,6 +2,7 @@
 #define OPENBUS_CPP_INTEROP_PROPERTIES_READER_H
 
 #include <fstream>
+#include <vector>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/utility.hpp>

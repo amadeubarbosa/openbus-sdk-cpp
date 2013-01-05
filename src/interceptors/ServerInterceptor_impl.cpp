@@ -3,7 +3,6 @@
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/log.hpp"
-#include "openbus/lock/AutoLock_impl.hpp"
 #include "stubs/credential_v1_5.h"
 
 #include <cstddef>
@@ -53,7 +52,9 @@ void ServerInterceptor::sendCredentialReset(
 {
   idl_cr::CredentialReset credentialReset;
 
-  AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::unique_lock<boost::mutex> lock(_mutex);
+#endif
   Session session(_sessionLRUCache.size() + 1,
                   std::string(caller.loginInfo->id));
   _sessionLRUCache.insert(session.id, session);
@@ -62,11 +63,17 @@ void ServerInterceptor::sendCredentialReset(
   /* cifrando o segredo com a chave pública do cliente. */
   CORBA::OctetSeq encrypted =
     caller.pubKey->encrypt(session.secret, secretSize); 
-  m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  lock.unlock();
+#endif
 
-  AutoLock conn_mutex(&conn._mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::unique_lock<boost::mutex> conn_lock(conn._mutex);
+#endif
   credentialReset.login = conn._login()->id;
-  conn_mutex.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+  conn_lock.unlock();
+#endif
   memcpy(credentialReset.challenge, encrypted.get_buffer(),
          idl::EncryptedBlockSize);
 
@@ -178,10 +185,16 @@ void ServerInterceptor::receive_request_service_contexts(
     ** interceptação */
     _openbusContext->setCurrentConnection(&conn);
 
-    AutoLock conn_mutex(&conn._mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::unique_lock<boost::mutex> conn_lock(conn._mutex);
+#endif
     if (!conn._login())
+    {
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
-    conn_mutex.unlock();
+    }
+#ifdef OPENBUS_SDK_MULTITHREAD
+    conn_lock.unlock();
+#endif
 
     Login *caller;
     /* consulta ao cache de logins para saber se este login é valido. 
@@ -219,13 +232,17 @@ void ServerInterceptor::receive_request_service_contexts(
     idl::HashValue hash;   
     Session *session = 0;
 
-    AutoLock m(&_mutex);
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::unique_lock<boost::mutex> lock(_mutex);
+#endif
     bool hasSession = _sessionLRUCache.exists(credential.session);
     if (hasSession)
     {
       session = _sessionLRUCache.fetch_ptr(credential.session);
     }
-    m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+    lock.unlock();
+#endif
 
     tickets_History *t = 0;
     std::string remoteId;
@@ -239,16 +256,24 @@ void ServerInterceptor::receive_request_service_contexts(
       unsigned char *pBuf = buf.get();
       pBuf[0] = idl::MajorVersion;
       pBuf[1] = idl::MinorVersion;
-      m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      lock.lock();
+#endif
       memcpy(pBuf+2, session->secret, secretSize);
-      m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      lock.unlock();
+#endif
       memcpy(pBuf+18, &credential.ticket, 4);
       memcpy(pBuf+22, r->operation(), operationSize);
       SHA256(pBuf, bufSize, hash);
-      m.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      lock.lock();
+#endif
       t = &session->tickets;
       remoteId = session->remoteId;
-      m.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      lock.unlock();
+#endif
     }
 
     if (!(hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
@@ -285,9 +310,13 @@ void ServerInterceptor::receive_request_service_contexts(
                                 idl_ac::_tc_CallChain);
       idl_ac::CallChain callChain;
       callChainAny >>= callChain;
-      conn_mutex.lock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      conn_lock.lock();
+#endif
       int res = strcmp(callChain.target, conn._login()->id);
-      conn_mutex.unlock();
+#ifdef OPENBUS_SDK_MULTITHREAD
+      conn_lock.unlock();
+#endif
       if (res) 
       { 
         /* a cadeia tem como destino(target) outro login. */
