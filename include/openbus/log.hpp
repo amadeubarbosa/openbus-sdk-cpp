@@ -10,6 +10,9 @@
 #include <CORBA.h>
 #include <log/output/streambuf_output.h>
 #include <log/logger.h>
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
 
 namespace openbus 
 {
@@ -32,7 +35,7 @@ struct mico_thread_formatter : logger::formatter_base
               std::string &string) const
   {
     std::stringstream s;
-    s << "(thread " << reinterpret_cast<void*>(MICOMT::Thread::self()) << ") ";
+    s << "(thread " << boost::this_thread::get_id() << ") ";
     std::string tmp = s.str();
     string.insert(string.begin(), tmp.begin(), tmp.end());
   }

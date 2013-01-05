@@ -5,7 +5,9 @@
 #include <iostream>
 #include <typeinfo>
 
-#include <boost/thread.hpp>
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
 
 #include "stubs/messages.h"
 #include <CORBA.h>
@@ -16,13 +18,10 @@
 namespace delegation = tecgraf::openbus::interop::delegation;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-class RunThread : public MICOMT::Thread {
-public:
-  RunThread(openbus::OpenBusContext* m) : _openbusContext(m) {}
-  void _run(void*) { _openbusContext->orb()->run(); }
-private:
-  openbus::OpenBusContext* _openbusContext;
-};
+void ORBRun(CORBA::ORB_ptr orb)
+{
+ orb->run();
+}
 #endif
 
 struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegation::Broadcaster
@@ -99,8 +98,7 @@ int main(int argc, char** argv) {
     openbusContext->setDefaultConnection(conn.get());
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread* runThread = new RunThread(openbusContext);
-    runThread->start();
+    boost::thread orbRun(ORBRun, openbusContext->orb());
     #endif
 
     ::loginWithServerCredentials("interop_delegation_cpp_broadcaster", *conn);
@@ -139,7 +137,7 @@ int main(int argc, char** argv) {
       openbusContext->getOfferRegistry()->registerService(broadcaster_component.getIComponent(), props);
       std::cout << "Broadcaster no ar" << std::endl;
       #ifdef OPENBUS_SDK_MULTITHREAD
-      runThread->wait();
+      orbRun.join();
       #endif
     }
     else

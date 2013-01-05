@@ -14,13 +14,10 @@ openbus::CallerChain* certification;
 namespace delegation = tecgraf::openbus::interop::delegation;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-class RunThread : public MICOMT::Thread {
-public:
-  RunThread(openbus::OpenBusContext* m) : _openbusContext(m) {}
-  void _run(void*) { _openbusContext->orb()->run(); }
-private:
-  openbus::OpenBusContext* _openbusContext;
-};
+void ORBRun(CORBA::ORB_ptr orb)
+{
+ orb->run();
+}
 #endif
 
 int main(int argc, char** argv) {
@@ -54,8 +51,7 @@ int main(int argc, char** argv) {
     openbusContext->setDefaultConnection(conn.get());
     
     #ifdef OPENBUS_SDK_MULTITHREAD
-    RunThread* runThread = new RunThread(openbusContext);
-    runThread->start();
+    boost::thread orbRun(ORBRun, openbusContext->orb());
     #endif
     
     conn->loginByPassword("interop_delegation_cpp_broadcaster"
