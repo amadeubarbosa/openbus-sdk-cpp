@@ -197,6 +197,7 @@ Connection::~Connection()
   }
 #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin.interrupt();
+  _renewLogin.join();
 #endif
 }
 
@@ -480,6 +481,7 @@ bool Connection::_logout(bool local)
   {
     #ifdef OPENBUS_SDK_MULTITHREAD
     _renewLogin.interrupt();
+    _renewLogin.join();
     #else
     _renewLogin.reset();
     #endif
