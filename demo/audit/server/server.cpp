@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #endif
 
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <fstream>
 
@@ -62,7 +63,9 @@ int main(int argc, char** argv)
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    CORBA::OctetSeq private_key;
+    boost::optional<openbus::PrivateKey> private_key;
+    unsigned short bus_port = 2089;
+    std::string bus_host = "localhost";
     {
       namespace po = boost::program_options;
       po::options_description desc("Allowed options");
@@ -80,12 +83,7 @@ int main(int argc, char** argv)
         return 0;
       }
       std::string private_key_filename = vm["private-key"].as<std::string>();
-      std::ifstream f(private_key_filename.c_str());
-      f.seekg(0, std::ios::end);
-      std::size_t size = f.tellg();
-      f.seekg(0, std::ios::beg);
-      private_key.length(size);
-      f.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(private_key.get_buffer())), size);
+      private_key = openbus::PrivateKey(private_key_filename);
     }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -99,7 +97,7 @@ int main(int argc, char** argv)
     std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
     try
     {
-      conn->loginByCertificate("server", private_key);
+      conn->loginByCertificate("server", *private_key);
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
     {

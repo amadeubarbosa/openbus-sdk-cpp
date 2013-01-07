@@ -9,6 +9,20 @@
 #include "properties_reader.h"
 #include <log/output/file_output.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+void mysleep()
+{
+#ifndef _WIN32
+  unsigned int t = 30u;
+  do { t = sleep(t); } while(t);
+#else
+  Sleep(3000);
+#endif
+}
+
 openbus::CallerChain* certification;
 
 namespace delegation = tecgraf::openbus::interop::delegation;
@@ -22,7 +36,7 @@ void ORBRun(CORBA::ORB_ptr orb)
 
 int main(int argc, char** argv) {
   try {
-    openbus::log.set_level(openbus::info_level);
+    openbus::log().set_level(openbus::info_level);
 
     ::properties properties_file;
     if(!properties_file.openbus_log_file.empty())
@@ -30,7 +44,7 @@ int main(int argc, char** argv) {
       std::auto_ptr<logger::output_base> output
         (new logger::output::file_output(properties_file.openbus_log_file.c_str()
                                          , std::ios::out));
-      openbus::log.add_output(output);
+      openbus::log().add_output(output);
     }
     
     if(properties_file.buses.size() < 1)
@@ -106,8 +120,7 @@ int main(int argc, char** argv) {
           broadcaster->post("Testando a lista!");
           conn->logout();
 
-          int i = 10;
-          while((i = sleep(i)));
+          mysleep();
 
           const char* names[] = {"willian", "bill", "paul", "mary", "steve"};
           for(const char** first = &names[0]; first != &names[sizeof(names)/sizeof(names[0])]

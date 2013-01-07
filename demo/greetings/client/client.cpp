@@ -3,6 +3,10 @@
 #include <iostream>
 #include <stubs/greetings.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace services = tecgraf::openbus::core::v2_0::services;
@@ -114,8 +118,12 @@ struct onReloginCallback
       {
         std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
       }
+#ifndef _WIN32
       unsigned int t = 30u;
       do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
     }
     while(true);
   }
@@ -170,8 +178,12 @@ int main(int argc, char** argv)
     {
       std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
     }
-    unsigned int t = 30u;
-    do { t = sleep(t); } while(t);
+#ifndef _WIN32
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
   }
   while(true);
 
@@ -218,8 +230,12 @@ int main(int argc, char** argv)
         std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
           "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
       }
+#ifndef _WIN32
       unsigned int t = 30u;
       do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
     }
     while(try_again);
   }

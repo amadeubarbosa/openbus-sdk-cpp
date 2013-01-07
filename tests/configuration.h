@@ -90,19 +90,19 @@ struct configuration
         {
           if(!std::strcmp("error", argv[i]))
           {
-            openbus::log.set_level(openbus::error_level);
+            openbus::log().set_level(openbus::error_level);
           }
           else if(!std::strcmp("warning", argv[i]))
           {
-            openbus::log.set_level(openbus::warning_level);
+            openbus::log().set_level(openbus::warning_level);
           }
           else if(!std::strcmp("info", argv[i]))
           {
-            openbus::log.set_level(openbus::info_level);
+            openbus::log().set_level(openbus::info_level);
           }
           else if(!std::strcmp("debug", argv[i]))
           {
-            openbus::log.set_level(openbus::debug_level);
+            openbus::log().set_level(openbus::debug_level);
           }
           else
           {

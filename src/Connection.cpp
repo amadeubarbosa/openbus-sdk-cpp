@@ -9,8 +9,10 @@
   #include <boost/thread.hpp>
 #endif
 
-#include <sstream>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
+#include <sstream>
 #include <ctime>
 
 namespace openbus 
@@ -21,7 +23,7 @@ class Connection;
 void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
                             OpenBusContext &ctx, idl_ac::ValidityTime t)
 {
-  log_scope l(log.general_logger(), info_level, "Connection::renewLogin()");
+  log_scope l(log().general_logger(), info_level, "Connection::renewLogin()");
   ctx.setCurrentConnection(&conn);
   while (true)
   {
@@ -54,7 +56,7 @@ public:
    : _orb(o), _conn(c), _access_control(a), _openbusContext(m), 
      _validityTime(t) 
   { 
-    log_scope l(log.general_logger(), info_level, "RenewLogin::RenewLogin");
+    log_scope l(log().general_logger(), info_level, "RenewLogin::RenewLogin");
     _orb->dispatcher()->tm_event(this, _validityTime*1000);
   }
 
@@ -71,7 +73,7 @@ public:
 
   idl_ac::ValidityTime renew(CORBA::Dispatcher *dispatcher) 
   {
-    log_scope l(log.general_logger(), info_level, "RenewLogin::renew");
+    log_scope l(log().general_logger(), info_level, "RenewLogin::renew");
     assert(_access_control);
     idl_ac::ValidityTime validityTime = _validityTime;
     Connection *c = 0;
@@ -119,7 +121,7 @@ Connection::Connection(const std::string h, const unsigned short p,
     _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m), 
     _legacyDelegate(CALLER)
 {
-  log_scope l(log.general_logger(), info_level, "Connection::Connection");
+  log_scope l(log().general_logger(), info_level, "Connection::Connection");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent.in()));
@@ -178,7 +180,7 @@ Connection::Connection(const std::string h, const unsigned short p,
 
 Connection::~Connection() 
 { 
-  log_scope l(log.general_logger(), info_level, "Connection::~Connection");
+  log_scope l(log().general_logger(), info_level, "Connection::~Connection");
   try
   {
     _logout(true);
@@ -201,7 +203,7 @@ Connection::~Connection()
 void Connection::loginByPassword(const std::string &entity, 
                                  const std::string &password) 
 {
-  log_scope l(log.general_logger(), info_level, "Connection::loginByPassword");
+  log_scope l(log().general_logger(), info_level, "Connection::loginByPassword");
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
@@ -283,7 +285,7 @@ void Connection::loginByPassword(const std::string &entity,
 void Connection::loginByCertificate(const std::string &entity, 
                                     const PrivateKey &privKey) 
 {
-  log_scope l(log.general_logger(), info_level, 
+  log_scope l(log().general_logger(), info_level, 
               "Connection::loginByCertificate");
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);;
@@ -370,7 +372,7 @@ void Connection::loginByCertificate(const std::string &entity,
 std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> 
 Connection::startSharedAuth() 
 {
-  log_scope l(log.general_logger(), info_level, "Connection::startSharedAuth");
+  log_scope l(log().general_logger(), info_level, "Connection::startSharedAuth");
   idl::EncryptedBlock challenge;
   Connection *c = 0;
   idl_ac::LoginProcess_ptr loginProcess;
@@ -393,7 +395,7 @@ Connection::startSharedAuth()
 void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess, 
                                    const idl::OctetSeq &secret)
 {
-  log_scope l(log.general_logger(), info_level, 
+  log_scope l(log().general_logger(), info_level, 
               "Connection::loginBySharedAuth");
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
@@ -543,7 +545,7 @@ bool Connection::_logout(bool local)
 
 bool Connection::logout() 
 { 
-  log_scope l(log.general_logger(), info_level, "Connection::logout");
+  log_scope l(log().general_logger(), info_level, "Connection::logout");
   return _logout(false); 
 }
 

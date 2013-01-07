@@ -39,8 +39,9 @@ template <typename Seq, typename Default>
 struct overloaded_error_handler : detail::overloaded_error_handler_aux<mpl::size<Seq>::value, Seq>
 {
   typedef detail::overloaded_error_handler_aux<mpl::size<Seq>::value, Seq> base_type;
+  typedef overloaded_error_handler<Seq, Default> self_type;
   template <typename T>
-  overloaded_error_handler(T object)
+  overloaded_error_handler(T const& object)
     : base_type(object) {}
   overloaded_error_handler()
     : base_type(Default()) {}
@@ -64,7 +65,7 @@ struct overloaded_error_handler_aux<N, Seq>
   base_type;
 
   template <typename T>
-  overloaded_error_handler_aux(T object)
+  overloaded_error_handler_aux(T const& object)
     : base_type(BOOST_PP_ENUM_PARAMS(N, object BOOST_PP_INTERCEPT)) {}
 };
 

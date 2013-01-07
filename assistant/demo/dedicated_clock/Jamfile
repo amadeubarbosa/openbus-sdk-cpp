@@ -14,6 +14,8 @@ exe dedicated_clock_client
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>dedicated-clock-idl
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
  ;
 exe dedicated_clock_server
  : server/server.cpp /openbus//openbus /boost//program_options
@@ -24,6 +26,8 @@ exe dedicated_clock_server
    <threading>multi:<source>/boost//thread <include>tests
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>dedicated-clock-idl
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
  ;
 
 alias dedicated_clock : dedicated_clock_client dedicated_clock_server ;

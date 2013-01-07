@@ -6,13 +6,45 @@
 
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
+  #include <boost/thread/once.hpp>
 #endif
 
 #include <memory>
 
 namespace openbus 
 {
-log_type log;
+// Para GCC compilando com C++11, nós fazemos uso de magic statics (thread-safe local statics)
+// usando o mesmo código para singlethread. MSVC, mesmo na versão 11 ainda não suporta
+// magic statics, então usamos call_once para initialização segura.
+#if defined(OPENBUS_SDK_THREAD) && !(defined(__GNUC__) && __cplusplus == 201103L)
+namespace {
+
+log_type& get_log()
+{
+  log_type l;
+  return l;
+}
+
+inline void init_log()
+{
+  static BOOST_ONCE_FLAG f;
+  boost::call_once(&get_log, f);
+}
+
+}
+
+OPENBUS_SDK_DECL log_type& log()
+{
+  init_log();
+  return get_log();
+}
+#else
+OPENBUS_SDK_DECL log_type& log()
+{
+  static log_type l;
+  return l;
+}
+#endif
 
 /* [obs] Eu não consegui usar um auto_ptr para segurar a referência ao
  * orbInitializer porque tive problemas no término do programa com
@@ -31,7 +63,7 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
-  log_scope l(log.general_logger(), info_level, "ORBInitializer");
+  log_scope l(log().general_logger(), info_level, "ORBInitializer");
   if (!orbInitializer) 
   {
     orbInitializer = new interceptors::ORBInitializer();

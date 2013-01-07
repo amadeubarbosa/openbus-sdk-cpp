@@ -10,7 +10,7 @@ namespace interceptors
 {
 ORBInitializer::ORBInitializer() 
 {
-  log_scope l(log.general_logger(), debug_level, 
+  log_scope l(log().general_logger(), debug_level, 
               "openbus::interceptors::ORBInitializer::ORBInitializer");
 }
 

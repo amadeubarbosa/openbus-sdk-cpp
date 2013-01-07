@@ -43,7 +43,7 @@ ServerInterceptor::ServerInterceptor(
     _cdrCodec(cdr_codec), _openbusContext(0),
     _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE))
 {
-  log_scope l(log.general_logger(), debug_level,
+  log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");
 }
 
@@ -101,7 +101,7 @@ Connection &ServerInterceptor::getDispatcher(OpenBusContext &context,
                                              const std::string &operation)
 {
   Connection *conn = 0;
-  log_scope l(log.general_logger(), debug_level,
+  log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::getDispatcher");
   try 
   {
@@ -136,7 +136,7 @@ void ServerInterceptor::receive_request_service_contexts(
   PortableInterceptor::ServerRequestInfo *r)
 {
   const char *operation = r->operation();
-  log_scope l(log.general_logger(), debug_level,
+  log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::receive_request_service_contexts");
   l.level_vlog(debug_level, "operation: %s", operation);
   
@@ -166,7 +166,7 @@ void ServerInterceptor::receive_request_service_contexts(
 
     /* disponibilizando a conexão atual para
      * OpenBusContext::getCurrentConnection() */
-    size_t bufSize = sizeof(Connection*);
+    size_t const bufSize = sizeof(Connection*);
     unsigned char buf[bufSize];
     Connection *_c = &conn;
     memcpy(buf, &_c, bufSize);

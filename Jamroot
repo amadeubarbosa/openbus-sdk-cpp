@@ -50,7 +50,9 @@ project dl ;
 lib dl : : <name>dl <link>shared ;
 
 project openbus : build-dir bin
- : requirements <tag>@tag
+ : requirements <tag>@tag <define>BOOST_ALL_NO_LIB=1
+   <link>shared:<define>OPENBUS_SDK_SHARED <define>OPENBUS_SDK_SOURCE
+ : usage-requirements <link>shared:<define>OPENBUS_SDK_SHARED
  : default-build <threading>multi <variant>debug <link>shared
  ;
 
@@ -60,7 +62,7 @@ local rule core-idl-obj ( name )
 {
   obj $(name).obj : $(openbus-idl-path)/$(name).idl
     /scs//idls
-   : <include>$(openbus-idl-path) <implicit-dependency>/scs//idls
+   : <include>$(openbus-idl-path)  <include>$(scs-idl-path) <implicit-dependency>/scs//idls
    : : <include>$(openbus-idl-path)
   ;
   explicit $(name).obj ;
@@ -124,6 +126,7 @@ lib openbus : src/Connection.cpp src/OpenBusContext.cpp
    <include>include
    <threading>multi:<source>/boost//thread
    <implicit-dependency>core-idls
+   <toolset>msvc:<source>/scs//idls
  :
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
    <include>include

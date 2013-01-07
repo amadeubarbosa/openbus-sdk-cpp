@@ -2,6 +2,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_PUBLIC_KEY_H
 #define TECGRAF_SDK_OPENBUS_PUBLIC_KEY_H
 
+#include "openbus/decl.hpp"
 #include "openbus/crypto/OpenSSL.hpp"
 
 #include <cstddef>

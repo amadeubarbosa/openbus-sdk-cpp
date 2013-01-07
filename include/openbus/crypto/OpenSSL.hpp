@@ -2,6 +2,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_OPENSSL_H_
 #define TECGRAF_SDK_OPENBUS_OPENSSL_H_
 
+#include "openbus/decl.hpp"
 #include <CORBA.h>
 #include <openssl/pem.h>
 #include <boost/shared_ptr.hpp>
@@ -143,12 +144,12 @@ private:
   boost::shared_ptr<EVP_PKEY> key;
 };
 
-pkey byteSeq2PubKey(const unsigned char *, size_t len);
-pkey byteSeq2PrvKey(const unsigned char *, size_t len);
-CORBA::OctetSeq PubKey2byteSeq(pkey);
-CORBA::OctetSeq PrvKey2byteSeq(pkey);
-CORBA::OctetSeq encrypt(pkey, const unsigned char *, size_t len);
-CORBA::OctetSeq decrypt(pkey, const unsigned char *, size_t len);
+OPENBUS_SDK_DECL pkey byteSeq2PubKey(const unsigned char *, size_t len);
+OPENBUS_SDK_DECL pkey byteSeq2PrvKey(const unsigned char *, size_t len);
+OPENBUS_SDK_DECL CORBA::OctetSeq PubKey2byteSeq(pkey);
+OPENBUS_SDK_DECL CORBA::OctetSeq PrvKey2byteSeq(pkey);
+OPENBUS_SDK_DECL CORBA::OctetSeq encrypt(pkey, const unsigned char *, size_t len);
+OPENBUS_SDK_DECL CORBA::OctetSeq decrypt(pkey, const unsigned char *, size_t len);
 }  
 }
 

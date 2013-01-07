@@ -7,12 +7,15 @@
 #ifndef TECGRAF_SDK_OPENBUS_LOG_H_
 #define TECGRAF_SDK_OPENBUS_LOG_H_
 
+#include "openbus/decl.hpp"
 #include <CORBA.h>
 #include <log/output/streambuf_output.h>
 #include <log/logger.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
+
+#include <cstring>
 
 namespace openbus 
 {
@@ -34,8 +37,11 @@ struct mico_thread_formatter : logger::formatter_base
   void format(logger::logger const &, logger::level, scope_token const&, 
               std::string &string) const
   {
+    std::size_t id;
+    boost::thread::id tid = boost::this_thread::get_id();
+    std::memcpy(&id, &tid, (std::min)(sizeof(id), sizeof(tid)));
     std::stringstream s;
-    s << "(thread " << boost::this_thread::get_id() << ") ";
+    s << "(thread " << std::hex << id << ") ";
     std::string tmp = s.str();
     string.insert(string.begin(), tmp.begin(), tmp.end());
   }
@@ -104,17 +110,17 @@ struct log_type
   }
 
   #ifndef OPENBUS_DOXYGEN
-  logger::logger &general_logger() 
+  logger::logger &general_logger()
   { 
     return general_log; 
   }
 
-  logger::logger &client_interceptor_logger() 
+  logger::logger &client_interceptor_logger()
   { 
     return ci_log; 
   }
 
-  logger::logger &server_interceptor_logger() 
+  logger::logger &server_interceptor_logger()
   { 
     return si_log; 
   }
@@ -127,7 +133,7 @@ private:
  * \brief Instância global de log_type que permite acesso pelo usuário
  * das configurações de log do Openbus
  */
-extern log_type log;
+OPENBUS_SDK_DECL log_type& log();
 
 }
 

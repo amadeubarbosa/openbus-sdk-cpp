@@ -5,6 +5,10 @@
 
 #include <log/logger.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #define OPENBUS_ASSISTANT_CATCH_EXCEPTIONS(x)                           \
   catch(CORBA::NO_PERMISSION const& e)                                  \
     {                                                                   \
@@ -134,8 +138,12 @@ typename boost::result_of<F()>::type execute_with_retry
 
     if(sleep_time_in_secs.count() >= 30)
     {
+#ifdef _WIN32
+      ::Sleep(3000);
+#else
       unsigned int t = 30;
       do { t = sleep(t); } while(t);
+#endif
     }
     else
     {

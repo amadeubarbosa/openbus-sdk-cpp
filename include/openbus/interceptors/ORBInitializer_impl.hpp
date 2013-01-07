@@ -2,6 +2,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 
+#include "openbus/decl.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 
@@ -12,7 +13,7 @@ namespace openbus
 {
 namespace interceptors 
 {
-class ORBInitializer : public PortableInterceptor::ORBInitializer 
+class OPENBUS_SDK_DECL ORBInitializer : public PortableInterceptor::ORBInitializer 
 {
 public:
   ORBInitializer();

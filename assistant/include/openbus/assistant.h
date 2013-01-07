@@ -3,6 +3,8 @@
 #ifndef OPENBUS_ASSISTANT_H
 #define OPENBUS_ASSISTANT_H
 
+#include <openbus/assistant/decl.h>
+
 #ifndef OPENBUS_ASSISTANT_DOXYGEN
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
 #ifdef BOOST_PARAMETER_MAX_ARITY
@@ -332,12 +334,14 @@ public:
   /** 
    * \brief Atribui uma funcao callback para erros de login
    */
+  OPENBUS_ASSISTANT_DECL
   void onLoginError(login_error_callback_type f);
 
   /** 
    * \brief Atribui uma funcao callback para erros de registro
    *  de ofertas
    */
+  OPENBUS_ASSISTANT_DECL
   void onRegisterError(register_error_callback_type f);
 
   /** 
@@ -345,6 +349,7 @@ public:
    *  que impossibilitam a continuacao da execucao
    *  do assistant
    */
+  OPENBUS_ASSISTANT_DECL
   void onFatalError(fatal_error_callback_type f);
 
   /** 
@@ -365,6 +370,7 @@ public:
    * \param component Referência do serviço sendo ofertado.
    * \param properties Propriedades do serviço sendo ofertado.
    */
+  OPENBUS_ASSISTANT_DECL
   void registerService(scs::core::IComponent_var component, idl_or::ServicePropertySeq properties = idl_or::ServicePropertySeq());
 
   /** 
@@ -373,6 +379,7 @@ public:
    * \param facet Nome da faceta que a oferta deve possuir
    * \param entity Nome da entidade criadora da oferta
    */
+  OPENBUS_ASSISTANT_DECL
   static idl_or::ServicePropertySeq createFacetAndEntityProperty(const char* facet, const char* entity);
 
   /** 
@@ -402,6 +409,7 @@ public:
    *
    * \return Sequência de descrições de ofertas de serviço encontradas.
    */
+  OPENBUS_ASSISTANT_DECL
   idl_or::ServiceOfferDescSeq findServices(idl_or::ServicePropertySeq properties
                                            , int retries) const;
 
@@ -424,6 +432,7 @@ public:
    * 
    * \return Sequência de descrições de ofertas de serviço registradas.
    */
+  OPENBUS_ASSISTANT_DECL
   idl_or::ServiceOfferDescSeq getAllServices(int retries) const;
 
   /** 
@@ -431,6 +440,7 @@ public:
    *
    * \param offers Ofertas a serem verificadas por responsividade
    */
+  OPENBUS_ASSISTANT_DECL
   static idl_or::ServiceOfferDescSeq filterWorkingOffers(idl_or::ServiceOfferDescSeq offers);
   
   /**
@@ -459,6 +469,7 @@ public:
    *
    * \return Objeto que representa o processo de login iniciado.
    */
+  OPENBUS_ASSISTANT_DECL
   std::pair<idl_ac::LoginProcess_ptr, idl::OctetSeq> startSharedAuth(int retries);
 
   /** 
@@ -480,7 +491,7 @@ public:
    * responsabilidade da aplicação iniciar e parar esse processamento (e.g.
    * através da operação 'ORB::shutdown()')
    */
-  void shutdown();
+  OPENBUS_ASSISTANT_DECL void shutdown();
 
   /** 
    * \brief ORB utilizado pelo assistente.
@@ -501,6 +512,7 @@ public:
 protected:
   friend struct assistant_access;
   AssistantImpl() {}
+  OPENBUS_ASSISTANT_DECL
   void InitWithPassword(std::string const& hostname, unsigned short port
                         , std::string const& username, std::string const& password
                         , int& argc, char** argv
@@ -509,6 +521,7 @@ protected:
                         , fatal_error_callback_type fatal_error
                         , find_error_callback_type find_error
                         , logger::level l);
+  OPENBUS_ASSISTANT_DECL
   void InitWithPassword(std::string const& hostname, unsigned short port
                         , std::string const& username, std::string const& password
                         , login_error_callback_type login_error
@@ -516,6 +529,7 @@ protected:
                         , fatal_error_callback_type fatal_error
                         , find_error_callback_type find_error
                         , logger::level l);
+  OPENBUS_ASSISTANT_DECL
   void InitWithPrivateKey(std::string const& hostname, unsigned short port
                           , std::string const& entity
                           , PrivateKey const& private_key
@@ -525,6 +539,7 @@ protected:
                           , fatal_error_callback_type fatal_error
                           , find_error_callback_type find_error
                           , logger::level l);
+  OPENBUS_ASSISTANT_DECL
   void InitWithPrivateKey(std::string const& hostname, unsigned short port
                           , std::string const& entity
                           , PrivateKey const& private_key
@@ -533,6 +548,7 @@ protected:
                           , fatal_error_callback_type fatal_error
                           , find_error_callback_type find_error
                           , logger::level l);
+  OPENBUS_ASSISTANT_DECL
   void InitWithSharedAuth(std::string const& hostname, unsigned short port
                           , shared_auth_callback_type shared_auth_callback
                           , int& argc, char** argv
@@ -541,6 +557,7 @@ protected:
                           , fatal_error_callback_type fatal_error
                           , find_error_callback_type find_error
                           , logger::level l);
+  OPENBUS_ASSISTANT_DECL
   void InitWithSharedAuth(std::string const& hostname, unsigned short port
                           , shared_auth_callback_type shared_auth_callback
                           , login_error_callback_type login_error
@@ -592,6 +609,7 @@ struct Assistant : AssistantImpl
   /** \brief Constroi um Openbus com informacao de autenticacao
    *   por usuario e senha
    */
+  OPENBUS_ASSISTANT_DECL
   static Assistant createWithPassword(const char* username, const char* password
                                       , const char* host, unsigned short port
                                       , int& argc, char** argv
@@ -605,6 +623,7 @@ struct Assistant : AssistantImpl
   /** \brief Constriu um Openbus com informacao de autenticacao
    *  por certificado
    */
+  OPENBUS_ASSISTANT_DECL
   static Assistant createWithPrivateKey(const char* entity, const idl::OctetSeq privKey
                                         , const char* host, unsigned short port
                                         , int& argc, char** argv
@@ -618,6 +637,7 @@ struct Assistant : AssistantImpl
   /** \brief Constriu um Openbus com informacao de autenticacao
    *  por Shared Authentication
    */
+  OPENBUS_ASSISTANT_DECL
   static Assistant createWithSharedAuth(shared_auth_callback_type shared_auth_callback
                                         , const char* host, unsigned short port
                                         , int& argc, char** argv
@@ -627,6 +647,11 @@ struct Assistant : AssistantImpl
                                         , fatal_error_callback_type fatal_error = fatal_error_callback_type()
                                         , find_error_callback_type find_error = find_error_callback_type()
                                         , logger::level l = logger::warning_level);
+
+  Assistant(Assistant const& other)
+    : AssistantImpl(static_cast<AssistantImpl const&>(other))
+  {
+  }
 private:
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
   Assistant() {}

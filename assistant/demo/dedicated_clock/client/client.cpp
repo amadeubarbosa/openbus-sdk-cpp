@@ -2,6 +2,20 @@
 #include <iostream>
 #include <stubs/dedicated_clock.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+void mysleep()
+{
+#ifndef _WIN32
+  unsigned int t = 30u;
+  do { t = sleep(t); } while(t);
+#else
+  Sleep(3000);
+#endif
+}
+
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace demo = tecgraf::openbus::demo;
@@ -75,8 +89,7 @@ int main(int argc, char** argv)
       std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
     }
 
-    unsigned int t = 30u;
-    do { t = sleep(t); } while(t);
+    mysleep();
   }
   while(true);
   return 0;

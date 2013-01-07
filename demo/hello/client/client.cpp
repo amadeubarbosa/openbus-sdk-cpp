@@ -3,6 +3,12 @@
 #include <iostream>
 #include <stubs/hello.h>
 
+#include <boost/program_options.hpp>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace simple = tecgraf::openbus::interop::simple;
@@ -114,8 +120,12 @@ struct onReloginCallback
       {
         std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
       }
+#ifndef _WIN32
       unsigned int t = 30u;
       do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
     }
     while(true);
   }
@@ -131,6 +141,32 @@ int main(int argc, char** argv)
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
   poa_manager->activate();
 
+  unsigned short bus_port = 2089;
+  std::string bus_host = "localhost";
+  {
+    namespace po = boost::program_options;
+    po::options_description desc("Allowed options");
+    desc.add_options()
+      ("help", "This help message")
+      ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
+      ("bus-port", po::value<unsigned short>(), "Host to Openbus (default: 2089)")
+      ;
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+    
+    if(vm.count("help"))
+    {
+      std::cout << desc << std::endl;
+      return 0;
+    }
+
+    if(vm.count("bus-host"))
+      bus_host = vm["bus-host"].as<std::string>();
+    if(vm.count("bus-port"))
+      bus_host = vm["bus-port"].as<unsigned short>();
+  }
+
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
     (orb->resolve_initial_references("OpenBusContext"));
@@ -141,7 +177,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn = openbusContext->createConnection("localhost", 2089);
+      conn = openbusContext->createConnection(bus_host, bus_port);
       conn->onInvalidLogin( ::onReloginCallback());
       conn->loginByPassword("demo", "demo");
       openbusContext->setDefaultConnection(conn.get());
@@ -170,8 +206,12 @@ int main(int argc, char** argv)
     {
       std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
     }
-    unsigned int t = 30u;
-    do { t = sleep(t); } while(t);
+#ifndef _WIN32
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
   }
   while(true);
 
@@ -211,8 +251,12 @@ int main(int argc, char** argv)
       std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
         "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
     }
+#ifndef _WIN32
     unsigned int t = 30u;
     do { t = sleep(t); } while(t);
+#else
+    Sleep(3000);
+#endif
   }
   while(try_again);
 }

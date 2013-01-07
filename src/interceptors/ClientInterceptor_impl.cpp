@@ -36,7 +36,7 @@ std::string getSessionKey(PortableInterceptor::ClientRequestInfo *r)
 Connection &ClientInterceptor::getCurrentConnection(
   PortableInterceptor::ClientRequestInfo *r)
 {
-  log_scope l(log.general_logger(),info_level,
+  log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::getCurrentConnection");
   Connection *conn = 0;
   CORBA::Any_var connectionAddrAny;
@@ -100,7 +100,7 @@ ClientInterceptor::ClientInterceptor(
     _callChainLRUCache(CallChainLRUCache(CACHE_LRU_SIZE)), 
     _openbusContext(0)
 { 
-  log_scope l(log.general_logger(), info_level, 
+  log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
   _slotId_ignoreInterceptor = slotId_ignoreInterceptor;
 }
@@ -112,7 +112,7 @@ ClientInterceptor::~ClientInterceptor()
 void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
 {
   const char *operation = r->operation();
-  log_scope l(log.general_logger(), debug_level, 
+  log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::send_request");
   l.level_vlog(debug_level, "operation: %s", operation);
 
@@ -324,7 +324,7 @@ void ClientInterceptor::receive_exception(
   PortableInterceptor::ClientRequestInfo *r)
 {
   const char *operation = r->operation();
-  log_scope l(log.general_logger(), debug_level, 
+  log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::receive_exception");
   l.level_vlog(debug_level, "operation: %s", operation); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 

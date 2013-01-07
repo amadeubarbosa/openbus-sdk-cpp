@@ -16,6 +16,8 @@ exe sharedauth_client
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>sharedauth-idl
    <implicit-dependency>hello-idl
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
  ;
 exe sharedauth_server
  : src/server.cpp /openbus//openbus /boost//program_options
@@ -27,6 +29,8 @@ exe sharedauth_server
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>sharedauth-idl
    <implicit-dependency>hello-idl
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
  ;
 
 exe sharedauth_client_sharedauth 
@@ -39,6 +43,8 @@ exe sharedauth_client_sharedauth
    <implicit-dependency>$(idl) <link>static:<source>/dl//dl
    <implicit-dependency>sharedauth-idl
    <implicit-dependency>hello-idl
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
  ;
 
 alias sharedauth : sharedauth_client sharedauth_server

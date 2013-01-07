@@ -2,6 +2,8 @@
 #ifndef TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_IMPL_H_
 #define TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_IMPL_H_
 
+#include "openbus/decl.hpp"
+
 extern "C" {
   #include "openbus/Ticket_impl.h"
 }
@@ -28,7 +30,7 @@ namespace interceptors
 
 const unsigned int secretSize = 16;
 
-struct Session 
+struct OPENBUS_SDK_DECL Session 
 {
   Session(CORBA::ULong, const std::string);
   CORBA::ULong id;
@@ -37,7 +39,7 @@ struct Session
   std::string remoteId;
 };
 
-class ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor 
+class OPENBUS_SDK_DECL ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor 
 {
 public:
   ServerInterceptor(PortableInterceptor::Current *piCurrent, 

@@ -23,9 +23,14 @@ lib assistant : src/assistant_common.cpp
    <threading>single:<source>src/assistant_st.cpp 
    <threading>multi:<source>/boost//thread
    <implicit-dependency>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
+   <link>shared:<define>OPENBUS_ASSISTANT_SHARED
+   <define>OPENBUS_ASSISTANT_SOURCE
  : :
    <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
    <include>include
+   <link>shared:<define>OPENBUS_ASSISTANT_SHARED
  ;
 explicit assistant ;
 

@@ -1,6 +1,7 @@
 // -*- coding: iso-latin-1 -*-
 
 #include <openbus/assistant.h>
+#include <openbus/assistant/waitlogin.h>
 #include <openbus/assistant/detail/exception_logging.h>
 #include <openbus/assistant/detail/register_information.h>
 #include <openbus/assistant/detail/execute_with_retry.h>

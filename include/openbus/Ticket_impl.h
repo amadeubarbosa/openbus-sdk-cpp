@@ -2,6 +2,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_TICKET_HISTORY_H_
 #define TECGRAF_SDK_OPENBUS_TICKET_HISTORY_H_
 
+#include "openbus/decl.hpp"
 #include <limits.h>
 
 #define TICKETS_SIZE (sizeof(tickets_BitMap) * CHAR_BIT)
@@ -19,8 +20,8 @@ struct tickets_HistoryData
 
 typedef struct tickets_HistoryData tickets_History;
 
-void tickets_init(tickets_History *);
-int tickets_check(tickets_History *, tickets_Value id);
-void tickets_print(tickets_History *);
+OPENBUS_SDK_DECL void tickets_init(tickets_History *);
+OPENBUS_SDK_DECL int tickets_check(tickets_History *, tickets_Value id);
+OPENBUS_SDK_DECL void tickets_print(tickets_History *);
 
 #endif

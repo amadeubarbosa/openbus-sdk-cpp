@@ -4,6 +4,10 @@
 
 #include <stubs/dedicated_clock.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace demo = tecgraf::openbus::demo;
@@ -78,8 +82,12 @@ struct onReloginCallback
       {
         std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
       }
+#ifndef _WIN32
       unsigned int t = 30u;
       do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
     }
     while(true);
   }
@@ -133,8 +141,12 @@ int main(int argc, char** argv)
     {
       std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
     }
-    unsigned int t = 30u;
-    do { t = sleep(t); } while(t);
+#ifndef _WIN32
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
   }
   while(true);
 
@@ -157,8 +169,12 @@ int main(int argc, char** argv)
       std::cout << "Hora no servidor em ticks: " << clock->getTimeInTicks() << std::endl;
     }
 
-    unsigned int t = 30u;
-    do { t = sleep(t); } while(t);
+#ifndef _WIN32
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
   }
   while(true);
 }

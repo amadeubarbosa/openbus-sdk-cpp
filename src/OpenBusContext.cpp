@@ -16,7 +16,7 @@ OpenBusContext::OpenBusContext(CORBA::ORB *o, IOP::Codec *c,
     _slotId_requesterConnection(s4), _slotId_receiveConnection(s5),
     _defaultConnection(0), _callDispatchCallback(0)
 {
-  log_scope l(log.general_logger(), debug_level, 
+  log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::OpenBusContext");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
@@ -31,7 +31,7 @@ std::auto_ptr<Connection>
 OpenBusContext::createConnection(const std::string host, short port, 
                                  std::vector<std::string> props)
 {
-  log_scope l(log.general_logger(), debug_level, 
+  log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::createConnection");
   l.vlog("createConnection para host %s:%hi", host.c_str(), port);
   std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, 
@@ -64,10 +64,10 @@ Connection * OpenBusContext::getDefaultConnection() const
 
 Connection *OpenBusContext::setCurrentConnection(Connection *c) 
 {
-  log_scope l(log.general_logger(), info_level, 
+  log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::setCurrentConnection");
   l.vlog("connection:%p", c); 
-  size_t size = sizeof(Connection *);
+  size_t const size = sizeof(Connection *);
   unsigned char buf[size];
   memcpy(buf, &c, size);
   idl::OctetSeq connectionAddrOctetSeq(size, size, buf);
@@ -80,7 +80,7 @@ Connection *OpenBusContext::setCurrentConnection(Connection *c)
 
 Connection *OpenBusContext::getCurrentConnection() const 
 {
-  log_scope l(log.general_logger(), info_level, 
+  log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCurrentConnection");
   CORBA::Any_var connectionAddrAny = 
     _piCurrent->get_slot(_slotId_requesterConnection);
@@ -99,7 +99,7 @@ Connection *OpenBusContext::getCurrentConnection() const
 
 CallerChain OpenBusContext::getCallerChain() 
 {
-  log_scope l(log.general_logger(), info_level, 
+  log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCallerChain");
   Connection *c = getDispatchConnection();
   if (!c)
@@ -137,7 +137,7 @@ CallerChain OpenBusContext::getCallerChain()
 
 void OpenBusContext::joinChain(CallerChain const &chain) 
 {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::joinChain");
+  log_scope l(log().general_logger(), info_level, "OpenBusContext::joinChain");
   CORBA::Any sigCallChainAny;
   sigCallChainAny <<= *(chain.signedCallChain());
   _piCurrent->set_slot(_slotId_joinedCallChain, sigCallChainAny);
@@ -145,14 +145,14 @@ void OpenBusContext::joinChain(CallerChain const &chain)
 
 void OpenBusContext::exitChain() 
 {
-  log_scope l(log.general_logger(), info_level, "OpenBusContext::exitChain");
+  log_scope l(log().general_logger(), info_level, "OpenBusContext::exitChain");
   CORBA::Any any;
   _piCurrent->set_slot(_slotId_joinedCallChain, any);    
 }
 
 CallerChain OpenBusContext::getJoinedChain() 
 {
-  log_scope l(log.general_logger(), info_level, 
+  log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getJoinedChain");
   Connection *c = getDispatchConnection();
   if (!c)
@@ -220,7 +220,7 @@ idl_ac::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
 
 Connection *OpenBusContext::getDispatchConnection()
 {
-  log_scope l(log.general_logger(), info_level, 
+  log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getDispatchConnection");
   CORBA::Any_var connectionAddrAny = 
     _piCurrent->get_slot(_slotId_receiveConnection);

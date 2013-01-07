@@ -9,6 +9,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_CONNECTION_H_
 #define TECGRAF_SDK_OPENBUS_CONNECTION_H_
 
+#include "openbus/decl.hpp"
 #include "stubs/scs.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
@@ -40,7 +41,7 @@ namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 class OpenBusContext;
 class RenewLogin;
   
-struct BusChanged : public std::exception 
+struct OPENBUS_SDK_DECL BusChanged : public std::exception 
 { 
   const char *what() const throw()
   { 
@@ -48,7 +49,7 @@ struct BusChanged : public std::exception
   }
 };
 
-struct AlreadyLoggedIn : public std::exception 
+struct OPENBUS_SDK_DECL AlreadyLoggedIn : public std::exception 
 { 
   const char *what() const throw()
   { 
@@ -56,7 +57,7 @@ struct AlreadyLoggedIn : public std::exception
   }
 };
 
-struct InvalidLoginProcess : public std::exception 
+struct OPENBUS_SDK_DECL InvalidLoginProcess : public std::exception 
 {
   const char *what() const throw()
   { 
@@ -64,7 +65,7 @@ struct InvalidLoginProcess : public std::exception
   }
 };
 
-struct InvalidPropertyValue : public std::exception 
+struct OPENBUS_SDK_DECL InvalidPropertyValue : public std::exception 
 {
   InvalidPropertyValue(std::string p, std::string v) : property(p), value(v) 
   { 
@@ -101,7 +102,7 @@ struct InvalidPropertyValue : public std::exception
  * efetivamente usadas nas chamadas do ORB são definidas através do
  * OpenBusContext associado ao ORB.
  */
-class Connection 
+class OPENBUS_SDK_DECL Connection 
 {
 public:
   /**

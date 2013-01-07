@@ -2,6 +2,8 @@
 #ifndef TECGRAF_SDK_OPENBUS_LOGIN_CACHE_H_
 #define TECGRAF_SDK_OPENBUS_LOGIN_CACHE_H_
 
+#include "openbus/decl.hpp"
+
 #include "stubs/core.h"
 #include "stubs/access_control.h"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
@@ -21,7 +23,7 @@ namespace openbus
 namespace idl = tecgraf::openbus::core::v2_0;
 namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
 
-struct Login 
+struct OPENBUS_SDK_DECL Login 
 {
   idl_ac::LoginInfo *loginInfo;
   idl::OctetSeq_var encodedCallerPubKey;
@@ -32,7 +34,7 @@ struct Login
 
 typedef LRUCache<std::string, Login *> LoginLRUCache;
 
-class LoginCache 
+class OPENBUS_SDK_DECL LoginCache 
 {
 public:
   LoginCache(idl_ac::LoginRegistry_ptr);

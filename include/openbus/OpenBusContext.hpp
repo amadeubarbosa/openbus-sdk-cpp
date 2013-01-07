@@ -7,6 +7,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
 #define TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
 
+#include "openbus/decl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
@@ -75,7 +76,7 @@ namespace openbus
  * recebam essas chamadas possam identificar se a chamada foi
  * originada por entidades autorizadas ou não.
  */
-struct CallerChain 
+struct OPENBUS_SDK_DECL CallerChain 
 {
   /**
   * Barramento através do qual as chamadas foram originadas.
@@ -171,7 +172,7 @@ inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs)
   return !(lhs == rhs);
 }
 
-class OpenBusContext : public CORBA::LocalObject 
+class OPENBUS_SDK_DECL OpenBusContext : public CORBA::LocalObject 
 {
 public:
   typedef boost::function<Connection* (OpenBusContext &context, 

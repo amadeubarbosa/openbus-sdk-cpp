@@ -7,6 +7,8 @@
 #ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_H_
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_H_
 
+#include "openbus/decl.hpp"
+
 #include <CORBA.h>
 
 /**
@@ -74,7 +76,7 @@ namespace openbus
  *
  * @return O ORB inicializado.
  */
-CORBA::ORB *ORBInitializer(int &argc, char **argv);
+  OPENBUS_SDK_DECL CORBA::ORB *ORBInitializer(int &argc, char **argv);
 }
 
 #endif

@@ -2,6 +2,8 @@
 #ifndef TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_IMPL_H_
 #define TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_IMPL_H_
 
+#include "openbus/decl.hpp"
+
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
@@ -25,7 +27,7 @@ struct CallerChain;
 namespace interceptors 
 {
 
-class ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 
+class OPENBUS_SDK_DECL ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 
 {
 public:
   ClientInterceptor(PortableInterceptor::SlotId slotId_requesterConnection,

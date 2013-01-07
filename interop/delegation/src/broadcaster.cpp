@@ -69,7 +69,7 @@ struct BroadcasterImpl : virtual public POA_tecgraf::openbus::interop::delegatio
 
 int main(int argc, char** argv) {
   try {
-    openbus::log.set_level(openbus::info_level);
+    openbus::log().set_level(openbus::info_level);
 
     ::properties properties_file;
     if(!properties_file.openbus_log_file.empty())
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
       std::auto_ptr<logger::output_base> output
         (new logger::output::file_output(properties_file.openbus_log_file.c_str()
                                          , std::ios::out));
-      openbus::log.add_output(output);
+      openbus::log().add_output(output);
     }
     
     if(properties_file.buses.size() < 1)

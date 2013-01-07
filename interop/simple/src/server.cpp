@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     }
     config.close();
     
-    openbus::log.set_level(openbus::debug_level);
+    openbus::log().set_level(openbus::debug_level);
     CORBA::ORB *orb = openbus::ORBInitializer(argc, argv);
     
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
