@@ -3,7 +3,6 @@
 #define TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_IMPL_H_
 
 #include "openbus/decl.hpp"
-
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
@@ -27,14 +26,14 @@ struct CallerChain;
 namespace interceptors 
 {
 
-class OPENBUS_SDK_DECL ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 
+class OPENBUS_SDK_DECL 
+ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 
 {
 public:
   ClientInterceptor(PortableInterceptor::SlotId slotId_requesterConnection,
                     PortableInterceptor::SlotId slotId_joinedCallChain,
                     PortableInterceptor::SlotId slotId_ignoreInterceptor,
                     IOP::Codec *cdr_codec);
-  ~ClientInterceptor();
   void send_request(PortableInterceptor::ClientRequestInfo *);
   void receive_exception(PortableInterceptor::ClientRequestInfo *);
   void send_poll(PortableInterceptor::ClientRequestInfo *) 
@@ -58,14 +57,14 @@ public:
   { 
   }
 
-  void openbusContext(openbus::OpenBusContext *m) 
+  void openbusContext(openbus::OpenBusContext &m) 
   { 
-    _openbusContext = m; 
+    _openbusContext = &m; 
   }
 
   Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo *);
-  openbus::CallerChain *getJoinedChain(Connection &, 
-                                       PortableInterceptor::ClientRequestInfo*);
+  openbus::CallerChain getJoinedChain(Connection &, 
+                                      PortableInterceptor::ClientRequestInfo *);
   static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
 private:
 

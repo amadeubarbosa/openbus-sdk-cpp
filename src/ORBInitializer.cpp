@@ -81,17 +81,17 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
   } 
   catch (const CORBA::ORB_InvalidName &) 
   {
-    OpenBusContext *openbusContext = 
+    OpenBusContext *openbusContext (
       new OpenBusContext(orb, orbInitializer->codec(), 
                          orbInitializer->slotId_joinedCallChain(), 
                          orbInitializer->slotId_signedCallChain(), 
                          orbInitializer->slotId_legacyCallChain(), 
                          orbInitializer->slotId_requesterConnection(),
-                         orbInitializer->slotId_receiveConnection());
+                         orbInitializer->slotId_receiveConnection()));
     l.level_log(debug_level, "Registrando OpenBusContext");
     orb->register_initial_reference("OpenBusContext", openbusContext);
-    orbInitializer->clientInterceptor()->openbusContext(openbusContext);
-    orbInitializer->serverInterceptor()->openbusContext(openbusContext);
+    orbInitializer->clientInterceptor()->openbusContext(*openbusContext);
+    orbInitializer->serverInterceptor()->openbusContext(*openbusContext);
   }
   l.log("Retornando ORB");
   return orb;

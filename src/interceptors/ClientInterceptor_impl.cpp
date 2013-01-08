@@ -60,9 +60,9 @@ Connection &ClientInterceptor::getCurrentConnection(
   return *conn;
 }
 
-CallerChain * 
-ClientInterceptor::getJoinedChain(Connection &c, 
-                                  PortableInterceptor::ClientRequestInfo *r)
+CallerChain ClientInterceptor::getJoinedChain(
+  Connection &c, 
+  PortableInterceptor::ClientRequestInfo *r)
 {
   CORBA::Any_var signedCallChainAny= r->get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain signedCallChain;
@@ -74,17 +74,17 @@ ClientInterceptor::getJoinedChain(Connection &c,
     idl_ac::CallChain callChain;
     if (callChainAny >>= callChain) 
     {
-      return new CallerChain(c.busid(), *c.login(), callChain.originators, 
-                             callChain.caller, signedCallChain);
+      return CallerChain(c.busid(), *c.login(), callChain.originators, 
+                         callChain.caller, signedCallChain);
     } 
     else 
     {
-      return 0;
+      return CallerChain();
     }
   } 
   else
   {
-    return 0;
+    return CallerChain();
   }
 }
 
@@ -103,10 +103,6 @@ ClientInterceptor::ClientInterceptor(
   log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
   _slotId_ignoreInterceptor = slotId_ignoreInterceptor;
-}
-
-ClientInterceptor::~ClientInterceptor() 
-{
 }
 
 void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
@@ -129,7 +125,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
 #ifdef OPENBUS_SDK_MULTITHREAD
       conn_lock.unlock();
 #endif
-      CallerChain *callerChain = 0;
+      CallerChain callerChain;
       IOP::ServiceContext serviceContext;
       serviceContext.context_id = idl_cr::CredentialContextId;
 
@@ -197,10 +193,10 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
           unsigned char *pBuf = buf.get();
           memcpy(pBuf, connId, idSize);
           memcpy(pBuf+idSize, session.remoteId.in(), remoteIdSize);
-          if (callerChain)
+          if (callerChain != CallerChain())
           {
             memcpy(pBuf+idSize+remoteIdSize, 
-                   callerChain->signedCallChain()->signature, 
+                   callerChain.signedCallChain()->signature, 
                    idl::EncryptedBlockSize);
           } 
           else
@@ -243,9 +239,9 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
         } 
         else
         {
-          if (callerChain)
+          if (callerChain != CallerChain())
           {
-            credential.chain = *callerChain->signedCallChain();
+            credential.chain = *(callerChain.signedCallChain());
           }
           else
           {
@@ -285,18 +281,18 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
 #ifdef OPENBUS_SDK_MULTITHREAD
       conn_lock.unlock();
 #endif
-      if (callerChain)
+      if (callerChain != CallerChain())
       {
         if (conn._legacyDelegate == Connection::ORIGINATOR 
-            && callerChain->_originators.length())
+            && callerChain._originators.length())
         {
           legacyCredential.delegate = 
-            CORBA::string_dup(callerChain->_originators[0].entity);
+            CORBA::string_dup(callerChain._originators[0].entity);
         }
         else
         {
           legacyCredential.delegate = 
-            CORBA::string_dup(callerChain->_caller.entity); 
+            CORBA::string_dup(callerChain._caller.entity); 
         }
       }
       else

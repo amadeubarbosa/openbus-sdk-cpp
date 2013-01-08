@@ -77,9 +77,9 @@ public:
   { 
   }
 
-  void openbusContext(OpenBusContext *m) 
+  void openbusContext(OpenBusContext &m) 
   { 
-    _openbusContext = m; 
+    _openbusContext = &m;
   }
 private:
 #ifdef OPENBUS_SDK_MULTITHREAD
