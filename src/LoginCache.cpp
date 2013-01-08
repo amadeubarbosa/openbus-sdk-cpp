@@ -1,16 +1,18 @@
 // -*- coding: iso-8859-1 -*-
 #include "openbus/LoginCache.hpp"
 
-#define LOGINCACHE_LRU_SIZE 128
+#include <cstddef>
+
+const std::size_t cacheSize = 128;
 
 namespace openbus
 {
 LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
-  : _login_registry(p), _loginLRUCache(LOGINCACHE_LRU_SIZE) 
+  : _login_registry(p), _loginLRUCache(cacheSize) 
 { 
 }
 
-Login *LoginCache::validateLogin(const std::string id) 
+Login *LoginCache::validateLogin(const std::string &id) 
 {
   /* este login está no cache? */
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -30,7 +32,7 @@ Login *LoginCache::validateLogin(const std::string id)
         _login_registry->getLoginInfo(id.c_str(), 
                                       login->encodedCallerPubKey);
     } 
-    catch (const idl_ac::InvalidLogins &e) 
+    catch (const idl_ac::InvalidLogins &) 
     { 
       return 0; 
     }

@@ -5,7 +5,6 @@
 #include "openbus/log.hpp"
 #include "stubs/credential_v1_5.h"
 
-#include <cstddef>
 #include <iostream>
 #include <string>
 
@@ -16,7 +15,7 @@ namespace openbus
 namespace interceptors 
 {
 
-Session::Session(CORBA::ULong i, const std::string login) 
+Session::Session(std::size_t i, const std::string &login) 
   : id(i), remoteId(login)
 {
   tickets_init(&tickets);

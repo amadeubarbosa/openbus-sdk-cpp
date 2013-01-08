@@ -4,12 +4,13 @@
 
 #include "openbus/decl.hpp"
 
-extern "C" {
+extern "C" 
+{
   #include "openbus/Ticket_impl.h"
 }
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
-#include "openbus/LRUCache_impl.hpp"
+  #include "openbus/LRUCache_impl.hpp"
 #endif
 #include "openbus/LoginCache.hpp"
 
@@ -18,6 +19,7 @@ extern "C" {
 #endif
 
 #include <CORBA.h>
+#include <cstddef>
 #include <string>
 
 namespace openbus 
@@ -28,12 +30,12 @@ class Connection;
 namespace interceptors 
 {
 
-const unsigned int secretSize = 16;
+const std::size_t secretSize = 16;
 
 struct OPENBUS_SDK_DECL Session 
 {
-  Session(CORBA::ULong, const std::string);
-  CORBA::ULong id;
+  Session(std::size_t, const std::string &);
+  std::size_t id;
   tickets_History tickets;
   unsigned char secret[secretSize];
   std::string remoteId;

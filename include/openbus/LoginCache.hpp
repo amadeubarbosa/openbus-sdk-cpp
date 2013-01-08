@@ -8,7 +8,7 @@
 #include "stubs/access_control.h"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
-#include "openbus/LRUCache_impl.hpp"
+  #include "openbus/LRUCache_impl.hpp"
 #endif
 #include "openbus/crypto/PublicKey.hpp"
 
@@ -38,7 +38,7 @@ class OPENBUS_SDK_DECL LoginCache
 {
 public:
   LoginCache(idl_ac::LoginRegistry_ptr);
-  Login *validateLogin(const std::string id);
+  Login *validateLogin(const std::string &id);
 private:
   idl_ac::LoginRegistry_ptr _login_registry;
   LoginLRUCache _loginLRUCache;
