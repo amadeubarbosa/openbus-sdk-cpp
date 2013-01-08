@@ -283,7 +283,7 @@ private:
              PortableInterceptor::SlotId slotId_signedCallChain, 
              PortableInterceptor::SlotId slotId_legacyCallChain, 
              PortableInterceptor::SlotId slotId_receiveConnection, 
-             OpenBusContext *, std::vector<std::string> props);
+             OpenBusContext &, std::vector<std::string> props);
   static void renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
                          OpenBusContext &ctx, idl_ac::ValidityTime t);
   void checkBusid() const;
@@ -334,8 +334,18 @@ private:
     INVALID
   } _state;
   
+  idl_or::OfferRegistry_var getOfferRegistry() const
+  { 
+    return _offer_registry;
+  }
+
+  idl_ac::LoginRegistry_var getLoginRegistry() const
+  {
+    return _login_registry;
+  }
+
   /* Variáveis que são modificadas somente no construtor. */
-  OpenBusContext *_openbusContext;
+  OpenBusContext &_openbusContext;
   PrivateKey _key;
   PortableInterceptor::Current_var _piCurrent;
   scs::core::IComponent_var _iComponent;
@@ -347,17 +357,7 @@ private:
   std::auto_ptr<PublicKey> _buskey;
   LegacyDelegate _legacyDelegate;
   /**/
-  
-  idl_or::OfferRegistry_var getOfferRegistry() const
-  { 
-    return _offer_registry;
-  }
-
-  idl_ac::LoginRegistry_var getLoginRegistry() const
-  {
-    return _login_registry;
-  }
-  
+    
   friend class openbus::interceptors::ServerInterceptor;
   friend class openbus::interceptors::ClientInterceptor;
   friend class openbus::OpenBusContext;

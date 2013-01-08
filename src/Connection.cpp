@@ -114,7 +114,7 @@ Connection::Connection(const std::string h, const unsigned short p,
                        PortableInterceptor::SlotId s2,
                        PortableInterceptor::SlotId s3,
                        PortableInterceptor::SlotId s4,
-                       OpenBusContext *m, std::vector<std::string> props) 
+                       OpenBusContext &m, std::vector<std::string> props) 
   : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
     _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), 
     _slotId_receiveConnection(s4), _loginInfo(0), 
@@ -273,11 +273,11 @@ void Connection::loginByPassword(const std::string &entity,
 #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin = boost::thread(
     boost::bind(renewLogin, boost::ref(*this), _access_control, 
-                boost::ref(*_openbusContext), validityTime));
+                boost::ref(_openbusContext), validityTime));
 #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
-    (new RenewLogin(_orb, *this, _access_control, *_openbusContext, 
+    (new RenewLogin(_orb, *this, _access_control, _openbusContext, 
                     validityTime));
 #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
@@ -360,11 +360,11 @@ void Connection::loginByCertificate(const std::string &entity,
 #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin = boost::thread(
     boost::bind(renewLogin, boost::ref(*this), _access_control, 
-                boost::ref(*_openbusContext), validityTime));
+                boost::ref(_openbusContext), validityTime));
 #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> 
-    (new RenewLogin(_orb, *this, _access_control, *_openbusContext, 
+    (new RenewLogin(_orb, *this, _access_control, _openbusContext, 
                    validityTime));
 #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
@@ -379,14 +379,14 @@ Connection::startSharedAuth()
   idl_ac::LoginProcess_ptr loginProcess;
   try 
   {
-    c = _openbusContext->getCurrentConnection();
-    _openbusContext->setCurrentConnection(this);
+    c = _openbusContext.getCurrentConnection();
+    _openbusContext.setCurrentConnection(this);
     loginProcess = _access_control->startLoginBySharedAuth(challenge);
-    _openbusContext->setCurrentConnection(c);
+    _openbusContext.setCurrentConnection(c);
   } 
   catch (...) 
   {
-    _openbusContext->setCurrentConnection(c);
+    _openbusContext.setCurrentConnection(c);
     throw;
   }
   CORBA::OctetSeq secretBuf = _key.decrypt(challenge, idl::EncryptedBlockSize);
@@ -457,11 +457,11 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 #ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin = boost::thread(
     boost::bind(renewLogin, boost::ref(*this), _access_control, 
-                boost::ref(*_openbusContext), validityTime));
+                boost::ref(_openbusContext), validityTime));
 #else
   assert(!_renewLogin.get());
   _renewLogin = std::auto_ptr<RenewLogin> (
-    new RenewLogin(_orb, *this, _access_control, *_openbusContext,
+    new RenewLogin(_orb, *this, _access_control, _openbusContext,
                    validityTime));
 #endif
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
@@ -501,7 +501,7 @@ bool Connection::_logout(bool local)
 
         OpenBusContext &context;
         Connection *old;
-      } save_connection_(*_openbusContext, this);
+      } save_connection_(_openbusContext, this);
 
       static_cast<void>(save_connection_); // avoid warnings
       try

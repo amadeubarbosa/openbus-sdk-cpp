@@ -39,7 +39,7 @@ OpenBusContext::createConnection(const std::string host, short port,
                                                 _slotId_signedCallChain, 
                                                 _slotId_legacyCallChain, 
                                                 _slotId_receiveConnection, 
-                                                this, props));
+                                                *this, props));
   l.vlog("connection: %p", conn.get());
   return conn;
 }
