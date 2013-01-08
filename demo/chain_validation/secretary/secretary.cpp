@@ -149,7 +149,7 @@ int main(int argc, char** argv)
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    openbusContext->setDefaultConnection(conn.get());
+    openbusContext->setDefaultConnection(*conn);
 
     // Recebendo ofertas
     openbus::idl_or::ServicePropertySeq props;

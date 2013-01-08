@@ -149,7 +149,7 @@ int main(int argc, char** argv)
       conn = openbusContext->createConnection("localhost", 2089);
       conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, private_key) );
       conn->loginByCertificate("demo", private_key);
-      openbusContext->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(*conn);
       break;
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)

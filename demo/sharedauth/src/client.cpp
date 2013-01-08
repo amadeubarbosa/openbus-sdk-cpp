@@ -170,7 +170,7 @@ int main(int argc, char** argv)
       conn->onInvalidLogin( ::onReloginCallback());
 
       conn->loginByPassword("demo", "demo");
-      openbusContext->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(*conn);
       break;
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)

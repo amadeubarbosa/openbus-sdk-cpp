@@ -44,17 +44,17 @@ OpenBusContext::createConnection(const std::string host, short port,
   return conn;
 }
 
-Connection *OpenBusContext::setDefaultConnection(Connection *c)
+Connection &OpenBusContext::setDefaultConnection(Connection &c)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> l(_mutex);
 #endif
   Connection *old = _defaultConnection;
-  _defaultConnection = c;
-  return old;
+  _defaultConnection = &c;
+  return *old;
 }
 
-Connection * OpenBusContext::getDefaultConnection() const 
+Connection *OpenBusContext::getDefaultConnection() const 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> l(_mutex);
