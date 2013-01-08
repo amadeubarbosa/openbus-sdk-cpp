@@ -15,14 +15,5 @@ int main(int argc, char** argv)
   CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenBusContext");
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
   std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(cfg.host(), cfg.port()));
-  CORBA::OctetSeq key;
-  {
-    std::ifstream key_file(argv[argc-1]);
-    key_file.seekg(0, std::ios::end);
-    std::size_t size = key_file.tellg();
-    key_file.seekg(0, std::ios::beg);
-    key.length(size);
-    key_file.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(key.get_buffer())), size);
-  }
-  conn->loginByCertificate(cfg.certificate_user().c_str(), key);
+  conn->loginByCertificate(cfg.certificate_user().c_str(), openbus::PrivateKey(argv[1]));
 }
