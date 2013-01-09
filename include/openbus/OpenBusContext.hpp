@@ -239,7 +239,7 @@ public:
    * 'ownership' da conexão não é transferida para o OpenBusContext, e
    * a conexão deve ser removida do OpenBusContext antes de destruida
    */
-  Connection &setDefaultConnection(Connection &);
+  Connection *setDefaultConnection(Connection *);
    
   /**
    * \brief Devolve a conexão padrão.

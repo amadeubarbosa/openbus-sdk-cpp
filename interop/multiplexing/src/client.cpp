@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
       std::auto_ptr <openbus::Connection> 
         conn (openbusContext->createConnection(properties_file.buses[bus_index].host
                                         , properties_file.buses[bus_index].port));
-      openbusContext->setDefaultConnection(*conn);
+      openbusContext->setDefaultConnection(conn.get());
       conn->loginByPassword(entity.c_str(), entity.c_str());
       openbus::idl_or::ServicePropertySeq props;
       props.length(2);

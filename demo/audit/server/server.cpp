@@ -105,7 +105,7 @@ int main(int argc, char** argv)
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    openbusContext->setDefaultConnection(*conn);
+    openbusContext->setDefaultConnection(conn.get());
 
     scs::core::ComponentId componentId;
     componentId.name = "Hello";

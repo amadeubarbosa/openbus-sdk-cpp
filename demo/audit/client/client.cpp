@@ -66,7 +66,7 @@ int main(int argc, char** argv)
       std::cout << "Falha ao tentar realizar o login por senha no barramento: a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    openbusContext->setDefaultConnection(*conn);
+    openbusContext->setDefaultConnection(conn.get());
 
     // Recebendo ofertas
     openbus::idl_or::ServicePropertySeq props;

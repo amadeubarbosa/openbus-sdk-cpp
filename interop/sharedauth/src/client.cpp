@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     std::auto_ptr <openbus::Connection> conn
       (openbusContext->createConnection(bus.host, bus.port));
 
-    openbusContext->setDefaultConnection(*conn);
+    openbusContext->setDefaultConnection(conn.get());
     conn->loginByPassword("interop_sharedauth_cpp_client"
                           , "interop_sharedauth_cpp_client");
 

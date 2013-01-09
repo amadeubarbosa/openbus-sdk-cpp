@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
       (orb->resolve_initial_references("OpenBusContext"));
     std::auto_ptr <openbus::Connection> conn
       (openbusContext->createConnection(bus.host, bus.port));
-    openbusContext->setDefaultConnection(*conn);
+    openbusContext->setDefaultConnection(conn.get());
 
     #ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread orbRun(ORBRun, openbusContext->orb());

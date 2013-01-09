@@ -80,7 +80,7 @@ void work_thread_function(boost::shared_ptr<assistant_detail::shared_state> stat
         openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
           (state->orb->resolve_initial_references("OpenBusContext"));
         assert(openbusContext != 0);
-        openbusContext->setDefaultConnection(*connection);
+        openbusContext->setDefaultConnection(connection.get());
       }
       assert(!!connection.get());
       boost::unique_lock<boost::mutex> lock(state->mutex);

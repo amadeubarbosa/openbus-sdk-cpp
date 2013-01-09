@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         std::cout << "Falhou unmarshaling os dados no arquivo de log" << std::endl;
         return 1;
       }
-      openbusContext->setDefaultConnection(*conn);
+      openbusContext->setDefaultConnection(conn.get());
     }
 
     openbus::idl_or::ServicePropertySeq props;

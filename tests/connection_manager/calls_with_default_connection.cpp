@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
   std::auto_ptr<openbus::Connection> conn(openbusContext->createConnection(cfg.host(), cfg.port()));
   conn->loginByPassword(cfg.user(), cfg.password());
-  openbusContext->setDefaultConnection(*conn);
+  openbusContext->setDefaultConnection(conn.get());
   
   openbus::idl_or::ServicePropertySeq properties;
   openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);

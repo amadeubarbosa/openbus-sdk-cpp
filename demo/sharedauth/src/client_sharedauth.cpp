@@ -204,7 +204,7 @@ int main(int argc, char** argv)
         
       }
 
-      openbusContext->setDefaultConnection(*conn);
+      openbusContext->setDefaultConnection(conn.get());
       break;
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)

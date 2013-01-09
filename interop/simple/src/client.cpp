@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     openbus::OpenBusContext *openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
     std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(host, port));
-    openbusContext->setDefaultConnection(*conn);
+    openbusContext->setDefaultConnection(conn.get());
     conn->loginByPassword(entity.c_str(), entity.c_str());
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
