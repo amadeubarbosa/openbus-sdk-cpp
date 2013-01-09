@@ -92,8 +92,6 @@ void ServerInterceptor::sendCredentialReset(
                              CORBA::COMPLETED_NO);              
 }
 
-ServerInterceptor::~ServerInterceptor() { }
-
 Connection &ServerInterceptor::getDispatcher(OpenBusContext &context,
                                              const std::string &busId, 
                                              const std::string &loginId,
@@ -147,11 +145,10 @@ void ServerInterceptor::receive_request_service_contexts(
     IOP::ServiceContext_var sc =
       r->get_request_service_context(idl_cr::CredentialContextId);
     IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
-    CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(),
-                                0);    
+    CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);
     any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
   }
-  catch (CORBA::BAD_PARAM&) 
+  catch (CORBA::BAD_PARAM &) 
   {
     hasContext = false;
   }
@@ -344,8 +341,7 @@ void ServerInterceptor::receive_request_service_contexts(
     {
       IOP::ServiceContext_var sc = r->get_request_service_context(1234);
       IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
-      CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 
-                                  0);    
+      CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);
       lany = _cdrCodec->decode_value(contextData, 
                                      openbus::legacy::v1_5::_tc_Credential);
     }

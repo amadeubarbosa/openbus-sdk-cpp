@@ -51,7 +51,6 @@ public:
                     PortableInterceptor::SlotId slotId_signedCallChain, 
                     PortableInterceptor::SlotId slotId_legacyCallChain,
                     IOP::Codec *cdr_codec);
-  ~ServerInterceptor();
   void 
   receive_request_service_contexts(PortableInterceptor::ServerRequestInfo *);
   void receive_request(PortableInterceptor::ServerRequestInfo *) 
