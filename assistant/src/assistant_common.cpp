@@ -112,7 +112,7 @@ void login_simple(Connection& c, assistant_detail::authentication_info const& in
     l.log("Fazendo login por password");
     l.level_vlog(logger::debug_level
                  , "Fazendo login por password com usuário '%s'"
-                 , p->username.c_str(), p->password.c_str());
+                 , p->username.c_str());
     c.loginByPassword(p->username.c_str(), p->password.c_str());
   }
   else if(assistant_detail::certificate_authentication_info const* p
