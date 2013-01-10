@@ -100,7 +100,7 @@ private:
                             const std::string &operation);
 
   void sendCredentialReset(Connection &, Login &, 
-                           PortableInterceptor::ServerRequestInfo *);
+                           PortableInterceptor::ServerRequestInfo &);
 
   typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;
   SessionLRUCache _sessionLRUCache;

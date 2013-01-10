@@ -47,7 +47,7 @@ ServerInterceptor::ServerInterceptor(
 }
 
 void ServerInterceptor::sendCredentialReset(
-  Connection &conn, Login &caller, PortableInterceptor::ServerRequestInfo *r) 
+  Connection &conn, Login &caller, PortableInterceptor::ServerRequestInfo &r) 
 {
   idl_cr::CredentialReset credentialReset;
 
@@ -86,7 +86,7 @@ void ServerInterceptor::sendCredentialReset(
   IOP::ServiceContext::_context_data_seq s(o->length(), o->length(),
                                            o->get_buffer(), 0);
   serviceContext.context_data = s;
-  r->add_reply_service_context(serviceContext, true);          
+  r.add_reply_service_context(serviceContext, true);          
 
   throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode,
                              CORBA::COMPLETED_NO);              
@@ -278,7 +278,7 @@ void ServerInterceptor::receive_request_service_contexts(
     {
       l.level_vlog(debug_level, 
                    "credential not valid, try to reset credetial session");
-      sendCredentialReset(conn, *caller, r);
+      sendCredentialReset(conn, *caller, *r);
     }
 
     /* a credencial recebida é válida. */
@@ -316,7 +316,7 @@ void ServerInterceptor::receive_request_service_contexts(
       if (res) 
       { 
         /* a cadeia tem como destino(target) outro login. */
-        sendCredentialReset(conn, *caller, r);
+        sendCredentialReset(conn, *caller, *r);
       }
       else if (strcmp(callChain.caller.id, caller->loginInfo->id)) 
       {
