@@ -48,6 +48,7 @@
 #include <map>
 #include <list>
 #include <vector>
+#include <cstddef>
 #undef _REENTRANT
 #ifdef _REENTRANT
 #include <boost/thread/mutex.hpp>
