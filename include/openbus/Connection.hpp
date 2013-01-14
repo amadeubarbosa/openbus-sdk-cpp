@@ -67,7 +67,8 @@ struct OPENBUS_SDK_DECL InvalidLoginProcess : public std::exception
 
 struct OPENBUS_SDK_DECL InvalidPropertyValue : public std::exception 
 {
-  InvalidPropertyValue(std::string p, std::string v) : property(p), value(v) 
+  InvalidPropertyValue(const std::string &p, const std::string &v) 
+    : property(p), value(v) 
   { 
   }
   ~InvalidPropertyValue() throw() 
@@ -284,6 +285,10 @@ private:
              PortableInterceptor::SlotId slotId_legacyCallChain, 
              PortableInterceptor::SlotId slotId_receiveConnection, 
              OpenBusContext &, std::vector<std::string> props);
+
+  Connection(const Connection &);
+  Connection &operator=(const Connection &);
+
   static void renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
                          OpenBusContext &ctx, idl_ac::ValidityTime t);
   void checkBusid() const;
