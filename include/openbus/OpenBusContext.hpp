@@ -312,7 +312,7 @@ public:
    * @throw CORBA::NO_PERMISSION {minor = InvalidChainCode}
    * @throw CORBA::Exception
    */
-  void joinChain(CallerChain const& chain);
+  void joinChain(const CallerChain &chain);
   
   /**
    * \brief Faz com que nenhuma cadeia de chamadas esteja associada ao
