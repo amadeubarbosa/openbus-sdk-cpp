@@ -39,7 +39,9 @@ namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
 namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 
 class OpenBusContext;
+#ifndef OPENBUS_SDK_MULTITHREAD
 class RenewLogin;
+#endif
   
 struct OPENBUS_SDK_DECL BusChanged : public std::exception 
 { 
@@ -262,7 +264,7 @@ public:
    * \brief Retorna a callback configurada para ser chamada quando o login atual
    * se torna inválido.
    */
-  InvalidLoginCallback_t onInvalidLogin();
+  InvalidLoginCallback_t onInvalidLogin() const;
   
   /**
    * \brief Informações do login dessa conexão ou 'null' se a conexão não está
@@ -277,34 +279,40 @@ public:
   ~Connection();  
 private:
   /**
-  * Connection deve ser adquirido através de: OpenBusContext::createConnection()
+  * Connection deve ser adquirido atraves de: OpenBusContext::createConnection()
   */
-  Connection(const std::string host, const unsigned short port, CORBA::ORB *, 
+  Connection(const std::string host, const unsigned short port, CORBA::ORB_ptr, 
              IOP::Codec *, PortableInterceptor::SlotId slotId_joinedCallChain, 
              PortableInterceptor::SlotId slotId_signedCallChain, 
              PortableInterceptor::SlotId slotId_legacyCallChain, 
              PortableInterceptor::SlotId slotId_receiveConnection, 
-             OpenBusContext &, std::vector<std::string> props);
+             OpenBusContext &, const std::vector<std::string> &props);
 
   Connection(const Connection &);
   Connection &operator=(const Connection &);
 
+#ifdef OPENBUS_SDK_MULTITHREAD  
   static void renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
                          OpenBusContext &ctx, idl_ac::ValidityTime t);
+#endif
+
   void checkBusid() const;
   bool _logout(bool local);
-  CORBA::ORB *orb() const 
+  CORBA::ORB_ptr orb() const 
   { 
     return _orb; 
   }
+
   idl_ac::LoginRegistry_var login_registry() const 
   { 
     return _login_registry; 
   }
+
   idl_ac::AccessControl_var access_control() const 
   { 
     return _access_control; 
   }
+
   const idl_ac::LoginInfo *_login() const 
   { 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -312,6 +320,17 @@ private:
 #endif
     return _loginInfo.get(); 
   }
+
+  idl_or::OfferRegistry_var getOfferRegistry() const
+  { 
+    return _offer_registry;
+  }
+
+  idl_ac::LoginRegistry_var getLoginRegistry() const
+  {
+    return _login_registry;
+  }
+
   const std::string _host;
   const unsigned short _port;
   CORBA::ORB *_orb;
@@ -342,17 +361,7 @@ private:
     INVALID
   } _state;
   
-  idl_or::OfferRegistry_var getOfferRegistry() const
-  { 
-    return _offer_registry;
-  }
-
-  idl_ac::LoginRegistry_var getLoginRegistry() const
-  {
-    return _login_registry;
-  }
-
-  /* Variáveis que são modificadas somente no construtor. */
+  /* Variaveis que sao modificadas somente no construtor. */
   OpenBusContext &_openbusContext;
   PrivateKey _key;
   PortableInterceptor::Current_var _piCurrent;
@@ -370,8 +379,6 @@ private:
   friend class openbus::interceptors::ClientInterceptor;
   friend class openbus::OpenBusContext;
 };
-
 }
 
 #endif
-

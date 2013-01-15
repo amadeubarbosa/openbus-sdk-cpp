@@ -10,9 +10,10 @@
 #endif
 
 #ifndef _WIN32
-#include <unistd.h>
+  #include <unistd.h>
 #endif
 #include <sstream>
+#include <cstring>
 #include <ctime>
 
 namespace openbus 
@@ -50,9 +51,8 @@ void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs,
 class RenewLogin : public CORBA::DispatcherCallback 
 {
 public:
-  RenewLogin(CORBA::ORB_ptr o, Connection &c, 
-             idl_ac::AccessControl_ptr a, OpenBusContext &m, 
-             idl_ac::ValidityTime t)
+  RenewLogin(CORBA::ORB_ptr o, Connection &c, idl_ac::AccessControl_ptr a, 
+             OpenBusContext &m, idl_ac::ValidityTime t)
    : _orb(o), _conn(c), _access_control(a), _openbusContext(m), 
      _validityTime(t) 
   { 
@@ -62,7 +62,20 @@ public:
 
   ~RenewLogin() 
   {
-    _orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);    
+    try
+    {
+      _orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);    
+    }
+    catch (...)
+    {
+      try
+      {
+        l.log("Exception thrown in ~RenewLogin. Ignoring exception");
+      }
+      catch (...)
+      {
+      }
+    }
   }
 
   void callback(CORBA::Dispatcher *dispatcher, Event event) 
@@ -102,20 +115,22 @@ private:
 
 void Connection::checkBusid() const 
 {
-  if (strcmp(_busid.c_str(), _access_control->busid())) 
+  if (std::strcmp(_busid.c_str(), _access_control->busid())) 
   {
     throw BusChanged();
   }
 }
 
-Connection::Connection(const std::string h, const unsigned short p, 
-                       CORBA::ORB *orb, IOP::Codec *c, 
+Connection::Connection(const std::string host, const unsigned short port, 
+                       CORBA::ORB_ptr orb, IOP::Codec *c, 
                        PortableInterceptor::SlotId s1, 
                        PortableInterceptor::SlotId s2,
                        PortableInterceptor::SlotId s3,
                        PortableInterceptor::SlotId s4,
-                       OpenBusContext &m, std::vector<std::string> props) 
-  : _host(h), _port(p), _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
+                       OpenBusContext &m, 
+                       const std::vector<std::string> &props) 
+  : _host(host), _port(port), _orb(orb), _codec(c), 
+    _slotId_joinedCallChain(s1), 
     _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), 
     _slotId_receiveConnection(s4), _loginInfo(0), 
     _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m), 
@@ -204,7 +219,8 @@ Connection::~Connection()
 void Connection::loginByPassword(const std::string &entity, 
                                  const std::string &password) 
 {
-  log_scope l(log().general_logger(), info_level, "Connection::loginByPassword");
+  log_scope l(log().general_logger(), info_level, 
+              "Connection::loginByPassword");
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
@@ -221,32 +237,27 @@ void Connection::loginByPassword(const std::string &entity,
   checkBusid();  
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
-  /* representação do password em uma cadeia de bytes. */
+  /* representacao do password em uma cadeia de bytes. */
   CORBA::ULong passSize = static_cast<CORBA::ULong> (password.size());
   idl::OctetSeq_var passOctetSeq = 
     new idl::OctetSeq(passSize, passSize, (CORBA::Octet *) 
                       CORBA::string_dup(password.c_str()));
   loginAuthenticationInfo.data = passOctetSeq;
   
-  /* representação da minha chave em uma cadeia de bytes. */
-  CORBA::OctetSeq bufKey = _key.pubKey();
-  
-  /* criando uma hash da minha chave. */
+  CORBA::OctetSeq bufKey = _key.pubKey();  
   SHA256(bufKey.get_buffer(), bufKey.length(), loginAuthenticationInfo.hash);
-
-  /* CDR da estrura LoginAuthenticationInfo que foi montada acima. */
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _codec->encode_value(any);
 
-  /* cifrando a estrutura LoginAuthenticationInfo com a chave pública
+  /* cifrando a estrutura LoginAuthenticationInfo com a chave publica
    * do barramento. */
   CORBA::OctetSeq encrypted = 
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length());
 
   idl::EncryptedBlock encryptedBlock;
-  memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
+  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
     
   idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo;
@@ -309,14 +320,12 @@ void Connection::loginByCertificate(const std::string &entity,
                                                             challenge);
   }
   
-  /* decifrar o desafio usando a chave privada do usuário. */
   CORBA::OctetSeq secret = privKey.decrypt((unsigned char*) challenge, 
                                            idl::EncryptedBlockSize);
 
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
   
-  /* representação da minha chave em uma cadeia de bytes. */
   CORBA::OctetSeq bufKey = _key.pubKey();
   SHA256(bufKey.get_buffer(), bufKey.length(), loginAuthenticationInfo.hash);
   
@@ -325,14 +334,14 @@ void Connection::loginByCertificate(const std::string &entity,
   CORBA::OctetSeq_var 
     encodedLoginAuthenticationInfo = _codec->encode_value(any);
   
-  /* cifrando a estrutura LoginAuthenticationInfo com a chave pública
+  /* cifrando a estrutura LoginAuthenticationInfo com a chave publica
    * do barramento. */
   CORBA::OctetSeq encrypted = 
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length());
 
   idl::EncryptedBlock encryptedBlock;
-  memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
+  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
   
   interceptors::IgnoreInterceptor _i(_piCurrent);
   idl_ac::ValidityTime validityTime;    
@@ -373,7 +382,8 @@ void Connection::loginByCertificate(const std::string &entity,
 std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> 
 Connection::startSharedAuth() 
 {
-  log_scope l(log().general_logger(), info_level, "Connection::startSharedAuth");
+  log_scope l(log().general_logger(), info_level, 
+              "Connection::startSharedAuth");
   idl::EncryptedBlock challenge;
   Connection *c = 0;
   idl_ac::LoginProcess_ptr loginProcess;
@@ -415,7 +425,6 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
   
-  /* representação da minha chave em uma cadeia de bytes. */
   CORBA::OctetSeq bufKey = _key.pubKey();
   SHA256(bufKey.get_buffer(), bufKey.length(), loginAuthenticationInfo.hash);
 
@@ -424,14 +433,14 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   CORBA::OctetSeq_var 
     encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
-  /* cifrando a estrutura LoginAuthenticationInfo com a chave pública
+  /* cifrando a estrutura LoginAuthenticationInfo com a chave ppblica
    * do barramento. */
   CORBA::OctetSeq encrypted = 
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length());
 
   idl::EncryptedBlock encryptedBlock;
-  memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
+  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
 
   idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo; 
@@ -559,7 +568,7 @@ void Connection::onInvalidLogin(Connection::InvalidLoginCallback_t p)
   _onInvalidLogin = p; 
 }
 
-Connection::InvalidLoginCallback_t Connection::onInvalidLogin() 
+Connection::InvalidLoginCallback_t Connection::onInvalidLogin() const
 { 
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;

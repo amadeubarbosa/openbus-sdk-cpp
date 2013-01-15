@@ -44,13 +44,13 @@ namespace services
 namespace access_control 
 {
 
-inline bool operator==(LoginInfo const &lhs, LoginInfo const &rhs)
+inline bool operator==(const LoginInfo &lhs, const LoginInfo &rhs)
 {
-  return lhs.id.in() == rhs.id.in() || 
-    (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
+  return lhs.id.in() == rhs.id.in() 
+    || (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
 }
 
-inline bool operator!=(LoginInfo const &lhs, LoginInfo const &rhs)
+inline bool operator!=(const LoginInfo &lhs, const LoginInfo &rhs)
 {
   return !(lhs == rhs);
 }
@@ -175,10 +175,9 @@ inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs)
 class OPENBUS_SDK_DECL OpenBusContext : public CORBA::LocalObject 
 {
 public:
-  typedef boost::function<Connection* (OpenBusContext &context, 
-                                       const std::string busId, 
-                                       const std::string loginId, 
-                                       const std::string operation)> 
+  typedef boost::function<Connection* (
+    OpenBusContext &context, const std::string busId, 
+    const std::string loginId, const std::string operation)> 
   CallDispatchCallback;
 
   void onCallDispatch(CallDispatchCallback c);
@@ -222,10 +221,9 @@ public:
    *
    * @return Conexão criada.
    */
-  std::auto_ptr<Connection> createConnection(const std::string host, 
-                                             unsigned short port,
-                                             std::vector<std::string> props 
-                                             = std::vector<std::string>());
+  std::auto_ptr<Connection> createConnection(
+    const std::string host, unsigned short port, 
+    const std::vector<std::string> &props = std::vector<std::string>());
    
   /**
    * \brief Define a conexão padrão a ser usada nas chamadas.
@@ -355,35 +353,39 @@ public:
   /** 
    * ORB utilizado pela conexão. 
    */
-  CORBA::ORB *orb() const 
+  CORBA::ORB_ptr orb() const 
   {
     return _orb;
   }
   
   idl_or::OfferRegistry_ptr getOfferRegistry() const;
   idl_ac::LoginRegistry_ptr getLoginRegistry() const;
-  ~OpenBusContext();
 private:
   /**
-   * OpenBusContext deve ser adquirido através de:
+   * OpenBusContext deve ser adquirido atraves de:
    *   orb->resolve_initial_references("OpenBusContext")
    */
-  OpenBusContext(CORBA::ORB *, IOP::Codec *, 
+  OpenBusContext(CORBA::ORB_ptr, IOP::Codec *, 
                  PortableInterceptor::SlotId slotId_joinedCallChain, 
                  PortableInterceptor::SlotId slotId_signedCallChain, 
                  PortableInterceptor::SlotId slotId_legacyCallChain,
                  PortableInterceptor::SlotId slotId_requesterConnection,
                  PortableInterceptor::SlotId slotId_receiveConnection);
-  void orb(CORBA::ORB *o) 
+  
+  OpenBusContext(const OpenBusContext&);
+  OpenBusContext &operator=(const OpenBusContext &);
+
+  void orb(CORBA::ORB_ptr o) 
   {
     _orb = o;
   }
+
   Connection *getDispatchConnection();
   typedef std::map<std::string, Connection *> BusidConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif
-  CORBA::ORB *_orb;
+  CORBA::ORB_ptr _orb;
   PortableInterceptor::Current_var _piCurrent;
   IOP::Codec *_codec;
   PortableInterceptor::SlotId _slotId_joinedCallChain; 
@@ -394,7 +396,8 @@ private:
   Connection *_defaultConnection;
   BusidConnection _busidConnection;
   CallDispatchCallback _callDispatchCallback;
-  friend CORBA::ORB *openbus::ORBInitializer(int &argc, char **argv);
+
+  friend CORBA::ORB_ptr openbus::ORBInitializer(int &argc, char **argv);
 };
 }
 

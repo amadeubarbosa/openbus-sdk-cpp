@@ -5,13 +5,13 @@
 
 namespace openbus 
 {
-OpenBusContext::OpenBusContext(CORBA::ORB *o, IOP::Codec *c, 
+OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb, IOP::Codec *c, 
                                PortableInterceptor::SlotId s1, 
                                PortableInterceptor::SlotId s2, 
                                PortableInterceptor::SlotId s3,
                                PortableInterceptor::SlotId s4, 
                                PortableInterceptor::SlotId s5) 
-  : _orb(o), _codec(c), _slotId_joinedCallChain(s1), 
+  : _orb(orb), _codec(c), _slotId_joinedCallChain(s1), 
     _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), 
     _slotId_requesterConnection(s4), _slotId_receiveConnection(s5),
     _defaultConnection(0), _callDispatchCallback(0)
@@ -23,23 +23,17 @@ OpenBusContext::OpenBusContext(CORBA::ORB *o, IOP::Codec *c,
   assert(!CORBA::is_nil(_piCurrent));
 }
 
-OpenBusContext::~OpenBusContext() 
-{ 
-}
-
-std::auto_ptr<Connection> 
-OpenBusContext::createConnection(const std::string host, unsigned short port, 
-                                 std::vector<std::string> props)
+std::auto_ptr<Connection> OpenBusContext::createConnection(
+  const std::string host, unsigned short port, 
+  const std::vector<std::string> &props)
 {
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::createConnection");
   l.vlog("createConnection para host %s:%hi", host.c_str(), port);
-  std::auto_ptr<Connection> conn(new Connection(host, port, _orb, _codec, 
-                                                _slotId_joinedCallChain, 
-                                                _slotId_signedCallChain, 
-                                                _slotId_legacyCallChain, 
-                                                _slotId_receiveConnection, 
-                                                *this, props));
+  std::auto_ptr<Connection> conn (
+    new Connection(host, port, _orb, _codec, _slotId_joinedCallChain, 
+                   _slotId_signedCallChain, _slotId_legacyCallChain, 
+                   _slotId_receiveConnection, *this, props));
   l.vlog("connection: %p", conn.get());
   return conn;
 }
@@ -90,7 +84,8 @@ Connection *OpenBusContext::getCurrentConnection() const
   {
     assert(connectionAddrOctetSeq.length() == sizeof(Connection *));
     std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection *));
-  } else 
+  } 
+  else 
   {
     return getDefaultConnection();
   }
@@ -102,34 +97,28 @@ CallerChain OpenBusContext::getCallerChain()
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCallerChain");
   Connection *c = getDispatchConnection();
-  if (!c)
+  if (c)
   {
-    return CallerChain();
-  }
-
-  CORBA::Any *sigCallChainAny = _piCurrent->get_slot(_slotId_signedCallChain);
-  idl_ac::CallChain callChain;
-  idl_cr::SignedCallChain sigCallChain;
-  if (*sigCallChainAny >>= sigCallChain) 
-  {
-    CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
-                                                       idl_ac::_tc_CallChain);
-    *callChainAny >>= callChain;
-    return CallerChain(c->busid(), *c->login(), callChain.originators, 
-                       callChain.caller, sigCallChain);
-  } 
-  else 
-  {
-    CORBA::Any_var legacyChainAny = 
-      _piCurrent->get_slot(_slotId_legacyCallChain);
-    if (legacyChainAny >>= callChain)
+    CORBA::Any_var sigCallChainAny = 
+      _piCurrent->get_slot(_slotId_signedCallChain);
+    idl_ac::CallChain callChain;
+    idl_cr::SignedCallChain sigCallChain;
+    if (*sigCallChainAny >>= sigCallChain) 
     {
+      CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded,
+                                                         idl_ac::_tc_CallChain);
+      *callChainAny >>= callChain;
       return CallerChain(c->busid(), *c->login(), callChain.originators, 
-                         callChain.caller);
-    }
+                         callChain.caller, sigCallChain);
+    } 
     else 
     {
-      return CallerChain();
+      CORBA::Any_var legacyChainAny = 
+        _piCurrent->get_slot(_slotId_legacyCallChain);
+      return ( (legacyChainAny >>= callChain) 
+               ? CallerChain(c->busid(), *c->login(), callChain.originators, 
+                             callChain.caller)
+               : CallerChain() );
     }
   }
   return CallerChain();
@@ -155,31 +144,23 @@ CallerChain OpenBusContext::getJoinedChain()
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getJoinedChain");
   Connection *c = getDispatchConnection();
-  if (!c)
+  if (c)
   {
-    return CallerChain();
-  }
-  CORBA::Any_var sigCallChainAny=_piCurrent->get_slot(_slotId_joinedCallChain);
-  idl_cr::SignedCallChain sigCallChain;
-  if (*sigCallChainAny >>= sigCallChain) 
-  {
-    CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded, 
-                                                       idl_ac::_tc_CallChain);
-    idl_ac::CallChain callChain;
-    if (callChainAny >>= callChain) 
+    CORBA::Any_var sigCallChainAny = 
+      _piCurrent->get_slot(_slotId_joinedCallChain);
+    idl_cr::SignedCallChain sigCallChain;
+    if (*sigCallChainAny >>= sigCallChain) 
     {
-      return CallerChain(c->busid(), *c->login(), callChain.originators, 
-                         callChain.caller, sigCallChain);
-    } 
-    else
-    { 
-      return CallerChain();
+      CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded, 
+                                                         idl_ac::_tc_CallChain);
+      idl_ac::CallChain callChain;
+      return ( (callChainAny >>= callChain) 
+               ? CallerChain(c->busid(), *c->login(), callChain.originators, 
+                             callChain.caller, sigCallChain)
+               : CallerChain() );
     }
-  } 
-  else 
-  {
-    return CallerChain();
   }
+  return CallerChain();
 }
 
 void OpenBusContext::onCallDispatch(CallDispatchCallback c) 
