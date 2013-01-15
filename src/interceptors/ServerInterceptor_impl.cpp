@@ -8,12 +8,12 @@
 #include <iostream>
 #include <string>
 
-#define LOGINCACHE_LRU_SIZE 128
-
 namespace openbus 
 {
 namespace interceptors 
 {
+
+const std::size_t LRUSize = 128;
 
 Session::Session(std::size_t i, const std::string &login) 
   : id(i), remoteId(login)
@@ -40,7 +40,7 @@ ServerInterceptor::ServerInterceptor(
     _slotId_signedCallChain(slotId_signedCallChain),
     _slotId_legacyCallChain(slotId_legacyCallChain),
     _cdrCodec(cdr_codec), _openbusContext(0),
-    _sessionLRUCache(SessionLRUCache(LOGINCACHE_LRU_SIZE))
+    _sessionLRUCache(SessionLRUCache(LRUSize))
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");
@@ -86,7 +86,7 @@ void ServerInterceptor::sendCredentialReset(
   serviceContext.context_data = s;
   r.add_reply_service_context(serviceContext, true);          
 
-  throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode,
+  throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, 
                              CORBA::COMPLETED_NO);              
 }
 
@@ -98,32 +98,34 @@ Connection &ServerInterceptor::getDispatcher(OpenBusContext &context,
   Connection *conn = 0;
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::getDispatcher");
-  try 
+  if (context.onCallDispatch())
   {
-    if (context.onCallDispatch()) 
+    try 
     {
       conn = context.onCallDispatch()(context, busId, loginId, operation);
     }
-  } 
-  catch (...) 
-  {
-    // [TODO] mais detalhes?
-    l.level_log(warning_level, "Falha na execucao da callback CallDispatch.");
-  }
-  if (conn) 
-  {
-    if (!conn->login() || (conn->busid() != busId)) 
+    catch (...) 
     {
-      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
-    } 
-  } 
-  else 
+      l.level_log(warning_level, "Falha na execucao da callback CallDispatch.");
+    }
+
+    if (conn)
+    {
+      if (!conn->login() || (conn->busid() != busId)) 
+      {
+        throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, 
+                                   CORBA::COMPLETED_NO);
+      } 
+    }
+  }
+  else
   {
     if (!(conn = context.getDefaultConnection())) 
     {
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
   }
+  assert(conn);
   return *conn;
 }
 
