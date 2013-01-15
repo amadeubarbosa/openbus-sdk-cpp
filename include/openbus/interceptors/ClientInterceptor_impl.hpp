@@ -102,31 +102,36 @@ private:
 class IgnoreInterceptor 
 {
 public:
-  IgnoreInterceptor(PortableInterceptor::Current *c) : _piCurrent(c) 
+  IgnoreInterceptor(PortableInterceptor::Current &c) : _piCurrent(c) 
   {
     CORBA::Any ignoreInterceptorAny;
     ignoreInterceptorAny <<= CORBA::Any::from_boolean(true);
-    _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, 
+    _piCurrent.set_slot(ClientInterceptor::_slotId_ignoreInterceptor, 
                          ignoreInterceptorAny);
   }
 
   ~IgnoreInterceptor() 
   {
-    CORBA::Any ignoreInterceptorAny;
-    ignoreInterceptorAny <<= CORBA::Any::from_boolean(false);
-    _piCurrent->set_slot(ClientInterceptor::_slotId_ignoreInterceptor, 
-                         ignoreInterceptorAny); 
+    try
+    {
+      CORBA::Any ignoreInterceptorAny;
+      ignoreInterceptorAny <<= CORBA::Any::from_boolean(false);
+      _piCurrent.set_slot(ClientInterceptor::_slotId_ignoreInterceptor, 
+                           ignoreInterceptorAny); 
+    } catch (...)
+    {
+    }
   }
 
-  static bool status(PortableInterceptor::ClientRequestInfo *r) 
+  static bool status(PortableInterceptor::ClientRequestInfo &r) 
   {
     CORBA::Any_var any = 
-      r->get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
+      r.get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
     CORBA::Boolean b = 0;
     return ( (*any >>= CORBA::Any::to_boolean(b)) ? b : false );
   }
 private:
-  PortableInterceptor::Current *_piCurrent;
+  PortableInterceptor::Current &_piCurrent;
 };
 }
 }

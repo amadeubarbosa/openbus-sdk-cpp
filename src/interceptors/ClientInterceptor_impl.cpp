@@ -102,7 +102,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
               "ClientInterceptor::send_request");
   l.level_vlog(debug_level, "operation: %s", r->operation());
 
-  if (!IgnoreInterceptor::status(r)) 
+  if (!IgnoreInterceptor::status(*r)) 
   {
     Connection &conn = getCurrentConnection(*r);
     if (conn._login()) 

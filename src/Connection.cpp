@@ -145,7 +145,7 @@ Connection::Connection(const std::string host, const unsigned short port,
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
   CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
   {
-    interceptors::IgnoreInterceptor _i(_piCurrent);
+    interceptors::IgnoreInterceptor _i(*_piCurrent);
     _iComponent = scs::core::IComponent::_narrow(obj);
     obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
     _access_control = idl_ac::AccessControl::_narrow(obj);
@@ -160,7 +160,7 @@ Connection::Connection(const std::string host, const unsigned short port,
 	
   _loginCache = std::auto_ptr<LoginCache> (new LoginCache(_login_registry));
   {
-    interceptors::IgnoreInterceptor _i(_piCurrent);
+    interceptors::IgnoreInterceptor _i(*_piCurrent);
     _busid = _access_control->busid();
     CORBA::OctetSeq_var o = _access_control->buskey();
     _buskey = std::auto_ptr<PublicKey> (new PublicKey(o));
@@ -234,11 +234,10 @@ void Connection::loginByPassword(const std::string &entity,
     throw AlreadyLoggedIn();
   }
   
-  interceptors::IgnoreInterceptor _i(_piCurrent);
+  interceptors::IgnoreInterceptor _i(*_piCurrent);
   checkBusid();  
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
-  /* representacao do password em uma cadeia de bytes. */
   CORBA::ULong passSize = static_cast<CORBA::ULong> (password.size());
   idl::OctetSeq_var passOctetSeq = 
     new idl::OctetSeq(passSize, passSize, (CORBA::Octet *) 
@@ -251,8 +250,6 @@ void Connection::loginByPassword(const std::string &entity,
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _codec->encode_value(any);
 
-  /* cifrando a estrutura LoginAuthenticationInfo com a chave publica
-   * do barramento. */
   CORBA::OctetSeq encrypted = 
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length());
@@ -315,7 +312,7 @@ void Connection::loginByCertificate(const std::string &entity,
   idl::EncryptedBlock challenge;
   idl_ac::LoginProcess_var loginProcess;
   {
-    interceptors::IgnoreInterceptor _i(_piCurrent);
+    interceptors::IgnoreInterceptor _i(*_piCurrent);
     checkBusid();
     loginProcess = _access_control->startLoginByCertificate(entity.c_str(),
                                                             challenge);
@@ -335,8 +332,6 @@ void Connection::loginByCertificate(const std::string &entity,
   CORBA::OctetSeq_var 
     encodedLoginAuthenticationInfo = _codec->encode_value(any);
   
-  /* cifrando a estrutura LoginAuthenticationInfo com a chave publica
-   * do barramento. */
   CORBA::OctetSeq encrypted = 
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length());
@@ -344,7 +339,7 @@ void Connection::loginByCertificate(const std::string &entity,
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
   
-  interceptors::IgnoreInterceptor _i(_piCurrent);
+  interceptors::IgnoreInterceptor _i(*_piCurrent);
   idl_ac::ValidityTime validityTime;    
   idl_ac::LoginInfo *loginInfo;
   try 
@@ -421,7 +416,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
     throw AlreadyLoggedIn();
   }
   
-  interceptors::IgnoreInterceptor _i(_piCurrent);
+  interceptors::IgnoreInterceptor _i(*_piCurrent);
   checkBusid();  
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
@@ -434,8 +429,6 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   CORBA::OctetSeq_var 
     encodedLoginAuthenticationInfo = _codec->encode_value(any);
 
-  /* cifrando a estrutura LoginAuthenticationInfo com a chave ppblica
-   * do barramento. */
   CORBA::OctetSeq encrypted = 
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length());
