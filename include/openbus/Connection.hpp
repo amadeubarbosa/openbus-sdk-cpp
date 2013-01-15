@@ -297,7 +297,7 @@ private:
 #endif
 
   void checkBusid() const;
-  bool _logout(bool local);
+  bool _logout(bool local = true);
   CORBA::ORB_ptr orb() const 
   { 
     return _orb; 

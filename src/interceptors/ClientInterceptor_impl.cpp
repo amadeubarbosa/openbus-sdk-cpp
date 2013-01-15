@@ -160,7 +160,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
           } 
           else
           {
-            memset(buf.get() + idSize+remoteIdSize, '\0', 
+            std::memset(buf.get() + idSize + remoteIdSize, '\0', 
                    idl::EncryptedBlockSize);
           }
           SHA256(buf.get(), bufSize, hash);
@@ -205,7 +205,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
           }
           else
           {
-            memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
+            std::memset(credential.chain.signature, '\0', 
+                        idl::EncryptedBlockSize);
           }
         }
       } 
@@ -213,8 +214,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
       {
         credential.ticket = 0;
         credential.session = 0;
-        memset(credential.hash, '\0', idl::HashValueSize);
-        memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
+        std::memset(credential.hash, '\0', idl::HashValueSize);
+        std::memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       }
       
       CORBA::Any any;
@@ -374,7 +375,7 @@ void ClientInterceptor::receive_exception(
         {
           if (!std::strcmp(conn._login()->id.in(), oldLogin.id.in())) 
           {
-            conn._logout(true);
+            conn._logout();
             l.log("Connection::INVALID: throw NoLoginCode");
             throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode,
                                        CORBA::COMPLETED_NO);

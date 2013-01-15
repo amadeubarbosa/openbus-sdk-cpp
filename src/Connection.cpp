@@ -122,14 +122,11 @@ void Connection::checkBusid() const
   }
 }
 
-Connection::Connection(const std::string host, const unsigned short port, 
-                       CORBA::ORB_ptr orb, IOP::Codec *c, 
-                       PortableInterceptor::SlotId s1, 
-                       PortableInterceptor::SlotId s2,
-                       PortableInterceptor::SlotId s3,
-                       PortableInterceptor::SlotId s4,
-                       OpenBusContext &m, 
-                       const std::vector<std::string> &props) 
+Connection::Connection(
+  const std::string host, const unsigned short port, CORBA::ORB_ptr orb, 
+  IOP::Codec *c, PortableInterceptor::SlotId s1, PortableInterceptor::SlotId s2,
+  PortableInterceptor::SlotId s3, PortableInterceptor::SlotId s4, 
+  OpenBusContext &m, const std::vector<std::string> &props) 
   : _host(host), _port(port), _orb(orb), _codec(c), 
     _slotId_joinedCallChain(s1), 
     _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), 
@@ -199,15 +196,15 @@ Connection::~Connection()
   log_scope l(log().general_logger(), info_level, "Connection::~Connection");
   try
   {
-    _logout(true);
+    _logout();
   }
-  catch(...)
+  catch (...) 
   {
     try
     {
       l.log("Exception thrown in destructor. Ignoring exception");
     }
-    catch(...)
+    catch (...)
     {
     }
   }
