@@ -7,9 +7,12 @@
 #include "openbus/log.hpp"
 
 #include <openssl/sha.h>
+
+#include <cstddef>
+#include <cstring>
 #include <sstream>
 
-#define CACHE_LRU_SIZE 128
+const std::size_t LRUSize = 128;
 
 namespace openbus 
 {
@@ -20,25 +23,23 @@ namespace interceptors
 
 PortableInterceptor::SlotId ClientInterceptor::_slotId_ignoreInterceptor;
 
-/* monta uma indentificador(chave) para uma requisição através de uma
- * hash do profile. */
-std::string getSessionKey(PortableInterceptor::ClientRequestInfo *r) 
+std::string getSessionKey(PortableInterceptor::ClientRequestInfo &r) 
 {
   idl::HashValue profileDataHash;
   ::IOP::TaggedProfile::_profile_data_seq profile = 
-      r->effective_profile()->profile_data;
+    r.effective_profile()->profile_data;
   SHA256(profile.get_buffer(), profile.length(), profileDataHash);
   return std::string((const char*) profileDataHash, idl::HashValueSize);
 }
 
 Connection &ClientInterceptor::getCurrentConnection(
-  PortableInterceptor::ClientRequestInfo *r)
+  PortableInterceptor::ClientRequestInfo &r)
 {
   log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::getCurrentConnection");
   Connection *conn = 0;
   CORBA::Any_var connectionAddrAny;
-  connectionAddrAny = r->get_slot(_slotId_requesterConnection);
+  connectionAddrAny = r.get_slot(_slotId_requesterConnection);
   idl::OctetSeq connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) 
   {
@@ -59,32 +60,23 @@ Connection &ClientInterceptor::getCurrentConnection(
   return *conn;
 }
 
-CallerChain ClientInterceptor::getJoinedChain(
-  Connection &c, 
-  PortableInterceptor::ClientRequestInfo *r)
+CallerChain ClientInterceptor::getJoinedChain(Connection &c, 
+  PortableInterceptor::ClientRequestInfo &r)
 {
-  CORBA::Any_var signedCallChainAny= r->get_slot(_slotId_joinedCallChain);
+  CORBA::Any_var signedCallChainAny= r.get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) 
   {
     CORBA::Any_var callChainAny =
-      _cdrCodec->decode_value(signedCallChain.encoded, 
-                              idl_ac::_tc_CallChain);
+      _cdrCodec->decode_value(signedCallChain.encoded, idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
-    if (callChainAny >>= callChain) 
+    if (callChainAny >>= callChain)
     {
       return CallerChain(c.busid(), *c.login(), callChain.originators, 
                          callChain.caller, signedCallChain);
-    } 
-    else 
-    {
-      return CallerChain();
     }
-  } 
-  else
-  {
-    return CallerChain();
   }
+  return CallerChain();
 }
 
 ClientInterceptor::ClientInterceptor(
@@ -95,8 +87,8 @@ ClientInterceptor::ClientInterceptor(
   : _cdrCodec(cdr_codec), 
     _slotId_requesterConnection(slotId_requesterConnection), 
     _slotId_joinedCallChain(slotId_joinedCallChain), 
-    _sessionLRUCache(SessionLRUCache(CACHE_LRU_SIZE)),
-    _callChainLRUCache(CallChainLRUCache(CACHE_LRU_SIZE)), 
+    _sessionLRUCache(SessionLRUCache(LRUSize)),
+    _callChainLRUCache(CallChainLRUCache(LRUSize)), 
     _openbusContext(0)
 { 
   log_scope l(log().general_logger(), info_level, 
@@ -106,14 +98,13 @@ ClientInterceptor::ClientInterceptor(
 
 void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
 {
-  const char *operation = r->operation();
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::send_request");
-  l.level_vlog(debug_level, "operation: %s", operation);
+  l.level_vlog(debug_level, "operation: %s", r->operation());
 
   if (!IgnoreInterceptor::status(r)) 
   {
-    Connection &conn = getCurrentConnection(r);
+    Connection &conn = getCurrentConnection(*r);
     if (conn._login()) 
     {
       l.vlog("login: %s", conn._login()->id.in());
@@ -121,11 +112,10 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
       IOP::ServiceContext serviceContext;
       serviceContext.context_id = idl_cr::CredentialContextId;
 
-      /* montando uma credencial com os dados(busid e login) da conexão. */
       idl_cr::CredentialData credential;
       credential.bus = CORBA::string_dup(conn._busid.c_str());
       credential.login = CORBA::string_dup(conn._login()->id);      
-      std::string sessionKey = getSessionKey(r);    
+      std::string sessionKey = getSessionKey(*r);    
       SecretSession session;
 #ifdef OPENBUS_SDK_MULTITHREAD
       boost::unique_lock<boost::mutex> lock(_mutex);
@@ -142,18 +132,17 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
       {
         credential.session = session.id;
         credential.ticket = ++session.ticket;
-        int bufSize = 22 + strlen(operation);
+        int bufSize = 22 + strlen(r->operation());
         std::auto_ptr<unsigned char> buf (new unsigned char[bufSize]());
-        unsigned char *pBuf = buf.get();
-        pBuf[0] = idl::MajorVersion;
-        pBuf[1] = idl::MinorVersion;
-        memcpy(pBuf+2, session.secret->get_buffer(), 16);
-        memcpy(pBuf+18, &credential.ticket, 4);
-        memcpy(pBuf+22, operation, strlen(operation));
-        SHA256(pBuf, bufSize, credential.hash);
+        buf.get()[0] = idl::MajorVersion;
+        buf.get()[1] = idl::MinorVersion;
+        std::memcpy(buf.get()+2, session.secret->get_buffer(), 16);
+        std::memcpy(buf.get()+18, &credential.ticket, 4);
+        std::memcpy(buf.get()+22, r->operation(), strlen(r->operation()));
+        SHA256(buf.get(), bufSize, credential.hash);
         
-        callerChain = getJoinedChain(conn, r);
-        if (strcmp(idl::BusLogin, session.remoteId.in())) 
+        callerChain = getJoinedChain(conn, *r);
+        if (std::strcmp(idl::BusLogin, session.remoteId.in())) 
         {
           idl::HashValue hash;
           CORBA::String_var connId = CORBA::string_dup(conn._login()->id);
@@ -161,20 +150,20 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
           size_t remoteIdSize = strlen(session.remoteId.in());
           bufSize = idSize + remoteIdSize + idl::EncryptedBlockSize;
           buf.reset(new unsigned char[bufSize]());
-          unsigned char *pBuf = buf.get();
-          memcpy(pBuf, connId, idSize);
-          memcpy(pBuf+idSize, session.remoteId.in(), remoteIdSize);
+          std::memcpy(buf.get(), connId, idSize);
+          std::memcpy(buf.get() + idSize, session.remoteId.in(), remoteIdSize);
           if (callerChain != CallerChain())
           {
-            memcpy(pBuf+idSize+remoteIdSize, 
+            std::memcpy(buf.get()+idSize+remoteIdSize, 
                    callerChain.signedCallChain()->signature, 
                    idl::EncryptedBlockSize);
           } 
           else
           {
-            memset(pBuf+idSize+remoteIdSize, '\0', idl::EncryptedBlockSize);
+            memset(buf.get() + idSize+remoteIdSize, '\0', 
+                   idl::EncryptedBlockSize);
           }
-          SHA256(pBuf, bufSize, hash);
+          SHA256(buf.get(), bufSize, hash);
           std::string shash((const char*) hash, idl::HashValueSize);
           idl_cr::SignedCallChain signedCallChain;
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -190,7 +179,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
 #endif
           if (b2) 
           {
-            l.level_vlog(debug_level,
+            l.level_vlog(debug_level, 
                          "Recuperando signedCallChain. remoteid: %s", 
                          session.remoteId.in());
             credential.chain = signedCallChain;
@@ -228,7 +217,6 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
         memset(credential.chain.signature, '\0', idl::EncryptedBlockSize);
       }
       
-      /* anexando a credencial a esta requisição. */
       CORBA::Any any;
       any <<= credential;
       CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
@@ -280,13 +268,12 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
 void ClientInterceptor::receive_exception(
   PortableInterceptor::ClientRequestInfo *r)
 {
-  const char *operation = r->operation();
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::receive_exception");
-  l.level_vlog(debug_level, "operation: %s", operation); 
+  l.level_vlog(debug_level, "operation: %s", r->operation()); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
 
-  if (!strcmp(r->received_exception_id(), 
+  if (!std::strcmp(r->received_exception_id(), 
               "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) 
   {
     CORBA::SystemException &ex = 
@@ -294,7 +281,7 @@ void ClientInterceptor::receive_exception(
     if (ex.completed() == CORBA::COMPLETED_NO) 
     {
       l.level_vlog(debug_level, "minor: %d", ex.minor());
-      Connection &conn = getCurrentConnection(r);
+      Connection &conn = getCurrentConnection(*r);
       if (ex.minor() == idl_ac::InvalidCredentialCode) 
       {
         l.level_vlog(debug_level, "creating credential session");
@@ -325,7 +312,7 @@ void ClientInterceptor::receive_exception(
             (new CORBA::OctetSeq (conn._key.decrypt(credentialReset.challenge,
                                                     idl::EncryptedBlockSize)));
 
-          std::string sessionKey = getSessionKey(r);
+          std::string sessionKey = getSessionKey(*r);
           
           SecretSession session;
           session.id = credentialReset.session;
@@ -360,12 +347,11 @@ void ClientInterceptor::receive_exception(
 #ifdef OPENBUS_SDK_MULTITHREAD
         conn_lock.unlock();
 #endif
-        Connection::InvalidLoginCallback_t callback = conn.onInvalidLogin();
         try 
         {
-          if (callback) 
+          if (conn.onInvalidLogin()) 
           {
-            (callback)(conn, oldLogin);
+            conn.onInvalidLogin()(conn, oldLogin);
           }
         } 
         catch (...) 
@@ -373,6 +359,7 @@ void ClientInterceptor::receive_exception(
           l.level_log(warning_level, 
                       "Falha na execucao da callback OnInvalidLogin.");
         }
+
         if (conn._state == Connection::LOGGED)
         {
           throw PortableInterceptor::ForwardRequest(r->target(), false); 
@@ -385,7 +372,7 @@ void ClientInterceptor::receive_exception(
         } 
         else if (conn._state == Connection::INVALID) 
         {
-          if (!strcmp(conn._login()->id.in(), oldLogin.id.in())) 
+          if (!std::strcmp(conn._login()->id.in(), oldLogin.id.in())) 
           {
             conn._logout(true);
             l.log("Connection::INVALID: throw NoLoginCode");

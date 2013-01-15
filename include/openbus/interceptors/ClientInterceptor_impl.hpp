@@ -62,9 +62,9 @@ public:
     _openbusContext = &m; 
   }
 
-  Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo *);
+  Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo &);
   openbus::CallerChain getJoinedChain(Connection &, 
-                                      PortableInterceptor::ClientRequestInfo *);
+                                      PortableInterceptor::ClientRequestInfo &);
   static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
 private:
 
@@ -123,14 +123,7 @@ public:
     CORBA::Any_var any = 
       r->get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
     CORBA::Boolean b = 0;
-    if (*any >>= CORBA::Any::to_boolean(b))
-    {
-      return b;
-    }
-    else 
-    {
-      return false;
-    }
+    return ( (*any >>= CORBA::Any::to_boolean(b)) ? b : false );
   }
 private:
   PortableInterceptor::Current *_piCurrent;
