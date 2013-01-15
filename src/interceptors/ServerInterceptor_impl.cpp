@@ -59,7 +59,6 @@ void ServerInterceptor::sendCredentialReset(
   _sessionLRUCache.insert(session.id, session);
   credentialReset.session = session.id;
 
-  /* cifrando o segredo com a chave pública do cliente. */
   CORBA::OctetSeq encrypted =
     caller.pubKey->encrypt(session.secret, secretSize); 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -80,7 +79,6 @@ void ServerInterceptor::sendCredentialReset(
   any <<= credentialReset;
   CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
 
-  /* anexando CredentialReset a resposta para o cliente. */
   IOP::ServiceContext serviceContext;
   serviceContext.context_id = idl_cr::CredentialContextId;
   IOP::ServiceContext::_context_data_seq s(o->length(), o->length(),
@@ -132,12 +130,10 @@ Connection &ServerInterceptor::getDispatcher(OpenBusContext &context,
 void ServerInterceptor::receive_request_service_contexts(
   PortableInterceptor::ServerRequestInfo *r)
 {
-  const char *operation = r->operation();
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::receive_request_service_contexts");
-  l.level_vlog(debug_level, "operation: %s", operation);
+  l.level_vlog(debug_level, "operation: %s", r->operation());
   
-  /* extraindo a credencial desta requisição. */
   CORBA::Any_var any;
   bool hasContext = true;
   try 
@@ -145,10 +141,10 @@ void ServerInterceptor::receive_request_service_contexts(
     IOP::ServiceContext_var sc =
       r->get_request_service_context(idl_cr::CredentialContextId);
     IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
-    CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);
+    CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer());
     any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
   }
-  catch (CORBA::BAD_PARAM &) 
+  catch (const CORBA::BAD_PARAM &) 
   {
     hasContext = false;
   }
@@ -158,10 +154,8 @@ void ServerInterceptor::receive_request_service_contexts(
     Connection &conn = getDispatcher(*_openbusContext,
                                      std::string(credential.bus), 
                                      std::string(credential.login),
-                                     std::string(operation));
+                                     std::string(r->operation()));
 
-    /* disponibilizando a conexão atual para
-     * OpenBusContext::getCurrentConnection() */
     size_t const bufSize = sizeof(Connection*);
     unsigned char buf[bufSize];
     Connection *_c = &conn;
@@ -172,13 +166,8 @@ void ServerInterceptor::receive_request_service_contexts(
     connectionAddrAny <<= *(connectionAddrOctetSeq);
     r->set_slot(_slotId_requesterConnection, connectionAddrAny);
 
-    /* Disponibilização da conexão que está recebendo esta chamada. 
-    ** Uso em OpenBusContext::getCallerChain() */
     r->set_slot(_slotId_receiveConnection, connectionAddrAny);
 
-    /* definindo a conexão atual como a conexão a ser utilizada pelas
-    ** chamadas remotas a serem realizadas por este ponto de
-    ** interceptação */
     _openbusContext->setCurrentConnection(&conn);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -193,8 +182,6 @@ void ServerInterceptor::receive_request_service_contexts(
 #endif
 
     Login *caller;
-    /* consulta ao cache de logins para saber se este login é valido. 
-    ** obtenção da estrutura Login referente a este login id. (caller) */
     if (strcmp(credential.bus.in(), conn._busid.c_str())) 
     {
       l.log("Login diferente daquele que iniciou a sessão.");
@@ -244,8 +231,6 @@ void ServerInterceptor::receive_request_service_contexts(
     std::string remoteId;
     if (hasSession) 
     {
-      /* montando uma hash com os dados da credencial recebida e da
-       * sessão existente. */
       size_t operationSize = strlen(r->operation());
       int bufSize = 22 + operationSize;
       std::auto_ptr<unsigned char> buf(new unsigned char[bufSize]());
@@ -272,18 +257,15 @@ void ServerInterceptor::receive_request_service_contexts(
 #endif
     }
 
-    if (!(hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) && 
-          !strcmp(remoteId.c_str(), credential.login.in()) 
+    if (!(hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) 
+          && !strcmp(remoteId.c_str(), credential.login.in()) 
           && tickets_check(t, credential.ticket))) 
     {
       l.level_vlog(debug_level, 
                    "credential not valid, try to reset credetial session");
       sendCredentialReset(conn, *caller, *r);
     }
-
-    /* a credencial recebida é válida. */
     l.level_vlog(debug_level, "credential is valid");
-
     if (!credential.chain.encoded.length())
     {
       throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
@@ -294,8 +276,8 @@ void ServerInterceptor::receive_request_service_contexts(
            credential.chain.encoded.length(), hashChain);
 
     if (!conn._buskey->verify(credential.chain.signature, 
-                               idl::EncryptedBlockSize, hashChain, 
-                               idl::HashValueSize))
+                              idl::EncryptedBlockSize, hashChain, 
+                              idl::HashValueSize))
     {
       throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
     }
@@ -315,13 +297,11 @@ void ServerInterceptor::receive_request_service_contexts(
 #endif
       if (res) 
       { 
-        /* a cadeia tem como destino(target) outro login. */
         sendCredentialReset(conn, *caller, *r);
       }
       else if (strcmp(callChain.caller.id, caller->loginInfo->id)) 
       {
-        /* o último elemento da cadeia não é quem está me chamando. */
-        throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode,
+        throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, 
                                    CORBA::COMPLETED_NO);
       }
       else 
