@@ -28,7 +28,7 @@ OpenBusContext::~OpenBusContext()
 }
 
 std::auto_ptr<Connection> 
-OpenBusContext::createConnection(const std::string host, short port, 
+OpenBusContext::createConnection(const std::string host, unsigned short port, 
                                  std::vector<std::string> props)
 {
   log_scope l(log().general_logger(), debug_level, 

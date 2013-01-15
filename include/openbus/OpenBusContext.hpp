@@ -222,7 +222,8 @@ public:
    *
    * @return Conexão criada.
    */
-  std::auto_ptr<Connection> createConnection(const std::string host, short port,
+  std::auto_ptr<Connection> createConnection(const std::string host, 
+                                             unsigned short port,
                                              std::vector<std::string> props 
                                              = std::vector<std::string>());
    
