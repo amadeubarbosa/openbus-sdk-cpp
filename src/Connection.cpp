@@ -567,34 +567,19 @@ Connection::InvalidLoginCallback_t Connection::onInvalidLogin()
   return _onInvalidLogin; 
 }
 
-const idl_ac::LoginInfo *Connection::login() 
+const idl_ac::LoginInfo *Connection::login() const 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;
 #endif
-  if (_state == INVALID) 
-  {
-    return 0;
-  }
-  else
-  {
-    return _loginInfo.get();
-  }
+  return ((_state == INVALID) ? 0 : _loginInfo.get());
 }
 
-const std::string Connection::busid() 
+const std::string Connection::busid() const
 { 
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;
 #endif
-//[DOUBT] isso e necessario?
-  if (_state == INVALID)
-  {
-    return std::string();
-  }
-  else
-  {
-    return _busid;
-  }
+  return ((_state == INVALID) ? std::string() : _busid);
 }
 }

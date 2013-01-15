@@ -114,15 +114,9 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
   if (!IgnoreInterceptor::status(r)) 
   {
     Connection &conn = getCurrentConnection(r);
-#ifdef OPENBUS_SDK_MULTITHREAD
-    boost::unique_lock<boost::mutex> conn_lock(conn._mutex);
-#endif
     if (conn._login()) 
     {
       l.vlog("login: %s", conn._login()->id.in());
-#ifdef OPENBUS_SDK_MULTITHREAD
-      conn_lock.unlock();
-#endif
       CallerChain callerChain;
       IOP::ServiceContext serviceContext;
       serviceContext.context_id = idl_cr::CredentialContextId;
@@ -130,16 +124,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
       /* montando uma credencial com os dados(busid e login) da conexão. */
       idl_cr::CredentialData credential;
       credential.bus = CORBA::string_dup(conn._busid.c_str());
-#ifdef OPENBUS_SDK_MULTITHREAD
-      conn_lock.lock();
-#endif
-      credential.login = CORBA::string_dup(conn._login()->id);
-#ifdef OPENBUS_SDK_MULTITHREAD
-      conn_lock.unlock();
-#endif
-      
-      std::string sessionKey = getSessionKey(r);
-    
+      credential.login = CORBA::string_dup(conn._login()->id);      
+      std::string sessionKey = getSessionKey(r);    
       SecretSession session;
 #ifdef OPENBUS_SDK_MULTITHREAD
       boost::unique_lock<boost::mutex> lock(_mutex);
@@ -170,13 +156,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
         if (strcmp(idl::BusLogin, session.remoteId.in())) 
         {
           idl::HashValue hash;
-#ifdef OPENBUS_SDK_MULTITHREAD
-          conn_lock.lock();
-#endif
           CORBA::String_var connId = CORBA::string_dup(conn._login()->id);
-#ifdef OPENBUS_SDK_MULTITHREAD
-          conn_lock.unlock();
-#endif
           size_t idSize = strlen(connId);
           size_t remoteIdSize = strlen(session.remoteId.in());
           bufSize = idSize + remoteIdSize + idl::EncryptedBlockSize;
@@ -260,14 +240,8 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
       IOP::ServiceContext legacyContext;
       legacyContext.context_id = 1234;
       legacy::v1_5::Credential legacyCredential;
-#ifdef OPENBUS_SDK_MULTITHREAD
-      conn_lock.lock();
-#endif
       legacyCredential.identifier = CORBA::string_dup(conn._login()->id);
       legacyCredential.owner = CORBA::string_dup(conn._login()->entity);
-#ifdef OPENBUS_SDK_MULTITHREAD
-      conn_lock.unlock();
-#endif
       if (callerChain != CallerChain())
       {
         if (conn._legacyDelegate == Connection::ORIGINATOR 

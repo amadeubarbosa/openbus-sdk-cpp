@@ -5,6 +5,7 @@
 #include "openbus/log.hpp"
 #include "stubs/credential_v1_5.h"
 
+#include <cstring>
 #include <iostream>
 #include <string>
 
@@ -65,14 +66,8 @@ void ServerInterceptor::sendCredentialReset(
   lock.unlock();
 #endif
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-  boost::unique_lock<boost::mutex> conn_lock(conn._mutex);
-#endif
   credentialReset.login = conn._login()->id;
-#ifdef OPENBUS_SDK_MULTITHREAD
-  conn_lock.unlock();
-#endif
-  memcpy(credentialReset.challenge, encrypted.get_buffer(),
+  std::memcpy(credentialReset.challenge, encrypted.get_buffer(),
          idl::EncryptedBlockSize);
 
   CORBA::Any any;
@@ -153,15 +148,14 @@ void ServerInterceptor::receive_request_service_contexts(
   idl_cr::CredentialData credential;
   if (hasContext && (any >>= credential)) 
   {
-    Connection &conn = getDispatcher(*_openbusContext,
-                                     std::string(credential.bus), 
-                                     std::string(credential.login),
-                                     std::string(r->operation()));
+    Connection &conn = getDispatcher(
+      *_openbusContext, std::string(credential.bus), 
+      std::string(credential.login), r->operation());
 
     size_t const bufSize = sizeof(Connection*);
     unsigned char buf[bufSize];
     Connection *_c = &conn;
-    memcpy(buf, &_c, bufSize);
+    std::memcpy(buf, &_c, bufSize);
     idl::OctetSeq_var connectionAddrOctetSeq =
       new idl::OctetSeq(bufSize, bufSize, buf);
     CORBA::Any connectionAddrAny;
@@ -172,16 +166,10 @@ void ServerInterceptor::receive_request_service_contexts(
 
     _openbusContext->setCurrentConnection(&conn);
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-    boost::unique_lock<boost::mutex> conn_lock(conn._mutex);
-#endif
     if (!conn._login())
     {
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
-#ifdef OPENBUS_SDK_MULTITHREAD
-    conn_lock.unlock();
-#endif
 
     Login *caller;
     if (strcmp(credential.bus.in(), conn._busid.c_str())) 
@@ -242,12 +230,12 @@ void ServerInterceptor::receive_request_service_contexts(
 #ifdef OPENBUS_SDK_MULTITHREAD
       lock.lock();
 #endif
-      memcpy(pBuf+2, session->secret, secretSize);
+      std::memcpy(pBuf+2, session->secret, secretSize);
 #ifdef OPENBUS_SDK_MULTITHREAD
       lock.unlock();
 #endif
-      memcpy(pBuf+18, &credential.ticket, 4);
-      memcpy(pBuf+22, r->operation(), operationSize);
+      std::memcpy(pBuf+18, &credential.ticket, 4);
+      std::memcpy(pBuf+22, r->operation(), operationSize);
       SHA256(pBuf, bufSize, hash);
 #ifdef OPENBUS_SDK_MULTITHREAD
       lock.lock();
@@ -259,8 +247,9 @@ void ServerInterceptor::receive_request_service_contexts(
 #endif
     }
 
-    if (!(hasSession && !memcmp(hash, credential.hash, idl::HashValueSize) 
-          && !strcmp(remoteId.c_str(), credential.login.in()) 
+    if (!(hasSession 
+          && !std::memcmp(hash, credential.hash, idl::HashValueSize) 
+          && !std::strcmp(remoteId.c_str(), credential.login.in()) 
           && tickets_check(t, credential.ticket))) 
     {
       l.level_vlog(debug_level, 
@@ -290,18 +279,11 @@ void ServerInterceptor::receive_request_service_contexts(
                                 idl_ac::_tc_CallChain);
       idl_ac::CallChain callChain;
       callChainAny >>= callChain;
-#ifdef OPENBUS_SDK_MULTITHREAD
-      conn_lock.lock();
-#endif
-      int res = strcmp(callChain.target, conn._login()->id);
-#ifdef OPENBUS_SDK_MULTITHREAD
-      conn_lock.unlock();
-#endif
-      if (res) 
+      if (std::strcmp(callChain.target, conn._login()->id)) 
       { 
         sendCredentialReset(conn, *caller, *r);
       }
-      else if (strcmp(callChain.caller.id, caller->loginInfo->id)) 
+      else if (std::strcmp(callChain.caller.id, caller->loginInfo->id)) 
       {
         throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, 
                                    CORBA::COMPLETED_NO);
@@ -343,7 +325,7 @@ void ServerInterceptor::receive_request_service_contexts(
                    legacyCredential.delegate.in());
       idl_ac::CallChain legacyChain;
       legacyChain.target = "";
-      if (strcmp(legacyCredential.delegate, "")) 
+      if (std::strcmp(legacyCredential.delegate, "")) 
       {
         legacyChain.originators.length(1);
         idl_ac::LoginInfo delegate;

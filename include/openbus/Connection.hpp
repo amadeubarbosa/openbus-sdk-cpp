@@ -268,12 +268,12 @@ public:
    * \brief Informações do login dessa conexão ou 'null' se a conexão não está
    * autenticada, ou seja, não tem um login válido no barramento.
    */
-  const idl_ac::LoginInfo *login();
+  const idl_ac::LoginInfo *login() const;
   
   /**
    * Identificador do barramento ao qual essa conexão se refere.
    */
-  const std::string busid();
+  const std::string busid() const;
   ~Connection();  
 private:
   /**
@@ -307,6 +307,9 @@ private:
   }
   const idl_ac::LoginInfo *_login() const 
   { 
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
     return _loginInfo.get(); 
   }
   const std::string _host;
@@ -319,7 +322,7 @@ private:
   PortableInterceptor::SlotId _slotId_receiveConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;
-  boost::mutex _mutex;
+  mutable boost::mutex _mutex;
 #else
   std::auto_ptr<RenewLogin> _renewLogin;
 #endif
