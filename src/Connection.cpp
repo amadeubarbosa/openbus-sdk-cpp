@@ -62,6 +62,7 @@ public:
 
   ~RenewLogin() 
   {
+    log_scope l(log().general_logger(), info_level, "RenewLogin::~RenewLogin");
     try
     {
       _orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);    
