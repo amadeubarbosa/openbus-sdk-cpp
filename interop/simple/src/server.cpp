@@ -15,9 +15,6 @@
 #include <fstream>
 #include <typeinfo>
 
-std::auto_ptr<openbus::Connection> conn;
-openbus::idl_or::ServicePropertySeq props;
-
 const std::string entity("interop_hello_cpp_server");
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello 
@@ -40,10 +37,12 @@ private:
 };
 
 void loginAndRegister(const openbus::OpenBusContext &busCtx, 
-                      scs::core::ComponentContext &compCtx)
+                      scs::core::ComponentContext &compCtx,
+                      const openbus::idl_or::ServicePropertySeq &props,
+                      openbus::Connection &conn)
 {
   const openbus::PrivateKey pKey(entity + ".key");
-  conn->loginByCertificate(entity, pKey);
+  conn.loginByCertificate(entity, pKey);
   busCtx.getOfferRegistry()->registerService(compCtx.getIComponent(), 
                                                       props);
 }
@@ -52,8 +51,10 @@ struct onInvalidLogin
 {
   typedef void result_type;
   onInvalidLogin(const openbus::OpenBusContext &busCtx, 
-                 scs::core::ComponentContext &ctx) 
-    : _busCtx(busCtx), _compCtx(ctx)
+                 scs::core::ComponentContext &ctx, 
+                 const openbus::idl_or::ServicePropertySeq &props,
+                 openbus::Connection  &conn) 
+    : _busCtx(busCtx), _compCtx(ctx), _props(props), _conn(conn)
   {
   }
 
@@ -62,7 +63,7 @@ struct onInvalidLogin
     try 
     {
       std::cout << "invalid login: " << l.id.in() << std::endl; 
-      loginAndRegister(_busCtx, _compCtx);
+      loginAndRegister(_busCtx, _compCtx, _props, _conn);
     } 
     catch (const CORBA::Exception &e) 
     {
@@ -72,6 +73,8 @@ struct onInvalidLogin
 private:
   const openbus::OpenBusContext &_busCtx;
   scs::core::ComponentContext &_compCtx;
+  const openbus::idl_or::ServicePropertySeq &_props;
+  openbus::Connection &_conn;
 };
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -129,7 +132,8 @@ int main(int argc, char **argv)
     
     openbus::OpenBusContext *busCtx = dynamic_cast<openbus::OpenBusContext *>
       (orb->resolve_initial_references("OpenBusContext"));
-    conn = busCtx->createConnection(host, port);
+    std::auto_ptr<openbus::Connection> conn = busCtx->createConnection(host, 
+                                                                       port);
     busCtx->setDefaultConnection(conn.get());
     
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -144,8 +148,7 @@ int main(int argc, char **argv)
     componentId.platform_spec = "c++";
     scs::core::ComponentContext compCtx(busCtx->orb(), componentId);
 
-    conn->onInvalidLogin(onInvalidLogin(*busCtx, compCtx));
-
+    openbus::idl_or::ServicePropertySeq props;
     props.length(1);
     openbus::idl_or::ServiceProperty property;
     CORBA::ULong i = 0;
@@ -153,11 +156,13 @@ int main(int argc, char **argv)
     property.value = "Interoperability Tests";
     props[i] = property;
 
+    conn->onInvalidLogin(onInvalidLogin(*busCtx, compCtx, props, *conn));
+
     HelloImpl srv(*busCtx);
     compCtx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", 
                      &srv);
 
-    loginAndRegister(*busCtx, compCtx);
+    loginAndRegister(*busCtx, compCtx, props, *conn);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
     orbRun.join();
