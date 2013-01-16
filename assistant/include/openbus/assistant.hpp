@@ -247,7 +247,7 @@ protected:
     }
     result_type operator()(AssistantImpl* self
                            , std::string hostname, unsigned short port, void_, void_
-                           , std::string entity, CORBA::OctetSeq private_key, void_, void_
+                           , std::string entity, PrivateKey private_key, void_, void_
                            , int& argc, char** argv
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
@@ -259,7 +259,7 @@ protected:
                                , login_error, register_error, fatal_error, find_error, l);
     }
     result_type operator()(AssistantImpl* self, std::string hostname, unsigned short port, void_, void_
-                           , std::string entity, CORBA::OctetSeq private_key, void_, void_, void_, void_
+                           , std::string entity, PrivateKey private_key, void_, void_, void_, void_
                            , login_error_callback_type login_error
                            , register_error_callback_type register_error
                            , fatal_error_callback_type fatal_error
@@ -593,7 +593,7 @@ struct Assistant : AssistantImpl
     (username, OPENBUS_ASSISTANT_STRING_LAMBDA())
     (entity, OPENBUS_ASSISTANT_STRING_LAMBDA())
     (password, OPENBUS_ASSISTANT_STRING_LAMBDA())
-    (private_key, (CORBA::OctetSeq))
+    (private_key, (openbus::PrivateKey))
     (in_out(argc), (int))
     (in_out(argv), (char**))
     (retry_wait, (unsigned int))
@@ -624,7 +624,7 @@ struct Assistant : AssistantImpl
    *  por certificado
    */
   OPENBUS_ASSISTANT_DECL
-  static Assistant createWithPrivateKey(const char* entity, const idl::OctetSeq privKey
+  static Assistant createWithPrivateKey(const char* entity, const PrivateKey privKey
                                         , const char* host, unsigned short port
                                         , int& argc, char** argv
                                         , login_error_callback_type login_error = login_error_callback_type()

@@ -340,7 +340,7 @@ Assistant Assistant::createWithPassword(const char* username, const char* passwo
   return assistant;
 }
  
-Assistant Assistant::createWithPrivateKey(const char* entity, const idl::OctetSeq privKey
+Assistant Assistant::createWithPrivateKey(const char* entity, const PrivateKey privKey
                                           , const char* host, unsigned short port
                                           , int& argc, char** argv
                                           , login_error_callback_type login_error

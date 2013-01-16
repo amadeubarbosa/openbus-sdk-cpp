@@ -6,7 +6,6 @@
 
 int main(int argc, char** argv)
 {
-  CORBA::OctetSeq key;
   if(argc < 2)
   {
     std::cout << "Test must be run with a command line" 
@@ -15,19 +14,10 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  {
-    std::ifstream key_file(argv[argc-1]);
-    key_file.seekg(0, std::ios::end);
-    std::size_t size = key_file.tellg();
-    key_file.seekg(0, std::ios::beg);
-    key.length(size);
-    key_file.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(key.get_buffer())), size);
-  }
-
   using namespace openbus::assistant::keywords;
   openbus::assistant::Assistant assistant
     ("localhost", 2089, _entity = "TestCppHello"
-     , _private_key = key
+     , _private_key = openbus::PrivateKey(argv[argc-1])
      , _argc = argc, _argv = argv, _log_level = logger::debug_level);
 
   waitLogin(assistant);
