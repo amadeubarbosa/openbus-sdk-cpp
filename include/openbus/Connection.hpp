@@ -69,45 +69,54 @@ struct OPENBUS_SDK_DECL InvalidLoginProcess : public std::exception
 
 struct OPENBUS_SDK_DECL InvalidPropertyValue : public std::exception 
 {
-  InvalidPropertyValue(const std::string &p, const std::string &v) 
+  InvalidPropertyValue(const std::string &p, const std::string &v) throw()
     : property(p), value(v) 
   { 
   }
-  ~InvalidPropertyValue() throw() 
+
+  ~InvalidPropertyValue() throw()
   { 
   }
+
   const char *what() const throw() 
   { 
     return "openbus::InvalidPropertyValue"; 
   }
-  std::string property;
-  std::string value;
+
+  const std::string property;
+  const std::string value;
 };
 
 /**
- * \brief Objeto que representa uma forma de acesso a um barramento.
+ * \brief Conexão para acesso identificado a um barramento.
  *
- * Uma conexão representa uma forma de acesso a um barramento. Basicamente, uma
- * conexão é usada para representar uma identidade de acesso a um barramento.  É
- * possível uma aplicação assumir múltiplas identidades ao acessar um ou mais
+ * Uma conexão é usada para realizar acessos identificados a um barramento.
+ * Denominamos esses acessos identificados ao barramento de login. Cada login
+ * possui um identificador único e está sempre associado ao nome de uma
+ * entidade que é autenticada no momento do estabelecimento do login.
+ * Há basicamente três formas de autenticação de entidade disponíveis:
+ * - Por Senha: veja a operação 'loginByPassword'
+ * - Por Certificado de login: veja a operação 'loginByCertificate'
+ * - Por Autenticação compartilhada: veja a operação 'loginBySharedAuth'
+ *
+ * A entidade associada ao login é responsável por todas as chamadas feitas
+ * através daquela conexão e essa entidade deve ser levada em consideração
+ * pelos serviços ofertados no barramento para decidir aceitar ou recusar
+ * chamadas.
+ *
+ * É possível uma aplicação assumir múltiplas identidades ao acessar um ou mais
  * barramentos criando múltiplas conexões para esses barramentos.
  * 
- * Para que as conexões possam ser efetivamente utilizadas elas precisam estar
- * autenticadas no barramento, que pode ser visto como um identificador de
- * acesso. Cada login possui um identificador único e é autenticado em nome de
- * uma entidade, que pode representar um sistema computacional ou mesmo uma
- * pessoa. A função da entidade é atribuir a responsabilidade as chamadas feitas
- * com aquele login.
- * 
- * É importante notar que a conexão define uma forma de acesso, mas não é usada
- * diretamente pela aplicação ao realizar ou receber chamadas, pois as chamadas
- * ocorrem usando proxies e servants de um ORB. As conexções que são
- * efetivamente usadas nas chamadas do ORB são definidas através do
- * OpenBusContext associado ao ORB.
+ * É importante notar que a conexão não é usada diretamente pela aplicação ao
+ * realizar ou receber chamadas, pois as chamadas ocorrem usando proxies e
+ * servants de um ORB. As conexões que são efetivamente usadas nas chamadas do
+ * ORB são definidas através do OpenBusContext associado ao ORB.
  */
 class OPENBUS_SDK_DECL Connection 
 {
 public:
+  typedef std::vector<std::pair<std::string, std::string> > 
+    ConnectionProperties;
   /**
    * \brief Callback de login inválido.
    * 
@@ -129,16 +138,17 @@ public:
   /**
   * Efetua login no barramento como uma entidade usando autenticação por senha.
   * 
+  * A autenticação por senha é validada usando um dos validadores de senha
+  * definidos pelo adminsitrador do barramento.
+  *
   * @param[in] entity Identificador da entidade a ser autenticada.
   * @param[in] password Senha de autenticação no barramento da entidade.
   * 
   * @throw AlreadyLoggedIn A conexão já está logada.
-  * @throw BusChanged O identificador do barramento mudou. Uma nova conexão 
-  *        deve ser criada.
-  * @throw tecgraf::openbus::core::v2_0::services::access_control::AccessDenied
+  * @throw idl_ac::AccessDenied
   *        Senha fornecida para autenticação da entidade não foi validada pelo 
   *        barramento.
-  * @throw tecgraf::openbus::core::v2_0::services::ServiceFailure 
+  * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
   * @throw CORBA::Exception
@@ -154,16 +164,14 @@ public:
   * @param[in] entity Identificador da entidade a ser conectada.
   * @param[in] privKey Chave privada da entidade utilizada na autenticação.
   * 
-  * @throw InvalidPrivateKey A chave privada fornecida não é válida.
   * @throw AlreadyLoggedIn A conexão já está autenticada.
-  * @throw BusChanged O identificador do barramento mudou. Uma nova conexão 
-  *        deve ser criada.
-  * @throw tecgraf::openbus::core::v2_0::services::access_control::AccessDenied 
+  * @throw idl_ac::AccessDenied 
   *        A chave privada fornecida não corresponde ao certificado da entidade 
   *        registrado no barramento indicado.
-  * @throw MissingCertificate Não há certificado para essa entidade registrado 
-  *        no barramento indicado.
-  * @throw tecgraf::openbus::core::v2_0::services::ServiceFailure 
+  * @throw idl_ac::MissingCertificate 
+  *        Não há certificado para essa entidade registrado no barramento
+  *        indicado.
+  * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
   * @throw CORBA::Exception
@@ -187,7 +195,7 @@ public:
   *         iniciado e de um segredo a ser fornecido na conclusão do processo 
   *         de login.
   *
-  * @throw tecgraf::openbus::core::v2_0::services::ServiceFailure 
+  * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu 
   *        o estabelecimento da conexão.
   * @throw CORBA::Exception
@@ -206,11 +214,9 @@ public:
   * @throw InvalidLoginProcess O LoginProcess informado é inválido, por exemplo 
   *        depois de ser cancelado ou ter expirado.
   * @throw AlreadyLoggedIn A conexão já está autenticada.
-  * @throw BusChangedO identificador do barramento mudou. Uma nova conexão deve 
-  *        ser criada.
-  * @throw tecgraf::openbus::core::v2_0::services::access_control::AccessDenied 
+  * @throw idl_ac::AccessDenied 
   *        O segredo fornecido não corresponde ao esperado pelo barramento.
-  * @throw tecgraf::openbus::core::v2_0::services::ServiceFailure 
+  * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviÃ§os do barramento que impediu o 
   *        estabelecimento da conexão.
   * @throw CORBA::Exception
@@ -236,8 +242,7 @@ public:
   bool logout();
   	
   /**
-   * \brief Estabiliza a callback a ser chamada quando o login atual se tornar
-   * inválido.
+   * \brief Callback a ser chamada quando o login atual se tornar inválido.
    *
    * Esse atributo é utilizado para definir um objeto função (function object)
    * que implementa uma interface de callback a ser chamada sempre que a conexão
@@ -286,7 +291,8 @@ private:
              PortableInterceptor::SlotId slotId_signedCallChain, 
              PortableInterceptor::SlotId slotId_legacyCallChain, 
              PortableInterceptor::SlotId slotId_receiveConnection, 
-             OpenBusContext &, const std::vector<std::string> &props);
+             OpenBusContext &, 
+             const ConnectionProperties &props);
 
   Connection(const Connection &);
   Connection &operator=(const Connection &);
@@ -373,6 +379,7 @@ private:
   std::string _busid;
   std::auto_ptr<PublicKey> _buskey;
   LegacyDelegate _legacyDelegate;
+  bool _legacyEnabled;
   /**/
     
   friend class openbus::interceptors::ServerInterceptor;

@@ -114,25 +114,18 @@ private:
 };
 #endif
 
-void Connection::checkBusid() const 
-{
-  if (std::strcmp(_busid.c_str(), _access_control->busid())) 
-  {
-    throw BusChanged();
-  }
-}
-
 Connection::Connection(
   const std::string host, const unsigned short port, CORBA::ORB_ptr orb, 
   IOP::Codec *c, PortableInterceptor::SlotId s1, PortableInterceptor::SlotId s2,
   PortableInterceptor::SlotId s3, PortableInterceptor::SlotId s4, 
-  OpenBusContext &m, const std::vector<std::string> &props) 
+  OpenBusContext &m, 
+  const ConnectionProperties &props) 
   : _host(host), _port(port), _orb(orb), _codec(c), 
     _slotId_joinedCallChain(s1), 
     _slotId_signedCallChain(s2), _slotId_legacyCallChain(s3), 
     _slotId_receiveConnection(s4), _loginInfo(0), 
     _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m), 
-    _legacyDelegate(CALLER)
+    _legacyDelegate(CALLER), _legacyEnabled(true)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
@@ -163,30 +156,28 @@ Connection::Connection(
     _buskey = std::auto_ptr<PublicKey> (new PublicKey(o));
   }
   
-  for (std::vector<std::string>::const_iterator it = props.begin(); 
+  for (ConnectionProperties::const_iterator it = props.begin(); 
        it != props.end(); ++it)
   {
-    if (*it == "legacydelegate")
+    std::pair<std::string, std::string> prop (*it);
+    if (prop.first == "legacy.delegate")
     {
-      if (++it != props.end())
+      if (prop.second == "originator")
       {
-        if (*it == "originator")
-        {
-          _legacyDelegate = ORIGINATOR;
-        }
-        else if (*it == "caller")
-        {
-          _legacyDelegate = CALLER;
-        }
-        else
-        {
-          throw InvalidPropertyValue("legacydelegate", *it);
-        }
+        _legacyDelegate = ORIGINATOR;
+      }
+      else if (prop.second == "caller")
+      {
+        _legacyDelegate = CALLER;
       }
       else
       {
-        throw InvalidPropertyValue("legacydelegate", *it);
+        throw InvalidPropertyValue("legacy.delegate", prop.second);
       }
+    }
+    else if (prop.first == "legacy.disable")
+    {
+      _legacyEnabled = false;
     }
   }
 }
@@ -232,7 +223,6 @@ void Connection::loginByPassword(const std::string &entity,
   }
   
   interceptors::IgnoreInterceptor _i(*_piCurrent);
-  checkBusid();  
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
   CORBA::ULong passSize = static_cast<CORBA::ULong> (password.size());
@@ -310,7 +300,6 @@ void Connection::loginByCertificate(const std::string &entity,
   idl_ac::LoginProcess_var loginProcess;
   {
     interceptors::IgnoreInterceptor _i(*_piCurrent);
-    checkBusid();
     loginProcess = _access_control->startLoginByCertificate(entity.c_str(),
                                                             challenge);
   }
@@ -326,12 +315,12 @@ void Connection::loginByCertificate(const std::string &entity,
   
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var 
-    encodedLoginAuthenticationInfo = _codec->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = 
+    _codec->encode_value(any);
   
-  CORBA::OctetSeq encrypted = 
-    _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
-                     encodedLoginAuthenticationInfo->length());
+  CORBA::OctetSeq encrypted = _buskey->encrypt(
+    encodedLoginAuthenticationInfo->get_buffer(), 
+    encodedLoginAuthenticationInfo->length());
 
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
@@ -342,9 +331,8 @@ void Connection::loginByCertificate(const std::string &entity,
   try 
   {
     loginInfo = loginProcess->login(bufKey, encryptedBlock, validityTime);
-
   } 
-  catch (idl_ac::WrongEncoding&) 
+  catch (const idl_ac::WrongEncoding &) 
   {
     throw idl_ac::AccessDenied();
   }
@@ -414,7 +402,6 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   }
   
   interceptors::IgnoreInterceptor _i(*_piCurrent);
-  checkBusid();  
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret;
   

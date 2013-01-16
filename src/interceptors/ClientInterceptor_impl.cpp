@@ -226,36 +226,39 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
       serviceContext.context_data = s;
       r->add_request_service_context(serviceContext, true);
       
-      IOP::ServiceContext legacyContext;
-      legacyContext.context_id = 1234;
-      legacy::v1_5::Credential legacyCredential;
-      legacyCredential.identifier = CORBA::string_dup(conn._login()->id);
-      legacyCredential.owner = CORBA::string_dup(conn._login()->entity);
-      if (callerChain != CallerChain())
+      if (conn._legacyEnabled)
       {
-        if (conn._legacyDelegate == Connection::ORIGINATOR 
-            && callerChain._originators.length())
+        IOP::ServiceContext legacyContext;
+        legacyContext.context_id = 1234;
+        legacy::v1_5::Credential legacyCredential;
+        legacyCredential.identifier = CORBA::string_dup(conn._login()->id);
+        legacyCredential.owner = CORBA::string_dup(conn._login()->entity);
+        if (callerChain != CallerChain())
         {
-          legacyCredential.delegate = 
-            CORBA::string_dup(callerChain._originators[0].entity);
+          if (conn._legacyDelegate == Connection::ORIGINATOR 
+              && callerChain._originators.length())
+          {
+            legacyCredential.delegate = 
+              CORBA::string_dup(callerChain._originators[0].entity);
+          }
+          else
+          {
+            legacyCredential.delegate = 
+              CORBA::string_dup(callerChain._caller.entity); 
+          }
         }
         else
         {
-          legacyCredential.delegate = 
-            CORBA::string_dup(callerChain._caller.entity); 
+          legacyCredential.delegate = "";
         }
+        CORBA::Any lany;
+        lany <<= legacyCredential;
+        o = _cdrCodec->encode_value(lany);
+        IOP::ServiceContext::_context_data_seq ls(o->length(), o->length(), 
+                                                  o->get_buffer());
+        legacyContext.context_data = ls;
+        r->add_request_service_context(legacyContext, true);
       }
-      else
-      {
-        legacyCredential.delegate = "";
-      }
-      CORBA::Any lany;
-      lany <<= legacyCredential;
-      o = _cdrCodec->encode_value(lany);
-      IOP::ServiceContext::_context_data_seq ls(o->length(), o->length(), 
-                                                o->get_buffer());
-      legacyContext.context_data = ls;
-      r->add_request_service_context(legacyContext, true);
     } 
     else 
     {

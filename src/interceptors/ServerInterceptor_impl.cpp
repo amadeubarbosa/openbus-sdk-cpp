@@ -298,6 +298,7 @@ void ServerInterceptor::receive_request_service_contexts(
   } 
   else 
   {
+    //[TODO] conn._legacyEnabled
     l.level_vlog(debug_level, "verificando se existe uma credencial legacy");
     hasContext = true;
     CORBA::Any_var lany;
@@ -348,7 +349,7 @@ void ServerInterceptor::receive_request_service_contexts(
       CORBA::Any legacyChainAny;
       legacyChainAny <<= legacyChain;
       r->set_slot(_slotId_legacyCallChain, legacyChainAny);
-    } 
+    }
     else
     {
       throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, CORBA::COMPLETED_NO);

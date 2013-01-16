@@ -25,7 +25,7 @@ OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb, IOP::Codec *c,
 
 std::auto_ptr<Connection> OpenBusContext::createConnection(
   const std::string host, unsigned short port, 
-  const std::vector<std::string> &props)
+  const Connection::ConnectionProperties &props)
 {
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::createConnection");
@@ -113,12 +113,16 @@ CallerChain OpenBusContext::getCallerChain()
     } 
     else 
     {
-      CORBA::Any_var legacyChainAny = 
-        _piCurrent->get_slot(_slotId_legacyCallChain);
-      return ( (legacyChainAny >>= callChain) 
-               ? CallerChain(c->busid(), *c->login(), callChain.originators, 
-                             callChain.caller)
-               : CallerChain() );
+      if (c->_legacyEnabled)
+      {
+        CORBA::Any_var legacyChainAny = 
+          _piCurrent->get_slot(_slotId_legacyCallChain);
+        if (legacyChainAny >>= callChain) 
+        {
+          return CallerChain(c->busid(), *c->login(), callChain.originators, 
+                             callChain.caller);
+        }
+      }
     }
   }
   return CallerChain();
@@ -154,10 +158,11 @@ CallerChain OpenBusContext::getJoinedChain()
       CORBA::Any_var callChainAny = _codec->decode_value(sigCallChain.encoded, 
                                                          idl_ac::_tc_CallChain);
       idl_ac::CallChain callChain;
-      return ( (callChainAny >>= callChain) 
-               ? CallerChain(c->busid(), *c->login(), callChain.originators, 
-                             callChain.caller, sigCallChain)
-               : CallerChain() );
+      if (callChainAny >>= callChain) 
+      {
+        return CallerChain(c->busid(), *c->login(), callChain.originators, 
+                           callChain.caller, sigCallChain);
+      }
     }
   }
   return CallerChain();

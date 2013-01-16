@@ -86,21 +86,28 @@ struct OPENBUS_SDK_DECL CallerChain
     return _busid;
   }
 
+	/**
+   * Login para o qual a chamada estava destinada. Só é possível fazer chamadas
+   * dentro dessa cadeia (através do método joinChain da interface 
+   * OpenBusContext) se o login da conexão corrente for o mesmo do target.
+   *
+   * No caso de conexões legadas, este campo será nulo e será possível fazer
+   * qualquer chamada como parte dessa cadeia. Contudo, todas as chamadas
+   * feitas como parte de uma cadeia de uma chamada legada serão feitas
+   * utilizando apenas o protocolo do OpenBus 1.5 (apenas com credenciais
+   * legadas) e portanto serão recusadas por serviços que não aceitem chamadas
+   * legadas (OpenBus 1.5).
+   */
   const idl_ac::LoginInfo &target() const
   {
     return _target;
   }
-
-  /**
-  * Lista de informações de login de todas as entidades que realizaram
-  * chamadas que originaram a cadeia de chamadas da qual essa chamada
-  * está inclusa.  Quando essa lista é vazia isso indica que a chamada
-  * não está inclusa em uma cadeia de chamadas.
-  * 
-  * A ordem da sequência retornada é começando da fonte da cadeia até
-  * o penúltimo da cadeia na chamada. Assim, originators()[0], se
-  * existir, é quem originou a chamada de cadeia.
-  */
+  
+	/**
+	 * Lista de informações de login de todas as entidades que originaram as
+	 * chamadas nessa cadeia. Quando essa lista é vazia isso indica que a
+	 * chamada não está inclusa em outra cadeia de chamadas.
+	 */
   const idl_ac::LoginInfoSeq &originators() const 
   {
     return _originators;
@@ -199,11 +206,6 @@ public:
    *        configurações sobre a forma que as chamadas realizadas ou validadas
    *        com essa conexão são feitas. A seguir são listadas as propriedades
    *        válidas:
-   *        - access.key: chave de acesso a ser utiliza internamente para a
-   *          geração de credenciais que identificam as chamadas através do
-   *          barramento. A chave deve ser uma chave privada RSA de 2048 bits
-   *          (256 bytes). Quando essa propriedade não é fornecida, uma chave
-   *          de acesso é gerada automaticamente.
    *        - legacy.disable: desabilita o suporte a chamadas usando protocolo
    *          OpenBus 1.5. Por padrão o suporte está habilitado.
    *        - legacy.delegate: indica como é preenchido o campo 'delegate' das
@@ -223,7 +225,8 @@ public:
    */
   std::auto_ptr<Connection> createConnection(
     const std::string host, unsigned short port, 
-    const std::vector<std::string> &props = std::vector<std::string>());
+    const Connection::ConnectionProperties &props = 
+    Connection::ConnectionProperties());
    
   /**
    * \brief Define a conexão padrão a ser usada nas chamadas.
