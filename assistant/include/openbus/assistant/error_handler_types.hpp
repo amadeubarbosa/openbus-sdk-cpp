@@ -3,8 +3,8 @@
 #ifndef OPENBUS_ASSISTANT_ERROR_HANDLER_TYPES_H
 #define OPENBUS_ASSISTANT_ERROR_HANDLER_TYPES_H
 
-#include <openbus/assistant/overloaded_error_handler.h>
-#include <openbus/assistant/exceptions.h>
+#include <openbus/assistant/overloaded_error_handler.hpp>
+#include <openbus/assistant/exceptions.hpp>
 
 #include <openbus/Connection.hpp>
 

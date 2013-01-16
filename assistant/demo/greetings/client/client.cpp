@@ -1,4 +1,4 @@
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 #include <iostream>
 #include <stubs/greetings.h>
 

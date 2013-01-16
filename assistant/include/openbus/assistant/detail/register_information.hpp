@@ -3,7 +3,7 @@
 #ifndef OPENBUS_ASSISTANT_DETAIL_REGISTER_INFORMATION_H
 #define OPENBUS_ASSISTANT_DETAIL_REGISTER_INFORMATION_H
 
-#include <openbus/assistant/detail/exception_message.h>
+#include <openbus/assistant/detail/exception_message.hpp>
 
 namespace openbus { namespace assistant { namespace assistant_detail {
 

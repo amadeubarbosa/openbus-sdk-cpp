@@ -3,7 +3,7 @@
 #ifndef OPENBUS_ASSISTANT_DETAIL_SHARED_STATE_H
 #define OPENBUS_ASSISTANT_DETAIL_SHARED_STATE_H
 
-#include <openbus/assistant/error_handler_types.h>
+#include <openbus/assistant/error_handler_types.hpp>
 
 #include <log/logger.h>
 #include <log/output/streambuf_output.h>

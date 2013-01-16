@@ -5,7 +5,7 @@
 #ifndef OPENBUS_ASSISTANT_OVERLOADED_ERROR_HANDLER_H
 #define OPENBUS_ASSISTANT_OVERLOADED_ERROR_HANDLER_H
 
-#include <openbus/assistant/exceptions.h>
+#include <openbus/assistant/exceptions.hpp>
 
 #ifdef BOOST_FUNCTIONAL_OVERLOADED_FUNCTION_CONFIG_OVERLOAD_MAX
 #if BOOST_FUNCTIONAL_OVERLOADED_FUNCTION_CONFIG_OVERLOAD_MAX < BOOST_PP_SEQ_SIZE(OPENBUS_ASSISTANT_ALL_EXCEPTIONS())
@@ -30,7 +30,7 @@ template <std::size_t N, typename Seq>
 struct overloaded_error_handler_aux;
 
 #define BOOST_PP_ITERATION_PARAMS_1 (3, (2, BOOST_PP_SEQ_SIZE(OPENBUS_ASSISTANT_ALL_EXCEPTIONS()) \
-                                         , "openbus/assistant/overloaded_error_handler.h"))
+                                         , "openbus/assistant/overloaded_error_handler.hpp"))
 #include BOOST_PP_ITERATE()
 
 }

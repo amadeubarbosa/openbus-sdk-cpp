@@ -3,7 +3,7 @@
 #ifndef OPENBUS_ASSISTANT_DETAIL_WAIT_LOGIN_H
 #define OPENBUS_ASSISTANT_DETAIL_WAIT_LOGIN_H
 
-#include <openbus/assistant/detail/shared_state.h>
+#include <openbus/assistant/detail/shared_state.hpp>
 
 #include <boost/chrono/include.hpp>
 #include <boost/optional.hpp>

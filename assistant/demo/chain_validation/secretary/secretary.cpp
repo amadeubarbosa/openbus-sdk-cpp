@@ -1,4 +1,4 @@
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 #include <scs/ComponentContext.h>
 #include <iostream>
 

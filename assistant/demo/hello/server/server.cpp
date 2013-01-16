@@ -1,4 +1,4 @@
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 #include <stubs/hello.h>
 
 #include <boost/program_options.hpp>

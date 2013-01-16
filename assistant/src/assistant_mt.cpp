@@ -1,12 +1,12 @@
 // -*- coding: iso-latin-1 -*-
 
-#include <openbus/assistant.h>
-#include <openbus/assistant/waitlogin.h>
-#include <openbus/assistant/detail/exception_logging.h>
-#include <openbus/assistant/detail/register_information.h>
-#include <openbus/assistant/detail/execute_with_retry.h>
-#include <openbus/assistant/detail/exception_message.h>
-#include <openbus/assistant/detail/create_connection_and_login.h>
+#include <openbus/assistant.hpp>
+#include <openbus/assistant/waitlogin.hpp>
+#include <openbus/assistant/detail/exception_logging.hpp>
+#include <openbus/assistant/detail/register_information.hpp>
+#include <openbus/assistant/detail/execute_with_retry.hpp>
+#include <openbus/assistant/detail/exception_message.hpp>
+#include <openbus/assistant/detail/create_connection_and_login.hpp>
 
 namespace openbus { namespace assistant {
 

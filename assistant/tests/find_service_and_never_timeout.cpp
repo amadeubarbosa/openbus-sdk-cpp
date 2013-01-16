@@ -1,5 +1,5 @@
 
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 
 int main(int argc, char** argv)
 {

@@ -5,7 +5,7 @@
 #ifndef OPENBUS_ASSISTANT_DETAIL_OVERLOADED_ERROR_HANDLER_OPERATOR_H
 #define OPENBUS_ASSISTANT_DETAIL_OVERLOADED_ERROR_HANDLER_OPERATOR_H
 
-#include <openbus/assistant/exceptions.h>
+#include <openbus/assistant/exceptions.hpp>
 
 #include <boost/preprocessor/iterate.hpp>
 #include <boost/function_types/result_type.hpp>

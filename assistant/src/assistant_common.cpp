@@ -1,17 +1,17 @@
 // -*- coding: iso-latin-1 -*-
 
-#include <openbus/assistant.h>
-#include <openbus/assistant/AssociativePropertySeq.h>
-#include <openbus/assistant/detail/exception_logging.h>
-#include <openbus/assistant/detail/register_information.h>
-#include <openbus/assistant/detail/execute_with_retry.h>
-#include <openbus/assistant/detail/exception_message.h>
-#include <openbus/assistant/detail/create_connection_and_login.h>
-#include <openbus/assistant/detail/wait_login.h>
-#include <openbus/assistant/detail/tri_types_retry.h>
-#include <openbus/assistant/detail/functional/find_services.h>
-#include <openbus/assistant/detail/functional/get_all_services.h>
-#include <openbus/assistant/detail/functional/start_shared_auth.h>
+#include <openbus/assistant.hpp>
+#include <openbus/assistant/AssociativePropertySeq.hpp>
+#include <openbus/assistant/detail/exception_logging.hpp>
+#include <openbus/assistant/detail/register_information.hpp>
+#include <openbus/assistant/detail/execute_with_retry.hpp>
+#include <openbus/assistant/detail/exception_message.hpp>
+#include <openbus/assistant/detail/create_connection_and_login.hpp>
+#include <openbus/assistant/detail/wait_login.hpp>
+#include <openbus/assistant/detail/tri_types_retry.hpp>
+#include <openbus/assistant/detail/functional/find_services.hpp>
+#include <openbus/assistant/detail/functional/get_all_services.hpp>
+#include <openbus/assistant/detail/functional/start_shared_auth.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/utility/result_of.hpp>

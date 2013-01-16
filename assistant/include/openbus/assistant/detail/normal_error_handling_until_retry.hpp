@@ -3,8 +3,8 @@
 #ifndef OPENBUS_ASSISTANT_DETAIL_NORMAL_ERROR_HANDLING_UNTIL_RETRY_H
 #define OPENBUS_ASSISTANT_DETAIL_NORMAL_ERROR_HANDLING_UNTIL_RETRY_H
 
-#include <openbus/assistant/detail/shared_state.h>
-#include <openbus/assistant/detail/exception_message.h>
+#include <openbus/assistant/detail/shared_state.hpp>
+#include <openbus/assistant/detail/exception_message.hpp>
 
 #include <boost/function.hpp>
 

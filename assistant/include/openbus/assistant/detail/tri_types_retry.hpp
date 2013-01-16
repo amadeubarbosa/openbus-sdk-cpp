@@ -3,8 +3,8 @@
 #ifndef OPENBUS_ASSISTANT_DETAIL_TRI_TYPES_RETRY_H
 #define OPENBUS_ASSISTANT_DETAIL_TRI_TYPES_RETRY_H
 
-#include <openbus/assistant/detail/normal_error_handling_until_retry.h>
-#include <openbus/assistant/detail/exception_message.h>
+#include <openbus/assistant/detail/normal_error_handling_until_retry.hpp>
+#include <openbus/assistant/detail/exception_message.hpp>
 
 #include <boost/utility/result_of.hpp>
 

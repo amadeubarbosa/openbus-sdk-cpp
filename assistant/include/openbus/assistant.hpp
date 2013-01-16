@@ -3,7 +3,7 @@
 #ifndef OPENBUS_ASSISTANT_H
 #define OPENBUS_ASSISTANT_H
 
-#include <openbus/assistant/decl.h>
+#include <openbus/assistant/decl.hpp>
 
 #ifndef OPENBUS_ASSISTANT_DOXYGEN
 #ifndef OPENBUS_ASSISTANT_DISABLE_NAMED_PARAMETERS
@@ -19,10 +19,10 @@
 #endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
 #ifndef OPENBUS_ASSISTANT_DOXYGEN
-#include <openbus/assistant/overloaded_error_handler.h>
-#include <openbus/assistant/exceptions.h>
-#include <openbus/assistant/detail/shared_state.h>
-#include <openbus/assistant/error_handler_types.h>
+#include <openbus/assistant/overloaded_error_handler.hpp>
+#include <openbus/assistant/exceptions.hpp>
+#include <openbus/assistant/detail/shared_state.hpp>
+#include <openbus/assistant/error_handler_types.hpp>
 #endif // #ifndef OPENBUS_ASSISTANT_DOXYGEN
 
 #include <scs/IComponent.h>

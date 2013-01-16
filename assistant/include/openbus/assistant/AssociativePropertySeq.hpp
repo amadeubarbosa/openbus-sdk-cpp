@@ -1,7 +1,7 @@
 #ifndef OPENBUS_ASSISTANT_ASSOCIATIVEPROPERTYSEQ_H
 #define OPENBUS_ASSISTANT_ASSOCIATIVEPROPERTYSEQ_H
 
-#include <openbus/assistant/corba/SequenceRange.h>
+#include <openbus/assistant/corba/SequenceRange.hpp>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>

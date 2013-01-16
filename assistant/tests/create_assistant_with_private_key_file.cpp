@@ -1,6 +1,6 @@
 
-#include <openbus/assistant.h>
-#include <openbus/assistant/waitlogin.h>
+#include <openbus/assistant.hpp>
+#include <openbus/assistant/waitlogin.hpp>
 
 #include <fstream>
 

@@ -1,7 +1,7 @@
 // -*- coding: iso-latin-1 -*-
 
-#include <openbus/assistant.h>
-#include <openbus/assistant/decl.h>
+#include <openbus/assistant.hpp>
+#include <openbus/assistant/decl.hpp>
 
 namespace openbus { namespace assistant {
 
