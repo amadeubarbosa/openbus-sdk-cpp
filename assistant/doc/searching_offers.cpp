@@ -1,7 +1,7 @@
 
 //[searching_offers
 //[searching_offers_include
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 //]
 
 //[searching_offers_include_hello

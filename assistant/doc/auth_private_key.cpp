@@ -1,5 +1,5 @@
 
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 
 #include <fstream>
 

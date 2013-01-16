@@ -1,7 +1,7 @@
 
 //[searching_offers_errors_retry
 //[searching_offers_errors_retry_include
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 //]
 
 //[searching_offers_errors_retry_include_hello

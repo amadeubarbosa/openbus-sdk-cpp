@@ -2,7 +2,7 @@
 //[create_offers
 //[create_offers_component_created
 //[create_offers_include
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 //]
 
 //[create_offers_include_hello

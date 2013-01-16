@@ -1,6 +1,6 @@
 
 //[create_offers_chain
-#include <openbus/assistant.h>
+#include <openbus/assistant.hpp>
 
 #include <stubs/hello.h>
 
