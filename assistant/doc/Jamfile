@@ -18,7 +18,7 @@ path-constant openbus-cpp-root : ../.. ;
 local boost_path = [ os.environ BOOST_PATH ] ;
 
 doxygen assistant-reference :
-  $(here)/../../assistant/include/openbus/assistant.h
+  $(here)/../../assistant/include/openbus/assistant.hpp
   : <doxygen:param>HIDE_UNDOC_MEMBERS=YES
     <doxygen:param>EXTRACT_PRIVATE=NO
     <doxygen:param>ENABLE_PREPROCESSING=YES
