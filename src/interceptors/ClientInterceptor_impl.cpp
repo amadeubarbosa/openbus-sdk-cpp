@@ -21,9 +21,9 @@ namespace idl = tecgraf::openbus::core::v2_0;
 namespace interceptors 
 { 
 
-PortableInterceptor::SlotId ClientInterceptor::_slotId_ignoreInterceptor;
+PI::SlotId ClientInterceptor::_slotId_ignoreInterceptor;
 
-std::string getSessionKey(PortableInterceptor::ClientRequestInfo &r) 
+std::string getSessionKey(PI::ClientRequestInfo &r) 
 {
   idl::HashValue profileDataHash;
   ::IOP::TaggedProfile::_profile_data_seq profile = 
@@ -32,8 +32,7 @@ std::string getSessionKey(PortableInterceptor::ClientRequestInfo &r)
   return std::string((const char*) profileDataHash, idl::HashValueSize);
 }
 
-Connection &ClientInterceptor::getCurrentConnection(
-  PortableInterceptor::ClientRequestInfo &r)
+Connection &ClientInterceptor::getCurrentConnection(PI::ClientRequestInfo &r)
 {
   log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::getCurrentConnection");
@@ -61,7 +60,7 @@ Connection &ClientInterceptor::getCurrentConnection(
 }
 
 CallerChain ClientInterceptor::getJoinedChain(Connection &c, 
-  PortableInterceptor::ClientRequestInfo &r)
+                                              PI::ClientRequestInfo &r)
 {
   CORBA::Any_var signedCallChainAny= r.get_slot(_slotId_joinedCallChain);
   idl_cr::SignedCallChain signedCallChain;
@@ -79,10 +78,8 @@ CallerChain ClientInterceptor::getJoinedChain(Connection &c,
   return CallerChain();
 }
 
-ClientInterceptor::ClientInterceptor(
-  PortableInterceptor::SlotId slotId_requesterConnection,
-  PortableInterceptor::SlotId slotId_joinedCallChain,
-  PortableInterceptor::SlotId slotId_ignoreInterceptor,
+ClientInterceptor::ClientInterceptor(PI::SlotId slotId_requesterConnection,
+  PI::SlotId slotId_joinedCallChain, PI::SlotId slotId_ignoreInterceptor,
   IOP::Codec *cdr_codec)
   : _cdrCodec(cdr_codec), 
     _slotId_requesterConnection(slotId_requesterConnection), 
@@ -96,7 +93,7 @@ ClientInterceptor::ClientInterceptor(
   _slotId_ignoreInterceptor = slotId_ignoreInterceptor;
 }
 
-void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
+void ClientInterceptor::send_request(PI::ClientRequestInfo *r)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::send_request");
@@ -142,16 +139,16 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
         SHA256(buf.get(), bufSize, credential.hash);
         
         callerChain = getJoinedChain(conn, *r);
-        if (std::strcmp(idl::BusLogin, session.remoteId.in())) 
+        if (std::strcmp(idl::BusLogin, session.remoteId)) 
         {
           idl::HashValue hash;
           CORBA::String_var connId = CORBA::string_dup(conn._login()->id);
           size_t idSize = strlen(connId);
-          size_t remoteIdSize = strlen(session.remoteId.in());
+          size_t remoteIdSize = strlen(session.remoteId);
           bufSize = idSize + remoteIdSize + idl::EncryptedBlockSize;
           buf.reset(new unsigned char[bufSize]());
           std::memcpy(buf.get(), connId, idSize);
-          std::memcpy(buf.get() + idSize, session.remoteId.in(), remoteIdSize);
+          std::memcpy(buf.get() + idSize, session.remoteId, remoteIdSize);
           if (callerChain != CallerChain())
           {
             std::memcpy(buf.get()+idSize+remoteIdSize, 
@@ -187,7 +184,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
           else
           {
             credential.chain = 
-              *conn.access_control()->signChainFor(session.remoteId.in());
+              *conn.access_control()->signChainFor(session.remoteId);
 #ifdef OPENBUS_SDK_MULTITHREAD
             lock.lock();
 #endif
@@ -269,16 +266,15 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo *r)
   }
 }
 
-void ClientInterceptor::receive_exception(
-  PortableInterceptor::ClientRequestInfo *r)
+void ClientInterceptor::receive_exception(PI::ClientRequestInfo *r)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::receive_exception");
   l.level_vlog(debug_level, "operation: %s", r->operation()); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
 
-  if (!std::strcmp(r->received_exception_id(), 
-              "IDL:omg.org/CORBA/NO_PERMISSION:1.0")) 
+  if (std::string(r->received_exception_id())
+      == "IDL:omg.org/CORBA/NO_PERMISSION:1.0")
   {
     CORBA::SystemException &ex = 
       *CORBA::SystemException::_decode(*r->received_exception());
@@ -331,7 +327,7 @@ void ClientInterceptor::receive_exception(
           }
           l.log("Retransmissao da requisicao...");
 					CORBA::Object *_o = new CORBA::Object(*r->target());
-          throw PortableInterceptor::ForwardRequest(_o, false);
+          throw PI::ForwardRequest(_o, false);
         } 
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, 
                                    CORBA::COMPLETED_NO);
@@ -366,7 +362,7 @@ void ClientInterceptor::receive_exception(
 
         if (conn._state == Connection::LOGGED)
         {
-          throw PortableInterceptor::ForwardRequest(r->target(), false); 
+          throw PI::ForwardRequest(r->target(), false); 
         }
         else if (conn._state == Connection::UNLOGGED) 
         {
@@ -376,7 +372,7 @@ void ClientInterceptor::receive_exception(
         } 
         else if (conn._state == Connection::INVALID) 
         {
-          if (!std::strcmp(conn._login()->id.in(), oldLogin.id.in())) 
+          if (!std::strcmp(conn._login()->id, oldLogin.id)) 
           {
             conn._logout();
             l.log("Connection::INVALID: throw NoLoginCode");
@@ -385,7 +381,7 @@ void ClientInterceptor::receive_exception(
           }
           else
           {
-            throw PortableInterceptor::ForwardRequest(r->target(), false);
+            throw PI::ForwardRequest(r->target(), false);
           }
         }
       }

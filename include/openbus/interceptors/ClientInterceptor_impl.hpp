@@ -25,26 +25,27 @@ struct CallerChain;
 
 namespace interceptors 
 {
+namespace PI = PortableInterceptor;
 
 class OPENBUS_SDK_DECL 
-ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 
+ClientInterceptor : public PI::ClientRequestInterceptor 
 {
 public:
-  ClientInterceptor(PortableInterceptor::SlotId slotId_requesterConnection,
-                    PortableInterceptor::SlotId slotId_joinedCallChain,
-                    PortableInterceptor::SlotId slotId_ignoreInterceptor,
-                    IOP::Codec *cdr_codec);
-  void send_request(PortableInterceptor::ClientRequestInfo *);
-  void receive_exception(PortableInterceptor::ClientRequestInfo *);
-  void send_poll(PortableInterceptor::ClientRequestInfo *) 
+  ClientInterceptor(
+    PI::SlotId slotId_requesterConnection, PI::SlotId slotId_joinedCallChain,
+    PI::SlotId slotId_ignoreInterceptor, IOP::Codec *cdr_codec);
+
+  void send_request(PI::ClientRequestInfo *);
+  void receive_exception(PI::ClientRequestInfo *);
+  void send_poll(PI::ClientRequestInfo *) 
   { 
   }
 
-  void receive_reply(PortableInterceptor::ClientRequestInfo *) 
+  void receive_reply(PI::ClientRequestInfo *) 
   { 
   }
 
-  void receive_other(PortableInterceptor::ClientRequestInfo *) 
+  void receive_other(PI::ClientRequestInfo *) 
   { 
   }
 
@@ -62,16 +63,15 @@ public:
     _openbusContext = &m; 
   }
 
-  Connection &getCurrentConnection(PortableInterceptor::ClientRequestInfo &);
-  openbus::CallerChain getJoinedChain(Connection &, 
-                                      PortableInterceptor::ClientRequestInfo &);
-  static PortableInterceptor::SlotId _slotId_ignoreInterceptor;
+  Connection &getCurrentConnection(PI::ClientRequestInfo &);
+  openbus::CallerChain getJoinedChain(Connection &, PI::ClientRequestInfo &);
+  static PI::SlotId _slotId_ignoreInterceptor;
 private:
 
   /* Variáveis que são modificadas somente no construtor. */
   IOP::Codec *_cdrCodec;
-  PortableInterceptor::SlotId _slotId_requesterConnection;
-  PortableInterceptor::SlotId _slotId_joinedCallChain;
+  PI::SlotId _slotId_requesterConnection;
+  PI::SlotId _slotId_joinedCallChain;
   /**/
     
   struct SecretSession 
@@ -102,12 +102,12 @@ private:
 class IgnoreInterceptor 
 {
 public:
-  IgnoreInterceptor(PortableInterceptor::Current &c) : _piCurrent(c) 
+  IgnoreInterceptor(PI::Current &c) : _piCurrent(c) 
   {
     CORBA::Any ignoreInterceptorAny;
     ignoreInterceptorAny <<= CORBA::Any::from_boolean(true);
     _piCurrent.set_slot(ClientInterceptor::_slotId_ignoreInterceptor, 
-                         ignoreInterceptorAny);
+                        ignoreInterceptorAny);
   }
 
   ~IgnoreInterceptor() 
@@ -117,13 +117,13 @@ public:
       CORBA::Any ignoreInterceptorAny;
       ignoreInterceptorAny <<= CORBA::Any::from_boolean(false);
       _piCurrent.set_slot(ClientInterceptor::_slotId_ignoreInterceptor, 
-                           ignoreInterceptorAny); 
+                          ignoreInterceptorAny); 
     } catch (...)
     {
     }
   }
 
-  static bool status(PortableInterceptor::ClientRequestInfo &r) 
+  static bool status(PI::ClientRequestInfo &r) 
   {
     CORBA::Any_var any = 
       r.get_slot(ClientInterceptor::_slotId_ignoreInterceptor);
@@ -131,7 +131,7 @@ public:
     return ( (*any >>= CORBA::Any::to_boolean(b)) ? b : false );
   }
 private:
-  PortableInterceptor::Current &_piCurrent;
+  PI::Current &_piCurrent;
 };
 }
 }

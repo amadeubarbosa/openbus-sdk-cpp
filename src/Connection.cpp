@@ -90,10 +90,9 @@ public:
     log_scope l(log().general_logger(), info_level, "RenewLogin::renew");
     assert(_access_control);
     idl_ac::ValidityTime validityTime = _validityTime;
-    Connection *c = 0;
     try 
     {
-      c = _openbusContext.getCurrentConnection();
+      Connection *c = _openbusContext.getCurrentConnection();
       _openbusContext.setCurrentConnection(&_conn);
       validityTime = _access_control->renew();
       _openbusContext.setCurrentConnection(c);
@@ -244,8 +243,8 @@ void Connection::loginByPassword(const std::string &entity,
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
     
-  idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo *loginInfo;
+  idl_ac::ValidityTime validityTime = 0;
+  idl_ac::LoginInfo *loginInfo = 0;
   try 
   {
     loginInfo = _access_control->loginByPassword(entity.c_str(), bufKey, 
@@ -326,8 +325,8 @@ void Connection::loginByCertificate(const std::string &entity,
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
   
   interceptors::IgnoreInterceptor _i(*_piCurrent);
-  idl_ac::ValidityTime validityTime;    
-  idl_ac::LoginInfo *loginInfo;
+  idl_ac::ValidityTime validityTime = 0;    
+  idl_ac::LoginInfo *loginInfo = 0;
   try 
   {
     loginInfo = loginProcess->login(bufKey, encryptedBlock, validityTime);
@@ -420,8 +419,8 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
 
-  idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo *loginInfo; 
+  idl_ac::ValidityTime validityTime = 0;
+  idl_ac::LoginInfo *loginInfo = 0; 
   try 
   {
     loginInfo = loginProcess->login(bufKey, encryptedBlock, validityTime);

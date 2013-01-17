@@ -29,6 +29,7 @@ class Connection;
 
 namespace interceptors 
 {
+namespace PI = PortableInterceptor;
 
 const std::size_t secretSize = 16;
 
@@ -41,31 +42,31 @@ struct OPENBUS_SDK_DECL Session
   std::string remoteId;
 };
 
-class OPENBUS_SDK_DECL ServerInterceptor : public PortableInterceptor::ServerRequestInterceptor 
+class OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
 {
 public:
-  ServerInterceptor(PortableInterceptor::Current *piCurrent, 
-                    PortableInterceptor::SlotId slotId_requesterConnection,
-                    PortableInterceptor::SlotId slotId_receiveConnection,
-                    PortableInterceptor::SlotId slotId_joinedCallChain,
-                    PortableInterceptor::SlotId slotId_signedCallChain, 
-                    PortableInterceptor::SlotId slotId_legacyCallChain,
-                    IOP::Codec *cdr_codec);
+  ServerInterceptor(
+    PI::Current *piCurrent, PI::SlotId slotId_requesterConnection, 
+    PI::SlotId slotId_receiveConnection, PI::SlotId slotId_joinedCallChain,
+    PI::SlotId slotId_signedCallChain, PI::SlotId slotId_legacyCallChain,
+    IOP::Codec *cdr_codec);
+
   void 
-  receive_request_service_contexts(PortableInterceptor::ServerRequestInfo *);
-  void receive_request(PortableInterceptor::ServerRequestInfo *) 
+  receive_request_service_contexts(PI::ServerRequestInfo *);
+
+  void receive_request(PI::ServerRequestInfo *) 
   { 
   }
 
-  void send_reply(PortableInterceptor::ServerRequestInfo *) 
+  void send_reply(PI::ServerRequestInfo *) 
   { 
   }
 
-  void send_exception(PortableInterceptor::ServerRequestInfo *) 
+  void send_exception(PI::ServerRequestInfo *) 
   { 
   }
 
-  void send_other(PortableInterceptor::ServerRequestInfo *) 
+  void send_other(PI::ServerRequestInfo *) 
   { 
   }
 
@@ -86,21 +87,19 @@ private:
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
 #endif
-  PortableInterceptor::Current *_piCurrent;
-  PortableInterceptor::SlotId _slotId_requesterConnection;
-  PortableInterceptor::SlotId _slotId_receiveConnection;
-  PortableInterceptor::SlotId _slotId_joinedCallChain;
-  PortableInterceptor::SlotId _slotId_signedCallChain;
-  PortableInterceptor::SlotId _slotId_legacyCallChain;
+  PI::Current *_piCurrent;
+  PI::SlotId _slotId_requesterConnection;
+  PI::SlotId _slotId_receiveConnection;
+  PI::SlotId _slotId_joinedCallChain;
+  PI::SlotId _slotId_signedCallChain;
+  PI::SlotId _slotId_legacyCallChain;
   IOP::Codec *_cdrCodec;
   OpenBusContext *_openbusContext;
-  Connection &getDispatcher(OpenBusContext &context, 
-                            const std::string &busId,
-                            const std::string &loginId, 
-                            const std::string &operation);
+  Connection &getDispatcher(
+    OpenBusContext &context, const std::string &busId, 
+    const std::string &loginId, const std::string &operation);
 
-  void sendCredentialReset(Connection &, Login &, 
-                           PortableInterceptor::ServerRequestInfo &);
+  void sendCredentialReset(Connection &, Login &, PI::ServerRequestInfo &);
 
   typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;
   SessionLRUCache _sessionLRUCache;

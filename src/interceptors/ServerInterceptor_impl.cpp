@@ -27,12 +27,9 @@ Session::Session(std::size_t i, const std::string &login)
 }
 
 ServerInterceptor::ServerInterceptor(
-  PortableInterceptor::Current *piCurrent, 
-  PortableInterceptor::SlotId slotId_requesterConnection,
-  PortableInterceptor::SlotId slotId_receiveConnection,
-  PortableInterceptor::SlotId slotId_joinedCallChain,
-  PortableInterceptor::SlotId slotId_signedCallChain, 
-  PortableInterceptor::SlotId slotId_legacyCallChain,
+  PI::Current *piCurrent, PI::SlotId slotId_requesterConnection,
+  PI::SlotId slotId_receiveConnection, PI::SlotId slotId_joinedCallChain,
+  PI::SlotId slotId_signedCallChain, PI::SlotId slotId_legacyCallChain,
   IOP::Codec *cdr_codec) 
   : _piCurrent(piCurrent), 
     _slotId_requesterConnection(slotId_requesterConnection),
@@ -48,7 +45,7 @@ ServerInterceptor::ServerInterceptor(
 }
 
 void ServerInterceptor::sendCredentialReset(
-  Connection &conn, Login &caller, PortableInterceptor::ServerRequestInfo &r) 
+  Connection &conn, Login &caller, PI::ServerRequestInfo &r) 
 {
   idl_cr::CredentialReset credentialReset;
 
@@ -85,10 +82,9 @@ void ServerInterceptor::sendCredentialReset(
                              CORBA::COMPLETED_NO);              
 }
 
-Connection &ServerInterceptor::getDispatcher(OpenBusContext &context,
-                                             const std::string &busId, 
-                                             const std::string &loginId,
-                                             const std::string &operation)
+Connection &ServerInterceptor::getDispatcher(
+  OpenBusContext &context, const std::string &busId, const std::string &loginId,
+  const std::string &operation)
 {
   Connection *conn = 0;
   log_scope l(log().general_logger(), debug_level,
@@ -104,14 +100,11 @@ Connection &ServerInterceptor::getDispatcher(OpenBusContext &context,
       l.level_log(warning_level, "Falha na execucao da callback CallDispatch.");
     }
 
-    if (conn)
+    if (conn && ( (!conn->login() || (conn->busid() != busId)) ))
     {
-      if (!conn->login() || (conn->busid() != busId)) 
-      {
-        throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, 
-                                   CORBA::COMPLETED_NO);
-      } 
-    }
+      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, 
+                                 CORBA::COMPLETED_NO);
+    } 
   }
   else
   {
@@ -125,7 +118,7 @@ Connection &ServerInterceptor::getDispatcher(OpenBusContext &context,
 }
 
 void ServerInterceptor::receive_request_service_contexts(
-  PortableInterceptor::ServerRequestInfo *r)
+  PI::ServerRequestInfo *r)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::receive_request_service_contexts");
@@ -326,7 +319,15 @@ void ServerInterceptor::receive_request_service_contexts(
                    legacyCredential.delegate.in());
       idl_ac::CallChain legacyChain;
       legacyChain.target = "";
-      if (std::strcmp(legacyCredential.delegate, "")) 
+      if (std::string(legacyCredential.delegate) == "")
+      {
+        legacyChain.originators.length(0);
+        idl_ac::LoginInfo loginInfo;
+        loginInfo.id = legacyCredential.identifier;
+        loginInfo.entity = legacyCredential.owner;
+        legacyChain.caller = loginInfo;            
+      } 
+      else 
       {
         legacyChain.originators.length(1);
         idl_ac::LoginInfo delegate;
@@ -337,14 +338,6 @@ void ServerInterceptor::receive_request_service_contexts(
         login.id = legacyCredential.identifier;
         login.entity = legacyCredential.owner;
         legacyChain.caller = login;
-      } 
-      else 
-      {
-        legacyChain.originators.length(0);
-        idl_ac::LoginInfo loginInfo;
-        loginInfo.id = legacyCredential.identifier;
-        loginInfo.entity = legacyCredential.owner;
-        legacyChain.caller = loginInfo;            
       }
       CORBA::Any legacyChainAny;
       legacyChainAny <<= legacyChain;

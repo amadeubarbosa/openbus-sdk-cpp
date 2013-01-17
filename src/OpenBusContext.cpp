@@ -1,5 +1,4 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/log.hpp"
 
@@ -96,8 +95,7 @@ CallerChain OpenBusContext::getCallerChain()
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCallerChain");
-  Connection *c = getDispatchConnection();
-  if (c)
+  if (Connection *c = getDispatchConnection())
   {
     CORBA::Any_var sigCallChainAny = 
       _piCurrent->get_slot(_slotId_signedCallChain);
@@ -147,8 +145,7 @@ CallerChain OpenBusContext::getJoinedChain()
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getJoinedChain");
-  Connection *c = getDispatchConnection();
-  if (c)
+  if (Connection *c = getDispatchConnection())
   {
     CORBA::Any_var sigCallChainAny = 
       _piCurrent->get_slot(_slotId_joinedCallChain);
@@ -187,21 +184,13 @@ OpenBusContext::CallDispatchCallback OpenBusContext::onCallDispatch() const
 idl_or::OfferRegistry_ptr OpenBusContext::getOfferRegistry() const
 {
   Connection *c = getCurrentConnection();
-  if (c) 
-  {
-    return c->getOfferRegistry();
-  }
-  return 0; 
+  return (c ? c->getOfferRegistry() : 0);
 }
 
 idl_ac::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
 {
   Connection *c = getCurrentConnection();
-  if (c)
-  {
-    return c->getLoginRegistry();
-  }
-  return 0;
+  return (c ? c->getLoginRegistry() : 0);
 }
 
 Connection *OpenBusContext::getDispatchConnection()

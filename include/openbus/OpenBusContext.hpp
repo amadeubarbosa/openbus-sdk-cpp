@@ -22,7 +22,6 @@
 #endif
 
 #include <string>
-#include <vector>
 
 namespace openbus 
 {
