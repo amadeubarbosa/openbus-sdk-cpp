@@ -301,6 +301,8 @@ private:
   static void renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
                          OpenBusContext &ctx, idl_ac::ValidityTime t);
 #endif
+  void login(idl_ac::LoginInfo &loginInfo, 
+             idl_ac::ValidityTime validityTime);
 
   void checkBusid() const;
   bool _logout(bool local = true);
