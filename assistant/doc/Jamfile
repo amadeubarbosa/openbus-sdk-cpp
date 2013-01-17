@@ -36,6 +36,7 @@ doxygen openbus-reference :
   $(here)/../../include/openbus/Connection.hpp
   $(here)/../../include/openbus/OpenBusContext.hpp
   $(here)/../../include/openbus/ORBInitializer.hpp
+  $(here)/../../include/openbus/crypto/PrivateKey.hpp
   : <doxygen:param>HIDE_UNDOC_MEMBERS=YES
     <doxygen:param>EXTRACT_PRIVATE=NO
     <doxygen:param>ENABLE_PREPROCESSING=YES

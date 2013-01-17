@@ -32,9 +32,9 @@ Boost.System] ]
 
 [section Introdução]
 
-Esse manual oferece um overview de implementação de serviços com uso
-do barramento __Openbus__, assim como explicação de várias
-características opções. Os seguintes conhecimentos são assumidos pelo
+Esse manual oferece uma visão geral de implementação de serviços com
+uso do barramento __Openbus__, assim como a explicação de várias
+características e opções. Os seguintes conhecimentos são assumidos pelo
 documento:
 
 * Linguagem C++
@@ -79,7 +79,7 @@ Os arquivos e diretórios tem o seguinte padrão de nomenclatura, com exceção 
   [[Simbolo] [Descrição]]
   [
         [`-mico`]
-[Se a biblioteca for compilada para o ORB Mico. É o caso para todas as bibliotecas que usam CORBA na versão 2.0.0. É possível que outros ORBs venham a ser suportados no futuro.]
+[Se a biblioteca for compilada para o ORB Mico. É o caso para todas as bibliotecas que usam CORBA na versão 2.0.0 do Openbus. É possível que outros ORBs venham a ser suportados no futuro.]
   ]
   [
         [`-mt`]
@@ -187,8 +187,8 @@ intermediários com as bibliotecas nos executáveis finais `client` e
 Esse comando faz a compilação de `hello.idl` para `bin/hello.cc` e
 `bin/hello.h` com os stubs da interface CORBA, que serão usados nos
 códigos fontes `server/server.cpp` e `client/client.cpp`. Usamos aqui
-as variáveis `MICO_BIN` e `MICO_LIB` para parametrizar a localidade da
-biblioteca compartilhada do mico e o diretório aonde estão as
+as variáveis `MICO_BIN` e `MICO_LIB` para parametrizar a localização
+da biblioteca compartilhada do mico e o diretório aonde estão as
 ferramentas do mico, como o compilador idl.
 
 Veja que, o compilador idl do mico, faz uso de outra ferramenta
@@ -260,7 +260,7 @@ servidor, mas trocando o arquivo alvo e o arquivo fonte:
 
 [demo_hello_mak_compile_client_cpp]
 
-Assim, temos a compilação dos arquivos `server.cpp` e client.cpp` e a
+Assim, temos a compilação dos arquivos `server.cpp` e `client.cpp` e a
 compilação da idl `hello.idl`. Falta ainda fazer a compilação dos stubs
 para arquivo objeto também.
 
@@ -365,7 +365,8 @@ estar ainda autenticado com o barramento __Openbus__]
 
 [section Vantagens de usar o Assistant]
 
-Para as aplicações que estão no escopo do __Assistant__, usar o __Assistant possui várias vantagens. Dentre as principais:
+Para as aplicações que estão no escopo do __Assistant__, usar o
+__Assistant__ possui várias vantagens. Dentre as principais:
 
 * Autenticação simplificada com o barramento
 * Tratamento automático de erros
@@ -436,21 +437,20 @@ segundo argumento do construtor do [classref openbus::assistant::Assistant].]
 por usuário e senha. Deve sempre ser usado junto com o ['named parameter] _password.]
   ]
   [
+        [`_password`]
+[Senha de autenticação. Esse parâmetro deve ser usado quando se pretende fazer uma autenticação por usuário e senha.
+Deve sempre ser usado junto com o ['named parameter] _username.]
+  ]
+  [
         [`_entity`]
 [Nome da entidade registrada por certificado no barramento. Esse parâmetro deve ser usado quando se pretende
 fazer uma autenticação por certificado. Deve sempre ser usado junto com um dos dois ['named parameters] _private_key
 ou _private_key_filename.]
   ]
   [
-        [`_password`]
-[Senha de autenticação. Esse parâmetro deve ser usado quando se pretende fazer uma autenticação por usuário e senha.
-Deve sempre ser usado junto com o ['named parameter] _username.]
-  ]
-  [
         [`_private_key`]
 [Conteúdo de chave privada usada para criação do certificado registrado no barramento. Esse parâmetro deve ser usado quando se
-pretende fazer uma autenticação por certificado. Seu tipo deve ser um CORBA::OctetSeq e seu conteúdo deve ser de uma
-chave privada gerada com o ['shell script] openssl-generate.sh. Deve sempre ser usado com o ['named parameter] _entity.]
+pretende fazer uma autenticação por certificado. Seu tipo deve ser um [classref openbus::PrivateKey]. Deve sempre ser usado com o ['named parameter] _entity.]
   ]
   [
         [`_private_key_filename`]
@@ -492,25 +492,24 @@ que indica o número de argumentos que contém o array. Esse argumento pode ser 
   ]
   [
         [`_on_login_error`]
-[['Function object] de tratamento de erros de ['login]. O ['function object] passado como argumento deve ter a assinatura
-`void(std::string)`. O argumento `std::string` passado é o nome da exceção que foi tratatada pelo __Assistant__.
+[['Polymorphic function object] de tratamento de erros de ['login]. O ['function object] passado como argumento deve ter um operador de chamada polimórfico com um parâmetro. O argumento passado é a exceção que foi tratatada pelo __Assistant__.
+[note Essa função deve receber o argumento por referência para objeto constante para evitar uma cópia, que pode causar um problema de slicing da exceção.]
 [note Essa função pode ser executada em outra thread em um ambiente multithread.] ]
   ]
   [
         [`_on_register_error`]
-[['Function object] de tratamento de erros de registro de ofertas. O ['function object] passado como argumento deve ter
- a assinatura `void(IComponent_var, ServicePropertySeq, std::string)`. O argumento `IComponent_var` é a referência CORBA
+[['Polymorphic function object] de tratamento de erros de registro de ofertas. O ['function object] passado como argumento deve ter
+ um operador de chamada polimórfico com três parâmetros. A assinatura deve ser do tipo `void(IComponent_var, ServicePropertySeq, Error const&)`, aonde `Error` é um tipo parametrizado, um `typename` de uma `template`. O argumento `IComponent_var` é a referência CORBA
 usada para tentativa de registro; o argumento `ServicePropertySeq` é o conjunto de propriedades a serem registradas
-na oferta e o argumento `std::string` passado é o nome da exceção que foi tratatada pelo __Assistant__ durante o erro.
+na oferta e o argumento `Error` passado é a exceção que foi tratatada pelo __Assistant__ durante o erro.
+[note Essa função deve receber o argumento Error por referência para objeto constante para evitar uma cópia, que pode causar um problema de slicing da exceção.]
 [note Essa função pode ser executada em outra thread em um ambiente multithread.] ]
   ]
   [
         [`_on_fatal_error`]
-[['Function object] de tratamento de erros fatais. O ['function object] passado como argumento deve ter
- a assinatura `void(const char*)`. O argumento passado é o nome da exceção que foi tratatada pelo __Assistant__ durante o erro.
-[note Essa função recebe um `const char*` ao invés de um `std::string`, pois essa função pode ser executada por motivos
-de falta de recursos. Assim, o __Assistant__ evita uma alocação requerida pela classe `std::string` para evitar que
-outra exceção possa ser lançada durante a tentativa de tratamento do erro.]
+[['Polymorphic function object] de tratamento de erros fatais. O ['function object] passado como argumento deve ter
+um operador de chamada polimórfico com um parâmetro. O argumento passado é a exceção que foi tratatada pelo __Assistant__ durante o erro.
+[note Essa função deve receber o argumento por referência para objeto constante para evitar uma cópia, que pode causar um problema de slicing da exceção.]
 [note Essa função pode ser executada em outra thread em um ambiente multithread.] ]
   ]
 ]
@@ -546,7 +545,7 @@ A autenticação por usuário e senha se faz com os parâmetros
 [auth_user]
 
 Como vimos anteriormente, após a construção de
-`openbus::assistant::Assistant`, a autenticação não necessariamente já
+[classref openbus::assistant::Assistant], a autenticação não necessariamente já
 ocorreu, pois a mesma é feita assincronamente e pode se repetir
 indefinidamente, sem intervenção do usuário. O __Assistant__ assume
 que o cliente pretende se manter logado por todo o tempo em que o
@@ -562,13 +561,13 @@ vantagens de se usar o __Assistant__.
 Existem duas formas de se autenticar por chave privada no __Assistant__
 do C++:
 
-* Com o conteúdo em um OctetSeq CORBA
+* Passando um [classref openbus::PrivateKey] como argumento
 * Passando como argumento o nome do arquivo da chave
 
 Nem sempre a chave se encontra em um arquivo, como por exemplo no caso
 de construção de uma chave privada dinamicamente, ou recebida por
-algum método de IPC. Neste caso faz mais sentido passar o conteúdo da
-chave diretamente:
+algum método de IPC. Neste caso faz mais sentido usar [classref
+openbus::PrivateKey] com um de seus construtores.
 
 [import auth_private_key.cpp]
 [auth_private_key]
@@ -591,13 +590,13 @@ autenticar ao barramento __Openbus__ e ofertar os serviços no Registro
 de Ofertas.
 
 Primeiramente fazemos o `#include` do ['header] do __Assistant__ para
-que possamos construir um `openbus::assistant::Assistant`.
+que possamos construir um [classref openbus::assistant::Assistant].
 
 [import offers.cpp]
 [create_offers_include]
 
-Feito isto, podemos instanciar a classe
-`openbus::assistant::Assistant`, que cuidará da autenticação por nós:
+Feito isto, podemos instanciar a classe [classref
+openbus::assistant::Assistant], que cuidará da autenticação por nós:
 
 [create_offers_auth]
 
@@ -689,7 +688,7 @@ Vejamos aqui novamente a autenticação, mas desta vez de nosso cliente:
 
 [searching_offers_auth]
 
-Como vimos, a instanciação da classe `openbus::assistant::Assistant`
+Como vimos, a instanciação da classe [classref openbus::assistant::Assistant]
 coloca o __Assistant__ em responsabilidade por nos autenticar ao
 barramento de forma assincrona. Agora, nos resta fazer uso do Registro
 de Ofertas através do __Assistant__. Para fazermos uma busca no
@@ -769,9 +768,9 @@ com `findServices`, podemos mudar para o seguinte:
 
 [endsect]
 
-[section OpenbusContext]
+[section OpenBusContext]
 
-[classref openbus::OpenbusContext] é uma classe cuja instância
+[classref openbus::OpenBusContext] é uma classe cuja instância
 representa o contexto atual da chamada. É através dessa função que
 temos acesso a várias informações do contexto atual. Como:
 

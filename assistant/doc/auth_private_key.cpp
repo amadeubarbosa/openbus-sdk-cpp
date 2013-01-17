@@ -20,6 +20,6 @@ int main(int argc, char* argv[])
   using namespace openbus::assistant::keywords;
   openbus::assistant::Assistant assistant
     ("localhost", 2089, _entity = "tutorial"
-     , _private_key = key);
+     , _private_key = openbus::PrivateKey(key));
   //]
 }
