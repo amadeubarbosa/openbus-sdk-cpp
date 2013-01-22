@@ -198,10 +198,6 @@ Connection::~Connection()
     {
     }
   }
-#ifdef OPENBUS_SDK_MULTITHREAD
-  _renewLogin.interrupt();
-  _renewLogin.join();
-#endif
 }
 
 void Connection::login(idl_ac::LoginInfo &loginInfo, 
