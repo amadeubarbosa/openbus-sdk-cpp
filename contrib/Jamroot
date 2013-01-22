@@ -6,7 +6,7 @@ path-constant lib : ../lib ;
 
 using mico-idl : $(bin)/mico-st : $(lib)/mico-st : stubs ;
 
-project openbus ;
+project openbus : build-dir bin ;
 
 lib openbus : : <name>openbus-mico <search>../lib
  <threading>single <link>shared <variant>release
@@ -59,6 +59,57 @@ lib openbus : : <name>openbus-mico-mt-s-d <search>../lib
 alias core-idls : : : : <include>../include/openbus/cpp
  <include>../include/openbus/cpp/stubs
  ;
+
+project openbus/assistant ;
+
+lib assistant : : <name>assistant-mico <search>../lib
+ <threading>single <link>shared <variant>release
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_ASSISTANT_SHARED
+ ;
+
+lib assistant : : <name>assistant-mico-d <search>../lib
+ <threading>single <link>shared <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_ASSISTANT_SHARED
+ ;
+
+lib assistant : : <name>assistant-mico-s <search>../lib
+ <threading>single <link>static <variant>release
+ : : <include>../include/openbus/cpp
+ ;
+
+lib assistant : : <name>assistant-mico-s-d <search>../lib
+ <threading>single <link>static <variant>debug
+ : : <include>../include/openbus/cpp
+ ;
+
+lib assistant : : <name>assistant-mico-mt <search>../lib
+ <threading>multi <link>shared <variant>release
+ : : <include>../include/openbus/cpp
+     <define>ASSISTANT_SDK_MULTITHREAD
+     <define>OPENBUS_ASSISTANT_SHARED
+ ;
+
+lib assistant : : <name>assistant-mico-mt-d <search>../lib
+ <threading>multi <link>shared <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>ASSISTANT_SDK_MULTITHREAD
+     <define>OPENBUS_ASSISTANT_SHARED
+ ;
+
+lib assistant : : <name>assistant-mico-mt-s <search>../lib
+ <threading>multi <link>static <variant>release
+ : : <include>../include/openbus/cpp
+     <define>ASSISTANT_SDK_MULTITHREAD
+ ;
+
+lib assistant : : <name>assistant-mico-mt-s-d <search>../lib
+ <threading>multi <link>static <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>ASSISTANT_SDK_MULTITHREAD
+ ;
+
 
 project scs ;
 
@@ -235,3 +286,4 @@ lib crypto : : <name>crypto <search>../lib ;
 lib openssl : crypto : <name>ssl <search>../lib
  : : <include>../include/openssl-1.0.0
  ;
+
