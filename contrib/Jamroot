@@ -140,6 +140,36 @@ lib program_options : headers
    <threading>multi <variant>debug
  ;
 
+lib system : headers
+ : <name>boost_system <search>../lib
+   <threading>single <variant>release
+ ;
+
+lib system : headers
+ : <name>boost_system-d <search>../lib
+   <threading>single <variant>debug
+ ;
+
+lib system : headers
+ : <name>boost_system-mt <search>../lib
+   <threading>multi <variant>release
+ ;
+
+lib system : headers
+ : <name>boost_system-mt-d <search>../lib
+   <threading>multi <variant>debug
+ ;
+
+lib thread : headers
+ : <name>boost_thread-mt <search>../lib
+   <threading>multi <variant>release
+ ;
+
+lib thread : headers
+ : <name>boost_thread-mt-d <search>../lib
+   <threading>multi <variant>debug
+ ;
+
 project logger ;
 
 lib logger : : <name>logger <search>../lib
