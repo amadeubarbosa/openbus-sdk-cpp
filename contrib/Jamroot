@@ -11,11 +11,13 @@ project openbus ;
 lib openbus : : <name>openbus-mico <search>../lib
  <threading>single <link>shared <variant>release
  : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_SHARED
  ;
 
 lib openbus : : <name>openbus-mico-d <search>../lib
  <threading>single <link>shared <variant>debug
  : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_SHARED
  ;
 
 lib openbus : : <name>openbus-mico-s <search>../lib
@@ -31,21 +33,27 @@ lib openbus : : <name>openbus-mico-s-d <search>../lib
 lib openbus : : <name>openbus-mico-mt <search>../lib
  <threading>multi <link>shared <variant>release
  : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_MULTITHREAD
+     <define>OPENBUS_SDK_SHARED
  ;
 
 lib openbus : : <name>openbus-mico-mt-d <search>../lib
  <threading>multi <link>shared <variant>debug
  : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_MULTITHREAD
+     <define>OPENBUS_SDK_SHARED
  ;
 
 lib openbus : : <name>openbus-mico-mt-s <search>../lib
  <threading>multi <link>static <variant>release
  : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_MULTITHREAD
  ;
 
 lib openbus : : <name>openbus-mico-mt-s-d <search>../lib
  <threading>multi <link>static <variant>debug
  : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_MULTITHREAD
  ;
 
 alias core-idls : : : : <include>../include/openbus/cpp
@@ -57,11 +65,13 @@ project scs ;
 lib scs : : <name>scs-mico <search>../lib
  <threading>single <link>shared <variant>release
  : : <include>../include
+     <define>SCS_SHARED
  ;
 
 lib scs : : <name>scs-mico-d <search>../lib
  <threading>single <link>shared <variant>debug
  : : <include>../include
+     <define>SCS_SHARED
  ;
 
 lib scs : : <name>scs-mico-s <search>../lib
@@ -77,21 +87,27 @@ lib scs : : <name>scs-mico-s-d <search>../lib
 lib scs : : <name>scs-mico-mt <search>../lib
  <threading>multi <link>shared <variant>release
  : : <include>../include
+     <define>SCS_SHARED
+     <define>SCS_THREADING_ENABLED
  ;
 
 lib scs : : <name>scs-mico-mt-d <search>../lib
  <threading>multi <link>shared <variant>debug
  : : <include>../include
+     <define>SCS_SHARED
+     <define>SCS_THREADING_ENABLED
  ;
 
 lib scs : : <name>scs-mico-mt-s <search>../lib
  <threading>multi <link>static <variant>release
  : : <include>../include
+     <define>SCS_THREADING_ENABLED
  ;
 
 lib scs : : <name>scs-mico-mt-s-d <search>../lib
  <threading>multi <link>static <variant>debug
  : : <include>../include
+     <define>SCS_THREADING_ENABLED
  ;
 
 project mico ;
@@ -160,12 +176,12 @@ lib system : headers
    <threading>multi <variant>debug
  ;
 
-lib thread : headers
+lib thread : headers system
  : <name>boost_thread-mt <search>../lib
    <threading>multi <variant>release
  ;
 
-lib thread : headers
+lib thread : headers system
  : <name>boost_thread-mt-d <search>../lib
    <threading>multi <variant>debug
  ;
@@ -174,26 +190,34 @@ project logger ;
 
 lib logger : : <name>logger <search>../lib
  <threading>single <link>shared <variant>release
+ : : <define>LOGGER_DISABLE_THREADS
+     <define>LOGGER_SHARED
  ;
 
 lib logger : : <name>logger-d <search>../lib
  <threading>single <link>shared <variant>debug
+ : : <define>LOGGER_DISABLE_THREADS
+     <define>LOGGER_SHARED
  ;
 
 lib logger : : <name>logger-s <search>../lib
  <threading>single <link>static <variant>release
+ : : <define>LOGGER_DISABLE_THREADS
  ;
 
 lib logger : : <name>logger-s-d <search>../lib
  <threading>single <link>static <variant>debug
+ : : <define>LOGGER_DISABLE_THREADS
  ;
 
 lib logger : : <name>logger-mt <search>../lib
  <threading>multi <link>shared <variant>release
+ : : <define>LOGGER_SHARED
  ;
 
 lib logger : : <name>logger-mt-d <search>../lib
  <threading>multi <link>shared <variant>debug
+ : : <define>LOGGER_SHARED
  ;
 
 lib logger : : <name>logger-mt-s <search>../lib
