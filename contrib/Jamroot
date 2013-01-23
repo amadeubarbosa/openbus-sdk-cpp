@@ -66,49 +66,49 @@ alias core-idls : : : : <include>../include/openbus/cpp
 
 project openbus/assistant ;
 
-lib assistant : : <name>assistant-mico <search>../lib
+lib assistant : /boost//chrono : <name>assistant-mico <search>../lib
  <threading>single <link>shared <variant>release
  : : <include>../include/openbus/cpp
      <define>OPENBUS_ASSISTANT_SHARED
  ;
 
-lib assistant : : <name>assistant-mico-d <search>../lib
+lib assistant : /boost//chrono : <name>assistant-mico-d <search>../lib
  <threading>single <link>shared <variant>debug
  : : <include>../include/openbus/cpp
      <define>OPENBUS_ASSISTANT_SHARED
  ;
 
-lib assistant : : <name>assistant-mico-s <search>../lib
+lib assistant : /boost//chrono : <name>assistant-mico-s <search>../lib
  <threading>single <link>static <variant>release
  : : <include>../include/openbus/cpp
  ;
 
-lib assistant : : <name>assistant-mico-s-d <search>../lib
+lib assistant : /boost//chrono : <name>assistant-mico-s-d <search>../lib
  <threading>single <link>static <variant>debug
  : : <include>../include/openbus/cpp
  ;
 
-lib assistant : : <name>assistant-mico-mt <search>../lib
+lib assistant : /boost//chrono : <name>assistant-mico-mt <search>../lib
  <threading>multi <link>shared <variant>release
  : : <include>../include/openbus/cpp
      <define>ASSISTANT_SDK_MULTITHREAD
      <define>OPENBUS_ASSISTANT_SHARED
  ;
 
-lib assistant : : <name>assistant-mico-mt-d <search>../lib
+lib assistant : /boost//chrono : <name>assistant-mico-mt-d <search>../lib
  <threading>multi <link>shared <variant>debug
  : : <include>../include/openbus/cpp
      <define>ASSISTANT_SDK_MULTITHREAD
      <define>OPENBUS_ASSISTANT_SHARED
  ;
 
-lib assistant : : <name>assistant-mico-mt-s <search>../lib
+lib assistant : /boost//chrono : <name>assistant-mico-mt-s <search>../lib
  <threading>multi <link>static <variant>release
  : : <include>../include/openbus/cpp
      <define>ASSISTANT_SDK_MULTITHREAD
  ;
 
-lib assistant : : <name>assistant-mico-mt-s-d <search>../lib
+lib assistant : /boost//chrono : <name>assistant-mico-mt-s-d <search>../lib
  <threading>multi <link>static <variant>debug
  : : <include>../include/openbus/cpp
      <define>ASSISTANT_SDK_MULTITHREAD
@@ -228,6 +228,26 @@ lib system : headers
 
 lib system : headers
  : <name>boost_system-mt-d <search>../lib
+   <threading>multi <variant>debug
+ ;
+
+lib chrono : headers system
+ : <name>boost_chrono <search>../lib
+   <threading>single <variant>release
+ ;
+
+lib chrono : headers system
+ : <name>boost_chrono-d <search>../lib
+   <threading>single <variant>debug
+ ;
+
+lib chrono : headers system
+ : <name>boost_chrono-mt <search>../lib
+   <threading>multi <variant>release
+ ;
+
+lib chrono : headers system
+ : <name>boost_chrono-mt-d <search>../lib
    <threading>multi <variant>debug
  ;
 
