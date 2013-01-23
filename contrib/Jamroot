@@ -6,6 +6,10 @@ path-constant lib : ../lib ;
 
 using mico-idl : $(bin)/mico-st : $(lib)/mico-st : stubs ;
 
+project dl ;
+
+lib dl : : <name>dl <link>shared ;
+
 project openbus : build-dir bin ;
 
 lib openbus : : <name>openbus-mico <search>../lib
