@@ -164,7 +164,7 @@ int main(int argc, char** argv)
     if(vm.count("bus-host"))
       bus_host = vm["bus-host"].as<std::string>();
     if(vm.count("bus-port"))
-      bus_host = vm["bus-port"].as<unsigned short>();
+      bus_port = vm["bus-port"].as<unsigned short>();
   }
 
   // Construindo e logando conexao
