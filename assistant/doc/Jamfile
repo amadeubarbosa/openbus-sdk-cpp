@@ -126,12 +126,16 @@ compile-rule searching_offers $(here)/hello.idl ;
 compile-rule searching_offers_errors $(here)/hello.idl ;
 compile-rule searching_offers_errors_retry $(here)/hello.idl ;
 
-install documentation-html : standalone namedparameters
- namedparameters_host_port auth_user auth_private_key
- auth_private_key_file offers offers_chain searching_offers
- searching_offers_errors searching_offers_errors_retry
+install documentation-html : standalone
  ;
 explicit documentation-html ;
 
 install documentation-images : [ glob images/*.png ] : <install-source-root>. ;
 explicit documentation-images ;
+
+alias documentation-tests :
+ namedparameters
+ namedparameters_host_port auth_user auth_private_key
+ auth_private_key_file offers offers_chain searching_offers
+ searching_offers_errors searching_offers_errors_retry
+ ;

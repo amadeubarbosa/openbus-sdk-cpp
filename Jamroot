@@ -220,7 +220,7 @@ alias assistant-doc-onehtml : assistant/doc//documentation-html/<location>assist
  : <format>onehtml ;
 explicit assistant-doc-onehtml ;
 
-alias assistant-doc : assistant-doc-onehtml ;
+alias assistant-doc : assistant-doc-onehtml assistant/doc//documentation-tests ;
 explicit assistant-doc ;
 
 install stage-libs-deps : stage-demo-$(all-demos) stage-interop-$(all-interops)
