@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
             delegation::PostDescSeq_var posts = m->receivePosts();
             for(std::size_t i = 0; i != posts->length(); ++i)
             {
-              std::cout << i << ") " << posts[i].from << ": " << posts[i].message << std::endl;
+              std::cout << i << ") " << (*posts)[i].from << ": " << (*posts)[i].message << std::endl;
             }
             broadcaster->unsubscribe();
             conn->logout();

@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 
   if(offers->length() == 1)
   {
-    CORBA::Object_var hello_obj = offers[0u].service_ref->getFacetByName("hello");
+    CORBA::Object_var hello_obj = (*offers)[0u].service_ref->getFacetByName("hello");
     ::Hello_var hello = ::Hello::_narrow(hello_obj);
 
     hello->sayHello();

@@ -59,9 +59,9 @@ struct forwarding_thread
           {
             std::cout << "Has message" << std::endl;
             std::string msg("forwarded from ");
-            msg += posts[i].from;
+            msg += (*posts)[i].from;
             msg += ':';
-            msg += posts[i].message;
+            msg += (*posts)[i].message;
             messenger->post(from.c_str(), msg.c_str());
           }
         }

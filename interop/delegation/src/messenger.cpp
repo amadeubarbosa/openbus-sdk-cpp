@@ -47,7 +47,7 @@ struct MessengerImpl : virtual public POA_tecgraf::openbus::interop::delegation:
     std::size_t index = 0;
     for(iterator first = range.first; first != range.second; ++first, ++index)
     {
-      posts[index] = first->second;
+      (*posts)[index] = first->second;
     }
     return posts._retn();
   }
