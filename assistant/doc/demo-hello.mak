@@ -13,7 +13,8 @@ LDFLAGS= -L$(MICO_LIB) -L$(CURDIR)/../../lib -Wl,--start-group           \
 #[demo_hello_mak_set_cxxflags
 CXXFLAGS= -Ibin -Ibin/stubs -I../../include/mico-mt-d -I../../include    \
  -I../../include/openbus/cpp -I../../include/boost                       \
- -I../../include/openssl-1.0.0 -g -O0 -pthread
+ -I../../include/openssl-1.0.0 -g -O0 -pthread                           \
+ -DOPENBUS_SDK_MULTITHREAD -DSCS_THREADING_ENABLED
 #]
 #[demo_hello_mak_compile_idl
 bin/stubs/hello.cc bin/stubs/hello.h: idl/hello.idl

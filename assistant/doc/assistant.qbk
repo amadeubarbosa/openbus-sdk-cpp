@@ -255,6 +255,11 @@ pacote. Como iremos compilar em debug, não estamos usando nenhuma
 otimização, passando `-O0`, e passando `-g` para inclusão de simbolos
 de depuração na compilação do demo.
 
+Também fazemos a definição das macros `OPENBUS_SDK_MULTITHREAD` e
+`SCS_THREADING_ENABLED` pois estamos compilando a versão multithread
+do demo. Porém, não fazemos a definição de `ASSISTANT_SDK_MULTITHREAD`
+pois o código dessa demo não faz uso do __Assistant__.
+
 E para a compilação do cliente, fazemos o mesmo que na compilação do
 servidor, mas trocando o arquivo alvo e o arquivo fonte:
 
