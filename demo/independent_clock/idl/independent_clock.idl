@@ -1,0 +1,17 @@
+
+module tecgraf {
+
+module openbus {
+
+module demo {
+
+interface Clock
+{
+  long getTimeInTicks();
+};
+
+};
+
+};
+
+};

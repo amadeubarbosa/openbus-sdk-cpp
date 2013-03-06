@@ -1,0 +1,142 @@
+
+import testing ;
+import path ;
+import doxygen ;
+import os ;
+
+#using auto-index ;
+using doxygen ;
+
+import boostbook ;
+
+project openbus/assistant/doc ;
+
+path-constant doc-images : images ;
+path-constant here : . ;
+path-constant openbus-cpp-root : ../.. ;
+
+local boost_path = [ os.environ BOOST_PATH ] ;
+
+doxygen assistant-reference :
+  $(here)/../../assistant/include/openbus/assistant.hpp
+  : <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+    <doxygen:param>EXTRACT_PRIVATE=NO
+    <doxygen:param>ENABLE_PREPROCESSING=YES
+    <doxygen:param>EXPAND_ONLY_PREDEF=YES
+    <doxygen:param>MACRO_EXPANSION=YES
+    <doxygen:param>INPUT_ENCODING=ISO-8859-1
+    <prefix>include
+    <xsl:param>"boost.doxygen.reftitle=Referencia do Assistant"
+    <doxygen:param>"PREDEFINED= \\
+        \"OPENBUS_ASSISTANT_DOXYGEN=1\""
+ ;
+explicit assistant-reference ;
+
+doxygen openbus-reference :
+  $(here)/../../include/openbus/Connection.hpp
+  $(here)/../../include/openbus/OpenBusContext.hpp
+  $(here)/../../include/openbus/ORBInitializer.hpp
+  $(here)/../../include/openbus/crypto/PrivateKey.hpp
+  : <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+    <doxygen:param>EXTRACT_PRIVATE=NO
+    <doxygen:param>ENABLE_PREPROCESSING=YES
+    <doxygen:param>EXPAND_ONLY_PREDEF=YES
+    <doxygen:param>MACRO_EXPANSION=YES
+    <doxygen:param>INPUT_ENCODING=ISO-8859-1
+    <prefix>include
+    <xsl:param>"boost.doxygen.reftitle=Referencia da API Básica"
+    <doxygen:param>"PREDEFINED= \\
+        \"OPENBUS_DOXYGEN=1\""
+ ;
+explicit openbus-reference ;
+
+local openbus-idl-path-env = [ os.environ OPENBUS_IDL_PATH ] ;
+
+doxygen openbus-idl-reference :
+  $(openbus-idl-path-env)/access_control.idl
+  $(openbus-idl-path-env)/core.idl
+  $(openbus-idl-path-env)/credential.idl
+  $(openbus-idl-path-env)/offer_registry.idl
+  : <doxygen:param>HIDE_UNDOC_MEMBERS=YES
+    <doxygen:param>EXTRACT_PRIVATE=NO
+    <doxygen:param>ENABLE_PREPROCESSING=YES
+    <doxygen:param>EXPAND_ONLY_PREDEF=YES
+    <doxygen:param>MACRO_EXPANSION=YES
+    <doxygen:param>INPUT_ENCODING=ISO-8859-1
+    <prefix>src
+    <xsl:param>"boost.doxygen.reftitle=Referencia da IDL Openbus"
+    <doxygen:param>"PREDEFINED= \\
+        \"OPENBUS_ASSISTANT_DOXYGEN=1\""
+    <include>$(scs-idl-path)
+ ;
+explicit openbus-idl-reference ;
+
+xml assistant : assistant.qbk
+ : #<include>$(boost_path)/tools/auto_index/include
+   <dependency>assistant-reference
+   <dependency>openbus-reference
+   <dependency>openbus-idl-reference
+ ;
+explicit assistant ;
+
+boostbook standalone
+ : assistant
+ : <implicit-dependency>assistant-reference
+   <implicit-dependency>openbus-reference
+   <implicit-dependency>openbus-idl-reference
+#   <auto-index>on
+#   <auto-index-verbose>on
+   <xsl:param>boost.root=$(boost_path)
+#   <format>pdf:<auto-index-internal>off
+#   <format>html:<auto-index-internal>on
+#   <format>html:<auto-index-type>appendix
+#   <auto-index-script>index.idx
+#   <auto-index-prefix>"$(here)/.."
+#   <auto-index-prefix>"assistant-"
+   <quickbook-define>enable_index
+ ;
+explicit standalone ;
+
+local dependencies =
+ /openbus/assistant//assistant
+ /openbus//openbus /mico//mico /scs//scs /boost//headers
+ /logger//logger /openbus//core-idls /openssl//openssl ;
+local requirements =
+ <implicit-dependency>/openbus//core-idls
+ <implicit-dependency>/scs//scs-idl
+ ;
+
+local rule compile-rule ( name idl ? )
+{
+  exe $(name) : $(name).cpp $(dependencies) $(idl) : $(requirements) <implicit-dependency>$(idl) ;
+  explicit $(name) ;
+  return $(l) ;
+}
+
+path-constant here : . ;
+
+compile-rule namedparameters ;
+compile-rule namedparameters_host_port ;
+compile-rule auth_user ;
+compile-rule auth_private_key ;
+compile-rule auth_private_key_file ;
+compile-rule offers $(here)/hello.idl ;
+compile-rule offers_chain $(here)/hello.idl ;
+compile-rule searching_offers $(here)/hello.idl ;
+compile-rule searching_offers_errors $(here)/hello.idl ;
+compile-rule searching_offers_errors_retry $(here)/hello.idl ;
+
+install documentation-html : standalone
+ ;
+explicit documentation-html ;
+
+install documentation-images : [ glob images/*.png ] : <install-source-root>. ;
+explicit documentation-images ;
+
+alias documentation-tests :
+ namedparameters
+ namedparameters_host_port auth_user auth_private_key
+ auth_private_key_file offers offers_chain searching_offers
+ searching_offers_errors searching_offers_errors_retry
+ ;
+explicit documentation-tests ;

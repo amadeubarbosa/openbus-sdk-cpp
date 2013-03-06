@@ -1,0 +1,28 @@
+
+project openbus/demos ;
+
+path-constant here : . ;
+
+alias greetings-idl : $(here)/idl/greetings.idl ;
+
+exe greetings_client
+ : client/client.cpp /openbus//openbus /boost//program_options
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openssl//openssl greetings-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>greetings-idl
+ ;
+exe greetings_server
+ : server/server.cpp /openbus//openbus /boost//program_options
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openssl//openssl greetings-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>greetings-idl
+ ;
+
+alias greetings : greetings_client greetings_server ;
+

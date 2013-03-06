@@ -1,0 +1,27 @@
+
+project openbus/demos ;
+
+path-constant here : . ;
+
+alias hello-idl : $(here)/idl/hello.idl ;
+
+exe hello_client
+ : client/client.cpp /openbus//openbus /boost//program_options
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+exe hello_server
+ : server/server.cpp /openbus//openbus /boost//program_options
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openssl//openssl hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>hello-idl
+ ;
+
+alias hello : hello_client hello_server ;

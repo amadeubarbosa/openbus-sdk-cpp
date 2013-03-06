@@ -1,0 +1,74 @@
+Category {
+  id = "DemoCppMultiplexingCategory",
+  name = "Categoria gerada pelo script",
+}
+
+Entity {
+  id = "demo",
+  category = "DemoCppMultiplexingCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "demo1",
+  category = "DemoCppMultiplexingCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "demo2",
+  category = "DemoCppMultiplexingCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "demo3",
+  category = "DemoCppMultiplexingCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Certificate {
+  id = "demo",
+  certificate = "DemoCppMultiplexing.crt",
+}
+
+Certificate {
+  id = "demo1",
+  certificate = "DemoCppMultiplexing.crt",
+}
+
+Certificate {
+  id = "demo2",
+  certificate = "DemoCppMultiplexing.crt",
+}
+
+Certificate {
+  id = "demo3",
+  certificate = "DemoCppMultiplexing.crt",
+}
+
+Interface {
+  id = "IDL:Greetings:1.0"
+}
+
+Grant {
+  id = "demo1",
+  interfaces = {
+    "IDL:Greetings:1.0",
+  }
+}
+
+Grant {
+  id = "demo2",
+  interfaces = {
+    "IDL:Greetings:1.0",
+  }
+}
+
+Grant {
+  id = "demo3",
+  interfaces = {
+    "IDL:Greetings:1.0",
+  }
+}
+

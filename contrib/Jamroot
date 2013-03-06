@@ -1,0 +1,328 @@
+
+import mico-idl ;
+
+path-constant bin : ../bin ;
+path-constant lib : ../lib ;
+
+using mico-idl : $(bin)/mico-st : $(lib)/mico-st : stubs ;
+
+project rt ;
+
+lib real_rt : : <name>rt <link>shared ;
+explicit real_rt ;
+alias rt : : : : <target-os>linux:<source>/rt//real_rt ;
+
+project dl ;
+
+lib dl : : <name>dl <link>shared <target-os>linux ;
+alias rt : : <target-os>windows ;
+
+project openbus : build-dir bin ;
+
+lib openbus : : <name>openbus-mico <search>../lib
+ <threading>single <link>shared <variant>release
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_SHARED
+ ;
+
+lib openbus : : <name>openbus-mico-d <search>../lib
+ <threading>single <link>shared <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_SHARED
+ ;
+
+lib openbus : : <name>openbus-mico-s <search>../lib
+ <threading>single <link>static <variant>release
+ : : <include>../include/openbus/cpp
+ ;
+
+lib openbus : : <name>openbus-mico-s-d <search>../lib
+ <threading>single <link>static <variant>debug
+ : : <include>../include/openbus/cpp
+ ;
+
+lib openbus : : <name>openbus-mico-mt <search>../lib
+ <threading>multi <link>shared <variant>release
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_MULTITHREAD
+     <define>OPENBUS_SDK_SHARED
+ ;
+
+lib openbus : : <name>openbus-mico-mt-d <search>../lib
+ <threading>multi <link>shared <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_MULTITHREAD
+     <define>OPENBUS_SDK_SHARED
+ ;
+
+lib openbus : : <name>openbus-mico-mt-s <search>../lib
+ <threading>multi <link>static <variant>release
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_MULTITHREAD
+ ;
+
+lib openbus : : <name>openbus-mico-mt-s-d <search>../lib
+ <threading>multi <link>static <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_SDK_MULTITHREAD
+ ;
+
+alias core-idls : : : : <include>../include/openbus/cpp
+ <include>../include/openbus/cpp/stubs
+ ;
+
+project openbus/assistant ;
+
+lib assistant : /boost//chrono : <name>assistant-mico <search>../lib
+ <threading>single <link>shared <variant>release
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_ASSISTANT_SHARED
+     <source>rt
+ ;
+
+lib assistant : /boost//chrono : <name>assistant-mico-d <search>../lib
+ <threading>single <link>shared <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>OPENBUS_ASSISTANT_SHARED
+     <source>rt
+ ;
+
+lib assistant : /boost//chrono : <name>assistant-mico-s <search>../lib
+ <threading>single <link>static <variant>release
+ : : <include>../include/openbus/cpp
+     <source>rt
+ ;
+
+lib assistant : /boost//chrono : <name>assistant-mico-s-d <search>../lib
+ <threading>single <link>static <variant>debug
+ : : <include>../include/openbus/cpp
+     <source>rt
+ ;
+
+lib assistant : /boost//chrono : <name>assistant-mico-mt <search>../lib
+ <threading>multi <link>shared <variant>release
+ : : <include>../include/openbus/cpp
+     <define>ASSISTANT_SDK_MULTITHREAD
+     <define>OPENBUS_ASSISTANT_SHARED
+     <source>rt
+ ;
+
+lib assistant : /boost//chrono : <name>assistant-mico-mt-d <search>../lib
+ <threading>multi <link>shared <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>ASSISTANT_SDK_MULTITHREAD
+     <define>OPENBUS_ASSISTANT_SHARED
+     <source>rt
+ ;
+
+lib assistant : /boost//chrono : <name>assistant-mico-mt-s <search>../lib
+ <threading>multi <link>static <variant>release
+ : : <include>../include/openbus/cpp
+     <define>ASSISTANT_SDK_MULTITHREAD
+     <source>rt
+ ;
+
+lib assistant : /boost//chrono : <name>assistant-mico-mt-s-d <search>../lib
+ <threading>multi <link>static <variant>debug
+ : : <include>../include/openbus/cpp
+     <define>ASSISTANT_SDK_MULTITHREAD
+     <source>rt
+ ;
+
+
+project scs ;
+
+lib scs : : <name>scs-mico <search>../lib
+ <threading>single <link>shared <variant>release
+ : : <include>../include
+     <define>SCS_SHARED
+ ;
+
+lib scs : : <name>scs-mico-d <search>../lib
+ <threading>single <link>shared <variant>debug
+ : : <include>../include
+     <define>SCS_SHARED
+ ;
+
+lib scs : : <name>scs-mico-s <search>../lib
+ <threading>single <link>static <variant>release
+ : : <include>../include
+ ;
+
+lib scs : : <name>scs-mico-s-d <search>../lib
+ <threading>single <link>static <variant>debug
+ : : <include>../include
+ ;
+
+lib scs : : <name>scs-mico-mt <search>../lib
+ <threading>multi <link>shared <variant>release
+ : : <include>../include
+     <define>SCS_SHARED
+     <define>SCS_THREADING_ENABLED
+ ;
+
+lib scs : : <name>scs-mico-mt-d <search>../lib
+ <threading>multi <link>shared <variant>debug
+ : : <include>../include
+     <define>SCS_SHARED
+     <define>SCS_THREADING_ENABLED
+ ;
+
+lib scs : : <name>scs-mico-mt-s <search>../lib
+ <threading>multi <link>static <variant>release
+ : : <include>../include
+     <define>SCS_THREADING_ENABLED
+ ;
+
+lib scs : : <name>scs-mico-mt-s-d <search>../lib
+ <threading>multi <link>static <variant>debug
+ : : <include>../include
+     <define>SCS_THREADING_ENABLED
+ ;
+
+project mico ;
+
+lib mico : : <search>../lib/mico-st <name>mico2.3.13
+ <threading>single <variant>release
+ : : <include>../include/mico-st
+ ;
+
+lib mico : : <search>../lib/mico-st-d <name>mico2.3.13
+ <threading>single <variant>debug
+ : : <include>../include/mico-st-d
+ ;
+
+lib mico : : <search>../lib/mico-mt <name>mico2.3.13
+ <threading>multi <variant>release
+ : : <include>../include/mico-mt
+ ;
+
+lib mico : : <search>../lib/mico-mt-d <name>mico2.3.13
+ <threading>multi <variant>debug
+ : : <include>../include/mico-mt-d
+ ;
+
+project boost ;
+
+alias headers : : : : <include>../include/boost ;
+
+lib program_options : headers
+ : <name>boost_program_options <search>../lib
+   <threading>single <variant>release
+ ;
+
+lib program_options : headers
+ : <name>boost_program_options-d <search>../lib
+   <threading>single <variant>debug
+ ;
+
+lib program_options : headers
+ : <name>boost_program_options-mt <search>../lib
+   <threading>multi <variant>release
+ ;
+
+lib program_options : headers
+ : <name>boost_program_options-mt-d <search>../lib
+   <threading>multi <variant>debug
+ ;
+
+lib system : headers
+ : <name>boost_system <search>../lib
+   <threading>single <variant>release
+ ;
+
+lib system : headers
+ : <name>boost_system-d <search>../lib
+   <threading>single <variant>debug
+ ;
+
+lib system : headers
+ : <name>boost_system-mt <search>../lib
+   <threading>multi <variant>release
+ ;
+
+lib system : headers
+ : <name>boost_system-mt-d <search>../lib
+   <threading>multi <variant>debug
+ ;
+
+lib chrono : headers system
+ : <name>boost_chrono <search>../lib
+   <threading>single <variant>release
+ ;
+
+lib chrono : headers system
+ : <name>boost_chrono-d <search>../lib
+   <threading>single <variant>debug
+ ;
+
+lib chrono : headers system
+ : <name>boost_chrono-mt <search>../lib
+   <threading>multi <variant>release
+ ;
+
+lib chrono : headers system
+ : <name>boost_chrono-mt-d <search>../lib
+   <threading>multi <variant>debug
+ ;
+
+lib thread : headers system
+ : <name>boost_thread-mt <search>../lib
+   <threading>multi <variant>release
+ ;
+
+lib thread : headers system
+ : <name>boost_thread-mt-d <search>../lib
+   <threading>multi <variant>debug
+ ;
+
+project logger ;
+
+lib logger : : <name>logger <search>../lib
+ <threading>single <link>shared <variant>release
+ : : <define>LOGGER_DISABLE_THREADS
+     <define>LOGGER_SHARED
+ ;
+
+lib logger : : <name>logger-d <search>../lib
+ <threading>single <link>shared <variant>debug
+ : : <define>LOGGER_DISABLE_THREADS
+     <define>LOGGER_SHARED
+ ;
+
+lib logger : : <name>logger-s <search>../lib
+ <threading>single <link>static <variant>release
+ : : <define>LOGGER_DISABLE_THREADS
+ ;
+
+lib logger : : <name>logger-s-d <search>../lib
+ <threading>single <link>static <variant>debug
+ : : <define>LOGGER_DISABLE_THREADS
+ ;
+
+lib logger : : <name>logger-mt <search>../lib
+ <threading>multi <link>shared <variant>release
+ : : <define>LOGGER_SHARED
+ ;
+
+lib logger : : <name>logger-mt-d <search>../lib
+ <threading>multi <link>shared <variant>debug
+ : : <define>LOGGER_SHARED
+ ;
+
+lib logger : : <name>logger-mt-s <search>../lib
+ <threading>multi <link>static <variant>release
+ ;
+
+lib logger : : <name>logger-mt-s-d <search>../lib
+ <threading>multi <link>static <variant>debug
+ ;
+
+project openssl ;
+
+lib crypto : : <name>crypto <search>../lib ;
+
+lib openssl : crypto : <name>ssl <search>../lib
+ : : <include>../include/openssl-1.0.0
+ ;
+

@@ -1,8 +1,0 @@
-
-SET(ORBIX_ROOT_DIR PATH-TO-ORBIX-Orbix)
-SET(ORBIX_LIBRARIES it_poa) # it_art it_ifc
-SET(OPENBUS_CORE_IDL_ROOT_DIR ../core_idl)
-SET(SCS_IDL_ROOT_DIR ../../scs/scs-idl)
-SET(LOGGER_ROOT ../logger)
-SET(SCS_ROOT_DIR ../../scs/scs-trunk-git)
-SET(SCS_LIBRARIES PATH-TO-SCS-LIBS-TO-LINK-TO)

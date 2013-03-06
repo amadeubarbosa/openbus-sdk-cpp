@@ -1,0 +1,31 @@
+
+project openbus/interop ;
+
+path-constant here : . ;
+
+obj hello-idl : $(here)/idl/hello.idl /mico//mico ;
+
+exe multiplexing_client
+    : src/client.cpp hello-idl
+      /openbus//openbus /scs//scs /logger//logger /mico//mico
+      /boost//headers /openssl//openssl
+    : <threading>multi:<source>/boost//thread
+      <include>../properties_reader/include
+      <implicit-dependency>/openbus//core-idls
+      <implicit-dependency>hello-idl
+      <link>static:<source>/dl//dl
+    ;
+
+exe multiplexing_server
+    : src/server.cpp hello-idl
+      /openbus//openbus /scs//scs /logger//logger /mico//mico
+      /boost//headers /openssl//openssl
+    : <threading>multi:<source>/boost//thread
+      <include>../properties_reader/include
+      <implicit-dependency>/openbus//core-idls
+      <implicit-dependency>hello-idl
+      <link>static:<source>/dl//dl
+    ;
+
+alias multiplexing : multiplexing_client multiplexing_server test.properties
+ admin/interop_multiplexing_cpp_server.key ;

@@ -16,7 +16,7 @@ module interop {
 module simple {
 
 interface Hello {
-  void sayHello();
+  string sayHello();
 };
 
 }; // hello

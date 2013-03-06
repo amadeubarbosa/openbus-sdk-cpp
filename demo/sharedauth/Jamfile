@@ -1,0 +1,52 @@
+
+project openbus/demos ;
+
+path-constant here : . ;
+
+alias sharedauth-idl : $(here)/idl/sharedauth.idl ;
+alias hello-idl : $(here)/idl/hello.idl ;
+
+exe sharedauth_client
+ : src/client.cpp /openbus//openbus /boost//program_options
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openssl//openssl sharedauth-idl
+   hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>sharedauth-idl
+   <implicit-dependency>hello-idl
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
+ ;
+exe sharedauth_server
+ : src/server.cpp /openbus//openbus /boost//program_options
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openssl//openssl sharedauth-idl
+   hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>sharedauth-idl
+   <implicit-dependency>hello-idl
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
+ ;
+
+exe sharedauth_client_sharedauth 
+ : src/client_sharedauth.cpp /openbus//openbus /boost//program_options
+   /mico//mico /scs//scs /boost//headers /logger//logger
+   /openssl//openssl sharedauth-idl
+   hello-idl
+ : <implicit-dependency>/openbus//core-idls
+   <threading>multi:<source>/boost//thread <include>tests
+   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>sharedauth-idl
+   <implicit-dependency>hello-idl
+   <target-os>windows,<link>shared:<source>/openbus//core-idls
+   <target-os>windows,<link>shared:<source>/scs//idls
+ ;
+
+alias sharedauth : sharedauth_client sharedauth_server
+ sharedauth_client_sharedauth ;
+
