@@ -2,9 +2,9 @@
 
 [library Documentação do Assistant C++
     [quickbook 1.5]
-    [version 1.0]
+    [version 2.0.0.1]
     [id assistant]
-    [copyright 2012 TecGraf/PUC-Rio]
+    [copyright 2012-2013 TecGraf/PUC-Rio]
     [authors [Almeida, Felipe Magno]]
     [/ license ]
     [source-mode c++]
@@ -731,6 +731,15 @@ em caso de falha de comunicação com o barramento e outros, porém, o
 tipo de tratamento de erros. Se alguma das operações, como `_narrow` e
 `sayHello`, executadas sobre as ofertas falharem, então toda a
 aplicação terminará.]
+
+[warning O compilador Visual C++ 2005 possui um bug, aonde o
+`operator[]` definido como membro de variáveis `_var` não são
+prioritários e o lookup continua com o `operator[]` livre através
+de uma conversão do objeto `_var` para `T*`. O erro se manifesta
+como uma ambiguidade quando o argumento para `operator[]` não é
+um `MICO::ULong`, geralmente o caso quando se utiliza um literal.
+Para evitar esse erro de compilação é só usar o `operator*` antes
+do `operator[]` da seguinte forma `(*offers)[0u]`.]
 
 [section Tratando erros]
 
