@@ -235,9 +235,9 @@ public:
   * temporariamente desautenticada.
   * 
   * @return Verdadeiro se o processo de logout for concluído com êxito e falso
-  *         se a conexão já estiver desautenticada (login inválido).
+  *         se a conexão já estiver desautenticada (login inválido) ou se houver 
+  *         uma falha durante o processo remoto do logout.
   *
-  * @throw CORBA::Exception
   */
   bool logout();
   	

@@ -435,12 +435,12 @@ bool Connection::_logout(bool local)
   }
   else if (state == LOGGED) 
   {
-    #ifdef OPENBUS_SDK_MULTITHREAD
+  #ifdef OPENBUS_SDK_MULTITHREAD
     _renewLogin.interrupt();
     _renewLogin.join();
-    #else
+  #else
     _renewLogin.reset();
-    #endif
+  #endif
     if (!local)
     {
       struct save_connection
@@ -465,12 +465,9 @@ bool Connection::_logout(bool local)
         _access_control->logout();
         success = true;
       }
-      catch (const CORBA::NO_PERMISSION &e)
+      catch (const CORBA::SystemException &e)
       { 
-        if(e.minor() != idl_ac::NoLoginCode)
-        {
-          throw;
-        }
+        success = false;
       }
     }
   }
