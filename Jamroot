@@ -52,6 +52,7 @@ lib dl : : <name>dl <link>shared ;
 project openbus : build-dir bin
  : requirements <tag>@tag <define>BOOST_ALL_NO_LIB=1
    <link>shared:<define>OPENBUS_SDK_SHARED <define>OPENBUS_SDK_SOURCE
+   <toolset>gcc:<cxxflags>-Wno-unused-local-typedefs
  : usage-requirements <link>shared:<define>OPENBUS_SDK_SHARED
  : default-build <threading>multi <variant>debug <link>shared
  ;
