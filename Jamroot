@@ -231,3 +231,7 @@ install stage-libs-deps : stage-demo-$(all-demos) stage-interop-$(all-interops)
 
 alias run-tests : tests//run-tests ;
 explicit run-tests ;
+
+alias assistant : assistant//assistant ;
+explicit assistant ;
+
