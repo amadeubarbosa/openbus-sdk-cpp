@@ -20,6 +20,7 @@
 
 #include <CORBA.h>
 #include <boost/function.hpp>
+#include <boost/scoped_ptr.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
@@ -351,9 +352,9 @@ private:
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;
 #else
-  std::auto_ptr<RenewLogin> _renewLogin;
+  boost::scoped_ptr<RenewLogin> _renewLogin;
 #endif
-  std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
+  boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo;
   InvalidLoginCallback_t _onInvalidLogin;
   
   enum LegacyDelegate 
@@ -377,9 +378,9 @@ private:
   idl_ac::AccessControl_var _access_control;
   idl_ac::LoginRegistry_var _login_registry;
   idl_or::OfferRegistry_var _offer_registry;
-  std::auto_ptr<LoginCache> _loginCache;
+  boost::scoped_ptr<LoginCache> _loginCache;
   std::string _busid;
-  std::auto_ptr<PublicKey> _buskey;
+  boost::scoped_ptr<PublicKey> _buskey;
   LegacyDelegate _legacyDelegate;
   bool _legacyEnabled;
   /**/

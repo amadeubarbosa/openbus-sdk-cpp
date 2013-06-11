@@ -147,12 +147,12 @@ Connection::Connection(
     assert(!CORBA::is_nil(_login_registry.in()));
   }
 	
-  _loginCache = std::auto_ptr<LoginCache> (new LoginCache(_login_registry));
+  _loginCache.reset(new LoginCache(_login_registry));
   {
     interceptors::IgnoreInterceptor _i(*_piCurrent);
     _busid = _access_control->busid();
     CORBA::OctetSeq_var o = _access_control->buskey();
-    _buskey = std::auto_ptr<PublicKey> (new PublicKey(o));
+    _buskey.reset(new PublicKey(o));
   }
   
   for (ConnectionProperties::const_iterator it = props.begin(); 
@@ -210,7 +210,7 @@ void Connection::login(idl_ac::LoginInfo &loginInfo,
   {
     throw AlreadyLoggedIn();
   }
-  _loginInfo = std::auto_ptr<idl_ac::LoginInfo> (&loginInfo);
+  _loginInfo.reset(&loginInfo);
   _state = LOGGED;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -219,9 +219,8 @@ void Connection::login(idl_ac::LoginInfo &loginInfo,
                 boost::ref(_openbusContext), validityTime));
 #else
   assert(!_renewLogin.get());
-  _renewLogin = std::auto_ptr<RenewLogin> 
-    (new RenewLogin(_orb, *this, _access_control, _openbusContext, 
-                   validityTime));
+  _renewLogin.reset(new RenewLogin(_orb, *this, _access_control, 
+                                   _openbusContext, validityTime));
 #endif
 }
 
