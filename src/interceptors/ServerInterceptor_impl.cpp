@@ -5,6 +5,7 @@
 #include "openbus/log.hpp"
 #include "stubs/credential_v1_5.h"
 
+#include <boost/scoped_ptr.hpp>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -216,7 +217,7 @@ void ServerInterceptor::receive_request_service_contexts(
     {
       size_t operationSize = strlen(r->operation());
       int bufSize = 22 + operationSize;
-      std::auto_ptr<unsigned char> buf(new unsigned char[bufSize]());
+      boost::scoped_ptr<unsigned char> buf(new unsigned char[bufSize]());
       unsigned char *pBuf = buf.get();
       pBuf[0] = idl::MajorVersion;
       pBuf[1] = idl::MinorVersion;

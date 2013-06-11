@@ -36,8 +36,7 @@ Login *LoginCache::validateLogin(const std::string &id)
     { 
       return 0; 
     }
-    login->pubKey = 
-      std::auto_ptr<PublicKey> (new PublicKey(login->encodedCallerPubKey));
+    login->pubKey.reset(new PublicKey(login->encodedCallerPubKey));
     login->timeUpdated = time(0);
 #ifdef OPENBUS_SDK_MULTITHREAD
     lock.lock();

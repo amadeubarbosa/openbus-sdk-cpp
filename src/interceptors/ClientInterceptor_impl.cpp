@@ -6,8 +6,8 @@
 #include "stubs/credential_v1_5.h"
 #include "openbus/log.hpp"
 
+#include <boost/scoped_ptr.hpp>
 #include <openssl/sha.h>
-
 #include <cstddef>
 #include <cstring>
 #include <sstream>
@@ -130,7 +130,7 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo *r)
         credential.session = session.id;
         credential.ticket = ++session.ticket;
         int bufSize = 22 + strlen(r->operation());
-        std::auto_ptr<unsigned char> buf (new unsigned char[bufSize]());
+        boost::scoped_ptr<unsigned char> buf (new unsigned char[bufSize]());
         buf.get()[0] = idl::MajorVersion;
         buf.get()[1] = idl::MinorVersion;
         std::memcpy(buf.get()+2, session.secret->get_buffer(), 16);

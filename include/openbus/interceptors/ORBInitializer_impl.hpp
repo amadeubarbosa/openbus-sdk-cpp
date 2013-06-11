@@ -6,6 +6,7 @@
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 
+#include <boost/scoped_ptr.hpp>
 #include <memory>
 #include <CORBA.h>
 
@@ -63,8 +64,8 @@ public:
     return _slotId_legacyCallChain; 
   }
 private:
-  std::auto_ptr<ClientInterceptor> _clientInterceptor; 
-  std::auto_ptr<ServerInterceptor> _serverInterceptor;
+  boost::scoped_ptr<ClientInterceptor> _clientInterceptor; 
+  boost::scoped_ptr<ServerInterceptor> _serverInterceptor;
   IOP::Codec_var _codec;
   PortableInterceptor::SlotId _slotId_requesterConnection;
   PortableInterceptor::SlotId _slotId_receiveConnection;

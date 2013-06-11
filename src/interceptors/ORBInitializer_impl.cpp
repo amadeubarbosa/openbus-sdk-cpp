@@ -31,18 +31,16 @@ void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo *info)
   PortableInterceptor::Current_var piCurrent = 
     PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(piCurrent));
-  _clientInterceptor = std::auto_ptr<ClientInterceptor> 
-    (new ClientInterceptor(_slotId_requesterConnection, 
-                           _slotId_joinedCallChain, 
-                           _slotId_ignoreInterceptor, _codec));
+  _clientInterceptor.reset(new ClientInterceptor(
+    _slotId_requesterConnection, _slotId_joinedCallChain, 
+    _slotId_ignoreInterceptor, _codec));
   info->add_client_request_interceptor(_clientInterceptor.get());
   _slotId_signedCallChain = info->allocate_slot_id();
   _slotId_legacyCallChain = info->allocate_slot_id();
-  _serverInterceptor = std::auto_ptr<ServerInterceptor> 
-    (new ServerInterceptor(piCurrent, _slotId_requesterConnection, 
-                           _slotId_receiveConnection, 
-                           _slotId_joinedCallChain, _slotId_signedCallChain, 
-                           _slotId_legacyCallChain, _codec));
+  _serverInterceptor.reset(new ServerInterceptor(
+    piCurrent, _slotId_requesterConnection, _slotId_receiveConnection, 
+    _slotId_joinedCallChain, _slotId_signedCallChain, _slotId_legacyCallChain, 
+    _codec));
   info->add_server_request_interceptor(_serverInterceptor.get());
 }
 }
