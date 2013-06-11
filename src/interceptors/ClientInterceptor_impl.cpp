@@ -130,7 +130,7 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo *r)
         credential.session = session.id;
         credential.ticket = ++session.ticket;
         int bufSize = 22 + strlen(r->operation());
-        boost::scoped_ptr<unsigned char> buf (new unsigned char[bufSize]());
+        boost::scoped_array<unsigned char> buf (new unsigned char[bufSize]());
         buf.get()[0] = idl::MajorVersion;
         buf.get()[1] = idl::MinorVersion;
         std::memcpy(buf.get()+2, session.secret->get_buffer(), 16);

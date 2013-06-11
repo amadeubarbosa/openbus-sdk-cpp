@@ -217,7 +217,7 @@ void ServerInterceptor::receive_request_service_contexts(
     {
       size_t operationSize = strlen(r->operation());
       int bufSize = 22 + operationSize;
-      boost::scoped_ptr<unsigned char> buf(new unsigned char[bufSize]());
+      boost::scoped_array<unsigned char> buf(new unsigned char[bufSize]());
       unsigned char *pBuf = buf.get();
       pBuf[0] = idl::MajorVersion;
       pBuf[1] = idl::MinorVersion;
