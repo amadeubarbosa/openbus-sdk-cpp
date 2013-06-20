@@ -33,7 +33,6 @@ struct OPENBUS_SDK_DECL Slot
 struct orb_info
 {
   orb_info(PI::ORBInitInfo_ptr);
-  ~orb_info(){std::cout<<"~orb_info"<<std::endl;}
   PI::ORBInitInfo_ptr info;
   Slot slot;
   IOP::Codec_var codec;

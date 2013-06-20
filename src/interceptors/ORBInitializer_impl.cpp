@@ -50,7 +50,6 @@ ORBInitializer::ORBInitializer()
 
 ORBInitializer::~ORBInitializer() 
 {
-  std::cout << "~ORBInitializer " << _orb_info.use_count() << std::endl;
 }
 
 void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo_ptr info) 
