@@ -24,7 +24,7 @@
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
-
+#include <boost/shared_ptr.hpp>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -288,11 +288,7 @@ private:
   * Connection deve ser adquirido atraves de: OpenBusContext::createConnection()
   */
   Connection(const std::string host, const unsigned short port, CORBA::ORB_ptr, 
-             IOP::Codec *, PortableInterceptor::SlotId slotId_joinedCallChain, 
-             PortableInterceptor::SlotId slotId_signedCallChain, 
-             PortableInterceptor::SlotId slotId_legacyCallChain, 
-             PortableInterceptor::SlotId slotId_receiveConnection, 
-             OpenBusContext &, 
+             boost::shared_ptr<interceptors::orb_info>, OpenBusContext &, 
              const ConnectionProperties &props);
 
   Connection(const Connection &);
@@ -342,12 +338,8 @@ private:
 
   const std::string _host;
   const unsigned short _port;
-  CORBA::ORB *_orb;
-  IOP::Codec *_codec;
-  PortableInterceptor::SlotId _slotId_joinedCallChain; 
-  PortableInterceptor::SlotId _slotId_signedCallChain;
-  PortableInterceptor::SlotId _slotId_legacyCallChain;
-  PortableInterceptor::SlotId _slotId_receiveConnection;
+  CORBA::ORB_ptr _orb;
+  boost::shared_ptr<interceptors::orb_info> _orb_info;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;

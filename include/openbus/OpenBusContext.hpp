@@ -20,7 +20,7 @@
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
-
+#include <boost/shared_ptr.hpp>
 #include <string>
 
 namespace openbus 
@@ -54,12 +54,7 @@ inline bool operator!=(const LoginInfo &lhs, const LoginInfo &rhs)
   return !(lhs == rhs);
 }
 
-} 
-} 
-} 
-} 
-} 
-}
+}}}}}}
 
 /**
 * \brief openbus
@@ -367,12 +362,7 @@ private:
    * OpenBusContext deve ser adquirido atraves de:
    *   orb->resolve_initial_references("OpenBusContext")
    */
-  OpenBusContext(CORBA::ORB_ptr, IOP::Codec *, 
-                 PortableInterceptor::SlotId slotId_joinedCallChain, 
-                 PortableInterceptor::SlotId slotId_signedCallChain, 
-                 PortableInterceptor::SlotId slotId_legacyCallChain,
-                 PortableInterceptor::SlotId slotId_requesterConnection,
-                 PortableInterceptor::SlotId slotId_receiveConnection);
+  OpenBusContext(CORBA::ORB_ptr, boost::shared_ptr<interceptors::orb_info>);
   
   OpenBusContext(const OpenBusContext&);
   OpenBusContext &operator=(const OpenBusContext &);
@@ -388,13 +378,8 @@ private:
   mutable boost::mutex _mutex;
 #endif
   CORBA::ORB_ptr _orb;
+  boost::shared_ptr<interceptors::orb_info> _orb_info;
   PortableInterceptor::Current_var _piCurrent;
-  IOP::Codec *_codec;
-  PortableInterceptor::SlotId _slotId_joinedCallChain; 
-  PortableInterceptor::SlotId _slotId_signedCallChain;
-  PortableInterceptor::SlotId _slotId_legacyCallChain;
-  PortableInterceptor::SlotId _slotId_requesterConnection;
-  PortableInterceptor::SlotId _slotId_receiveConnection;
   Connection *_defaultConnection;
   BusidConnection _busidConnection;
   CallDispatchCallback _callDispatchCallback;

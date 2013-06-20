@@ -21,8 +21,6 @@ namespace idl = tecgraf::openbus::core::v2_0;
 namespace interceptors 
 { 
 
-PI::SlotId ClientInterceptor::_slotId_ignoreInterceptor;
-
 std::string getSessionKey(PI::ClientRequestInfo &r) 
 {
   idl::HashValue profileDataHash;
@@ -38,17 +36,17 @@ Connection &ClientInterceptor::getCurrentConnection(PI::ClientRequestInfo &r)
               "ClientInterceptor::getCurrentConnection");
   Connection *conn = 0;
   CORBA::Any_var connectionAddrAny;
-  connectionAddrAny = r.get_slot(_slotId_requesterConnection);
+  connectionAddrAny = r.get_slot(_orb_info->slot.requester_conn);
   idl::OctetSeq connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) 
   {
     assert(connectionAddrOctetSeq.length() == sizeof(conn));
     std::memcpy(&conn, connectionAddrOctetSeq.get_buffer(), sizeof(conn));
   }
-  assert(_openbusContext);
+  assert(_openbus_ctx);
   if(!conn) 
   {
-    if (!(conn = _openbusContext->getDefaultConnection())) 
+    if (!(conn = _openbus_ctx->getDefaultConnection())) 
     {
       l.log("throw NoLoginCode");
       throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
@@ -62,12 +60,12 @@ Connection &ClientInterceptor::getCurrentConnection(PI::ClientRequestInfo &r)
 CallerChain ClientInterceptor::getJoinedChain(Connection &c, 
                                               PI::ClientRequestInfo &r)
 {
-  CORBA::Any_var signedCallChainAny= r.get_slot(_slotId_joinedCallChain);
+  CORBA::Any_var signedCallChainAny= r.get_slot(_orb_info->slot.joined_call_chain);
   idl_cr::SignedCallChain signedCallChain;
   if (*signedCallChainAny >>= signedCallChain) 
   {
     CORBA::Any_var callChainAny =
-      _cdrCodec->decode_value(signedCallChain.encoded, idl_ac::_tc_CallChain);
+      _orb_info->codec->decode_value(signedCallChain.encoded, idl_ac::_tc_CallChain);
     idl_ac::CallChain callChain;
     if (callChainAny >>= callChain)
     {
@@ -78,28 +76,24 @@ CallerChain ClientInterceptor::getJoinedChain(Connection &c,
   return CallerChain();
 }
 
-ClientInterceptor::ClientInterceptor(PI::SlotId slotId_requesterConnection,
-  PI::SlotId slotId_joinedCallChain, PI::SlotId slotId_ignoreInterceptor,
-  IOP::Codec *cdr_codec)
-  : _cdrCodec(cdr_codec), 
-    _slotId_requesterConnection(slotId_requesterConnection), 
-    _slotId_joinedCallChain(slotId_joinedCallChain), 
-    _sessionLRUCache(SessionLRUCache(LRUSize)),
-    _callChainLRUCache(CallChainLRUCache(LRUSize)), 
-    _openbusContext(0)
+  ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p)
+  : _orb_info(p), _sessionLRUCache(SessionLRUCache(LRUSize)),
+    _callChainLRUCache(CallChainLRUCache(LRUSize))
 { 
   log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
-  _slotId_ignoreInterceptor = slotId_ignoreInterceptor;
 }
 
-void ClientInterceptor::send_request(PI::ClientRequestInfo *r)
+void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::send_request");
   l.level_vlog(debug_level, "operation: %s", r->operation());
 
-  if (!IgnoreInterceptor::status(*r)) 
+  CORBA::Any_var any = r->get_slot(_orb_info->slot.ignore_interceptor);
+  CORBA::Boolean ignore = false;
+  *any >>= CORBA::Any::to_boolean(ignore);
+  if (!ignore) 
   {
     Connection &conn = getCurrentConnection(*r);
     if (conn._login()) 
@@ -217,7 +211,7 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo *r)
       
       CORBA::Any any;
       any <<= credential;
-      CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
+      CORBA::OctetSeq_var o = _orb_info->codec->encode_value(any);
       IOP::ServiceContext::_context_data_seq s(o->length(), o->length(), 
                                                o->get_buffer());
       serviceContext.context_data = s;
@@ -250,7 +244,7 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo *r)
         }
         CORBA::Any lany;
         lany <<= legacyCredential;
-        o = _cdrCodec->encode_value(lany);
+        o = _orb_info->codec->encode_value(lany);
         IOP::ServiceContext::_context_data_seq ls(o->length(), o->length(), 
                                                   o->get_buffer());
         legacyContext.context_data = ls;
@@ -266,7 +260,7 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo *r)
   }
 }
 
-void ClientInterceptor::receive_exception(PI::ClientRequestInfo *r)
+void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::receive_exception");
@@ -294,7 +288,7 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo *r)
           CORBA::Any_var any;
           try 
           {
-            any = _cdrCodec->decode_value(o, idl_cr::_tc_CredentialReset);
+            any = _orb_info->codec->decode_value(o, idl_cr::_tc_CredentialReset);
           }
           catch (const CORBA::Exception &) 
           {
@@ -389,5 +383,25 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo *r)
   }
 }
 
+void ClientInterceptor::send_poll(PI::ClientRequestInfo_ptr) 
+{ 
 }
+
+void ClientInterceptor::receive_reply(PI::ClientRequestInfo_ptr) 
+{ 
 }
+
+void ClientInterceptor::receive_other(PI::ClientRequestInfo_ptr) 
+{ 
+}
+
+char *ClientInterceptor::name() 
+{ 
+  return CORBA::string_dup("ClientInterceptor"); 
+}
+
+void ClientInterceptor::destroy() 
+{ 
+}
+
+}}

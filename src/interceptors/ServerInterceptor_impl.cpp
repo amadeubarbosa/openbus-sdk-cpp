@@ -27,19 +27,8 @@ Session::Session(std::size_t i, const std::string &login)
   }
 }
 
-ServerInterceptor::ServerInterceptor(
-  PI::Current *piCurrent, PI::SlotId slotId_requesterConnection,
-  PI::SlotId slotId_receiveConnection, PI::SlotId slotId_joinedCallChain,
-  PI::SlotId slotId_signedCallChain, PI::SlotId slotId_legacyCallChain,
-  IOP::Codec *cdr_codec) 
-  : _piCurrent(piCurrent), 
-    _slotId_requesterConnection(slotId_requesterConnection),
-    _slotId_receiveConnection(slotId_receiveConnection), 
-    _slotId_joinedCallChain(slotId_joinedCallChain),
-    _slotId_signedCallChain(slotId_signedCallChain),
-    _slotId_legacyCallChain(slotId_legacyCallChain),
-    _cdrCodec(cdr_codec), _openbusContext(0),
-    _sessionLRUCache(SessionLRUCache(LRUSize))
+ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p)
+  : _orb_info(p), _sessionLRUCache(SessionLRUCache(LRUSize))
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");
@@ -70,7 +59,7 @@ void ServerInterceptor::sendCredentialReset(
 
   CORBA::Any any;
   any <<= credentialReset;
-  CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
+  CORBA::OctetSeq_var o = _orb_info->codec->encode_value(any);
 
   IOP::ServiceContext serviceContext;
   serviceContext.context_id = idl_cr::CredentialContextId;
@@ -84,17 +73,17 @@ void ServerInterceptor::sendCredentialReset(
 }
 
 Connection &ServerInterceptor::getDispatcher(
-  OpenBusContext &context, const std::string &busId, const std::string &loginId,
-  const std::string &operation)
+  boost::shared_ptr<OpenBusContext> ctx, const std::string &busId, 
+  const std::string &loginId, const std::string &operation)
 {
   Connection *conn = 0;
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::getDispatcher");
-  if (context.onCallDispatch())
+  if (ctx->onCallDispatch())
   {
     try 
     {
-      conn = context.onCallDispatch()(context, busId, loginId, operation);
+      conn = ctx->onCallDispatch()(*ctx, busId, loginId, operation);
     }
     catch (...) 
     {
@@ -109,7 +98,7 @@ Connection &ServerInterceptor::getDispatcher(
   }
   else
   {
-    if (!(conn = context.getDefaultConnection())) 
+    if (!(conn = ctx->getDefaultConnection())) 
     {
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
@@ -119,7 +108,7 @@ Connection &ServerInterceptor::getDispatcher(
 }
 
 void ServerInterceptor::receive_request_service_contexts(
-  PI::ServerRequestInfo *r)
+  PI::ServerRequestInfo_ptr r)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::receive_request_service_contexts");
@@ -133,7 +122,8 @@ void ServerInterceptor::receive_request_service_contexts(
       r->get_request_service_context(idl_cr::CredentialContextId);
     IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
     CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer());
-    any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
+    any = _orb_info->codec->decode_value(contextData, 
+                                         idl_cr::_tc_CredentialData);
   }
   catch (const CORBA::BAD_PARAM &) 
   {
@@ -142,11 +132,11 @@ void ServerInterceptor::receive_request_service_contexts(
   idl_cr::CredentialData credential;
   if (hasContext && (any >>= credential)) 
   {
-    Connection &conn = getDispatcher(
-      *_openbusContext, std::string(credential.bus), 
-      std::string(credential.login), r->operation());
+    Connection &conn = getDispatcher(_openbus_ctx, std::string(credential.bus), 
+                                     std::string(credential.login), 
+                                     r->operation());
 
-    size_t const bufSize = sizeof(Connection*);
+    size_t const bufSize = sizeof(Connection *);
     unsigned char buf[bufSize];
     Connection *_c = &conn;
     std::memcpy(buf, &_c, bufSize);
@@ -154,18 +144,18 @@ void ServerInterceptor::receive_request_service_contexts(
       new idl::OctetSeq(bufSize, bufSize, buf);
     CORBA::Any connectionAddrAny;
     connectionAddrAny <<= *(connectionAddrOctetSeq);
-    r->set_slot(_slotId_requesterConnection, connectionAddrAny);
+    r->set_slot(_orb_info->slot.requester_conn, connectionAddrAny);
 
-    r->set_slot(_slotId_receiveConnection, connectionAddrAny);
+    r->set_slot(_orb_info->slot.receive_conn, connectionAddrAny);
 
-    _openbusContext->setCurrentConnection(&conn);
+    _openbus_ctx->setCurrentConnection(&conn);
 
     if (!conn._login())
     {
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
 
-    Login *caller;
+    Login *caller = 0;
     if (strcmp(credential.bus.in(), conn._busid.c_str())) 
     {
       l.log("Login diferente daquele que iniciou a sessão.");
@@ -269,7 +259,7 @@ void ServerInterceptor::receive_request_service_contexts(
     else
     {
       CORBA::Any_var callChainAny =
-        _cdrCodec->decode_value(credential.chain.encoded,
+        _orb_info->codec->decode_value(credential.chain.encoded,
                                 idl_ac::_tc_CallChain);
       idl_ac::CallChain callChain;
       callChainAny >>= callChain;
@@ -286,7 +276,7 @@ void ServerInterceptor::receive_request_service_contexts(
       {
         CORBA::Any signedCallChainAny;
         signedCallChainAny <<= credential.chain;
-        r->set_slot(_slotId_signedCallChain, signedCallChainAny);
+        r->set_slot(_orb_info->slot.signed_call_chain, signedCallChainAny);
       }
     }
   } 
@@ -301,7 +291,7 @@ void ServerInterceptor::receive_request_service_contexts(
       IOP::ServiceContext_var sc = r->get_request_service_context(1234);
       IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
       CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);
-      lany = _cdrCodec->decode_value(contextData, 
+      lany = _orb_info->codec->decode_value(contextData, 
                                      openbus::legacy::v1_5::_tc_Credential);
     }
     catch (const CORBA::BAD_PARAM &) 
@@ -342,13 +332,38 @@ void ServerInterceptor::receive_request_service_contexts(
       }
       CORBA::Any legacyChainAny;
       legacyChainAny <<= legacyChain;
-      r->set_slot(_slotId_legacyCallChain, legacyChainAny);
+      r->set_slot(_orb_info->slot.legacy_call_chain, legacyChainAny);
     }
     else
     {
       throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, CORBA::COMPLETED_NO);
     }
   }
+}
+
+void ServerInterceptor::receive_request(PI::ServerRequestInfo_ptr) 
+{ 
+}
+
+void ServerInterceptor::send_reply(PI::ServerRequestInfo_ptr) 
+{ 
+}
+
+void ServerInterceptor::send_exception(PI::ServerRequestInfo_ptr) 
+{ 
+}
+
+void ServerInterceptor::send_other(PI::ServerRequestInfo_ptr) 
+{ 
+}
+
+char *ServerInterceptor::name() 
+{ 
+  return CORBA::string_dup("ServerInterceptor"); 
+}
+
+void ServerInterceptor::destroy() 
+{ 
 }
 
 }

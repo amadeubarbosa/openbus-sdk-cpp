@@ -2,6 +2,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_IMPL_H_
 #define TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_IMPL_H_
 
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/decl.hpp"
 
 extern "C" 
@@ -17,7 +18,7 @@ extern "C"
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
-
+#include <boost/shared_ptr.hpp>
 #include <CORBA.h>
 #include <cstddef>
 #include <string>
@@ -29,6 +30,7 @@ class Connection;
 
 namespace interceptors 
 {
+
 namespace PI = PortableInterceptor;
 
 const std::size_t secretSize = 16;
@@ -42,69 +44,29 @@ struct OPENBUS_SDK_DECL Session
   std::string remoteId;
 };
 
-class OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
+struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
 {
-public:
-  ServerInterceptor(
-    PI::Current *piCurrent, PI::SlotId slotId_requesterConnection, 
-    PI::SlotId slotId_receiveConnection, PI::SlotId slotId_joinedCallChain,
-    PI::SlotId slotId_signedCallChain, PI::SlotId slotId_legacyCallChain,
-    IOP::Codec *cdr_codec);
-
-  void 
-  receive_request_service_contexts(PI::ServerRequestInfo *);
-
-  void receive_request(PI::ServerRequestInfo *) 
-  { 
-  }
-
-  void send_reply(PI::ServerRequestInfo *) 
-  { 
-  }
-
-  void send_exception(PI::ServerRequestInfo *) 
-  { 
-  }
-
-  void send_other(PI::ServerRequestInfo *) 
-  { 
-  }
-
-  char *name() 
-  { 
-    return CORBA::string_dup("ServerInterceptor"); 
-  }
-
-  void destroy() 
-  { 
-  }
-
-  void openbusContext(OpenBusContext &m) 
-  { 
-    _openbusContext = &m;
-  }
-private:
+  ServerInterceptor(boost::shared_ptr<orb_info>);
+  void receive_request_service_contexts(PI::ServerRequestInfo_ptr);
+  void receive_request(PI::ServerRequestInfo_ptr);
+  void send_reply(PI::ServerRequestInfo_ptr);
+  void send_exception(PI::ServerRequestInfo_ptr);
+  void send_other(PI::ServerRequestInfo_ptr);
+  char *name();
+  void destroy();
+  boost::shared_ptr<OpenBusContext> _openbus_ctx;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
 #endif
-  PI::Current *_piCurrent;
-  PI::SlotId _slotId_requesterConnection;
-  PI::SlotId _slotId_receiveConnection;
-  PI::SlotId _slotId_joinedCallChain;
-  PI::SlotId _slotId_signedCallChain;
-  PI::SlotId _slotId_legacyCallChain;
-  IOP::Codec *_cdrCodec;
-  OpenBusContext *_openbusContext;
-  Connection &getDispatcher(
-    OpenBusContext &context, const std::string &busId, 
-    const std::string &loginId, const std::string &operation);
-
+  boost::shared_ptr<orb_info> _orb_info;
+  Connection &getDispatcher(boost::shared_ptr<OpenBusContext> context, 
+                            const std::string &busId,const std::string &loginId,
+                            const std::string &operation);
   void sendCredentialReset(Connection &, Login &, PI::ServerRequestInfo &);
-
   typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;
   SessionLRUCache _sessionLRUCache;
 };
-}
-}
+
+}}
 
 #endif

@@ -3,10 +3,8 @@
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 
 #include "openbus/decl.hpp"
-#include "openbus/interceptors/ClientInterceptor_impl.hpp"
-#include "openbus/interceptors/ServerInterceptor_impl.hpp"
 
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <memory>
 #include <CORBA.h>
 
@@ -14,67 +12,54 @@ namespace openbus
 {
 namespace interceptors 
 {
-class OPENBUS_SDK_DECL ORBInitializer : public PortableInterceptor::ORBInitializer 
+namespace PI = PortableInterceptor;
+class ClientInterceptor;
+class ServerInterceptor;
+
+struct OPENBUS_SDK_DECL Slot
 {
-public:
+  Slot(PI::ORBInitInfo_ptr info)
+    : requester_conn(info->allocate_slot_id()),
+    receive_conn(info->allocate_slot_id()),
+    joined_call_chain(info->allocate_slot_id()),
+    signed_call_chain(info->allocate_slot_id()),
+    legacy_call_chain(info->allocate_slot_id()),
+    ignore_interceptor(info->allocate_slot_id())
+  {}
+  const PI::SlotId requester_conn, receive_conn, joined_call_chain, signed_call_chain,
+    legacy_call_chain, ignore_interceptor;
+};
+
+struct orb_info
+{
+  orb_info(PI::ORBInitInfo_ptr);
+  ~orb_info(){std::cout<<"~orb_info"<<std::endl;}
+  PI::ORBInitInfo_ptr info;
+  Slot slot;
+  IOP::Codec_var codec;
+  PortableInterceptor::Current_var pi_current;
+};
+
+struct OPENBUS_SDK_DECL ignore_interceptor
+{
+  ignore_interceptor(boost::shared_ptr<orb_info>);
+  ~ignore_interceptor();
+  boost::shared_ptr<orb_info> _orb_info;
+};
+
+struct OPENBUS_SDK_DECL ORBInitializer : 
+  public PortableInterceptor::ORBInitializer 
+{
   ORBInitializer();
   ~ORBInitializer();
-  void pre_init(PortableInterceptor::ORBInitInfo *);
-  void post_init(PortableInterceptor::ORBInitInfo *) 
-  { 
-  }
+  void pre_init(PortableInterceptor::ORBInitInfo_ptr);
+  void post_init(PortableInterceptor::ORBInitInfo_ptr);
 
-  ClientInterceptor *clientInterceptor() const 
-  { 
-    return _clientInterceptor.get(); 
-  }
-
-  ServerInterceptor *serverInterceptor() const 
-  { 
-    return _serverInterceptor.get(); 
-  }
-
-  IOP::Codec *codec() const 
-  { 
-    return _codec; 
-  }
-
-  PortableInterceptor::SlotId slotId_requesterConnection() const 
-  { 
-    return _slotId_requesterConnection; 
-  } 
-
-  PortableInterceptor::SlotId slotId_receiveConnection() const 
-  { 
-    return _slotId_receiveConnection; 
-  }
-
-  PortableInterceptor::SlotId slotId_joinedCallChain() const 
-  { 
-    return _slotId_joinedCallChain; 
-  }
-
-  PortableInterceptor::SlotId slotId_signedCallChain() const 
-  { 
-    return _slotId_signedCallChain; 
-  }
-
-  PortableInterceptor::SlotId slotId_legacyCallChain() const 
-  { 
-    return _slotId_legacyCallChain; 
-  }
-private:
-  boost::scoped_ptr<ClientInterceptor> _clientInterceptor; 
-  boost::scoped_ptr<ServerInterceptor> _serverInterceptor;
-  IOP::Codec_var _codec;
-  PortableInterceptor::SlotId _slotId_requesterConnection;
-  PortableInterceptor::SlotId _slotId_receiveConnection;
-  PortableInterceptor::SlotId _slotId_joinedCallChain;
-  PortableInterceptor::SlotId _slotId_signedCallChain;
-  PortableInterceptor::SlotId _slotId_legacyCallChain;
-  PortableInterceptor::SlotId _slotId_ignoreInterceptor;
+  boost::shared_ptr<ClientInterceptor> clientInterceptor; 
+  boost::shared_ptr<ServerInterceptor> serverInterceptor;
+  boost::shared_ptr<orb_info> _orb_info;
 };
-}
-}
+
+}}
 
 #endif
