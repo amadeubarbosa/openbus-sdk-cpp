@@ -18,7 +18,7 @@ std::string host("localhost");
 unsigned short port = 2089;
 bool regex_cb(const boost::match_results<std::string::const_iterator> &what)
 {
-  if ("bust.host.name" == what[1])
+  if ("bus.host.name" == what[1])
   {
     host = what[2];
   }
