@@ -7,7 +7,7 @@ obj hello-idl : $(here)/idl/hello.idl /mico//mico ;
 exe simple_client
     : src/client.cpp hello-idl
       /openbus//openbus /scs//scs /logger//logger /mico//mico
-      /boost//headers /openssl//openssl
+      /boost//headers /boost//regex /openssl//openssl
     : <threading>multi:<source>/boost//thread
       <include>../properties_reader/include
       <implicit-dependency>/openbus//core-idls
