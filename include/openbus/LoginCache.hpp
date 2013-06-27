@@ -11,7 +11,7 @@
   #include "openbus/LRUCache_impl.hpp"
 #endif
 #include "openbus/crypto/PublicKey.hpp"
-
+#include <boost/shared_ptr.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
@@ -32,13 +32,13 @@ struct OPENBUS_SDK_DECL Login
   time_t timeUpdated;
 };
 
-typedef LRUCache<std::string, Login *> LoginLRUCache;
+typedef LRUCache<std::string, boost::shared_ptr<Login> > LoginLRUCache;
 
 class OPENBUS_SDK_DECL LoginCache 
 {
 public:
   LoginCache(idl_ac::LoginRegistry_ptr);
-  Login *validateLogin(const std::string &id);
+  boost::shared_ptr<Login> validateLogin(const std::string &id);
 private:
   idl_ac::LoginRegistry_ptr _login_registry;
   LoginLRUCache _loginLRUCache;

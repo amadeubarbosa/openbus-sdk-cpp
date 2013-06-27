@@ -2,6 +2,7 @@
 #include "openbus/LoginCache.hpp"
 
 #include <cstddef>
+#include <boost/make_shared.hpp>
 
 const std::size_t cacheSize = 128;
 
@@ -12,19 +13,19 @@ LoginCache::LoginCache(idl_ac::LoginRegistry_ptr p)
 { 
 }
 
-Login *LoginCache::validateLogin(const std::string &id) 
+boost::shared_ptr<Login> LoginCache::validateLogin(const std::string &id) 
 {
   /* este login está no cache? */
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-  Login *login = _loginLRUCache.fetch(id);
+  boost::shared_ptr<Login> login = _loginLRUCache.fetch(id);
   if (!login) 
   {
 #ifdef OPENBUS_SDK_MULTITHREAD
     lock.unlock();
 #endif
-    login = new Login;
+    login = boost::make_shared<Login>();
     login->time2live = -1;
     try 
     {
@@ -34,7 +35,7 @@ Login *LoginCache::validateLogin(const std::string &id)
     } 
     catch (const idl_ac::InvalidLogins &) 
     { 
-      return 0; 
+      return boost::shared_ptr<Login>();
     }
     login->pubKey.reset(new PublicKey(login->encodedCallerPubKey));
     login->timeUpdated = time(0);
@@ -50,7 +51,7 @@ Login *LoginCache::validateLogin(const std::string &id)
   /* se time2live é zero então o login é inválido. */
   if (!login->time2live) 
   {
-    return 0;
+    return boost::shared_ptr<Login>();
   }
   
   /* se time2live é maior do que o intervalo de tempo de atualização,
@@ -72,7 +73,7 @@ Login *LoginCache::validateLogin(const std::string &id)
       return login;
     }
   }
-  return 0;
+  return boost::shared_ptr<Login>();
 }
 
 }

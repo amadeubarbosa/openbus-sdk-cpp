@@ -35,7 +35,7 @@ ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p)
 }
 
 void ServerInterceptor::sendCredentialReset(
-  Connection &conn, Login &caller, PI::ServerRequestInfo &r) 
+  Connection &conn, boost::shared_ptr<Login> caller, PI::ServerRequestInfo &r) 
 {
   idl_cr::CredentialReset credentialReset;
 
@@ -43,12 +43,12 @@ void ServerInterceptor::sendCredentialReset(
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
   Session session(_sessionLRUCache.size() + 1,
-                  std::string(caller.loginInfo->id));
+                  std::string(caller->loginInfo->id));
   _sessionLRUCache.insert(session.id, session);
   credentialReset.session = session.id;
 
   CORBA::OctetSeq encrypted =
-    caller.pubKey->encrypt(session.secret, secretSize); 
+    caller->pubKey->encrypt(session.secret, secretSize); 
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
@@ -155,7 +155,7 @@ void ServerInterceptor::receive_request_service_contexts(
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
 
-    Login *caller = 0;
+    boost::shared_ptr<Login> caller;
     if (strcmp(credential.bus.in(), conn._busid.c_str())) 
     {
       l.log("Login diferente daquele que iniciou a sessão.");
@@ -238,7 +238,7 @@ void ServerInterceptor::receive_request_service_contexts(
     {
       l.level_vlog(debug_level, 
                    "credential not valid, try to reset credetial session");
-      sendCredentialReset(conn, *caller, *r);
+      sendCredentialReset(conn, caller, *r);
     }
     l.level_vlog(debug_level, "credential is valid");
     if (!credential.chain.encoded.length())
@@ -265,7 +265,7 @@ void ServerInterceptor::receive_request_service_contexts(
       callChainAny >>= callChain;
       if (std::strcmp(callChain.target, conn._login()->id)) 
       { 
-        sendCredentialReset(conn, *caller, *r);
+        sendCredentialReset(conn, caller, *r);
       }
       else if (std::strcmp(callChain.caller.id, caller->loginInfo->id)) 
       {
