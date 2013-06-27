@@ -320,7 +320,7 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
             _sessionLRUCache.insert(sessionKey, session);
           }
           l.log("Retransmissao da requisicao...");
-					CORBA::Object *_o = new CORBA::Object(*r->target());
+					CORBA::Object_var _o = new CORBA::Object(*r->target());
           throw PI::ForwardRequest(_o, false);
         } 
         throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, 

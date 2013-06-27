@@ -62,7 +62,8 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   Connection &getDispatcher(boost::shared_ptr<OpenBusContext> context, 
                             const std::string &busId,const std::string &loginId,
                             const std::string &operation);
-  void sendCredentialReset(Connection &, Login &, PI::ServerRequestInfo &);
+  void sendCredentialReset(Connection &, boost::shared_ptr<Login>, 
+                           PI::ServerRequestInfo &);
   typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;
   SessionLRUCache _sessionLRUCache;
 };
