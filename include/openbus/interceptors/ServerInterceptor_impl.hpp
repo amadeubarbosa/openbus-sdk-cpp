@@ -19,6 +19,7 @@ extern "C"
   #include <boost/thread.hpp>
 #endif
 #include <boost/shared_ptr.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <CORBA.h>
 #include <cstddef>
 #include <string>
@@ -33,14 +34,12 @@ namespace interceptors
 
 namespace PI = PortableInterceptor;
 
-const std::size_t secretSize = 16;
-
 struct OPENBUS_SDK_DECL Session 
 {
-  Session(std::size_t, const std::string &);
-  std::size_t id;
+  Session(const std::string &);
+  CORBA::ULong id;
   tickets_History tickets;
-  unsigned char secret[secretSize];
+  boost::uuids::uuid secret;
   std::string remoteId;
 };
 
@@ -64,7 +63,7 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
                             const std::string &operation);
   void sendCredentialReset(Connection &, boost::shared_ptr<Login>, 
                            PI::ServerRequestInfo &);
-  typedef LRUCache<CORBA::ULong, Session> SessionLRUCache;
+  typedef LRUCache<CORBA::ULong, boost::shared_ptr<Session> > SessionLRUCache;
   SessionLRUCache _sessionLRUCache;
 };
 
