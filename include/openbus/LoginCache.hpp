@@ -25,7 +25,7 @@ namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
 
 struct OPENBUS_SDK_DECL Login 
 {
-  idl_ac::LoginInfo *loginInfo;
+  idl_ac::LoginInfo_var loginInfo;
   idl::OctetSeq_var encodedCallerPubKey;
   std::auto_ptr<PublicKey> pubKey;
   long time2live;
@@ -37,10 +37,10 @@ typedef LRUCache<std::string, boost::shared_ptr<Login> > LoginLRUCache;
 class OPENBUS_SDK_DECL LoginCache 
 {
 public:
-  LoginCache(idl_ac::LoginRegistry_ptr);
+  LoginCache(idl_ac::LoginRegistry_var);
   boost::shared_ptr<Login> validateLogin(const std::string &id);
 private:
-  idl_ac::LoginRegistry_ptr _login_registry;
+  idl_ac::LoginRegistry_var _login_registry;
   LoginLRUCache _loginLRUCache;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
