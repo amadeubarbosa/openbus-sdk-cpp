@@ -97,7 +97,29 @@ Os arquivos e diretórios tem o seguinte padrão de nomenclatura, com exceção 
 
 Dessa forma, a biblioteca da API básica compilada em multithread, com debug e em compilação estática teria o nome, no linux: `libopenbus-mico-mt-s-d.a`.
 
-Para a biblioteca MICO, como não definimos seu processo de compilação, ele não segue esse mesmo padrão. Porém, para que os vários binários, resultado da compilação do mico, não conflitem um com o outro, separamos eles em diretórios diferentes. O nome desses diretórios seguem esse padrão. Portanto, o caminho, no pacote binário do __Assistant__, encontramos a biblioteca MICO, compilada para multithread, em static e com debug em: `lib/mico-mt-d/mico-2.3.13.a`. Veja que no nome do diretório, o `-s` não aparece. Isso é porque a compilação é feita em conjunto entre static e shared e o resultado dessa compilação é colocado na mesma pasta.
+Para a biblioteca MICO, como não definimos seu processo de compilação, ele não segue esse mesmo padrão. Porém, para que os vários binários, resultado da compilação do mico, não conflitem um com o outro, separamos eles em diretórios diferentes. O nome desses diretórios seguem esse padrão, conforme descrito a seguir:
+
+openbus-cpp-mico[br]
+├── bin[br]
+│   ├── mico-mt[br]
+│   ├── mico-mt-d[br]
+│   ├── mico-st[br]
+│   └── mico-st-d[br]
+...[br]
+├── include[br]
+│   ├── mico-mt[br]
+│   ├── mico-mt-d[br]
+│   ├── mico-st[br]
+│   └── mico-st-d[br]
+...[br]
+├── lib[br]
+│   ├── mico-mt[br]
+│   ├── mico-mt-d[br]
+│   ├── mico-st[br]
+│   └── mico-st-d[br]
+...[br]
+
+Portanto, o caminho, no pacote binário do __Assistant__, encontramos a biblioteca MICO, compilada para multithread, em static e com debug em: `lib/mico-mt-d/mico-2.3.13.a`. Veja que no nome do diretório, o `-s` não aparece. Isso é porque a compilação é feita em conjunto entre static e shared e o resultado dessa compilação é colocado na mesma pasta.
 
 [endsect]
 
