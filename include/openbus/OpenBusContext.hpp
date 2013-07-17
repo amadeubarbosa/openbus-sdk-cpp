@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix-*-
 /**
 * API - SDK Openbus C++
 * \file openbus/OpenBusContext.hpp

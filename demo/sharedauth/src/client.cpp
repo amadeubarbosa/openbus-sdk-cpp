@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <iostream>
@@ -264,5 +265,5 @@ int main(int argc, char** argv)
   std::ofstream file(argv[1]);
   std::copy(secret_seq->get_buffer()
             , secret_seq->get_buffer() + secret_seq->length()
-            , std::ostream_iterator<char>(file));
+            , std::ostream_iterator<char>(file));d
 }

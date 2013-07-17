@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 #include "properties_reader.h"
 #include "stubs/hello.h"
 #include <openbus/ORBInitializer.hpp>

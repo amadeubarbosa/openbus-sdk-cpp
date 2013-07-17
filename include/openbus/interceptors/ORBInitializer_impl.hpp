@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix-*-
 #ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 

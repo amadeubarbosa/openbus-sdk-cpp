@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>

@@ -1,4 +1,4 @@
-// -*- coding: iso-latin-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #ifndef OPENBUS_ASSISTANT_DETAIL_EXCEPTION_LOGGING_H
 #define OPENBUS_ASSISTANT_DETAIL_EXCEPTION_LOGGING_H

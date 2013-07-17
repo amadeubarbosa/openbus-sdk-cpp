@@ -1,4 +1,4 @@
-// -*- coding: iso-latin-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #define OPENBUS_ASSISTANT_ALL_EXCEPTIONS()                              \
   (CORBA::NO_PERMISSION)(CORBA::TRANSIENT)(CORBA::COMM_FAILURE)(CORBA::OBJECT_NOT_EXIST) \
