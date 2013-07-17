@@ -76,9 +76,8 @@ CallerChain ClientInterceptor::getJoinedChain(Connection &c,
   return CallerChain();
 }
 
-  ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p)
-  : _orb_info(p), _sessionLRUCache(SessionLRUCache(LRUSize)),
-    _callChainLRUCache(CallChainLRUCache(LRUSize))
+ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p)
+  : _orb_info(p), _callChainLRUCache(LRUSize)
 { 
   log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
@@ -107,14 +106,14 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
       credential.bus = CORBA::string_dup(conn._busid.c_str());
       credential.login = CORBA::string_dup(conn._login()->id);      
       std::string sessionKey = getSessionKey(*r);    
-      SecretSession session;
+      Connection::SecretSession session;
 #ifdef OPENBUS_SDK_MULTITHREAD
       boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-      bool b = _sessionLRUCache.exists(sessionKey);
+      bool b = conn._profile2session.exists(sessionKey);
       if (b)
       {
-        session = _sessionLRUCache.fetch(sessionKey);
+        session = conn._profile2session.fetch(sessionKey);
       }
 #ifdef OPENBUS_SDK_MULTITHREAD
       lock.unlock();
@@ -177,8 +176,16 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
           } 
           else
           {
-            credential.chain = 
-              *conn.access_control()->signChainFor(session.remoteId);
+            try
+            {
+              credential.chain = 
+                *conn.access_control()->signChainFor(session.remoteId);
+            }
+            catch (const idl_ac::InvalidLogins &)
+            {
+              throw CORBA::NO_PERMISSION(idl_ac::InvalidTargetCode, 
+                                         CORBA::COMPLETED_NO);
+            }
 #ifdef OPENBUS_SDK_MULTITHREAD
             lock.lock();
 #endif
@@ -308,16 +315,16 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
 
           std::string sessionKey = getSessionKey(*r);
           
-          SecretSession session;
+          Connection::SecretSession session;
           session.id = credentialReset.session;
-          session.remoteId = CORBA::string_dup(credentialReset.login);
+          session.remoteId = CORBA::string_dup(credentialReset.target);
           session.secret = secret;
           session.ticket = 0;
           {
 #ifdef OPENBUS_SDK_MULTITHREAD
             boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
-            _sessionLRUCache.insert(sessionKey, session);
+            conn._profile2session.insert(sessionKey, session);
           }
           l.log("Retransmissao da requisicao...");
 					CORBA::Object_var _o = new CORBA::Object(*r->target());

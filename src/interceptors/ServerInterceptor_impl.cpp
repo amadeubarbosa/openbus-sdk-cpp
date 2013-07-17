@@ -27,7 +27,7 @@ Session::Session(const std::string &login)
 }
 
 ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p)
-  : _orb_info(p), _sessionLRUCache(SessionLRUCache(LRUSize))
+  : _orb_info(p), _sessionLRUCache(LRUSize)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");
@@ -49,7 +49,7 @@ void ServerInterceptor::sendCredentialReset(
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
-  credentialReset.login = conn._login()->id;
+  credentialReset.target = conn._login()->id;
   std::memcpy(credentialReset.challenge, secret.get_buffer(), 
               idl::EncryptedBlockSize);
   CORBA::Any any;
@@ -224,7 +224,7 @@ void ServerInterceptor::receive_request_service_contexts(
                                 idl_ac::_tc_CallChain);
       idl_ac::CallChain callChain;
       callChainAny >>= callChain;
-      if (std::strcmp(callChain.target, conn._login()->id)) 
+      if (std::strcmp(callChain.target, conn._login()->entity)) 
       { 
         sendCredentialReset(conn, caller, *r);
       }

@@ -16,6 +16,8 @@
 #include <cstring>
 #include <ctime>
 
+const std::size_t LRUSize = 128;
+
 namespace openbus 
 {
 class Connection;
@@ -119,7 +121,7 @@ Connection::Connection(
   const ConnectionProperties &props) 
   : _host(host), _port(port), _orb(orb), _orb_info(i), _loginInfo(0), 
     _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m),
-    _legacyDelegate(CALLER), _legacyEnabled(true)
+    _legacyDelegate(CALLER), _legacyEnabled(true), _profile2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
   CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");

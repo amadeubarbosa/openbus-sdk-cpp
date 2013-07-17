@@ -17,6 +17,10 @@
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
 #include "openbus/crypto/PublicKey.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
+#define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
+#include "openbus/LRUCache_impl.hpp"
+#endif
 
 #include <CORBA.h>
 #include <boost/function.hpp>
@@ -377,6 +381,15 @@ private:
   bool _legacyEnabled;
   /**/
     
+  struct SecretSession 
+  {
+    CORBA::ULong id;
+    CORBA::String_var remoteId;
+    CORBA::OctetSeq_var secret;
+    CORBA::ULong ticket;
+  };
+  LRUCache<std::string, SecretSession> _profile2session;
+
   friend class openbus::interceptors::ServerInterceptor;
   friend class openbus::interceptors::ClientInterceptor;
   friend class openbus::OpenBusContext;

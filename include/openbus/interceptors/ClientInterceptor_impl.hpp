@@ -43,28 +43,9 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   void destroy();
   Connection &getCurrentConnection(PI::ClientRequestInfo &);
   openbus::CallerChain getJoinedChain(Connection &, PI::ClientRequestInfo &);
-
   boost::shared_ptr<orb_info> _orb_info;
   boost::shared_ptr<OpenBusContext> _openbus_ctx;
-  struct SecretSession 
-  {
-    CORBA::ULong id;
-    CORBA::String_var remoteId;
-    CORBA::OctetSeq_var secret;
-    CORBA::ULong ticket;
-  };
-
-  typedef LRUCache<std::string, SecretSession> SessionLRUCache;
-  typedef LRUCache<std::string, const idl_cr::SignedCallChain> 
-    CallChainLRUCache;
-
-  /* dado uma hash de um profile de uma requisição eu consigo obter uma sessão
-   * que me permite uma comunicação com o objeto CORBA que está sendo
-   * requisitado.
-   */
-  SessionLRUCache _sessionLRUCache;    
-    
-  CallChainLRUCache _callChainLRUCache;
+  LRUCache<std::string, const idl_cr::SignedCallChain> _callChainLRUCache;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
 #endif
