@@ -265,5 +265,5 @@ int main(int argc, char** argv)
   std::ofstream file(argv[1]);
   std::copy(secret_seq->get_buffer()
             , secret_seq->get_buffer() + secret_seq->length()
-            , std::ostream_iterator<char>(file));d
+            , std::ostream_iterator<char>(file));
 }
