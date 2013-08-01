@@ -7,12 +7,10 @@
 #include <openbus/log.hpp>
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <algorithm>
 #include <iterator>
 #include <cstdlib>
-#include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
 const std::string entity("interop_rellogedjoin_cpp_client");
@@ -50,28 +48,32 @@ void load_options(int argc, char **argv)
 
 int main(int argc, char **argv) 
 {
-  load_options(argc, argv);
   try
   {
+    load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
+
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
+
     openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
       (orb->resolve_initial_references("OpenBusContext"));
     std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host, 
                                                                   bus_port));
     ctx->setDefaultConnection(conn.get());
     conn->loginByPassword(entity, entity);
+
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
     props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
     props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
     props[static_cast<CORBA::ULong>(1)].name = "reloggedjoin.role";
     props[static_cast<CORBA::ULong>(1)].value = "proxy";
+
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
       ctx->getOfferRegistry()->findServices(props);
     assert(offers->length() != 0);

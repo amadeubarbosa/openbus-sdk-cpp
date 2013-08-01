@@ -9,13 +9,10 @@
 
 #include <CORBA.h>
 #include <iostream>
-#include <fstream>
-#include <typeinfo>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
 #include <boost/bind.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
 const std::string entity("interop_reloggedjoin_cpp_server");
@@ -79,7 +76,7 @@ private:
   openbus::OpenBusContext &ctx;
 };
 
-void loginAndRegister(
+void login_register(
   const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp,
   const openbus::idl_or::ServicePropertySeq &props, openbus::Connection &conn)
 {
@@ -117,8 +114,8 @@ int main(int argc, char **argv)
     
     openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
       (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn = 
-      ctx->createConnection(bus_host, bus_port);
+    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host, 
+                                                                    bus_port);
     ctx->setDefaultConnection(conn.get());    
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread orb_run(boost::bind(ORBRun, ctx->orb()));
@@ -141,7 +138,7 @@ int main(int argc, char **argv)
 
     HelloImpl srv(*ctx);
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
-    loginAndRegister(*ctx, comp, props, *conn);
+    login_register(*ctx, comp, props, *conn);
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
 #else

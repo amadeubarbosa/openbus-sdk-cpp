@@ -1,4 +1,5 @@
 // -*- coding: iso-8859-1-unix -*-
+
 #include "stubs/hello.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -7,26 +8,63 @@
 #include <scs/ComponentContext.h>
 
 #include <CORBA.h>
+#include <iostream>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
 #include <boost/bind.hpp>
-
-#include <iostream>
-#include <fstream>
-#include <typeinfo>
+#include <boost/program_options.hpp>
 
 const std::string entity("interop_hello_cpp_server");
+std::string private_key;
+std::string bus_host;
+unsigned short bus_port;
+
+void load_options(int argc, char **argv)
+{
+  namespace po = boost::program_options;
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help", "Help")
+    ("private-key", po::value<std::string>()->default_value("admin/" + entity
+                                                            + ".key"),
+     "Path to private key")
+    ("bus.host.name", po::value<std::string>()->default_value("localhost"),
+     "Host to OpenBus")
+    ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
+     "Port to OpenBus");
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+  if (vm.count("help")) 
+  {
+    std::cout << desc << std::endl;
+    std::exit(1);
+  }
+  if (vm.count("bus.host.name"))
+  {
+    bus_host = vm["bus.host.name"].as<std::string>();
+  }
+  if (vm.count("bus.host.port"))
+  {
+    bus_port = vm["bus.host.port"].as<unsigned short>();
+  }
+  if (vm.count("private-key"))
+  {
+    private_key = vm["private-key"].as<std::string>();
+  }
+}
+
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello 
 {
-  HelloImpl(openbus::OpenBusContext &c) : _busCtx(c) 
+  HelloImpl(openbus::OpenBusContext &c) : ctx(c) 
   { 
   }
 
   char *sayHello() 
   {
-    openbus::CallerChain chain = _busCtx.getCallerChain();
+    openbus::CallerChain chain = ctx.getCallerChain();
     assert(chain != openbus::CallerChain());
     std::string msg = "Hello " + std::string(chain.caller().entity) + "!";
     std::cout << msg << std::endl;
@@ -34,28 +72,32 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     return r._retn();
   }
 private:
-  openbus::OpenBusContext &_busCtx;
+  openbus::OpenBusContext &ctx;
 };
 
-void loginAndRegister(const openbus::OpenBusContext &busCtx, 
-                      scs::core::ComponentContext &compCtx,
-                      const openbus::idl_or::ServicePropertySeq &props,
-                      openbus::Connection &conn)
+void login_register(
+  const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp,
+  const openbus::idl_or::ServicePropertySeq &props, openbus::Connection &conn)
 {
-  const openbus::PrivateKey pKey(entity + ".key");
-  conn.loginByCertificate(entity, pKey);
-  busCtx.getOfferRegistry()->registerService(compCtx.getIComponent(), 
-                                                      props);
+  try 
+  {
+    conn.loginByCertificate(entity, openbus::PrivateKey(private_key));
+  }
+  catch(const openbus::InvalidPrivateKey &e)
+  {
+    std::cout << e.what() << std::endl;
+  }
+  ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
 }
 
-struct onInvalidLogin
+struct on_invalid_login
 {
   typedef void result_type;
-  onInvalidLogin(const openbus::OpenBusContext &busCtx, 
-                 scs::core::ComponentContext &ctx, 
-                 const openbus::idl_or::ServicePropertySeq &props,
-                 openbus::Connection  &conn) 
-    : _busCtx(busCtx), _compCtx(ctx), _props(props), _conn(conn)
+  on_invalid_login(
+    const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp, 
+    const openbus::idl_or::ServicePropertySeq &props, 
+    openbus::Connection  &conn) 
+    : ctx(ctx), comp(comp), props(props), conn(conn)
   {
   }
 
@@ -64,7 +106,7 @@ struct onInvalidLogin
     try 
     {
       std::cout << "invalid login: " << l.id.in() << std::endl; 
-      loginAndRegister(_busCtx, _compCtx, _props, _conn);
+      login_register(ctx, comp, props, conn);
     } 
     catch (const CORBA::Exception &e) 
     {
@@ -72,10 +114,10 @@ struct onInvalidLogin
     }
   }
 private:
-  const openbus::OpenBusContext &_busCtx;
-  scs::core::ComponentContext &_compCtx;
-  const openbus::idl_or::ServicePropertySeq &_props;
-  openbus::Connection &_conn;
+  const openbus::OpenBusContext &ctx;
+  scs::core::ComponentContext &comp;
+  const openbus::idl_or::ServicePropertySeq &props;
+  openbus::Connection &conn;
 };
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -85,60 +127,28 @@ void ORBRun(CORBA::ORB_ptr orb)
 }
 #endif
 
-template <typename T>
-void read(std::ifstream &in, T &val, const std::string &param)
-{
-  std::string arg;
-  while (in >> arg) 
-  {
-    if (arg == param) 
-    {
-      char c;
-      in >> c;
-      if (c == '=') 
-      {
-        if (!(in >> val)) 
-        {
-          assert(0);
-        }
-      } 
-      else 
-      {
-        assert(0);
-      }
-    } 
-  }
-}
-
 int main(int argc, char **argv) 
 {
   try 
   {
-    std::string host("localhost");
-    unsigned short port = 2089;
-    std::ifstream config("test.properties", std::ifstream::in);
-    assert(config);
-    read(config, host, "bus.host.name");
-    read(config, port, "bus.host.port");
-    config.close();
-    
+    load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-    CORBA::ORB_ptr orb = openbus::ORBInitializer(argc, argv);
-    
+
+    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
     
-    openbus::OpenBusContext *busCtx = dynamic_cast<openbus::OpenBusContext *>
+    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
       (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn = busCtx->createConnection(host, 
-                                                                       port);
-    busCtx->setDefaultConnection(conn.get());
+    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host, 
+                                                                    bus_port);
+    ctx->setDefaultConnection(conn.get());
     
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orbRun(boost::bind(ORBRun, busCtx->orb()));
+    boost::thread orb_run(boost::bind(ORBRun, ctx->orb()));
 #endif
     
     scs::core::ComponentId componentId;
@@ -147,28 +157,22 @@ int main(int argc, char **argv)
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "c++";
-    scs::core::ComponentContext compCtx(busCtx->orb(), componentId);
+    scs::core::ComponentContext comp(ctx->orb(), componentId);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
-    openbus::idl_or::ServiceProperty property;
-    CORBA::ULong i = 0;
-    property.name = "offer.domain";
-    property.value = "Interoperability Tests";
-    props[i] = property;
+    props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
+    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
 
-    conn->onInvalidLogin(onInvalidLogin(*busCtx, compCtx, props, *conn));
+    conn->onInvalidLogin(on_invalid_login(*ctx, comp, props, *conn));
 
-    HelloImpl srv(*busCtx);
-    compCtx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", 
-                     &srv);
-
-    loginAndRegister(*busCtx, compCtx, props, *conn);
-
+    HelloImpl srv(*ctx);
+    comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
+    login_register(*ctx, comp, props, *conn);
 #ifdef OPENBUS_SDK_MULTITHREAD
-    orbRun.join();
+    orb_run.join();
 #else
-    busCtx->orb()->run();
+    ctx->orb()->run();
 #endif
   } 
   catch (const CORBA::Exception &e) 
