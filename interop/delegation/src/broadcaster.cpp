@@ -1,6 +1,5 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "server_login.h"
 #include "stubs/messages.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>

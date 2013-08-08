@@ -10,7 +10,6 @@ exe multiplexing_client
       /openbus//openbus /scs//scs /logger//logger /mico//mico
       /boost//headers /boost//program_options /openssl//openssl
     : <threading>multi:<source>/boost//thread
-      <include>../properties_reader/include
       <implicit-dependency>/openbus//core-idls
       <implicit-dependency>hello-idl
       <link>static:<source>/dl//dl
@@ -21,7 +20,6 @@ exe multiplexing_server
       /openbus//openbus /scs//scs /logger//logger /mico//mico
       /boost//headers /boost//program_options /openssl//openssl
     : <threading>multi:<source>/boost//thread
-      <include>../properties_reader/include
       <implicit-dependency>/openbus//core-idls
       <implicit-dependency>hello-idl
       <link>static:<source>/dl//dl
