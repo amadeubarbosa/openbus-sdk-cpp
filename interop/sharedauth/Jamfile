@@ -1,0 +1,47 @@
+project openbus/interop ;
+
+path-constant here : . ;
+
+obj hello-idl : $(here)/idl/hello/hello.idl /mico//mico ;
+obj encoding-idl : $(here)/idl/sharedauth/encoding.idl /mico//mico ;
+
+exe sharedauth_client
+  : src/client.cpp 
+    hello-idl 
+    encoding-idl
+    /openbus//openbus 
+    /scs//scs 
+    /logger//logger 
+    /mico//mico
+    /boost//headers 
+    /boost//program_options 
+    /openssl//openssl
+  : <threading>multi:<source>/boost//thread
+    <implicit-dependency>/openbus//core-idls
+    <implicit-dependency>hello-idl
+    <implicit-dependency>encoding-idl
+    <link>static:<source>/dl//dl
+;
+
+exe sharedauth_client-sharedauth
+  : src/client-sharedauth.cpp 
+    hello-idl 
+    encoding-idl
+    /openbus//openbus 
+    /scs//scs 
+    /logger//logger 
+    /mico//mico
+    /boost//headers 
+    /boost//program_options 
+    /openssl//openssl
+  : <threading>multi:<source>/boost//thread
+    <implicit-dependency>/openbus//core-idls
+    <implicit-dependency>hello-idl
+    <implicit-dependency>encoding-idl
+    <link>static:<source>/dl//dl
+;
+
+alias sharedauth
+  : sharedauth_client
+    sharedauth_client-sharedauth
+;
