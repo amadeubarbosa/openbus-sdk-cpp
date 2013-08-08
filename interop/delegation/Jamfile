@@ -6,7 +6,8 @@ alias hello-idl : $(here)/idl/messages.idl ;
 
 exe delegation_client
  : src/client.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
+   /mico//mico /scs//scs /boost//headers /boost//program_options
+   /logger//logger
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread
@@ -17,7 +18,8 @@ exe delegation_client
 
 exe delegation_broadcaster
  : src/broadcaster.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
+   /mico//mico /scs//scs /boost//headers /boost//program_options
+   /logger//logger
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread
@@ -28,7 +30,8 @@ exe delegation_broadcaster
 
 exe delegation_forwarder
  : src/forwarder.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
+   /mico//mico /scs//scs /boost//headers /boost//program_options
+   /logger//logger
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread
@@ -39,7 +42,8 @@ exe delegation_forwarder
 
 exe delegation_messenger
  : src/messenger.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
+   /mico//mico /scs//scs /boost//headers /boost//program_options
+   /logger//logger
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread
@@ -48,5 +52,10 @@ exe delegation_messenger
    <implicit-dependency>hello-idl
  ;
 
-alias delegation :  delegation_client delegation_broadcaster delegation_forwarder
- delegation_messenger test.properties ;
+alias delegation :  
+  delegation_client 
+  delegation_broadcaster 
+  delegation_forwarder
+  delegation_messenger 
+  test.properties 
+;
