@@ -81,9 +81,9 @@ struct OPENBUS_SDK_DECL CallerChain
   }
 
 	/**
-   * Login para o qual a chamada estava destinada. Só é possível fazer chamadas
+   * Entidade para a qual a chamada estava destinada. Só é possível fazer chamadas
    * dentro dessa cadeia (através do método joinChain da interface 
-   * OpenBusContext) se o login da conexão corrente for o mesmo do target.
+   * OpenBusContext) se a entidade da conexão corrente for o mesmo do target.
    *
    * No caso de conexões legadas, este campo será nulo e será possível fazer
    * qualquer chamada como parte dessa cadeia. Contudo, todas as chamadas
@@ -92,7 +92,7 @@ struct OPENBUS_SDK_DECL CallerChain
    * legadas) e portanto serão recusadas por serviços que não aceitem chamadas
    * legadas (OpenBus 1.5).
    */
-  const idl_ac::LoginInfo &target() const
+  const std::string target() const
   {
     return _target;
   }
@@ -132,7 +132,7 @@ struct OPENBUS_SDK_DECL CallerChain
   {
   }
 private:
-  CallerChain(const std::string busid, const idl_ac::LoginInfo &t,
+  CallerChain(const std::string busid, const std::string &t,
               const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c,
               const idl_cr::SignedCallChain &d) 
     : _busid(busid), _target(t), _originators(b), _caller(c), 
@@ -140,14 +140,14 @@ private:
   {
   }
   
-  CallerChain(const std::string busid, const idl_ac::LoginInfo &t,
+  CallerChain(const std::string busid, const std::string &t,
               const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
     : _busid(busid), _target(t), _originators(b), _caller(c) 
   { 
   }
   
   std::string _busid;
-  idl_ac::LoginInfo _target;
+  std::string _target;
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;

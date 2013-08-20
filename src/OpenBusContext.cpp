@@ -97,8 +97,9 @@ CallerChain OpenBusContext::getCallerChain()
       CORBA::Any_var callChainAny = _orb_info->codec->decode_value(sigCallChain.encoded,
                                                          idl_ac::_tc_CallChain);
       *callChainAny >>= callChain;
-      return CallerChain(c->busid(), *c->login(), callChain.originators, 
-                         callChain.caller, sigCallChain);
+      return CallerChain(
+        c->busid(), c->login()->entity.in(), callChain.originators, 
+        callChain.caller, sigCallChain);
     } 
     else 
     {
@@ -108,8 +109,9 @@ CallerChain OpenBusContext::getCallerChain()
           _piCurrent->get_slot(_orb_info->slot.legacy_call_chain);
         if (legacyChainAny >>= callChain) 
         {
-          return CallerChain(c->busid(), *c->login(), callChain.originators, 
-                             callChain.caller);
+          return CallerChain(
+            c->busid(), std::string(c->login()->entity.in()), 
+            callChain.originators, callChain.caller);
         }
       }
     }
@@ -148,8 +150,9 @@ CallerChain OpenBusContext::getJoinedChain()
       idl_ac::CallChain callChain;
       if (callChainAny >>= callChain) 
       {
-        return CallerChain(c->busid(), *c->login(), callChain.originators, 
-                           callChain.caller, sigCallChain);
+        return CallerChain(
+          c->busid(), c->login()->entity.in(), callChain.originators, 
+          callChain.caller, sigCallChain);
       }
     }
   }

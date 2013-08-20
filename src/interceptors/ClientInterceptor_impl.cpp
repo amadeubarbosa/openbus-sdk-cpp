@@ -69,8 +69,9 @@ CallerChain ClientInterceptor::getJoinedChain(Connection &c,
     idl_ac::CallChain callChain;
     if (callChainAny >>= callChain)
     {
-      return CallerChain(c.busid(), *c.login(), callChain.originators, 
-                         callChain.caller, signedCallChain);
+      return CallerChain(
+        c.busid(), c.login()->entity.in(), callChain.originators, 
+        callChain.caller, signedCallChain);
     }
   }
   return CallerChain();
