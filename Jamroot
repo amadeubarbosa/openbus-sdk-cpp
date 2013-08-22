@@ -32,9 +32,11 @@ if [ option.get openbus-with-puts : : 1 ]
   project openssl ;
 
   lib crypto : : <name>crypto <search>$(openssl-lib-path)
+   <target-os>darwin,<link>static:<file>$(openssl-lib-path)/libcrypto.a
    ;
 
   lib openssl : crypto : <name>ssl <search>$(openssl-lib-path)
+   <target-os>darwin,<link>static:<file>$(openssl-lib-path)/libssl.a
    : : <include>$(openssl-include-path)
    ;
 }

@@ -183,21 +183,25 @@ lib scs : : <name>scs-mico-mt-s-d <search>../lib
 project mico ;
 
 lib mico : : <search>../lib/mico-st <name>mico2.3.13
+ <target-os>darwin,<link>static:<file>../lib/mico-st/libmico2.3.13.a
  <threading>single <variant>release
  : : <include>../include/mico-st
  ;
 
 lib mico : : <search>../lib/mico-st-d <name>mico2.3.13
+ <target-os>darwin,<link>static:<file>../lib/mico-st-d/libmico2.3.13.a
  <threading>single <variant>debug
  : : <include>../include/mico-st-d
  ;
 
 lib mico : : <search>../lib/mico-mt <name>mico2.3.13
+ <target-os>darwin,<link>static:<file>../lib/mico-mt/libmico2.3.13.a
  <threading>multi <variant>release
  : : <include>../include/mico-mt
  ;
 
 lib mico : : <search>../lib/mico-mt-d <name>mico2.3.13
+ <target-os>darwin,<link>static:<file>../lib/mico-mt-d/libmico2.3.13.a
  <threading>multi <variant>debug
  : : <include>../include/mico-mt-d
  ;
