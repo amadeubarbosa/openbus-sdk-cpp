@@ -6,7 +6,6 @@
   (openbus::InvalidLoginProcess)                                        \
   (openbus::InvalidPrivateKey)                                          \
   (openbus::BusChanged)                                                 \
-  (tecgraf::openbus::core::v2_0::services::access_control::InvalidCertificate) \
   (tecgraf::openbus::core::v2_0::services::access_control::MissingCertificate) \
   (tecgraf::openbus::core::v2_0::services::access_control::InvalidPublicKey) \
   (tecgraf::openbus::core::v2_0::services::access_control::AccessDenied) \
@@ -21,7 +20,6 @@
   (openbus::InvalidLoginProcess)                                        \
   (openbus::InvalidPrivateKey)                                          \
   (openbus::BusChanged)                                                 \
-  (tecgraf::openbus::core::v2_0::services::access_control::InvalidCertificate) \
   (tecgraf::openbus::core::v2_0::services::access_control::MissingCertificate) \
   (tecgraf::openbus::core::v2_0::services::access_control::InvalidPublicKey) \
   (tecgraf::openbus::core::v2_0::services::access_control::AccessDenied) \

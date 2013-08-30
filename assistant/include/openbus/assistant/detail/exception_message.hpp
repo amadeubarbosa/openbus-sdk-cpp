@@ -35,11 +35,6 @@ inline const char* exception_message(idl::services::UnauthorizedOperation const&
   return "tecgraf::openbus::core::v2_0::services::UnauthorizedOperation";
 }
 
-inline const char* exception_message(idl::services::access_control::InvalidCertificate const&)
-{
-  return "tecgraf::openbus::core::v2_0::services::InvalidCertificate";
-}
-
 inline const char* exception_message(idl::services::access_control::MissingCertificate const&)
 {
   return "tecgraf::openbus::core::v2_0::services::MissingCertificate";

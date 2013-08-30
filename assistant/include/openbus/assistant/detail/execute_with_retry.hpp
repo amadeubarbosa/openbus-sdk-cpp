@@ -34,10 +34,6 @@
     {                                                                   \
       x(e);                                                             \
     }                                                                   \
-  catch(idl::services::access_control::InvalidCertificate const& e)     \
-    {                                                                   \
-      x(e);                                                             \
-    }                                                                   \
   catch(idl::services::access_control::MissingCertificate const& e)     \
     {                                                                   \
       x(e);                                                             \
