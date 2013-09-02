@@ -383,17 +383,42 @@ private:
     
   struct SecretSession 
   {
+    SecretSession()
+      : id(0), ticket(0)
+    {
+      secret.fill(0);
+    }
     CORBA::ULong id;
-    CORBA::String_var remoteId;
-    CORBA::OctetSeq_var secret;
+    std::string remote_id;
+    boost::array<unsigned char, secret_size> secret;
     CORBA::ULong ticket;
+    friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);
+    friend bool operator!=(const SecretSession &lhs, const SecretSession &rhs);
   };
-  LRUCache<std::string, SecretSession> _profile2session;
+  LRUCache<hash_value, SecretSession> _profile2session;
 
   friend class openbus::interceptors::ServerInterceptor;
   friend class openbus::interceptors::ClientInterceptor;
   friend class openbus::OpenBusContext;
+  friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);
+  friend bool operator!=(const SecretSession &lhs, const SecretSession &rhs);
 };
+
+inline bool operator==(const Connection::SecretSession &lhs, 
+                const Connection::SecretSession &rhs)
+{
+  return lhs.id == rhs.id
+    && lhs.remote_id == rhs.remote_id
+    && lhs.secret == rhs.secret
+    && lhs.ticket == rhs.ticket;
+}
+
+inline bool operator!=(const Connection::SecretSession &lhs, 
+                const Connection::SecretSession &rhs)
+{
+  return !(lhs == rhs);
+}
+
 }
 
 #endif

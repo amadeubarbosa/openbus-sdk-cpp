@@ -3,13 +3,21 @@
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 
 #include "openbus/decl.hpp"
+#include "stubs/core.h"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/array.hpp>
 #include <memory>
 #include <CORBA.h>
 
 namespace openbus 
 {
+namespace idl = tecgraf::openbus::core::v2_0;
+const size_t secret_size = 16;
+typedef boost::array<CORBA::Octet, idl::HashValueSize> hash_value;
+hash_value hash(std::string, CORBA::ULong ticket, 
+                boost::array<unsigned char, secret_size> secret);
+
 namespace interceptors 
 {
 namespace PI = PortableInterceptor;
@@ -26,8 +34,8 @@ struct OPENBUS_SDK_DECL Slot
     legacy_call_chain(info->allocate_slot_id()),
     ignore_interceptor(info->allocate_slot_id())
   {}
-  const PI::SlotId requester_conn, receive_conn, joined_call_chain, signed_call_chain,
-    legacy_call_chain, ignore_interceptor;
+  const PI::SlotId requester_conn, receive_conn, joined_call_chain, 
+    signed_call_chain, legacy_call_chain, ignore_interceptor;
 };
 
 struct orb_info

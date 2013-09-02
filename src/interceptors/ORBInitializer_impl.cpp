@@ -1,4 +1,5 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
+
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
@@ -6,6 +7,28 @@
 
 namespace openbus 
 {
+hash_value hash(std::string operation, CORBA::ULong ticket, 
+                boost::array<unsigned char, secret_size> secret)
+{
+  size_t size = sizeof(idl::MajorVersion) + sizeof(idl::MinorVersion) 
+    + secret_size + sizeof(CORBA::ULong) /* ticket */ 
+    + operation.size();
+  boost::scoped_array<unsigned char> buf (new unsigned char[size]());
+  size_t pos = 0;
+  buf.get()[pos] = idl::MajorVersion;
+  pos += sizeof(idl::MajorVersion);
+  buf.get()[pos] = idl::MinorVersion;
+  pos += sizeof(idl::MinorVersion);
+  std::memcpy(buf.get() + pos, secret.data(), secret_size);
+  pos += secret_size;
+  std::memcpy(buf.get() + pos, &ticket, sizeof(CORBA::ULong));
+  pos += sizeof(CORBA::ULong);
+  std::memcpy(buf.get() + pos, operation.c_str(), operation.size());
+  hash_value hash;
+  SHA256(buf.get(), size, hash.c_array());
+  return hash;
+}
+
 namespace interceptors 
 {
 ignore_interceptor::ignore_interceptor(boost::shared_ptr<orb_info> p)

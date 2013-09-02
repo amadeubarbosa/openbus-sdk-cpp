@@ -19,7 +19,7 @@ namespace interceptors
 const std::size_t LRUSize = 128;
 
 Session::Session(const std::string &login) 
-  : remoteId(login)
+  : remote_id(login)
 {
   tickets_init(&tickets);
   secret = boost::uuids::random_generator()();
@@ -37,18 +37,18 @@ void ServerInterceptor::sendCredentialReset(
   Connection &conn, boost::shared_ptr<Login> caller, PI::ServerRequestInfo &r) 
 {
   idl_cr::CredentialReset credentialReset;
+  CORBA::OctetSeq secret;
+  {
 #ifdef OPENBUS_SDK_MULTITHREAD
-  boost::unique_lock<boost::mutex> lock(_mutex);
+    boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
-  boost::shared_ptr<Session> session = boost::shared_ptr<Session>(
-    new Session(std::string(caller->loginInfo->id)));
-  _sessionLRUCache.insert(session->id, session);
-  credentialReset.session = session->id;
-  CORBA::OctetSeq secret = caller->pubKey->encrypt(
-    session->secret.data, boost::uuids::uuid::static_size());
-#ifdef OPENBUS_SDK_MULTITHREAD
-  lock.unlock();
-#endif
+    boost::shared_ptr<Session> session = boost::shared_ptr<Session>(
+      new Session(caller->loginInfo->id.in()));
+    _sessionLRUCache.insert(session->id, session);
+    credentialReset.session = session->id;
+    secret = caller->pubKey->encrypt(session->secret.data, 
+                                     boost::uuids::uuid::static_size());
+  }
   credentialReset.target = conn._login()->id;
   std::memcpy(credentialReset.challenge, secret.get_buffer(), 
               idl::EncryptedBlockSize);
@@ -70,7 +70,7 @@ Connection &ServerInterceptor::getDispatcher(
   const std::string &loginId, const std::string &operation)
 {
   Connection *conn = 0;
-  log_scope l(log().general_logger(), debug_level,
+  log_scope l(log().general_logger(), debug_level, 
               "ServerInterceptor::getDispatcher");
   if (ctx->onCallDispatch())
   {
@@ -169,33 +169,26 @@ void ServerInterceptor::receive_request_service_contexts(
       throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
     }
     l.log("Login valido.");
-    idl::HashValue hash;   
+    hash_value hash;   
     boost::shared_ptr<Session> session;
-    std::string remoteId;
-#ifdef OPENBUS_SDK_MULTITHREAD
-    boost::unique_lock<boost::mutex> lock(_mutex);
-#endif
-    session = _sessionLRUCache.fetch(credential.session);
-    if (session)
+    std::string remote_id;
     {
-      int bufSize = 22 + strlen(r->operation());
-      boost::scoped_array<unsigned char> buf(new unsigned char[bufSize]());
-      unsigned char *const pBuf = buf.get();
-      pBuf[0] = idl::MajorVersion;
-      pBuf[1] = idl::MinorVersion;
-      std::memcpy(pBuf+2, session->secret.data, 
-                  boost::uuids::uuid::static_size());
-      std::memcpy(pBuf+18, &credential.ticket, 4);
-      std::memcpy(pBuf+22, r->operation(), strlen(r->operation()));
-      SHA256(pBuf, bufSize, hash);
-      remoteId = session->remoteId;
-    }
 #ifdef OPENBUS_SDK_MULTITHREAD
-    lock.unlock();
+      boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
+      session = _sessionLRUCache.fetch(credential.session);
+      if (session)
+      {
+        boost::array<unsigned char, secret_size> secret;
+        std::copy(session->secret.begin(), session->secret.end(), 
+                  secret.c_array());
+        hash = ::openbus::hash(r->operation(), credential.ticket, secret);
+        remote_id = session->remote_id;
+      }
+    }
     if (!(session
-          && !std::memcmp(hash, credential.hash, idl::HashValueSize) 
-          && !std::strcmp(remoteId.c_str(), credential.login) 
+          && !std::memcmp(hash.data(), credential.hash, idl::HashValueSize) 
+          && !std::strcmp(remote_id.c_str(), credential.login) 
           && tickets_check(&session->tickets, credential.ticket))) 
     {
       l.level_vlog(debug_level, 

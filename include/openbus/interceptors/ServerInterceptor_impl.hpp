@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #ifndef TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_IMPL_H_
 #define TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_IMPL_H_
 
@@ -36,11 +36,11 @@ namespace PI = PortableInterceptor;
 
 struct OPENBUS_SDK_DECL Session 
 {
-  Session(const std::string &);
+  Session(const std::string &login);
   CORBA::ULong id;
   tickets_History tickets;
   boost::uuids::uuid secret;
-  std::string remoteId;
+  std::string remote_id;
 };
 
 struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
