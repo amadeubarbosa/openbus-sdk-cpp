@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
       CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
-      tecgraf::openbus::interop::simple::Hello *hello = 
+      tecgraf::openbus::interop::simple::Hello_var hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       const char *ret = hello->sayHello();
       std::string msg = "Hello " + entity + "!";
