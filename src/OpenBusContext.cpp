@@ -177,14 +177,24 @@ OpenBusContext::CallDispatchCallback OpenBusContext::onCallDispatch() const
 
 idl_or::OfferRegistry_ptr OpenBusContext::getOfferRegistry() const
 {
-  Connection *c = getCurrentConnection();
-  return (c ? c->getOfferRegistry() : 0);
+  idl_or::OfferRegistry_var ret;
+  Connection *conn = getCurrentConnection();
+  if (conn)
+  {
+    ret = conn->getOfferRegistry();
+  }
+  return ret._retn();
 }
 
 idl_ac::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
 {
-  Connection *c = getCurrentConnection();
-  return (c ? c->getLoginRegistry() : 0);
+  idl_ac::LoginRegistry_var ret;
+  Connection *conn = getCurrentConnection();
+  if(conn)
+  {
+    ret = conn->getLoginRegistry();
+  }
+  return ret._retn();
 }
 
 Connection *OpenBusContext::getDispatchConnection()
