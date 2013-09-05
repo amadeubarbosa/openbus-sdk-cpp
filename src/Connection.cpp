@@ -259,7 +259,7 @@ void Connection::loginByPassword(const std::string &entity,
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
     
-  idl_ac::ValidityTime validityTime = 0;
+  idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo = 0;
   try 
   {
@@ -270,8 +270,6 @@ void Connection::loginByPassword(const std::string &entity,
   {
     throw idl::services::ServiceFailure();
   }
-  
-  assert(loginInfo);
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -321,7 +319,7 @@ void Connection::loginByCertificate(const std::string &entity,
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
   
   interceptors::ignore_interceptor _i(_orb_info);
-  idl_ac::ValidityTime validityTime = 0;    
+  idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo = 0;
   try 
   {
@@ -332,8 +330,6 @@ void Connection::loginByCertificate(const std::string &entity,
   {
     throw idl_ac::AccessDenied();
   }
-  
-  assert(loginInfo);
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -398,7 +394,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
 
-  idl_ac::ValidityTime validityTime = 0;
+  idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo = 0; 
   try 
   {
@@ -409,8 +405,6 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   {
     throw idl_ac::AccessDenied();
   }
-
-  assert(loginInfo);
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
