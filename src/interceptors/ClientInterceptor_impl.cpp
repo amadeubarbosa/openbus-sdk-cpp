@@ -85,6 +85,8 @@ bool ClientInterceptor::ignore_request(PI::ClientRequestInfo &r)
 idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
   Connection &conn, hash_value &hash, const std::string &remote_id)
 {
+  log_scope l(log().general_logger(), debug_level, 
+              "ClientInterceptor::get_signed_chain");
   idl_cr::SignedCallChain chain;
   bool cached = false;
   {
@@ -99,8 +101,16 @@ idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
     {
       chain = *conn.access_control()->signChainFor(remote_id.c_str());
     }
+    catch (const CORBA::SystemException &)
+    {
+      l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
+             conn.busid().c_str());
+      throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
+                                 CORBA::COMPLETED_NO);
+    }
     catch (const idl_ac::InvalidLogins &)
     {
+      l.log("throw CORBA::NO_PERMISSION, minor=InvalidTaretCode");
       throw CORBA::NO_PERMISSION(idl_ac::InvalidTargetCode,CORBA::COMPLETED_NO);
     }
 
