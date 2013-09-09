@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/crypto/OpenSSL.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
 

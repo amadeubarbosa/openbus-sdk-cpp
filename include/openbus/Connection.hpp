@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 
 /**
 * API - SDK Openbus C++
@@ -11,18 +11,18 @@
 
 #include "openbus/decl.hpp"
 #include "stubs/scs.h"
+#include "stubs/core.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
-#include "openbus/interceptors/ClientInterceptor_impl.hpp"
-#include "openbus/interceptors/ServerInterceptor_impl.hpp"
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
-#include "openbus/crypto/PublicKey.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
 #endif
 
 #include <CORBA.h>
+#include <boost/array.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -40,14 +40,27 @@
 */
 namespace openbus 
 {
-namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
-namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+  namespace idl = tecgraf::openbus::core::v2_0;
+  namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
+  namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 
-class OpenBusContext;
+  class OpenBusContext;
+  class PublicKey;
+  class LoginCache;
 #ifndef OPENBUS_SDK_MULTITHREAD
-class RenewLogin;
+  class RenewLogin;
 #endif
-  
+
+  namespace interceptors
+  {
+    class orb_info;
+    class ServerInterceptor;
+    class ClientInterceptor;
+  }
+}
+ 
+namespace openbus 
+{ 
 struct OPENBUS_SDK_DECL BusChanged : public std::exception 
 { 
   const char *what() const throw()

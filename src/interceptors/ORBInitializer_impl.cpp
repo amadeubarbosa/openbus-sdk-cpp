@@ -5,6 +5,8 @@
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/log.hpp"
 
+#include "openbus/crypto/OpenSSL.hpp"
+
 namespace openbus 
 {
 hash_value hash(std::string operation, CORBA::ULong ticket, 

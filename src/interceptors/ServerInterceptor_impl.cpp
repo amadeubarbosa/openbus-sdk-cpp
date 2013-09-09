@@ -1,7 +1,9 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
+#include "openbus/LoginCache.hpp"
+#include "openbus/crypto/PublicKey.hpp"
 #include "openbus/log.hpp"
 #include "stubs/credential_v1_5.h"
 

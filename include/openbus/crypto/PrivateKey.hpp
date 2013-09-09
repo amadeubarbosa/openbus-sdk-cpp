@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #ifndef TECGRAF_SDK_OPENBUS_PRIVATE_KEY_H_
 #define TECGRAF_SDK_OPENBUS_PRIVATE_KEY_H_
 

@@ -1,14 +1,16 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/Connection.hpp"
+#include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
+#include "openbus/LoginCache.hpp"
+#include "openbus/crypto/PublicKey.hpp"
 
 #include <CORBA.h>
 #include <boost/bind.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
-
 #ifndef _WIN32
   #include <unistd.h>
 #endif

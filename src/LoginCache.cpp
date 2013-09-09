@@ -1,5 +1,6 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/LoginCache.hpp"
+#include "openbus/crypto/PublicKey.hpp"
 
 #include <cstddef>
 #include <boost/make_shared.hpp>

@@ -1,5 +1,6 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "stubs/core.h"

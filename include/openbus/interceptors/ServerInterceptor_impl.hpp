@@ -13,7 +13,6 @@ extern "C"
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
   #include "openbus/LRUCache_impl.hpp"
 #endif
-#include "openbus/LoginCache.hpp"
 
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -28,6 +27,7 @@ namespace openbus
 {
 class OpenBusContext;
 class Connection;
+class Login;
 
 namespace interceptors 
 {

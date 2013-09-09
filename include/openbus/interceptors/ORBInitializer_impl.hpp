@@ -1,14 +1,14 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 
 #include "openbus/decl.hpp"
 #include "stubs/core.h"
 
+#include <CORBA.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/array.hpp>
 #include <memory>
-#include <CORBA.h>
 
 namespace openbus 
 {

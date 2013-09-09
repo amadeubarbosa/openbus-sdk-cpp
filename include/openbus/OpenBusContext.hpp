@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 /**
 * API - SDK Openbus C++
 * \file openbus/OpenBusContext.hpp
@@ -9,9 +9,7 @@
 
 #include "openbus/decl.hpp"
 #include "openbus/Connection.hpp"
-#include "openbus/ORBInitializer.hpp"
-#include "openbus/interceptors/ClientInterceptor_impl.hpp"
-#include "stubs/core.h"
+#include "stubs/credential.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
 
@@ -28,6 +26,12 @@ namespace openbus
   namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
   namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+
+  namespace interceptors
+  {
+    class orb_info;
+    class ClientInterceptor;
+  }
 }
 
 namespace tecgraf 

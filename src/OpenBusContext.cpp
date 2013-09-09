@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/log.hpp"
 
@@ -70,7 +70,7 @@ Connection *OpenBusContext::getCurrentConnection() const
     _piCurrent->get_slot(_orb_info->slot.requester_conn);
   idl::OctetSeq connectionAddrOctetSeq;
   Connection *c = 0;
-  if (*connectionAddrAny >>= connectionAddrOctetSeq)
+  if (connectionAddrAny >>= connectionAddrOctetSeq)
   {
     assert(connectionAddrOctetSeq.length() == sizeof(Connection *));
     std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection *));
@@ -92,11 +92,11 @@ CallerChain OpenBusContext::getCallerChain()
       _piCurrent->get_slot(_orb_info->slot.signed_call_chain);
     idl_ac::CallChain callChain;
     idl_cr::SignedCallChain sigCallChain;
-    if (*sigCallChainAny >>= sigCallChain) 
+    if (sigCallChainAny >>= sigCallChain) 
     {
       CORBA::Any_var callChainAny = _orb_info->codec->decode_value(sigCallChain.encoded,
                                                          idl_ac::_tc_CallChain);
-      *callChainAny >>= callChain;
+      callChainAny >>= callChain;
       return CallerChain(
         c->busid(), c->login()->entity.in(), callChain.originators, 
         callChain.caller, sigCallChain);
@@ -143,7 +143,7 @@ CallerChain OpenBusContext::getJoinedChain()
     CORBA::Any_var sigCallChainAny = 
       _piCurrent->get_slot(_orb_info->slot.joined_call_chain);
     idl_cr::SignedCallChain sigCallChain;
-    if (*sigCallChainAny >>= sigCallChain) 
+    if (sigCallChainAny >>= sigCallChain) 
     {
       CORBA::Any_var callChainAny = _orb_info->codec->decode_value(sigCallChain.encoded, 
                                                          idl_ac::_tc_CallChain);
@@ -205,7 +205,7 @@ Connection *OpenBusContext::getDispatchConnection()
     _piCurrent->get_slot(_orb_info->slot.receive_conn);
   idl::OctetSeq connectionAddrOctetSeq;
   Connection *c = 0;
-  if (*connectionAddrAny >>= connectionAddrOctetSeq)
+  if (connectionAddrAny >>= connectionAddrOctetSeq)
   {
     assert(connectionAddrOctetSeq.length() == sizeof(Connection*));
     std::memcpy(&c, connectionAddrOctetSeq.get_buffer(), sizeof(Connection*));

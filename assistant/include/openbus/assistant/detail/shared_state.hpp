@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 
 #ifndef OPENBUS_ASSISTANT_DETAIL_SHARED_STATE_H
 #define OPENBUS_ASSISTANT_DETAIL_SHARED_STATE_H

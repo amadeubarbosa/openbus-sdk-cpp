@@ -1,8 +1,10 @@
-// -*- coding: iso-8859-1-unix-*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
+#include "openbus/interceptors/ServerInterceptor_impl.hpp"
+#include "openbus/interceptors/ClientInterceptor_impl.hpp"
 
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
