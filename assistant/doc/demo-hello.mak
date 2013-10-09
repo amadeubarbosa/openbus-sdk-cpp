@@ -7,7 +7,7 @@ MICO_LIB= $(CURDIR)/../../lib/mico-mt-d
 LDFLAGS= -L$(MICO_LIB) -L$(CURDIR)/../../lib -Wl,--start-group           \
   -Wl,-Bstatic -lmico2.3.13 -lassistant-mico-mt-s-d -lboost_chrono-mt-d  \
   -lboost_system-mt-d -lboost_thread-mt-d -lboost_program_options-mt-d   \
-  -lscs-mico-mt-d -lcrypto -llogger-mt-d -lopenbus-mico-mt-s-d -lssl     \
+  -lscs-mico-mt-s-d -lcrypto -llogger-mt-s-d -lopenbus-mico-mt-s-d -lssl     \
   -Wl,-Bdynamic -ldl -Wl,--end-group -g -pthread
 #]
 #[demo_hello_mak_set_cxxflags
