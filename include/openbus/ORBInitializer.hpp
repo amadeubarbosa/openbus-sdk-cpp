@@ -43,7 +43,7 @@ namespace openbus
  *    "Requester" com login válido está associada ao contexto atual, ou
  *     seja, a conexão "Requester" corrente está desautenticada.  
  *  - CORBA::NO_PERMISSION{InvalidChain}: A cadeia de chamadas associada
- *     pao contexto atual não é compatível com o login da conexão
+ *     ao contexto atual não é compatível com o login da conexão
  *     "Requester" desse mesmo contexto. Isso ocorre pois não é possível
  *     fazer chamadas dentro de uma cadeia recebida por uma conexão com um
  *     login diferente.  - CORBA::NO_PERMISSION{UnknownBus}: O ORB remoto
@@ -76,7 +76,7 @@ namespace openbus
  *
  * @return O ORB inicializado.
  */
-  OPENBUS_SDK_DECL CORBA::ORB *ORBInitializer(int &argc, char **argv);
+  OPENBUS_SDK_DECL CORBA::ORB_ptr ORBInitializer(int &argc, char **argv);
 }
 
 #endif

@@ -136,17 +136,22 @@ struct OPENBUS_SDK_DECL CallerChain
   {
   }
 private:
-  CallerChain(const std::string busid, const std::string &t,
-              const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c,
-              const idl_cr::SignedCallChain &d) 
-    : _busid(busid), _target(t), _originators(b), _caller(c), 
-      _signedCallChain(d) 
+  CallerChain(const std::string &busid, 
+              const std::string &target,
+              const idl_ac::LoginInfoSeq &originators, 
+              const idl_ac::LoginInfo &caller,
+              const idl_cr::SignedCallChain &chain) 
+    : _busid(busid), _target(target), _originators(originators), 
+      _caller(caller), _signedCallChain(chain)
   {
   }
   
-  CallerChain(const std::string busid, const std::string &t,
-              const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
-    : _busid(busid), _target(t), _originators(b), _caller(c) 
+  CallerChain(const std::string &busid, 
+              const std::string &target,
+              const idl_ac::LoginInfoSeq &originators, 
+              const idl_ac::LoginInfo &caller) 
+    : _busid(busid), _target(target), _originators(originators), 
+      _caller(caller) 
   { 
   }
   
@@ -165,7 +170,8 @@ private:
   }
   friend class OpenBusContext;
   friend class openbus::interceptors::ClientInterceptor;
-  friend inline bool operator==(CallerChain const &lhs, CallerChain const &rhs) 
+  friend inline bool operator==(CallerChain const &lhs, 
+                                CallerChain const &rhs) 
   {
     return lhs._busid == rhs._busid && lhs._originators == rhs._originators
       && lhs._caller == rhs._caller;
