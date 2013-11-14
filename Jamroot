@@ -1,46 +1,162 @@
+# -*- coding: utf-8-dos -*-
 
-project sdk ;
+import common ;
+import os ;
+import string ;
+import feature ;
+import modules ;
+import "class" : new ;
+import property-set ;
 
-lib sdk : src/openbus.cpp
-#    src/FaultToleranceManager.cpp
+if [ option.get openbus-with-puts : : 1 ]
+{
+  local scs-idl-path-env = [ os.environ SCS_IDL_PATH ] ;
+  local scs-path-env = [ os.environ SCS_PATH ] ;
+  local openssl-lib-path-env = [ os.environ OPENSSL_LIB_PATH ] ;
+  local openssl-include-path-env = [ os.environ OPENSSL_INCLUDE_PATH ] ;
+  local logger-path-env = [ os.environ LOGGER_PATH ] ;
+  local openbus-idl-path-env = [ os.environ OPENBUS_IDL_PATH ] ;
+
+  path-constant scs-path : $(scs-path-env) ;
+  path-constant openssl-lib-path : $(openssl-lib-path-env) ;
+  path-constant openssl-include-path : $(openssl-include-path-env) ;
+  path-constant openbus-idl-path : $(openbus-idl-path-env) ;
+  path-constant scs-idl-path : $(scs-idl-path-env) ;
+
+  use-project scs : $(scs-path) ;
+  use-project logger : $(logger-path-env) ;
+
+  local search_path = [ modules.peek : BOOST_BUILD_PATH ] ;
+  search_path += $(scs-path) ;
+  modules.poke : BOOST_BUILD_PATH : $(search_path) ;
+
+  project openssl ;
+
+  lib crypto 
+    : 
+    : <search>$(openssl-lib-path)
+      <target-os>darwin,<link>static:<file>$(openssl-lib-path)/libcrypto.a
+  ;
+
+  lib ssl 
+    : crypto 
+    : <search>$(openssl-lib-path)
+      <target-os>darwin,<link>static:<file>$(openssl-lib-path)/libssl.a
+    : 
+    : <include>$(openssl-include-path)
+  ;
+}
+else
+{
+  path-constant scs-idl-path : [ scs-idl-path ] ;
+  path-constant openbus-idl-path : [ openbus-idl-path ] ;
+}
+
+project dl ;
+lib dl 
+  : 
+  : <link>shared 
+;
+
+project openbus 
+  : requirements <tag>@tag
+;
+
+rule tag ( name : type ? : property-set )
+{
+  if $(type) in STATIC_LIB SHARED_LIB IMPORT_LIB EXE
+  {
+    local result ;
+    local debug ;
+    local static ;
+    if <link>static in [ $(property-set).raw ]
+    {
+      static = -s ;
+    }
+    if <variant>debug in [ $(property-set).raw ]
+    {
+      debug = -d ;
+    }
+    if <threading>multi in [ $(property-set).raw ]
+    {
+      result = [ common.format-name <base> -mico
+        -mt $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    else
+    {
+      result = [ common.format-name <base> -mico
+        $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    return $(result) ;
+  }
+}
+
+lib openbus 
+  : src/openbus.cpp
     src/interceptors/ClientInterceptor.cpp
-    src/interceptors/ORBInitializerImpl.cpp src/interceptors/ServerInterceptor.cpp
+    src/interceptors/ServerInterceptor.cpp
+    src/interceptors/ORBInitializerImpl.cpp 
     src/util/Helper.cpp
     stubs/mico/access_control_service.cc
-    stubs/mico/core.cc
-#    stubs/mico/fault_tolerance.cc
     stubs/mico/registry_service.cc
     stubs/mico/session_service.cc
-    stubs/mico/scs.cc
-    /mico//mico /scs//scs /logger//logger openssl
+    /mico//mico
+    /scs//scs 
+    /logger//logger 
+    /openssl//crypto 
+    /openssl//ssl
  : <include>include <include>. <include>stubs/mico
    <link>shared:<define>MICO_SHARED
    <link>shared:<define>OPENBUS_SDK_SHARED
    <link>shared:<define>OPENBUS_SDK_SOURCE
    <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
-   <threading>multi:<source>/mico//pthreads
+   <threading>multi:<define>SCS_THREADING_ENABLED
+   <threading>multi:<define>LOGGER_MULTITHREAD
  : : <include>include <include>. <include>stubs/mico
    <link>shared:<define>MICO_SHARED
    <link>shared:<define>OPENBUS_SDK_SHARED
    <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
-   <threading>multi:<source>/mico//pthreads
- ;
-explicit sdk ;
+   <threading>multi:<define>SCS_THREADING_ENABLED
+   <threading>multi:<define>LOGGER_MULTITHREAD
+;
 
-install install : sdk : <install-dependencies>on <install-type>EXE <install-type>LIB ;
+explicit openbus ;
 
-exe hello_mico_server : demo/hello/mico/server.cpp stubs/hello.cc
- /sdk//sdk /mico//mico /mico//pthreads /scs//scs
+install stage 
+  : openbus 
+  : <install-dependencies>on 
+    <install-type>EXE 
+    <install-type>LIB 
+;
+
+exe hello_mico_server 
+  : demo/hello/mico/server.cpp 
+    stubs/hello.cc
+    /openbus//openbus 
+    /mico//mico
+    /scs//scs
  : <include>stubs
- ;
+   <link>static:<source>/dl//dl
+;
+
 explicit hello_mico_server ;
 
-exe hello_mico_client : demo/hello/mico/client.cpp stubs/hello.cc
- /sdk//sdk /mico//mico /mico//pthreads /scs//scs
+exe hello_mico_client 
+  : demo/hello/mico/client.cpp 
+    stubs/hello.cc
+    /openbus//openbus 
+    /mico//mico
+    /scs//scs
  : <include>stubs
- ;
+   <link>static:<source>/dl//dl
+;
+
 explicit hello_mico_client ;
 
-install install-demos : hello_mico_server hello_mico_client
- : <install-dependencies>on <install-type>EXE <install-type>SHARED_LIB
- ;
+install stage-demos 
+  : hello_mico_server 
+    hello_mico_client
+ : <install-dependencies>on 
+   <install-type>EXE 
+   <install-type>SHARED_LIB
+;
