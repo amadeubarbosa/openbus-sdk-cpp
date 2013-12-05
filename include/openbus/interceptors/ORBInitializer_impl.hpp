@@ -21,8 +21,8 @@ hash_value hash(std::string, CORBA::ULong ticket,
 namespace interceptors 
 {
 namespace PI = PortableInterceptor;
-class ClientInterceptor;
-class ServerInterceptor;
+struct ClientInterceptor;
+struct ServerInterceptor;
 
 struct OPENBUS_SDK_DECL Slot
 {

@@ -145,7 +145,7 @@ void ServerInterceptor::receive_request_service_contexts(
     boost::shared_ptr<Login> caller;
     if (strcmp(credential.bus, conn._busid.c_str())) 
     {
-      l.log("Login diferente daquele que iniciou a sessão.");
+      l.log("Login diferente daquele que iniciou a sessao.");
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
     try 

@@ -53,9 +53,9 @@ namespace openbus
 
   namespace interceptors
   {
-    class orb_info;
-    class ServerInterceptor;
-    class ClientInterceptor;
+    struct orb_info;
+    struct ServerInterceptor;
+    struct ClientInterceptor;
   }
 }
  
@@ -410,8 +410,8 @@ private:
   };
   LRUCache<hash_value, SecretSession> _profile2session;
 
-  friend class openbus::interceptors::ServerInterceptor;
-  friend class openbus::interceptors::ClientInterceptor;
+  friend struct openbus::interceptors::ServerInterceptor;
+  friend struct openbus::interceptors::ClientInterceptor;
   friend class openbus::OpenBusContext;
   friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);
   friend bool operator!=(const SecretSession &lhs, const SecretSession &rhs);

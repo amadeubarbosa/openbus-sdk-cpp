@@ -27,7 +27,7 @@ namespace openbus
 {
 class OpenBusContext;
 class Connection;
-class Login;
+struct Login;
 
 namespace interceptors 
 {

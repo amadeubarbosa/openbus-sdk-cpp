@@ -7,6 +7,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
 #define TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
 
+#include "openbus/ORBInitializer.hpp"
 #include "openbus/decl.hpp"
 #include "openbus/Connection.hpp"
 #include "stubs/credential.h"
@@ -29,8 +30,8 @@ namespace openbus
 
   namespace interceptors
   {
-    class orb_info;
-    class ClientInterceptor;
+    struct orb_info;
+    struct ClientInterceptor;
   }
 }
 
@@ -169,7 +170,7 @@ private:
     _signedCallChain = p; 
   }
   friend class OpenBusContext;
-  friend class openbus::interceptors::ClientInterceptor;
+  friend struct openbus::interceptors::ClientInterceptor;
   friend inline bool operator==(CallerChain const &lhs, 
                                 CallerChain const &rhs) 
   {
