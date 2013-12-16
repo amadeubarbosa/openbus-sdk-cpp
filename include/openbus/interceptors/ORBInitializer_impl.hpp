@@ -31,11 +31,10 @@ struct OPENBUS_SDK_DECL Slot
     receive_conn(info->allocate_slot_id()),
     joined_call_chain(info->allocate_slot_id()),
     signed_call_chain(info->allocate_slot_id()),
-    legacy_call_chain(info->allocate_slot_id()),
     ignore_interceptor(info->allocate_slot_id())
   {}
   const PI::SlotId requester_conn, receive_conn, joined_call_chain, 
-    signed_call_chain, legacy_call_chain, ignore_interceptor;
+    signed_call_chain, ignore_interceptor;
 };
 
 struct orb_info

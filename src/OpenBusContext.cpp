@@ -101,20 +101,6 @@ CallerChain OpenBusContext::getCallerChain()
         c->busid(), c->login()->entity.in(), callChain.originators, 
         callChain.caller, sigCallChain);
     } 
-    else 
-    {
-      if (c->_legacyEnabled)
-      {
-        CORBA::Any_var legacyChainAny = 
-          _piCurrent->get_slot(_orb_info->slot.legacy_call_chain);
-        if (legacyChainAny >>= callChain) 
-        {
-          return CallerChain(
-            c->busid(), std::string(c->login()->entity.in()), 
-            callChain.originators, callChain.caller);
-        }
-      }
-    }
   }
   return CallerChain();
 }

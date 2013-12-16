@@ -17,10 +17,10 @@
 void mysleep()
 {
 #ifndef _WIN32
-  unsigned int t = 30u;
+  unsigned int t = 10u;
   do { t = sleep(t); } while(t);
 #else
-  Sleep(3000);
+  Sleep(10000);
 #endif
 }
 
@@ -109,8 +109,8 @@ int main(int argc, char** argv) {
           delegation::Broadcaster_var broadcaster = delegation::Broadcaster::_narrow(o);
           conn->logout();
 
-          conn->loginByPassword("willian", "willian");
-          forwarder->setForward("bill");
+          conn->loginByPassword("bill", "bill");
+          forwarder->setForward("willian");
           broadcaster->subscribe();
           conn->logout();
 
@@ -138,15 +138,15 @@ int main(int argc, char** argv) {
             delegation::PostDescSeq_var posts = m->receivePosts();
             for(std::size_t i = 0; i != posts->length(); ++i)
             {
-              std::cout << i << ") " << (*posts)[i].from 
-                        << ": " << (*posts)[i].message << std::endl;
+              std::cout << "id (" << i << ") (from)" << (*posts)[i].from 
+                        << " (body)" << (*posts)[i].message << std::endl;
             }
             broadcaster->unsubscribe();
             conn->logout();
           }
 
-          conn->loginByPassword("willian", "willian");
-          forwarder->cancelForward("bill");
+          conn->loginByPassword("bill", "bill");
+          forwarder->cancelForward("willian");
           conn->logout();
         }
       }

@@ -43,7 +43,6 @@ struct forwarding_thread
   {
     try
     {
-      std::cout << "thread run" << std::endl;
       boost::unique_lock<boost::mutex> lock(mutex);
       while(!canceled)
       {
@@ -59,11 +58,11 @@ struct forwarding_thread
           for(std::size_t i = 0; i != posts->length(); ++i)
           {
             std::cout << "Has message" << std::endl;
-            std::string msg("forwarded from ");
+            std::string msg("forwarded message by ");
             msg += (*posts)[i].from;
             msg += ':';
             msg += (*posts)[i].message;
-            messenger->post(from.c_str(), msg.c_str());
+            messenger->post(to.c_str(), msg.c_str());
           }
         }
       }

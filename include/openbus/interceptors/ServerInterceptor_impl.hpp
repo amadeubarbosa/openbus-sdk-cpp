@@ -4,6 +4,8 @@
 
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/decl.hpp"
+#include "stubs/credential.h"
+#include "stubs/credential_v1_5.h"
 
 extern "C" 
 {
@@ -43,6 +45,12 @@ struct OPENBUS_SDK_DECL Session
   std::string remote_id;
 };
 
+struct credential
+{
+  tecgraf::openbus::core::v2_0::credential::CredentialData data;
+  openbus::legacy::v1_5::Credential legacy;
+};
+
 struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
 {
   ServerInterceptor(boost::shared_ptr<orb_info>);
@@ -58,11 +66,20 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   boost::mutex _mutex;
 #endif
   boost::shared_ptr<orb_info> _orb_info;
-  Connection &getDispatcher(boost::shared_ptr<OpenBusContext> context, 
-                            const std::string &busId,const std::string &loginId,
-                            const std::string &operation);
-  void sendCredentialReset(Connection &, boost::shared_ptr<Login>, 
-                           PI::ServerRequestInfo &);
+  Connection &get_dispatcher(
+    boost::shared_ptr<OpenBusContext>, 
+    const std::string &bus,
+    const std::string &login,
+    const std::string &operation);
+  credential get_credential(PI::ServerRequestInfo &);
+  void build_legacy_chain(
+    PI::ServerRequestInfo &,
+    std::string target,
+    const openbus::legacy::v1_5::Credential &);
+  void send_credential_reset(
+    Connection &, 
+    boost::shared_ptr<Login>, 
+    PI::ServerRequestInfo &);
   LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
 };
 

@@ -86,15 +86,15 @@ struct OPENBUS_SDK_DECL CallerChain
   }
 
 	/**
-   * Entidade para a qual a chamada estava destinada. Só é possível fazer chamadas
-   * dentro dessa cadeia (através do método joinChain da interface 
+   * Entidade para a qual a chamada estava destinada. Só é possível fazer 
+   * chamadas dentro dessa cadeia (através do método joinChain da interface 
    * OpenBusContext) se a entidade da conexão corrente for o mesmo do target.
    *
-   * No caso de conexões legadas, este campo será nulo e será possível fazer
-   * qualquer chamada como parte dessa cadeia. Contudo, todas as chamadas
-   * feitas como parte de uma cadeia de uma chamada legada serão feitas
-   * utilizando apenas o protocolo do OpenBus 1.5 (apenas com credenciais
-   * legadas) e portanto serão recusadas por serviços que não aceitem chamadas
+   * No caso de conexões legadas, este campo armazenará o nome da entidade 
+   * da conexão que atendeu a requisição. Todas as chamadas feitas como 
+   * parte de uma cadeia de uma chamada legada serão feitas utilizando 
+   * apenas o protocolo do OpenBus 1.5 (apenas com credenciais legadas) 
+   * e portanto serão recusadas por serviços que não aceitem chamadas
    * legadas (OpenBus 1.5).
    */
   const std::string target() const

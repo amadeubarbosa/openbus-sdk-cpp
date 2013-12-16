@@ -40,11 +40,11 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   char *name();
   void destroy();
   Connection &get_current_connection(PI::ClientRequestInfo &);
-  bool ignore_request(PI::ClientRequestInfo &r);
+  bool ignore_request(PI::ClientRequestInfo &);
   idl_cr::SignedCallChain get_signed_chain(Connection &, hash_value &hash, 
                                            const std::string &remote_id);
-  void build_credential(PI::ClientRequestInfo &r, Connection &conn);
-  void build_legacy_credential(PI::ClientRequestInfo &r, Connection &conn);
+  void build_credential(PI::ClientRequestInfo &, Connection &conn);
+  void build_legacy_credential(PI::ClientRequestInfo &, Connection &conn);
   openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
   boost::shared_ptr<orb_info> _orb_info;
   boost::shared_ptr<OpenBusContext> _openbus_ctx;
