@@ -11,7 +11,8 @@ exe independent_clock_client
    /openssl//openssl independent-clock-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>$(idl)
+   <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>independent-clock-idl
  ;
 exe independent_clock_server
@@ -20,7 +21,8 @@ exe independent_clock_server
    /openssl//openssl independent-clock-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>$(idl)
+   <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>independent-clock-idl
  ;
 
