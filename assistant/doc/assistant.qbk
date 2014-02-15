@@ -2,7 +2,7 @@
 
 [library Documentação do Assistant C++
     [quickbook 1.5]
-    [version 2.0.0.1]
+    [version 2.0.0.3]
     [id assistant]
     [copyright 2012-2013 TecGraf/PUC-Rio]
     [authors [Almeida, Felipe Magno]]
