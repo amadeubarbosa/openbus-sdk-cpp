@@ -12,7 +12,8 @@ exe greetings_client
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>$(idl)
+   <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>greetings-idl
    <target-os>windows,<link>shared:<source>/openbus//core-idls
    <target-os>windows,<link>shared:<source>/scs//idls
@@ -24,7 +25,8 @@ exe greetings_server
    /openbus/assistant//assistant
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>$(idl)
+   <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>greetings-idl
    <target-os>windows,<link>shared:<source>/openbus//core-idls
    <target-os>windows,<link>shared:<source>/scs//idls
