@@ -435,23 +435,27 @@ bool Connection::_logout(bool local)
   #endif
     if (!local)
     {
-      struct save_connection
+      struct save_state
       {
-        save_connection(OpenBusContext &context, Connection *self)
-          : context(context), old(context.getCurrentConnection())
+        save_state(OpenBusContext &context, Connection *self)
+          : context(context), previous_conn(context.getCurrentConnection()),
+            previous_chain(context.getJoinedChain())
         {
           context.setCurrentConnection(self);
+          context.exitChain();
         }
-        ~save_connection()
+        ~save_state()
         {
-          context.setCurrentConnection(old);
+          context.setCurrentConnection(previous_conn);
+          context.joinChain(previous_chain);
         }
 
         OpenBusContext &context;
-        Connection *old;
-      } save_connection_(_openbusContext, this);
+        Connection *previous_conn;
+        CallerChain previous_chain;
+      } save_state_(_openbusContext, this);
 
-      static_cast<void>(save_connection_); // avoid warnings
+      static_cast<void>(save_state_); // avoid warnings
       try
       {
         _access_control->logout();
