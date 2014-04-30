@@ -2,4 +2,4 @@
 
 . ./democonfig
 
-bin/client -OpenbusHost $HostBus -OpenbusPort $PortBus -OpenbusDebug ALL -BusUser $BusUser -BusPassword $BusPassword -FacetName $FacetName "$@"
+bin/hello_client-mico-mt-s -OpenbusHost $HostBus -OpenbusPort $PortBus -OpenbusDebug ALL -BusUser $BusUser -BusPassword $BusPassword -FacetName $FacetName "$@"

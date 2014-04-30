@@ -1,0 +1,148 @@
+project dl ;
+
+lib dl 
+  : 
+  : <link>shared 
+;
+
+project openssl
+  : usage-requirements <include>../../include/openssl-0.9.9
+;
+
+lib crypto
+  :
+  : <search>../../lib
+;
+
+lib ssl
+  :
+  : <search>../../lib
+;
+
+project mico
+  : usage-requirements <include>../../include/mico-mt
+;
+
+lib mico
+  :
+  : <name>mico2.3.13 
+    <search>../../lib/mico-mt
+    <threading>multi <variant>release
+  :
+;
+
+lib mico
+  :
+  : <name>mico2.3.13 
+    <search>../../lib/mico-mt-d
+    <threading>multi <variant>debug
+  :
+;
+
+project openbus
+  : usage-requirements 
+     <include>../../include/openbus
+     <include>../../include/openbus/stubs/mico
+     <define>OPENBUS_SDK_MULTITHREAD
+;
+
+lib openbus
+  : /logger//logger
+    /openssl//crypto
+  : <name>openbus-mico-mt
+    <search>../../lib
+    <threading>multi <link>shared <variant>release
+;
+
+lib openbus
+  : /logger//logger
+    /openssl//crypto
+  : <name>openbus-mico-mt-s
+    <search>../../lib
+    <threading>multi <link>static <variant>release
+;
+
+lib openbus
+  : /logger//logger
+    /openssl//crypto
+  : <name>openbus-mico-mt-d
+    <search>../../lib
+    <threading>multi <link>shared <variant>debug
+;
+
+lib openbus
+  : /logger//logger
+    /openssl//crypto
+  : <name>openbus-mico-mt-s-d
+    <search>../../lib
+    <threading>multi <link>static <variant>debug
+;
+
+project scs
+  : usage-requirements 
+     <include>../../include
+     <include>../../include/scs
+     <define>SCS_THREADING_ENABLED
+;
+
+lib scs
+  : 
+  : <name>scs-mico-mt
+    <search>../../lib
+    <threading>multi <link>shared <variant>release
+;
+
+lib scs
+  : 
+  : <name>scs-mico-mt-s
+    <search>../../lib
+    <threading>multi <link>static <variant>release
+;
+
+lib scs
+  : 
+  : <name>scs-mico-mt-d
+    <search>../../lib
+    <threading>multi <link>shared <variant>debug
+;
+
+lib scs
+  : 
+  : <name>scs-mico-mt-s-d
+    <search>../../lib
+    <threading>multi <link>static <variant>debug
+;
+
+project logger
+  : usage-requirements 
+     <include>../../include/logger
+     <define>LOGGER_MULTITHREAD
+;
+
+lib logger
+  : 
+  : <name>logger-mico-mt
+    <search>../../lib
+    <threading>multi <link>shared <variant>release
+;
+
+lib logger
+  : 
+  : <name>logger-mico-mt-s
+    <search>../../lib
+    <threading>multi <link>static <variant>release
+;
+
+lib logger
+  : 
+  : <name>logger-mico-mt-d
+    <search>../../lib
+    <threading>multi <link>shared <variant>debug
+;
+
+lib logger
+  : 
+  : <name>logger-mico-mt-s-d
+    <search>../../lib
+    <threading>multi <link>static <variant>debug
+;

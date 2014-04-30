@@ -129,7 +129,7 @@ install stage
     <install-type>LIB 
 ;
 
-exe hello_mico_server 
+exe hello_server 
   : demo/hello/mico/server.cpp 
     stubs/hello.cc
     /openbus//openbus 
@@ -139,9 +139,9 @@ exe hello_mico_server
    <link>static:<source>/dl//dl
 ;
 
-explicit hello_mico_server ;
+explicit hello_server ;
 
-exe hello_mico_client 
+exe hello_client 
   : demo/hello/mico/client.cpp 
     stubs/hello.cc
     /openbus//openbus 
@@ -151,11 +151,11 @@ exe hello_mico_client
    <link>static:<source>/dl//dl
 ;
 
-explicit hello_mico_client ;
+explicit hello_client ;
 
 install stage-demos 
-  : hello_mico_server 
-    hello_mico_client
+  : hello_server 
+    hello_client
  : <install-dependencies>on 
    <install-type>EXE 
    <install-type>SHARED_LIB
