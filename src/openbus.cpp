@@ -29,6 +29,32 @@
 
 #define CHALLENGE_SIZE 36
 
+
+template <class T>
+struct raii
+{
+  raii(T *p = 0, void (*f)(T *) = 0) : r(p), free_(f)
+  {
+  }
+  ~raii()
+  {
+    free_(r);
+  }
+  T *get() const
+  {
+    return r;
+  }
+  void reset(T *p)
+  {
+    free_(r);
+    r = p;
+  }
+private:
+  T *r;
+  void (*free_)(T *);
+};
+
+
 namespace openbus {
   logger::Logger* Openbus::logger  = 0;
   char* Openbus::debugFile = 0;
@@ -791,8 +817,9 @@ void Openbus::RenewLogin::run() {
         unsigned char* challenge = octetSeq->get_buffer();
 
       /* Leitura da chave privada da entidade. */
-        BIO* bio = BIO_new( BIO_s_file() );
-        if (BIO_read_filename( bio, privateKeyFilename ) <= 0) {
+        raii<BIO> bio_(BIO_new(BIO_s_file()), &BIO_free_all);
+        if (BIO_read_filename(bio_.get(), privateKeyFilename) <= 0) 
+        {
           std::stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             privateKeyFilename;
@@ -803,29 +830,37 @@ void Openbus::RenewLogin::run() {
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena a chave privada.");
         }
-        EVP_PKEY* EntityPrivateKey  = PEM_read_bio_PrivateKey( bio, NULL, NULL, 0 );
-        if (EntityPrivateKey == 0) {
-          logger->log(logger::WARNING, "Não foi possível obter a chave privada da entidade.");
-          logger->log(logger::ERROR, "Throwing SECURITY_EXCEPTION...");
-          logger->dedent(logger::INFO, "Openbus::connect() END");
-          EVP_PKEY_free(EntityPrivateKey);
-          mutex.unlock();
-          throw SECURITY_EXCEPTION(
-            "Não foi possível obter a chave privada da entidade.");
-        }
+
+        unsigned char *challengePlainText;
+        int RSAModulusSize;
+        {
+          raii<EVP_PKEY> EntityPrivateKey(
+            PEM_read_bio_PrivateKey(bio_.get(), 0, 0, 0),
+            &EVP_PKEY_free);
+          if (EntityPrivateKey.get() == 0) {
+            logger->log(logger::WARNING, 
+                        "Não foi possível obter a chave privada da entidade.");
+            logger->log(logger::ERROR, "Throwing SECURITY_EXCEPTION...");
+            logger->dedent(logger::INFO, "Openbus::connect() END");
+            mutex.unlock();
+            throw SECURITY_EXCEPTION(
+              "Não foi possível obter a chave privada da entidade.");
+          }
         
-        int RSAModulusSize = EVP_PKEY_size(EntityPrivateKey);
+          RSAModulusSize = EVP_PKEY_size(EntityPrivateKey.get());
 
-      /* Decifrando o desafio. */
-        unsigned char* challengePlainText =
-          (unsigned char*) malloc(RSAModulusSize);
-        memset(challengePlainText, ' ', RSAModulusSize);
+          /* Decifrando o desafio. */
+          challengePlainText = (unsigned char *) malloc(RSAModulusSize);
+          memset(challengePlainText, ' ', RSAModulusSize);
 
-        RSA_private_decrypt(RSAModulusSize, challenge, challengePlainText,
-          EntityPrivateKey->pkey.rsa, RSA_PKCS1_PADDING);
+          RSA_private_decrypt(RSAModulusSize, challenge, challengePlainText,
+                              EntityPrivateKey.get()->pkey.rsa, 
+                              RSA_PKCS1_PADDING);
+        }
 
-        bio = BIO_new( BIO_s_file() );
-        if (BIO_read_filename( bio, ACSCertificateFilename ) <= 0) {
+        bio_.reset(BIO_new(BIO_s_file()));
+        if (BIO_read_filename(bio_.get(), ACSCertificateFilename) <= 0) 
+        {
           std::stringstream filename;
           filename << "Não foi possível abrir o arquivo: " << 
             ACSCertificateFilename;
@@ -836,20 +871,19 @@ void Openbus::RenewLogin::run() {
           throw SECURITY_EXCEPTION(
             "Não foi possível abrir o arquivo que armazena o certificado ACS.");
         }
-      
-        EVP_PKEY_free(EntityPrivateKey);
-      
-        X509* x509 = d2i_X509_bio(bio, 0);
+
+        raii<X509> x509(d2i_X509_bio(bio_.get(), 0), &X509_free);
 
       /* Obtenção da chave pública do ACS. */
-        EVP_PKEY* ACSPublicKey = X509_get_pubkey(x509);
-        if (ACSPublicKey == 0) {
-          logger->log(logger::WARNING, "Não foi possível obter a chave pública do ACS.");
+        raii<EVP_PKEY> ACSPublicKey(
+          X509_get_pubkey(x509.get()),
+          &EVP_PKEY_free);
+        if (ACSPublicKey.get() == 0) {
+          logger->log(logger::WARNING, 
+                      "Não foi possível obter a chave pública do ACS.");
           logger->log(logger::ERROR, "Throwing SECURITY_EXCEPTION...");
           logger->dedent(logger::INFO, "Openbus::connect() END");
           free(challengePlainText);
-          EVP_PKEY_free(ACSPublicKey);
-          X509_free(x509);
           mutex.unlock();
           throw SECURITY_EXCEPTION(
             "Não foi possível obter a chave pública do ACS.");
@@ -860,16 +894,13 @@ void Openbus::RenewLogin::run() {
       */
         unsigned char* answer = (unsigned char*) malloc(RSAModulusSize);
         RSA_public_encrypt(CHALLENGE_SIZE, challengePlainText, answer,
-          ACSPublicKey->pkey.rsa, RSA_PKCS1_PADDING);
+                           ACSPublicKey.get()->pkey.rsa, RSA_PKCS1_PADDING);
 
         free(challengePlainText);
 
         tecgraf::openbus::core::v1_05::OctetSeq_var answerOctetSeq = new tecgraf::openbus::core::v1_05::OctetSeq(
           (CORBA::ULong) RSAModulusSize, (CORBA::ULong) RSAModulusSize,
           (CORBA::Octet*)answer, 0);
-
-        EVP_PKEY_free(ACSPublicKey);
-        X509_free(x509);
 
         std::stringstream iACSMSG;
         iACSMSG << "iAccessControlService = " << &iAccessControlService; 
