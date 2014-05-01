@@ -1,0 +1,61 @@
+import common ;
+
+project demo-hello
+  : requirements <tag>@tag <include>"." <include>stubs <threading>multi 
+  : build-dir build
+;
+
+rule tag ( name : type ? : property-set )
+{
+  if $(type) in STATIC_LIB SHARED_LIB IMPORT_LIB EXE
+  {
+    local result ;
+    local debug ;
+    local static ;
+    if <link>static in [ $(property-set).raw ]
+    {
+      static = -s ;
+    }
+    if <variant>debug in [ $(property-set).raw ]
+    {
+      debug = -d ;
+    }
+    if <threading>multi in [ $(property-set).raw ]
+    {
+      result = [ common.format-name <base> -mico
+        -mt $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    else
+    {
+      result = [ common.format-name <base> -mico
+        $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    return $(result) ;
+  }
+}
+
+exe hello_client
+  : src/client.cpp
+    stubs/hello.cc
+    /openbus//openbus 
+    /mico//mico
+    /scs//scs
+  : <link>static:<source>/dl//dl
+;
+explicit hello_client ;
+
+exe hello_server
+  : src/server.cpp
+    stubs/hello.cc
+    /openbus//openbus 
+    /mico//mico
+    /scs//scs
+  : <link>static:<source>/dl//dl
+;
+explicit hello_server ;    
+
+install demo
+  : hello_client
+    hello_server
+  : <location>bin
+;
