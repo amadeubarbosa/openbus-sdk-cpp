@@ -1,18 +1,19 @@
+// -*- coding: iso-8859-1-unix -*-
+
+#include "stubs/messages.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <scs/ComponentContext.h>
-#include <iostream>
-#include <typeinfo>
-
-#include <boost/thread.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include "stubs/messages.h"
-#include <CORBA.h>
-#include "server_login.h"
-#include "properties_reader.h"
 #include <log/output/file_output.h>
+
+#include <CORBA.h>
+#include <iostream>
+#ifdef OPENBUS_SDK_MULTITHREAD
+  #include <boost/thread.hpp>
+#endif
+#include <boost/shared_ptr.hpp>
+#include <boost/program_options.hpp>
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 
@@ -42,7 +43,6 @@ struct forwarding_thread
   {
     try
     {
-      std::cout << "thread run" << std::endl;
       boost::unique_lock<boost::mutex> lock(mutex);
       while(!canceled)
       {
@@ -58,11 +58,11 @@ struct forwarding_thread
           for(std::size_t i = 0; i != posts->length(); ++i)
           {
             std::cout << "Has message" << std::endl;
-            std::string msg("forwarded from ");
+            std::string msg("forwarded message by ");
             msg += (*posts)[i].from;
             msg += ':';
             msg += (*posts)[i].message;
-            messenger->post(from.c_str(), msg.c_str());
+            messenger->post(to.c_str(), msg.c_str());
           }
         }
       }
@@ -152,55 +152,83 @@ struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation:
   boost::mutex mutex;
 };
 
+const std::string entity("interop_delegation_cpp_forwarder");
+std::string private_key;
+std::string bus_host;
+unsigned short bus_port;
+
+void load_options(int argc, char **argv)
+{
+  namespace po = boost::program_options;
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help", "Help")
+    ("private-key", po::value<std::string>()->default_value("admin/" + entity
+                                                            + ".key"),
+     "Path to private key")
+    ("bus.host.name", po::value<std::string>()->default_value("localhost"),
+     "Host to OpenBus")
+    ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
+     "Port to OpenBus");
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+  if (vm.count("help")) 
+  {
+    std::cout << desc << std::endl;
+    std::exit(1);
+  }
+  if (vm.count("bus.host.name"))
+  {
+    bus_host = vm["bus.host.name"].as<std::string>();
+  }
+  if (vm.count("bus.host.port"))
+  {
+    bus_port = vm["bus.host.port"].as<unsigned short>();
+  }
+  if (vm.count("private-key"))
+  {
+    private_key = vm["private-key"].as<std::string>();
+  }
+}
+
 int main(int argc, char** argv) {
-  try {
-    openbus::log().set_level(openbus::info_level);
+  try 
+  {
+    load_options(argc, argv);
 
-    ::properties properties_file;
-    if(!properties_file.openbus_log_file.empty())
-    {
-      std::auto_ptr<logger::output_base> output
-        (new logger::output::file_output(properties_file.openbus_log_file.c_str()
-                                         , std::ios::out));
-      openbus::log().add_output(output);
-    }
-    
-    if(properties_file.buses.size() < 1)
-      throw std::runtime_error("No bus is configured");
-
-    ::properties::bus bus = properties_file.buses[0];
-
-    CORBA::ORB* orb = openbus::ORBInitializer(argc, argv);
+    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+
+    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn
-      (openbusContext->createConnection(bus.host, bus.port));
-    openbusContext->setDefaultConnection(conn.get());
+    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host, bus_port));
+    ctx->setDefaultConnection(conn.get());
     
-    #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orbRun(ORBRun, openbusContext->orb());
-    #endif
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::thread orb_run(ORBRun, ctx->orb());
+#endif
 
-    ::loginWithServerCredentials("interop_delegation_cpp_forwarder", *conn);
+    conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
 
-    openbus::idl_or::ServicePropertySeq properties;
-    properties.length(2);
-    properties[0].name  = "offer.domain";
-    properties[0].value = "Interoperability Tests";
-    properties[1].name  = "openbus.component.interface";
-    properties[1].value = tecgraf::openbus::interop::delegation::_tc_Messenger->id();
-    openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);
+    openbus::idl_or::ServicePropertySeq props;
+    props.length(2);
+    props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
+    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
+    props[static_cast<CORBA::ULong>(1)].name  = "openbus.component.interface";
+    props[static_cast<CORBA::ULong>(1)].value = delegation::_tc_Messenger->id();
+    openbus::idl_or::ServiceOfferDescSeq_var offers = 
+      ctx->getOfferRegistry()->findServices(props);
     
     if (offers->length() > 0)
     {
-      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("messenger");
-      tecgraf::openbus::interop::delegation::Messenger_var
-        m = tecgraf::openbus::interop::delegation::Messenger::_narrow(o);
+      CORBA::Object_var o = offers[static_cast<CORBA::ULong>(0)]
+        .service_ref->getFacetByName("messenger");
+      delegation::Messenger_var m = delegation::Messenger::_narrow(o);
 
       scs::core::ComponentId componentId;
       componentId.name = "Forwarder";
@@ -208,36 +236,43 @@ int main(int argc, char** argv) {
       componentId.minor_version = '0';
       componentId.patch_version = '0';
       componentId.platform_spec = "C++";
-      scs::core::ComponentContext forwarder_component(openbusContext->orb(), componentId);
+      scs::core::ComponentContext forwarder_component(ctx->orb(), componentId);
     
-      ForwarderImpl forwarder_servant(*openbusContext, m);
-      forwarder_component.addFacet("forwarder", tecgraf::openbus::interop::delegation::_tc_Forwarder->id(), &forwarder_servant);
+      ForwarderImpl forwarder_servant(*ctx, m);
+      forwarder_component.addFacet(
+        "forwarder", delegation::_tc_Forwarder->id(), &forwarder_servant);
     
       openbus::idl_or::ServicePropertySeq props;
       props.length(1);
-      openbus::idl_or::ServiceProperty property;
-      props[0].name = "offer.domain";
-      props[0].value = "Interoperability Tests";
+      props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
+      props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
 
-      openbusContext->getOfferRegistry()->registerService(forwarder_component.getIComponent(), props);
+      ctx->getOfferRegistry()->registerService(
+        forwarder_component.getIComponent(), props);
       std::cout << "Forwarder no ar" << std::endl;
-      #ifdef OPENBUS_SDK_MULTITHREAD
-      orbRun.join();
-      #endif
+#ifdef OPENBUS_SDK_MULTITHREAD
+      orb_run.join();
+#endif
     }
     else
     {
       std::cout << "Couldn't find messenger" << std::endl;
       return -1;
     }
-  } catch(std::exception const& e) {
+  } 
+  catch(const std::exception &e) 
+  {
     std::cout << "[error (std::exception)] " << e.what() << std::endl;
-  } catch (const CORBA::Exception& e) {
+    return -1;
+  } 
+  catch (const CORBA::Exception &e) 
+  {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
-  } catch (...) {
+  } 
+  catch (...) 
+  {
     std::cout << "[error *unknow exception*]" << std::endl;
     return -1;
   }
-  return 0;
 }

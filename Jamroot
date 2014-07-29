@@ -32,9 +32,11 @@ if [ option.get openbus-with-puts : : 1 ]
   project openssl ;
 
   lib crypto : : <name>crypto <search>$(openssl-lib-path)
+   <target-os>darwin,<link>static:<file>$(openssl-lib-path)/libcrypto.a
    ;
 
   lib openssl : crypto : <name>ssl <search>$(openssl-lib-path)
+   <target-os>darwin,<link>static:<file>$(openssl-lib-path)/libssl.a
    : : <include>$(openssl-include-path)
    ;
 }
@@ -42,6 +44,35 @@ else
 {
   path-constant scs-idl-path : [ scs-idl-path ] ;
   path-constant openbus-idl-path : [ openbus-idl-path ] ;
+}
+
+import version ;
+
+#### To add requirements for version >= or < than determinate version for specific toolset
+rule version-less ( lhs rhs )
+{
+    return [ version.version-less
+        [ SPLIT_BY_CHARACTERS $(lhs) : . ] :
+        [ SPLIT_BY_CHARACTERS $(rhs) : . ] ] ;
+}
+
+rule add-conditions ( conditions + : toolset : min-version ? : max-version ? : properties * )
+{
+    local curr-toolset = [ MATCH <toolset>(.*) : $(properties) ] ;
+    local curr-version = [ MATCH <toolset-$(curr-toolset):version>(.*) : $(properties) ] ;
+
+    if $(curr-toolset) = $(toolset) &&
+        ! ( $(min-version) && [ version-less $(curr-version) $(min-version) ] ) &&
+        ! ( $(max-version) && [ version-less $(max-version) $(curr-version) ] )
+    {
+        return $(conditions) ;
+    }
+}
+################################################################################
+
+rule add-Wno-unused-local-typedefs-gcc>=4.8 ( properties * )
+{
+    return [ add-conditions <cxxflags>-Wno-unused-local-typedefs : gcc : 4.8 : : $(properties) ] ;
 }
 
 import mico-idl ;
@@ -52,6 +83,7 @@ lib dl : : <name>dl <link>shared ;
 project openbus : build-dir bin
  : requirements <tag>@tag <define>BOOST_ALL_NO_LIB=1
    <link>shared:<define>OPENBUS_SDK_SHARED <define>OPENBUS_SDK_SOURCE
+   <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
  : usage-requirements <link>shared:<define>OPENBUS_SDK_SHARED
  : default-build <threading>multi <variant>debug <link>shared
  ;
@@ -230,3 +262,7 @@ install stage-libs-deps : stage-demo-$(all-demos) stage-interop-$(all-interops)
 
 alias run-tests : tests//run-tests ;
 explicit run-tests ;
+
+alias assistant : assistant//assistant ;
+explicit assistant ;
+

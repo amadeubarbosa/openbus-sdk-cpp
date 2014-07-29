@@ -1,4 +1,4 @@
-// -*- coding: iso-latin-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #include <openbus/assistant.hpp>
 #include <openbus/assistant/waitlogin.hpp>

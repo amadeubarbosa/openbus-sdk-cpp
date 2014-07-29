@@ -1,8 +1,10 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
+#include "openbus/interceptors/ServerInterceptor_impl.hpp"
+#include "openbus/interceptors/ClientInterceptor_impl.hpp"
 
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -46,14 +48,8 @@ OPENBUS_SDK_DECL log_type& log()
 }
 #endif
 
-/* [obs] Eu não consegui usar um auto_ptr para segurar a referência ao
- * orbInitializer porque tive problemas no término do programa com
- * relação a destruição do objeto. Parece que o Mico deve ficar com o
- * ownership por conta de uma vetor de ORBInitializer_var que ele
- * possui em mico/pi_impl.h VERIFICAR se o Mico está liberando o
- * objeto.
-*/
-interceptors::ORBInitializer *orbInitializer;
+interceptors::ORBInitializer orbInitializer;
+
 #ifdef OPENBUS_SDK_MULTITHREAD
 boost::mutex _mutex;
 #endif
@@ -64,16 +60,12 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
   boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
   log_scope l(log().general_logger(), info_level, "ORBInitializer");
-  if (!orbInitializer) 
-  {
-    orbInitializer = new interceptors::ORBInitializer();
-    PortableInterceptor::register_orb_initializer(orbInitializer);
-  }
+  PortableInterceptor::register_orb_initializer(&orbInitializer);
   /* [obs] Mico 2.3.13 só permite a criação de apenas *um* ORB.
    * *CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "")
    * retorna o mesmo ORB.
   */
-  CORBA::ORB *orb = CORBA::ORB_init(argc, argv);
+  CORBA::ORB_ptr orb = CORBA::ORB_init(argc, argv);
   try 
   {
     orb->resolve_initial_references("OpenBusContext");
@@ -81,17 +73,12 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
   } 
   catch (const CORBA::ORB_InvalidName &) 
   {
-    OpenBusContext *openbusContext (
-      new OpenBusContext(orb, orbInitializer->codec(), 
-                         orbInitializer->slotId_joinedCallChain(), 
-                         orbInitializer->slotId_signedCallChain(), 
-                         orbInitializer->slotId_legacyCallChain(), 
-                         orbInitializer->slotId_requesterConnection(),
-                         orbInitializer->slotId_receiveConnection()));
+    boost::shared_ptr<OpenBusContext> openbusContext
+      (new OpenBusContext(orb, orbInitializer._orb_info));
     l.level_log(debug_level, "Registrando OpenBusContext");
-    orb->register_initial_reference("OpenBusContext", openbusContext);
-    orbInitializer->clientInterceptor()->openbusContext(*openbusContext);
-    orbInitializer->serverInterceptor()->openbusContext(*openbusContext);
+    orb->register_initial_reference("OpenBusContext", openbusContext.get());
+    orbInitializer.clientInterceptor->_openbus_ctx = openbusContext;
+    orbInitializer.serverInterceptor->_openbus_ctx = openbusContext;
   }
   l.log("Retornando ORB");
   return orb;

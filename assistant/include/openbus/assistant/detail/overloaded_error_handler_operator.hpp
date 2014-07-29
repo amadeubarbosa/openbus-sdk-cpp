@@ -1,4 +1,4 @@
-// -*- coding: iso-latin-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #if !defined(BOOST_PP_IS_ITERATING) || !BOOST_PP_IS_ITERATING
 

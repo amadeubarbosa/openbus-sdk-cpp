@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 
 //[searching_offers_errors_retry
 //[searching_offers_errors_retry_include

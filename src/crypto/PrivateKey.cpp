@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/crypto/PrivateKey.hpp"
 
 #include <fstream>
@@ -63,8 +63,36 @@ PrivateKey::PrivateKey(const std::string &filename)
   assert(_key.get());
 }
 
+PrivateKey::PrivateKey(const PrivateKey &o)
+{
+#ifdef OPENUBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> _lock lock(o.mutex);
+#endif
+  _key = o._key;
+  _keySeq = o._keySeq;
+}
+
+PrivateKey& PrivateKey::operator=(const PrivateKey &o)
+{
+  if (this == &o)
+  {
+    return *this;
+  }
+#ifdef OPENUBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> l1(&_mutex < &o._mutex ? _mutex : o._mutex);
+  boost::lock_guard<boost::mutex> l2(&_mutex > &o._mutex ? _mutex : o._mutex);
+#endif
+  _key = o._key;
+  _keySeq = o._keySeq;
+  return *this;
+}
+
+
 CORBA::OctetSeq PrivateKey::pubKey()
 {
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> lock(_mutex);
+#endif
   unsigned char *buf = 0;
   std::size_t len = i2d_PUBKEY(_key.get(), &buf);
   assert(len > 0);
@@ -74,6 +102,9 @@ CORBA::OctetSeq PrivateKey::pubKey()
 CORBA::OctetSeq PrivateKey::decrypt(const unsigned char *data, 
                                     std::size_t len) const
 {
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> lock(_mutex);
+#endif
   size_t secretLen;
   openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(_key.get(), 0));
   assert(ctx.get());

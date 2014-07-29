@@ -11,7 +11,7 @@ exe audit_client
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <link>static:<source>/dl//dl
+   <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 exe audit_server
@@ -20,7 +20,7 @@ exe audit_server
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <link>static:<source>/dl//dl
+   <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 
@@ -30,7 +30,7 @@ exe audit_proxy
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <link>static:<source>/dl//dl
+   <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 

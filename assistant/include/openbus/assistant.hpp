@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #ifndef OPENBUS_ASSISTANT_H
 #define OPENBUS_ASSISTANT_H
@@ -397,7 +397,7 @@ public:
    *
    * \param properties Propriedades que as ofertas de serviços encontradas
    *                   devem apresentar.
-   * \param retries Parâmetro opcional indicando o número de novas tentativas
+   * \param retries Parâmetro indicando o número de novas tentativas
    *                de busca de ofertas em caso de falhas, como o barramento
    *                estar indisponível ou não ser possível estabelecer um login
    *                até o momento. 'retries' com o valor 0 implica que a
@@ -420,7 +420,7 @@ public:
    * chamada. Se o número de tentativas se esgotar e não houver sucesso, uma
    * sequência vazia será retornada.
    * 
-   * \param retries Parâmetro opcional indicando o número de novas tentativas
+   * \param retries Parâmetro indicando o número de novas tentativas
    *                de busca de ofertas em caso de falhas, como o barramento
    *                estar indisponível ou não for possível estabelecer um login
    *                até o momento. 'retries' com o valor 0 implica que a
@@ -456,8 +456,7 @@ public:
    * administrador do barramento. Caso contrário essas informações se tornam
    * inválidas e não podem mais ser utilizadas para criar um login.
    * 
-   * \param secret Segredo a ser fornecido na conclusão do processo de login.
-   * \param retries Parâmetro opcional indicando o número de novas tentativas
+   * \param retries Parâmetro indicando o número de novas tentativas
    *                de busca de ofertas em caso de falhas, como o barramento
    *                estar indisponível ou não for possível estabelecer um login
    *                até o momento. 'retries' com o valor 0 implica que a

@@ -1,4 +1,4 @@
-// -*- coding: iso-latin-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #ifndef OPENBUS_ASSISTANT_DETAIL_EXECUTE_WITH_RETRY_H
 #define OPENBUS_ASSISTANT_DETAIL_EXECUTE_WITH_RETRY_H
@@ -31,10 +31,6 @@
       x(e);                                                             \
     }                                                                   \
   catch(idl::services::UnauthorizedOperation const& e)                  \
-    {                                                                   \
-      x(e);                                                             \
-    }                                                                   \
-  catch(idl::services::access_control::InvalidCertificate const& e)     \
     {                                                                   \
       x(e);                                                             \
     }                                                                   \

@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 
 //[create_offers_chain
 #include <openbus/assistant.hpp>

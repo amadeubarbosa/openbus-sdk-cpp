@@ -1,0 +1,57 @@
+Category {
+  id = "InteropReloggedjoin",
+  name = "Categoria gerada pelo script",
+}
+
+Entity {
+  id = "interop_reloggedjoin_cpp_server",
+  category = "InteropReloggedjoin",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "interop_reloggedjoin_cpp_proxy",
+  category = "InteropReloggedjoin",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "interop_reloggedjoin_cpp_client",
+  category = "InteropReloggedjoin",
+  name = "Entidade gerada pelo script",
+}
+
+Certificate {
+  id = "interop_reloggedjoin_cpp_server",
+  certificate = "interop_reloggedjoin_cpp_server.crt",
+}
+
+Certificate {
+  id = "interop_reloggedjoin_cpp_proxy",
+  certificate = "interop_reloggedjoin_cpp_proxy.crt",
+}
+
+Interface {
+  id = "IDL:tecgraf/openbus/interop/simple/Hello:1.0"
+}
+
+Grant {
+  id = "interop_reloggedjoin_cpp_server",
+  interfaces = {
+    "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
+  }
+}
+
+Grant {
+  id = "interop_reloggedjoin_cpp_client",
+  interfaces = {
+    "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
+  }
+}
+
+Grant {
+  id = "interop_reloggedjoin_cpp_proxy",
+  interfaces = {
+    "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
+  }
+}

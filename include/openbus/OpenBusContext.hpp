@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 /**
 * API - SDK Openbus C++
 * \file openbus/OpenBusContext.hpp
@@ -7,11 +7,10 @@
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
 #define TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
 
+#include "openbus/ORBInitializer.hpp"
 #include "openbus/decl.hpp"
 #include "openbus/Connection.hpp"
-#include "openbus/ORBInitializer.hpp"
-#include "openbus/interceptors/ClientInterceptor_impl.hpp"
-#include "stubs/core.h"
+#include "stubs/credential.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
 
@@ -20,7 +19,7 @@
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
-
+#include <boost/shared_ptr.hpp>
 #include <string>
 
 namespace openbus 
@@ -28,6 +27,12 @@ namespace openbus
   namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
   namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+
+  namespace interceptors
+  {
+    struct orb_info;
+    struct ClientInterceptor;
+  }
 }
 
 namespace tecgraf 
@@ -54,12 +59,7 @@ inline bool operator!=(const LoginInfo &lhs, const LoginInfo &rhs)
   return !(lhs == rhs);
 }
 
-} 
-} 
-} 
-} 
-} 
-}
+}}}}}}
 
 /**
 * \brief openbus
@@ -86,18 +86,18 @@ struct OPENBUS_SDK_DECL CallerChain
   }
 
 	/**
-   * Login para o qual a chamada estava destinada. Só é possível fazer chamadas
-   * dentro dessa cadeia (através do método joinChain da interface 
-   * OpenBusContext) se o login da conexão corrente for o mesmo do target.
+   * Entidade para a qual a chamada estava destinada. Só é possível fazer 
+   * chamadas dentro dessa cadeia (através do método joinChain da interface 
+   * OpenBusContext) se a entidade da conexão corrente for o mesmo do target.
    *
-   * No caso de conexões legadas, este campo será nulo e será possível fazer
-   * qualquer chamada como parte dessa cadeia. Contudo, todas as chamadas
-   * feitas como parte de uma cadeia de uma chamada legada serão feitas
-   * utilizando apenas o protocolo do OpenBus 1.5 (apenas com credenciais
-   * legadas) e portanto serão recusadas por serviços que não aceitem chamadas
+   * No caso de conexões legadas, este campo armazenará o nome da entidade 
+   * da conexão que atendeu a requisição. Todas as chamadas feitas como 
+   * parte de uma cadeia de uma chamada legada serão feitas utilizando 
+   * apenas o protocolo do OpenBus 1.5 (apenas com credenciais legadas) 
+   * e portanto serão recusadas por serviços que não aceitem chamadas
    * legadas (OpenBus 1.5).
    */
-  const idl_ac::LoginInfo &target() const
+  const std::string target() const
   {
     return _target;
   }
@@ -137,22 +137,27 @@ struct OPENBUS_SDK_DECL CallerChain
   {
   }
 private:
-  CallerChain(const std::string busid, const idl_ac::LoginInfo &t,
-              const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c,
-              const idl_cr::SignedCallChain &d) 
-    : _busid(busid), _target(t), _originators(b), _caller(c), 
-      _signedCallChain(d) 
+  CallerChain(const std::string &busid, 
+              const std::string &target,
+              const idl_ac::LoginInfoSeq &originators, 
+              const idl_ac::LoginInfo &caller,
+              const idl_cr::SignedCallChain &chain) 
+    : _busid(busid), _target(target), _originators(originators), 
+      _caller(caller), _signedCallChain(chain)
   {
   }
   
-  CallerChain(const std::string busid, const idl_ac::LoginInfo &t,
-              const idl_ac::LoginInfoSeq &b, const idl_ac::LoginInfo &c) 
-    : _busid(busid), _target(t), _originators(b), _caller(c) 
+  CallerChain(const std::string &busid, 
+              const std::string &target,
+              const idl_ac::LoginInfoSeq &originators, 
+              const idl_ac::LoginInfo &caller) 
+    : _busid(busid), _target(target), _originators(originators), 
+      _caller(caller) 
   { 
   }
   
   std::string _busid;
-  idl_ac::LoginInfo _target;
+  std::string _target;
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
@@ -165,8 +170,9 @@ private:
     _signedCallChain = p; 
   }
   friend class OpenBusContext;
-  friend class openbus::interceptors::ClientInterceptor;
-  friend inline bool operator==(CallerChain const &lhs, CallerChain const &rhs) 
+  friend struct openbus::interceptors::ClientInterceptor;
+  friend inline bool operator==(CallerChain const &lhs, 
+                                CallerChain const &rhs) 
   {
     return lhs._busid == rhs._busid && lhs._originators == rhs._originators
       && lhs._caller == rhs._caller;
@@ -367,12 +373,7 @@ private:
    * OpenBusContext deve ser adquirido atraves de:
    *   orb->resolve_initial_references("OpenBusContext")
    */
-  OpenBusContext(CORBA::ORB_ptr, IOP::Codec *, 
-                 PortableInterceptor::SlotId slotId_joinedCallChain, 
-                 PortableInterceptor::SlotId slotId_signedCallChain, 
-                 PortableInterceptor::SlotId slotId_legacyCallChain,
-                 PortableInterceptor::SlotId slotId_requesterConnection,
-                 PortableInterceptor::SlotId slotId_receiveConnection);
+  OpenBusContext(CORBA::ORB_ptr, boost::shared_ptr<interceptors::orb_info>);
   
   OpenBusContext(const OpenBusContext&);
   OpenBusContext &operator=(const OpenBusContext &);
@@ -388,13 +389,8 @@ private:
   mutable boost::mutex _mutex;
 #endif
   CORBA::ORB_ptr _orb;
+  boost::shared_ptr<interceptors::orb_info> _orb_info;
   PortableInterceptor::Current_var _piCurrent;
-  IOP::Codec *_codec;
-  PortableInterceptor::SlotId _slotId_joinedCallChain; 
-  PortableInterceptor::SlotId _slotId_signedCallChain;
-  PortableInterceptor::SlotId _slotId_legacyCallChain;
-  PortableInterceptor::SlotId _slotId_requesterConnection;
-  PortableInterceptor::SlotId _slotId_receiveConnection;
   Connection *_defaultConnection;
   BusidConnection _busidConnection;
   CallDispatchCallback _callDispatchCallback;

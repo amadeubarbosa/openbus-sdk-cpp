@@ -1,4 +1,4 @@
-// -*- coding: iso-latin-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #ifndef OPENBUS_ASSISTANT_DETAIL_EXCEPTION_MESSAGE_H
 #define OPENBUS_ASSISTANT_DETAIL_EXCEPTION_MESSAGE_H
@@ -33,11 +33,6 @@ inline const char* exception_message(idl::services::ServiceFailure const&)
 inline const char* exception_message(idl::services::UnauthorizedOperation const&)
 {
   return "tecgraf::openbus::core::v2_0::services::UnauthorizedOperation";
-}
-
-inline const char* exception_message(idl::services::access_control::InvalidCertificate const&)
-{
-  return "tecgraf::openbus::core::v2_0::services::InvalidCertificate";
 }
 
 inline const char* exception_message(idl::services::access_control::MissingCertificate const&)

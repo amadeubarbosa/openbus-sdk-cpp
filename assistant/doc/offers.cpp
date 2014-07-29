@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 
 //[create_offers
 //[create_offers_component_created

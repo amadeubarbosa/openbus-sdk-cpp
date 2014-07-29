@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 
 #if 0
 //#ifndef OPENBUS_ASSISTANT_REFERENCE_H

@@ -1,4 +1,4 @@
-// -*- coding: iso-latin-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #ifndef OPENBUS_ASSISTANT_DETAIL_TRI_TYPES_RETRY_H
 #define OPENBUS_ASSISTANT_DETAIL_TRI_TYPES_RETRY_H

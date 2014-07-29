@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 #ifndef OPENBUS_SDK_DECL
 
@@ -17,3 +17,4 @@
 #endif
 
 #endif
+

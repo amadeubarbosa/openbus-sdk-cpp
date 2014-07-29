@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 #include <openbus/assistant.hpp>
 #include <iostream>
 #include <stubs/dedicated_clock.h>

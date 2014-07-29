@@ -11,7 +11,7 @@ exe greetings_client
    /openssl//openssl greetings-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>$(idl) <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>greetings-idl
  ;
 exe greetings_server
@@ -20,7 +20,7 @@ exe greetings_server
    /openssl//openssl greetings-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static:<source>/dl//dl
+   <implicit-dependency>$(idl) <link>static,<target-os>linux:<source>/dl//dl
    <implicit-dependency>greetings-idl
  ;
 

@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 
 /**
 * API - SDK Openbus C++
@@ -11,19 +11,24 @@
 
 #include "openbus/decl.hpp"
 #include "stubs/scs.h"
+#include "stubs/core.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
-#include "openbus/interceptors/ClientInterceptor_impl.hpp"
-#include "openbus/interceptors/ServerInterceptor_impl.hpp"
+#include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
-#include "openbus/crypto/PublicKey.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
+#define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
+#include "openbus/LRUCache_impl.hpp"
+#endif
 
 #include <CORBA.h>
+#include <boost/array.hpp>
 #include <boost/function.hpp>
+#include <boost/scoped_ptr.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
-
+#include <boost/shared_ptr.hpp>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -35,14 +40,27 @@
 */
 namespace openbus 
 {
-namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
-namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+  namespace idl = tecgraf::openbus::core::v2_0;
+  namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
+  namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 
-class OpenBusContext;
+  class OpenBusContext;
+  class PublicKey;
+  class LoginCache;
 #ifndef OPENBUS_SDK_MULTITHREAD
-class RenewLogin;
+  class RenewLogin;
 #endif
-  
+
+  namespace interceptors
+  {
+    struct orb_info;
+    struct ServerInterceptor;
+    struct ClientInterceptor;
+  }
+}
+ 
+namespace openbus 
+{ 
 struct OPENBUS_SDK_DECL BusChanged : public std::exception 
 { 
   const char *what() const throw()
@@ -235,9 +253,9 @@ public:
   * temporariamente desautenticada.
   * 
   * @return Verdadeiro se o processo de logout for concluído com êxito e falso
-  *         se a conexão já estiver desautenticada (login inválido).
+  *         se a conexão já estiver desautenticada (login inválido) ou se houver 
+  *         uma falha durante o processo remoto do logout.
   *
-  * @throw CORBA::Exception
   */
   bool logout();
   	
@@ -287,11 +305,7 @@ private:
   * Connection deve ser adquirido atraves de: OpenBusContext::createConnection()
   */
   Connection(const std::string host, const unsigned short port, CORBA::ORB_ptr, 
-             IOP::Codec *, PortableInterceptor::SlotId slotId_joinedCallChain, 
-             PortableInterceptor::SlotId slotId_signedCallChain, 
-             PortableInterceptor::SlotId slotId_legacyCallChain, 
-             PortableInterceptor::SlotId slotId_receiveConnection, 
-             OpenBusContext &, 
+             boost::shared_ptr<interceptors::orb_info>, OpenBusContext &, 
              const ConnectionProperties &props);
 
   Connection(const Connection &);
@@ -341,19 +355,15 @@ private:
 
   const std::string _host;
   const unsigned short _port;
-  CORBA::ORB *_orb;
-  IOP::Codec *_codec;
-  PortableInterceptor::SlotId _slotId_joinedCallChain; 
-  PortableInterceptor::SlotId _slotId_signedCallChain;
-  PortableInterceptor::SlotId _slotId_legacyCallChain;
-  PortableInterceptor::SlotId _slotId_receiveConnection;
+  CORBA::ORB_ptr _orb;
+  boost::shared_ptr<interceptors::orb_info> _orb_info;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;
 #else
-  std::auto_ptr<RenewLogin> _renewLogin;
+  boost::scoped_ptr<RenewLogin> _renewLogin;
 #endif
-  std::auto_ptr<idl_ac::LoginInfo> _loginInfo;
+  boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo;
   InvalidLoginCallback_t _onInvalidLogin;
   
   enum LegacyDelegate 
@@ -377,17 +387,51 @@ private:
   idl_ac::AccessControl_var _access_control;
   idl_ac::LoginRegistry_var _login_registry;
   idl_or::OfferRegistry_var _offer_registry;
-  std::auto_ptr<LoginCache> _loginCache;
+  boost::scoped_ptr<LoginCache> _loginCache;
   std::string _busid;
-  std::auto_ptr<PublicKey> _buskey;
+  boost::scoped_ptr<PublicKey> _buskey;
   LegacyDelegate _legacyDelegate;
   bool _legacyEnabled;
   /**/
     
-  friend class openbus::interceptors::ServerInterceptor;
-  friend class openbus::interceptors::ClientInterceptor;
+  struct SecretSession 
+  {
+    SecretSession()
+      : id(0), ticket(0)
+    {
+      secret.fill(0);
+    }
+    CORBA::ULong id;
+    std::string remote_id;
+    boost::array<unsigned char, secret_size> secret;
+    CORBA::ULong ticket;
+    friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);
+    friend bool operator!=(const SecretSession &lhs, const SecretSession &rhs);
+  };
+  LRUCache<hash_value, SecretSession> _profile2session;
+
+  friend struct openbus::interceptors::ServerInterceptor;
+  friend struct openbus::interceptors::ClientInterceptor;
   friend class openbus::OpenBusContext;
+  friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);
+  friend bool operator!=(const SecretSession &lhs, const SecretSession &rhs);
 };
+
+inline bool operator==(const Connection::SecretSession &lhs, 
+                const Connection::SecretSession &rhs)
+{
+  return lhs.id == rhs.id
+    && lhs.remote_id == rhs.remote_id
+    && lhs.secret == rhs.secret
+    && lhs.ticket == rhs.ticket;
+}
+
+inline bool operator!=(const Connection::SecretSession &lhs, 
+                const Connection::SecretSession &rhs)
+{
+  return !(lhs == rhs);
+}
+
 }
 
 #endif

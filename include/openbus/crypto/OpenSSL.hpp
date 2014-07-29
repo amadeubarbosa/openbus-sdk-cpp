@@ -1,4 +1,4 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 #ifndef TECGRAF_SDK_OPENBUS_OPENSSL_H_
 #define TECGRAF_SDK_OPENBUS_OPENSSL_H_
 
@@ -150,7 +150,7 @@ OPENBUS_SDK_DECL CORBA::OctetSeq PubKey2byteSeq(pkey);
 OPENBUS_SDK_DECL CORBA::OctetSeq PrvKey2byteSeq(pkey);
 OPENBUS_SDK_DECL CORBA::OctetSeq encrypt(pkey, const unsigned char *, size_t len);
 OPENBUS_SDK_DECL CORBA::OctetSeq decrypt(pkey, const unsigned char *, size_t len);
-}  
+}
 }
 
 #endif

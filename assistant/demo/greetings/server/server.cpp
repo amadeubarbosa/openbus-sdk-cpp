@@ -1,3 +1,4 @@
+// -*- coding: iso-8859-1-unix -*-
 #include <openbus/assistant.hpp>
 #include <scs/ComponentContext.h>
 #include <iostream>
@@ -76,7 +77,7 @@ int main(int argc, char** argv)
     ("greetings", _tc_Greetings->id(), &english_greetings_servant);
 
   scs::core::ComponentContext portuguese_greetings_component(assistant.orb(), componentId);
-  GreetingsImpl portuguese_greetings_servant("OlÃ¡");
+  GreetingsImpl portuguese_greetings_servant("Olá");
   portuguese_greetings_component.addFacet
     ("greetings", _tc_Greetings->id(), &portuguese_greetings_servant);
 

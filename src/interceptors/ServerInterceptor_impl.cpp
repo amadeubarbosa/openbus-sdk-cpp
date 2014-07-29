@@ -1,10 +1,14 @@
-// -*- coding: iso-8859-1 -*-
+// -*- coding: iso-8859-1-unix -*-
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
+#include "openbus/LoginCache.hpp"
+#include "openbus/crypto/PublicKey.hpp"
 #include "openbus/log.hpp"
 #include "stubs/credential_v1_5.h"
 
+#include <boost/scoped_ptr.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -16,99 +20,79 @@ namespace interceptors
 
 const std::size_t LRUSize = 128;
 
-Session::Session(std::size_t i, const std::string &login) 
-  : id(i), remoteId(login)
+Session::Session(const std::string &login) 
+  : remote_id(login)
 {
   tickets_init(&tickets);
-  for (std::size_t i = 0; i != secretSize; ++i) 
-  {
-    secret[i] = rand() % 255;
-  }
+  secret = boost::uuids::random_generator()();
+  id = boost::uuids::hash_value(boost::uuids::random_generator()());
 }
 
-ServerInterceptor::ServerInterceptor(
-  PI::Current *piCurrent, PI::SlotId slotId_requesterConnection,
-  PI::SlotId slotId_receiveConnection, PI::SlotId slotId_joinedCallChain,
-  PI::SlotId slotId_signedCallChain, PI::SlotId slotId_legacyCallChain,
-  IOP::Codec *cdr_codec) 
-  : _piCurrent(piCurrent), 
-    _slotId_requesterConnection(slotId_requesterConnection),
-    _slotId_receiveConnection(slotId_receiveConnection), 
-    _slotId_joinedCallChain(slotId_joinedCallChain),
-    _slotId_signedCallChain(slotId_signedCallChain),
-    _slotId_legacyCallChain(slotId_legacyCallChain),
-    _cdrCodec(cdr_codec), _openbusContext(0),
-    _sessionLRUCache(SessionLRUCache(LRUSize))
+ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p)
+  : _orb_info(p), _sessionLRUCache(LRUSize)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");
 }
 
-void ServerInterceptor::sendCredentialReset(
-  Connection &conn, Login &caller, PI::ServerRequestInfo &r) 
+void ServerInterceptor::send_credential_reset(
+  Connection &conn, boost::shared_ptr<Login> caller, PI::ServerRequestInfo &r) 
 {
   idl_cr::CredentialReset credentialReset;
-
+  CORBA::OctetSeq secret;
+  {
 #ifdef OPENBUS_SDK_MULTITHREAD
-  boost::unique_lock<boost::mutex> lock(_mutex);
+    boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
-  Session session(_sessionLRUCache.size() + 1,
-                  std::string(caller.loginInfo->id));
-  _sessionLRUCache.insert(session.id, session);
-  credentialReset.session = session.id;
-
-  CORBA::OctetSeq encrypted =
-    caller.pubKey->encrypt(session.secret, secretSize); 
-#ifdef OPENBUS_SDK_MULTITHREAD
-  lock.unlock();
-#endif
-
-  credentialReset.login = conn._login()->id;
-  std::memcpy(credentialReset.challenge, encrypted.get_buffer(),
-         idl::EncryptedBlockSize);
-
+    boost::shared_ptr<Session> session = boost::shared_ptr<Session>(
+      new Session(caller->loginInfo->id.in()));
+    _sessionLRUCache.insert(session->id, session);
+    credentialReset.session = session->id;
+    secret = caller->pubKey->encrypt(session->secret.data, 
+                                     boost::uuids::uuid::static_size());
+  }
+  credentialReset.target = conn._login()->id;
+  std::memcpy(credentialReset.challenge, secret.get_buffer(), 
+              idl::EncryptedBlockSize);
   CORBA::Any any;
   any <<= credentialReset;
-  CORBA::OctetSeq_var o = _cdrCodec->encode_value(any);
-
+  CORBA::OctetSeq_var o = _orb_info->codec->encode_value(any);
   IOP::ServiceContext serviceContext;
   serviceContext.context_id = idl_cr::CredentialContextId;
   IOP::ServiceContext::_context_data_seq s(o->length(), o->length(),
                                            o->get_buffer(), 0);
   serviceContext.context_data = s;
-  r.add_reply_service_context(serviceContext, true);          
-
+  r.add_reply_service_context(serviceContext, true);
   throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, 
                              CORBA::COMPLETED_NO);              
 }
 
-Connection &ServerInterceptor::getDispatcher(
-  OpenBusContext &context, const std::string &busId, const std::string &loginId,
-  const std::string &operation)
+Connection &ServerInterceptor::get_dispatcher(
+  boost::shared_ptr<OpenBusContext> ctx, const std::string &bus, 
+  const std::string &login, const std::string &operation)
 {
   Connection *conn = 0;
-  log_scope l(log().general_logger(), debug_level,
-              "ServerInterceptor::getDispatcher");
-  if (context.onCallDispatch())
+  log_scope l(log().general_logger(), debug_level, 
+              "ServerInterceptor::get_dispatcher");
+  if (ctx->onCallDispatch())
   {
     try 
     {
-      conn = context.onCallDispatch()(context, busId, loginId, operation);
+      conn = ctx->onCallDispatch()(*ctx, bus, login, operation);
     }
     catch (...) 
     {
       l.level_log(warning_level, "Falha na execucao da callback CallDispatch.");
     }
 
-    if (conn && ( (!conn->login() || (conn->busid() != busId)) ))
+    if (conn && ( (!conn->login() || (conn->busid() != bus)) ))
     {
-      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, 
-                                 CORBA::COMPLETED_NO);
+      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     } 
   }
   else
   {
-    if (!(conn = context.getDefaultConnection())) 
+    if (!(conn = ctx->getDefaultConnection())) 
     {
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
@@ -117,75 +101,131 @@ Connection &ServerInterceptor::getDispatcher(
   return *conn;
 }
 
+credential ServerInterceptor::get_credential(PI::ServerRequestInfo &r)
+{
+  CORBA::Any_var any_credential;
+  credential credential_;
+  try 
+  {
+    IOP::ServiceContext_var sc = r.get_request_service_context(
+      idl_cr::CredentialContextId);
+    IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
+    CORBA::OctetSeq data(cd.length(), cd.length(), cd.get_buffer());
+    any_credential = _orb_info->codec->decode_value(
+      data, idl_cr::_tc_CredentialData);
+    any_credential >>= credential_.data;
+  }
+  catch (const CORBA::BAD_PARAM &) 
+  {
+    openbus::legacy::v1_5::Credential legacy_credential;
+    CORBA::Any_var any_legacy_credential;
+    try 
+    {
+      IOP::ServiceContext_var sc = r.get_request_service_context(1234);
+      IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
+      CORBA::OctetSeq context_data(cd.length(), cd.length(), cd.get_buffer(),0);
+      any_legacy_credential = _orb_info->codec->decode_value(
+        context_data, openbus::legacy::v1_5::_tc_Credential);
+      any_legacy_credential >>= legacy_credential;
+      credential_.legacy.identifier = legacy_credential.identifier;
+      credential_.legacy.owner = legacy_credential.owner;
+      credential_.legacy.delegate = legacy_credential.delegate;
+      credential_.data.login = credential_.legacy.identifier;
+    }
+    catch (const CORBA::BAD_PARAM &) 
+    {
+      throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, 
+                                 CORBA::COMPLETED_NO);
+    }
+  }
+  return credential_;
+}
+
+void ServerInterceptor::build_legacy_chain(
+  PI::ServerRequestInfo &r,
+  std::string target,
+  const openbus::legacy::v1_5::Credential &credential)
+{
+  idl_ac::CallChain legacyChain;
+  legacyChain.target = target.c_str();
+  if (!strcmp(credential.delegate, ""))
+  {
+    legacyChain.originators.length(0);
+    idl_ac::LoginInfo login_info;
+    login_info.id = credential.identifier;
+    login_info.entity = credential.owner;
+    legacyChain.caller = login_info;            
+  } 
+  else 
+  {
+    legacyChain.originators.length(1);
+    idl_ac::LoginInfo delegate_;
+    delegate_.id = "<unknown>";
+    delegate_.entity = credential.delegate;
+    legacyChain.originators[0] = delegate_;
+    idl_ac::LoginInfo login;
+    login.id = credential.identifier;
+    login.entity = credential.owner;
+    legacyChain.caller = login;
+  }
+  CORBA::Any legacy_chain_any;
+  legacy_chain_any <<= legacyChain;
+  CORBA::OctetSeq_var o = _orb_info->codec->encode_value(legacy_chain_any);
+  idl_cr::SignedCallChain signed_legacy_chain;
+  signed_legacy_chain.encoded = o;
+  CORBA::Any signed_legacy_chain_any;
+  signed_legacy_chain_any <<= signed_legacy_chain;
+  r.set_slot(_orb_info->slot.signed_call_chain, signed_legacy_chain_any);
+}
+
 void ServerInterceptor::receive_request_service_contexts(
-  PI::ServerRequestInfo *r)
+  PI::ServerRequestInfo_ptr r)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::receive_request_service_contexts");
   l.level_vlog(debug_level, "operation: %s", r->operation());
-  
-  CORBA::Any_var any;
-  bool hasContext = true;
-  try 
+  credential credential_ = get_credential(*r);
+  Connection &conn = get_dispatcher(
+    _openbus_ctx, std::string(credential_.data.bus),
+    std::string(credential_.data.login), r->operation());
+  size_t const bufSize = sizeof(Connection *);
+  unsigned char buf[bufSize];
+  Connection *_c = &conn;
+  std::memcpy(buf, &_c, bufSize);
+  idl::OctetSeq_var connectionAddrOctetSeq =
+    new idl::OctetSeq(bufSize, bufSize, buf);
+  CORBA::Any connectionAddrAny;
+  connectionAddrAny <<= *(connectionAddrOctetSeq);
+  r->set_slot(_orb_info->slot.requester_conn, connectionAddrAny);
+  r->set_slot(_orb_info->slot.receive_conn, connectionAddrAny);
+  _openbus_ctx->setCurrentConnection(&conn);
+  if (!strcmp(credential_.legacy.owner, "")) 
   {
-    IOP::ServiceContext_var sc =
-      r->get_request_service_context(idl_cr::CredentialContextId);
-    IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
-    CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer());
-    any = _cdrCodec->decode_value(contextData, idl_cr::_tc_CredentialData);
-  }
-  catch (const CORBA::BAD_PARAM &) 
-  {
-    hasContext = false;
-  }
-  idl_cr::CredentialData credential;
-  if (hasContext && (any >>= credential)) 
-  {
-    Connection &conn = getDispatcher(
-      *_openbusContext, std::string(credential.bus), 
-      std::string(credential.login), r->operation());
-
-    size_t const bufSize = sizeof(Connection*);
-    unsigned char buf[bufSize];
-    Connection *_c = &conn;
-    std::memcpy(buf, &_c, bufSize);
-    idl::OctetSeq_var connectionAddrOctetSeq =
-      new idl::OctetSeq(bufSize, bufSize, buf);
-    CORBA::Any connectionAddrAny;
-    connectionAddrAny <<= *(connectionAddrOctetSeq);
-    r->set_slot(_slotId_requesterConnection, connectionAddrAny);
-
-    r->set_slot(_slotId_receiveConnection, connectionAddrAny);
-
-    _openbusContext->setCurrentConnection(&conn);
-
     if (!conn._login())
     {
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
-
-    Login *caller;
-    if (strcmp(credential.bus.in(), conn._busid.c_str())) 
+    boost::shared_ptr<Login> caller;
+    if (strcmp(credential_.data.bus, conn._busid.c_str())) 
     {
-      l.log("Login diferente daquele que iniciou a sessão.");
+      l.log("Login diferente daquele que iniciou a sessao.");
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
     try 
     {
-      l.vlog("Validando login: %s", credential.login.in());
-      caller = conn._loginCache->validateLogin(std::string(credential.login));
+      l.vlog("Validando login: %s", credential_.data.login.in());
+      caller = conn._loginCache->validateLogin(
+        std::string(credential_.data.login));
     }
     catch (const CORBA::NO_PERMISSION &e) 
     {
-      if (e.minor() == idl_ac::NoLoginCode) 
+      if (idl_ac::NoLoginCode == e.minor()) 
       {
         throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
       }
     } 
     catch (const CORBA::Exception &) 
     {
-      /* não há uma entrada válida no cache e o cache nõo consegui
-      ** validar o login com o barramento. */
       throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode,
                                  CORBA::COMPLETED_NO);
     }
@@ -195,71 +235,45 @@ void ServerInterceptor::receive_request_service_contexts(
       throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
     }
     l.log("Login valido.");
-    idl::HashValue hash;   
-    Session *session = 0;
-
-#ifdef OPENBUS_SDK_MULTITHREAD
-    boost::unique_lock<boost::mutex> lock(_mutex);
-#endif
-    bool hasSession = _sessionLRUCache.exists(credential.session);
-    if (hasSession)
+    hash_value hash;   
+    boost::shared_ptr<Session> session;
+    std::string remote_id;
     {
-      session = _sessionLRUCache.fetch_ptr(credential.session);
+#ifdef OPENBUS_SDK_MULTITHREAD
+      boost::lock_guard<boost::mutex> lock(_mutex);
+#endif
+      session = _sessionLRUCache.fetch(credential_.data.session);
+      if (session)
+      {
+        boost::array<unsigned char, secret_size> secret;
+        std::copy(session->secret.begin(), session->secret.end(), 
+                  secret.c_array());
+        hash = ::openbus::hash(r->operation(), 
+                               credential_.data.ticket, secret);
+        remote_id = session->remote_id;
+      }
     }
-#ifdef OPENBUS_SDK_MULTITHREAD
-    lock.unlock();
-#endif
-
-    tickets_History *t = 0;
-    std::string remoteId;
-    if (hasSession) 
-    {
-      size_t operationSize = strlen(r->operation());
-      int bufSize = 22 + operationSize;
-      std::auto_ptr<unsigned char> buf(new unsigned char[bufSize]());
-      unsigned char *pBuf = buf.get();
-      pBuf[0] = idl::MajorVersion;
-      pBuf[1] = idl::MinorVersion;
-#ifdef OPENBUS_SDK_MULTITHREAD
-      lock.lock();
-#endif
-      std::memcpy(pBuf+2, session->secret, secretSize);
-#ifdef OPENBUS_SDK_MULTITHREAD
-      lock.unlock();
-#endif
-      std::memcpy(pBuf+18, &credential.ticket, 4);
-      std::memcpy(pBuf+22, r->operation(), operationSize);
-      SHA256(pBuf, bufSize, hash);
-#ifdef OPENBUS_SDK_MULTITHREAD
-      lock.lock();
-#endif
-      t = &session->tickets;
-      remoteId = session->remoteId;
-#ifdef OPENBUS_SDK_MULTITHREAD
-      lock.unlock();
-#endif
-    }
-
-    if (!(hasSession 
-          && !std::memcmp(hash, credential.hash, idl::HashValueSize) 
-          && !std::strcmp(remoteId.c_str(), credential.login.in()) 
-          && tickets_check(t, credential.ticket))) 
+    if (!(session
+          && !std::memcmp(hash.data(), credential_.data.hash, 
+                          idl::HashValueSize) 
+          && !std::strcmp(remote_id.c_str(), credential_.data.login) 
+          && tickets_check(&session->tickets, 
+                           credential_.data.ticket))) 
     {
       l.level_vlog(debug_level, 
                    "credential not valid, try to reset credetial session");
-      sendCredentialReset(conn, *caller, *r);
+      send_credential_reset(conn, caller, *r);
     }
     l.level_vlog(debug_level, "credential is valid");
-    if (!credential.chain.encoded.length())
+    if (!credential_.data.chain.encoded.length())
     {
       throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
     }
-
     idl::HashValue hashChain;
-    SHA256(credential.chain.encoded.get_buffer(),
-           credential.chain.encoded.length(), hashChain);
+    SHA256(credential_.data.chain.encoded.get_buffer(),
+           credential_.data.chain.encoded.length(), hashChain);
 
-    if (!conn._buskey->verify(credential.chain.signature, 
+    if (!conn._buskey->verify(credential_.data.chain.signature, 
                               idl::EncryptedBlockSize, hashChain, 
                               idl::HashValueSize))
     {
@@ -268,86 +282,56 @@ void ServerInterceptor::receive_request_service_contexts(
     else
     {
       CORBA::Any_var callChainAny =
-        _cdrCodec->decode_value(credential.chain.encoded,
-                                idl_ac::_tc_CallChain);
+        _orb_info->codec->decode_value(
+          credential_.data.chain.encoded, idl_ac::_tc_CallChain);
       idl_ac::CallChain callChain;
       callChainAny >>= callChain;
-      if (std::strcmp(callChain.target, conn._login()->id)) 
+      if (std::strcmp(callChain.target, conn._login()->entity)) 
       { 
-        sendCredentialReset(conn, *caller, *r);
+        send_credential_reset(conn, caller, *r);
       }
       else if (std::strcmp(callChain.caller.id, caller->loginInfo->id)) 
       {
-        throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, 
+        throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode,
                                    CORBA::COMPLETED_NO);
       }
       else 
       {
         CORBA::Any signedCallChainAny;
-        signedCallChainAny <<= credential.chain;
-        r->set_slot(_slotId_signedCallChain, signedCallChainAny);
+        signedCallChainAny <<= credential_.data.chain;
+        r->set_slot(_orb_info->slot.signed_call_chain, signedCallChainAny);
       }
     }
   } 
-  else 
+  else
   {
-    //[TODO] conn._legacyEnabled
-    l.level_vlog(debug_level, "verificando se existe uma credencial legacy");
-    hasContext = true;
-    CORBA::Any_var lany;
-    try 
-    {
-      IOP::ServiceContext_var sc = r->get_request_service_context(1234);
-      IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
-      CORBA::OctetSeq contextData(cd.length(), cd.length(), cd.get_buffer(), 0);
-      lany = _cdrCodec->decode_value(contextData, 
-                                     openbus::legacy::v1_5::_tc_Credential);
-    }
-    catch (const CORBA::BAD_PARAM &) 
-    {
-      hasContext = false;
-    }
-    openbus::legacy::v1_5::Credential legacyCredential;
-    if (hasContext && (lany >>= legacyCredential)) 
-    {
-      l.level_vlog(info_level, "extraindo credencial legacy");
-      l.level_vlog(debug_level, "credential.identifier: %s",
-                   legacyCredential.identifier.in());
-      l.level_vlog(debug_level, "credential.owner: %s",
-                   legacyCredential.owner.in());
-      l.level_vlog(debug_level, "credential.delegate: %s",
-                   legacyCredential.delegate.in());
-      idl_ac::CallChain legacyChain;
-      legacyChain.target = "";
-      if (std::string(legacyCredential.delegate) == "")
-      {
-        legacyChain.originators.length(0);
-        idl_ac::LoginInfo loginInfo;
-        loginInfo.id = legacyCredential.identifier;
-        loginInfo.entity = legacyCredential.owner;
-        legacyChain.caller = loginInfo;            
-      } 
-      else 
-      {
-        legacyChain.originators.length(1);
-        idl_ac::LoginInfo delegate;
-        delegate.id = "<unknown>";
-        delegate.entity = legacyCredential.delegate;
-        legacyChain.originators[0] = delegate;
-        idl_ac::LoginInfo login;
-        login.id = legacyCredential.identifier;
-        login.entity = legacyCredential.owner;
-        legacyChain.caller = login;
-      }
-      CORBA::Any legacyChainAny;
-      legacyChainAny <<= legacyChain;
-      r->set_slot(_slotId_legacyCallChain, legacyChainAny);
-    }
-    else
-    {
-      throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, CORBA::COMPLETED_NO);
-    }
+    build_legacy_chain(*r, conn.login()->entity.in(), credential_.legacy);
   }
+}
+
+void ServerInterceptor::receive_request(PI::ServerRequestInfo_ptr) 
+{ 
+}
+
+void ServerInterceptor::send_reply(PI::ServerRequestInfo_ptr) 
+{ 
+}
+
+void ServerInterceptor::send_exception(PI::ServerRequestInfo_ptr) 
+{ 
+}
+
+void ServerInterceptor::send_other(PI::ServerRequestInfo_ptr) 
+{ 
+}
+
+char *ServerInterceptor::name() 
+{ 
+  return CORBA::string_dup("ServerInterceptor"); 
+}
+
+void ServerInterceptor::destroy() 
+{ 
 }
 
 }
