@@ -357,6 +357,74 @@ public:
    * @throw CORBA::Exception
    */
   CallerChain getJoinedChain();
+
+  /**
+   * \brief Cria uma cadeia de chamadas para a entidade com o identificador de
+   * login especificado.
+   *
+   * Cria uma nova cadeia de chamadas para a entidade especificada, onde o dono
+   * da cadeia é a conexão corrente. Utiliza a cadeia atual para a continuação
+   * do encadeamento. O identificador de login especificado deve ser um login
+   * atualmente válido para que a operação tenha sucesso. Caso o contexto
+   * corrente não tenha nenhuma cadeia associada, essa operação devolve uma
+   * cadeia 'vazia' 'default-constructed'.
+   *
+   * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
+   *
+   * CallerChain chain = openbusContext.makeChainFor(loginId);
+   * if(chain != CallerChain())
+   *   // chain é válido
+   * else
+   *   // chain é inválido
+   * 
+   * \param  loginId Identificador de login da entidade para a qual deseja-se
+   *         enviar a cadeia ou uma cadeia 'vazia'.
+   * \return A cadeia gerada para ser utilizada pela entidade com o login
+   *         especificado.
+   * 
+   * \throw CORBA::NO_PERMISSION {minor = InvalidTargetCode}
+   * \throw CORBA::NO_PERMISSION {minor = UnavailableBusCode}
+   */
+  CallerChain makeChainFor(const char *loginId);
+
+  /**
+   * \brief Codifica uma cadeia de chamadas (CallerChain) para um stream de
+   * bytes.
+   * 
+   * Codifica uma cadeia de chamadas em um stream de bytes para permitir a
+   * persistência ou transferência da informação. A codificação é realizada em
+   * CDR e possui um identificador de versão concatenado com as informações da
+   * cadeia. Sendo assim, a stream só será decodificada com sucesso por alguém
+   * que entenda esta mesma codificação.
+   * 
+   * \param chain A cadeia a ser codificada.
+   * \return A cadeia codificada em um stream de bytes.
+   */
+  CORBA::OctetSeq encodeChain(const CallerChain chain);
+
+  /**
+   * \brief Decodifica um stream de bytes de uma cadeia para o formato
+   * CallerChain.
+   * 
+   * Decodifica um stream de bytes de uma cadeia para o formato CallerChain.
+   * Espera-se que a stream de bytes esteja codificada em CDR e seja formada por
+   * um identificador de versão concatenado com as informações da cadeia. Caso
+   * não seja possível decodificar a sequência de octetos passada, essa operação
+   * devolve uma cadeia 'vazia' 'default-constructed'.
+   *
+   * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
+   *
+   * CallerChain chain = openbusContext.decodeChain(encoded);
+   * if(chain != CallerChain())
+   *   // chain é válido
+   * else
+   *   // chain é inválido
+   * 
+   * \param encoded O stream de bytes que representa a cadeia.
+   * \return A cadeia de chamadas no formato CallerChain, 'vazia' em caso de
+   * falha da decodificação.
+   */
+  CallerChain decodeChain(const CORBA::OctetSeq encoded);
   
   /** 
    * ORB utilizado pela conexão. 

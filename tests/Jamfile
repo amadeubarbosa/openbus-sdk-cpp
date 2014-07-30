@@ -21,45 +21,77 @@ local rule exe-test ( test-name : filename : idl ? )
   explicit $(test-name) ;
 }
 
-exe-test connect_host_port_connect_to_right_host_and_port
- : connect/host_port/connect_to_right_host_and_port.cpp ;
-exe-test connect_host_port_connect_to_wrong_host_and_port
- : connect/host_port/connect_to_wrong_host_and_port.cpp ;
-# exe-test connect_host_port_connect_with_empty_host
-#  : connect/host_port/connect_with_empty_host.cpp ;
-#exe-test connect_orb_connect_getting_orb_with_ORB_init
-# : connect/orb/connect_getting_orb_with_ORB_init.cpp ;
-exe-test connect_orb_connect_getting_orb_with_createORB
- : connect/orb/connect_getting_orb_with_createORB.cpp ;
 
 alias test-hello-idl : $(here)/idl/hello.idl ;
 explicit test-hello-idl ;
 
+exe-test connect_host_port_connect_to_right_host_and_port
+ : connect/host_port/connect_to_right_host_and_port.cpp
+ ;
+exe-test connect_host_port_connect_to_wrong_host_and_port
+ : connect/host_port/connect_to_wrong_host_and_port.cpp
+ ;
+#exe-test connect_host_port_connect_with_empty_host
+# : connect/host_port/connect_with_empty_host.cpp
+# ;
+#exe-test connect_orb_connect_getting_orb_with_ORB_init
+# : connect/orb/connect_getting_orb_with_ORB_init.cpp
+# ;
+exe-test connect_orb_connect_getting_orb_with_createORB
+ : connect/orb/connect_getting_orb_with_createORB.cpp
+ ;
+exe-test connection_caller_chain_decode_chain_wrong_context_id
+ : connection/caller_chain/decode_chain_wrong_context_id.cpp
+ ;
+exe-test connection_caller_chain_decode_default_octet_sequence
+ : connection/caller_chain/decode_default_octet_sequence.cpp
+ ;
+exe-test connection_caller_chain_encode_and_decode_chain
+ : connection/caller_chain/encode_and_decode_chain.cpp
+ ;
+exe-test connection_caller_chain_encode_default_caller_chain
+ : connection/caller_chain/encode_default_caller_chain.cpp
+ ;
+exe-test connection_caller_chain_make_chain_for_invalid_login
+ : connection/caller_chain/make_chain_for_invalid_login.cpp
+ ;
+exe-test connection_caller_chain_make_chain_for_valid_login
+ : connection/caller_chain/make_chain_for_valid_login.cpp
+ ;
 exe-test connection_caller_chain_receive_call_with_default_connection_get_caller_chain
  : connection/caller_chain/receive_call_with_default_connection_get_caller_chain.cpp
- : test-hello-idl ;
+ : test-hello-idl
+ ;
 exe-test connection_loginByCertificate_entity_id_and_file_private_key_ok
- : connection/loginByCertificate/entity_id_and_file_private_key_ok.cpp ;
+ : connection/loginByCertificate/entity_id_and_file_private_key_ok.cpp
+ ;
 exe-test connection_loginByPassword_after_logout
- : connection/loginByPassword/after_logout.cpp ;
+ : connection/loginByPassword/after_logout.cpp
+ ;
 exe-test connection_loginByPassword_entity_id_and_password_ok
- : connection/loginByPassword/entity_id_and_password_ok.cpp ;
+ : connection/loginByPassword/entity_id_and_password_ok.cpp
+ ;
 exe-test connection_loginByPassword_login_when_already_logged
- : connection/loginByPassword/login_when_already_logged.cpp ;
+ : connection/loginByPassword/login_when_already_logged.cpp
+ ;
 exe-test connection_loginByPassword_wrong_password
- : connection/loginByPassword/wrong_password.cpp ;
+ : connection/loginByPassword/wrong_password.cpp
+ ;
 exe-test connection_login_login_info_after_login
- : connection/login/login_info_after_login.cpp ;
-
+ : connection/login/login_info_after_login.cpp
+ ;
 exe-test connection_manager_calls_with_default_connection
  : connection_manager/calls_with_default_connection.cpp
- : test-hello-idl ;
+ : test-hello-idl
+ ;
 exe-test connection_manager_calls_with_dispatcher
  : connection_manager/calls_with_dispatcher.cpp
- : test-hello-idl ;
+ : test-hello-idl
+ ;
 exe-test connection_manager_calls_with_thread_requester
  : connection_manager/calls_with_thread_requester.cpp
- : test-hello-idl ;
+ : test-hello-idl
+ ;
 exe-test connection_manager_create_connection_to_accessible_bus
  : connection_manager/create_connection_to_accessible_bus.cpp
  ;
@@ -74,19 +106,29 @@ exe-test connection_manager_get_manager
  ;
 exe-test connection_manager_receive_call_with_default_connection
  : connection_manager/receive_call_with_default_connection.cpp
- : test-hello-idl ;
+ : test-hello-idl
+ ;
 exe-test fail_user_created_orb
- : fail_user_created_orb.cpp ;
+ : fail_user_created_orb.cpp
+ ;
 exe-test get_offer
  : get_offer.cpp
- : test-hello-idl ;
+ : test-hello-idl
+ ;
 exe-test register_service
  : register_service.cpp
- : test-hello-idl ;
+ : test-hello-idl
+ ;
 
 alias tests : connect_host_port_connect_to_right_host_and_port
  connect_host_port_connect_to_wrong_host_and_port
  connect_orb_connect_getting_orb_with_createORB
+ connection_caller_chain_decode_chain_wrong_context_id
+ connection_caller_chain_decode_default_octet_sequence
+ connection_caller_chain_encode_and_decode_chain
+ connection_caller_chain_encode_default_caller_chain
+ connection_caller_chain_make_chain_for_invalid_login
+ connection_caller_chain_make_chain_for_valid_login
  connection_caller_chain_receive_call_with_default_connection_get_caller_chain
  connection_loginByCertificate_entity_id_and_file_private_key_ok
  connection_loginByPassword_after_logout
@@ -115,6 +157,12 @@ alias run-tests
 #   connection_caller_chain_receive_call_with_default_connection_get_caller_chain-run
    [ run connect_orb_connect_getting_orb_with_createORB ]
 #   [ run connection_caller_chain_receive_call_with_default_connection_get_caller_chain ]
+   [ run connection_caller_chain_decode_chain_wrong_context_id ]
+   [ run connection_caller_chain_decode_default_octet_sequence ]
+   [ run connection_caller_chain_encode_and_decode_chain ]
+   [ run connection_caller_chain_encode_default_caller_chain ]
+   [ run connection_caller_chain_make_chain_for_invalid_login ]
+   [ run connection_caller_chain_make_chain_for_valid_login ]
    [ run connection_loginByCertificate_entity_id_and_file_private_key_ok : : admin/TestCppHello.key ]
    [ run connection_loginByPassword_after_logout ]
    [ run connection_loginByPassword_entity_id_and_password_ok ]

@@ -145,6 +145,109 @@ CallerChain OpenBusContext::getJoinedChain()
   return CallerChain();
 }
 
+CallerChain OpenBusContext::makeChainFor(const char *loginId)
+{
+  log_scope l(log().general_logger(), info_level, 
+                                                "OpenBusContext::makeChainFor");
+  Connection *conn = getCurrentConnection();
+  if (conn) {
+    std::string busid = conn->busid();
+    idl_cr::SignedCallChain_var sigCallChain;
+    try
+    {
+      sigCallChain = conn->access_control()->signChainFor(loginId);
+    }
+    catch (const CORBA::SystemException &)
+    {
+      l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
+                                                         conn->busid().c_str());
+      throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
+                                                           CORBA::COMPLETED_NO);
+    }
+    catch (const idl_ac::InvalidLogins &)
+    {
+      l.log("throw CORBA::NO_PERMISSION, minor=InvalidTargetCode");
+      throw CORBA::NO_PERMISSION(idl_ac::InvalidTargetCode,
+                                                           CORBA::COMPLETED_NO);
+    }
+    CORBA::Any_var callChainAny = _orb_info->codec->decode_value(
+                              sigCallChain.in().encoded, idl_ac::_tc_CallChain);
+    idl_ac::CallChain callChain;
+    if (callChainAny >>= callChain)
+    {
+      return CallerChain(
+        busid, callChain.target.in(), callChain.originators, callChain.caller,
+                                                                  sigCallChain);
+    }
+  }
+  return CallerChain();
+}
+
+CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
+{
+  log_scope l(log().general_logger(), info_level,
+              "OpenBusContext::encodeChain");
+  CORBA::Any ctxIdAny;
+  ctxIdAny <<= idl_cr::CredentialContextId;
+  CORBA::OctetSeq_var ctxIdEnc = _orb_info->codec->encode_value(ctxIdAny);
+  CORBA::Any chainAny;
+  chainAny <<= (idl_cr::ExportedCallChain) { chain.busid().c_str(),
+                                                   *(chain.signedCallChain()) };
+  CORBA::OctetSeq_var chainEnc = _orb_info->codec->encode_value(chainAny);
+  CORBA::OctetSeq encoded;
+  encoded.length(ctxIdEnc.in().length() + chainEnc.in().length());
+  CORBA::ULong i = 0;
+  for (; i < ctxIdEnc.in().length(); i++)
+  {
+    encoded[i] = ctxIdEnc[i];
+  }
+  for (; i < encoded.length(); i++)
+  {
+    encoded[i] = chainEnc[i - ctxIdEnc.in().length()];
+  }
+  return encoded;
+}
+
+CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq encoded)
+{
+  log_scope l(log().general_logger(), info_level,
+              "OpenBusContext::decodeChain");
+  size_t const ctxIdSize = 8; // Endianness (1 byte) + padding (3) + ULong (4).
+  if (encoded.length() >= ctxIdSize) {
+    CORBA::OctetSeq ctxIdEnc;
+    ctxIdEnc.length(ctxIdSize);
+    for (CORBA::ULong i = 0; i < ctxIdEnc.length() ; i++)
+    {
+      ctxIdEnc[i] = encoded[i];
+    }
+    CORBA::Any_var ctxIdAny = _orb_info->codec->decode_value(ctxIdEnc,
+                                                              CORBA::_tc_ulong);
+    CORBA::ULong ctxId;
+    if ((ctxIdAny >>= ctxId) && ctxId == idl_cr::CredentialContextId)
+    {
+      CORBA::OctetSeq chainEnc;
+      chainEnc.length(encoded.length() - ctxIdEnc.length());
+      for (CORBA::ULong i = ctxIdEnc.length(); i < encoded.length(); i++)
+      {
+        chainEnc[i - ctxIdSize] = encoded[i];
+      }
+      CORBA::Any_var impChainAny = _orb_info->codec->decode_value(chainEnc,
+                                                 idl_cr::_tc_ExportedCallChain);
+      idl_cr::ExportedCallChain impChain;
+      if (impChainAny >>= impChain)
+      {
+        CORBA::Any_var callChainAny = _orb_info->codec->decode_value(
+                           impChain.signedChain.encoded, idl_ac::_tc_CallChain);
+        idl_ac::CallChain callChain;
+        callChainAny >>= callChain;
+        return CallerChain(impChain.bus.in(), callChain.target.in(),
+                 callChain.originators, callChain.caller, impChain.signedChain);
+      }
+    }
+  }
+  return CallerChain();
+}
+
 void OpenBusContext::onCallDispatch(CallDispatchCallback c) 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
