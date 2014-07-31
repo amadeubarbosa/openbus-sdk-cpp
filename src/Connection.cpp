@@ -243,10 +243,12 @@ void Connection::loginByPassword(const std::string &entity,
   interceptors::ignore_interceptor _i(_orb_info);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
-  CORBA::ULong passSize = static_cast<CORBA::ULong> (password.size());
-  idl::OctetSeq_var passOctetSeq = new idl::OctetSeq(
-    passSize, passSize, (CORBA::Octet *) CORBA::string_dup(password.c_str()));
-  loginAuthenticationInfo.data = passOctetSeq;
+  idl::OctetSeq &seq = loginAuthenticationInfo.data;
+  seq.length(static_cast<CORBA::ULong>(password.size()));
+  for (CORBA::ULong i = 0; i != seq.length(); ++i)
+  {
+    seq[i] = password[i];
+  }
   
   SHA256(_key.pubKey().get_buffer(), _key.pubKey().length(), 
          loginAuthenticationInfo.hash);

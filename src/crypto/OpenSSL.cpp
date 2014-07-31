@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 #include "openbus/crypto/OpenSSL.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
+#include "openbus/crypto/PublicKey.hpp"
 
 #include <cassert>
 #include <cstdlib>
@@ -15,20 +16,29 @@ pkey byteSeq2PubKey(const unsigned char *buf, size_t len) {
   pkey key (d2i_PUBKEY(0, &buf, len));
   if(!key)
   {
-    throw InvalidPrivateKey();
+    throw InvalidPublicKey();
   }
   return pkey(key);
 }
 
-CORBA::OctetSeq PubKey2byteSeq(pkey key) 
+template <class E>
+CORBA::OctetSeq key2byteSeq(pkey key)
 {
-  unsigned char *buf = 0;
-  size_t len = i2d_PUBKEY(key.get(), &buf);
+  size_t buf_size = i2d_PUBKEY(key.get(), 0);
+  openssl_buffer buf(CORBA::OctetSeq::allocbuf(buf_size));
+  buf.deleter(CORBA::OctetSeq::freebuf);
+  unsigned char *p = buf.get();
+  size_t len = i2d_PUBKEY(key.get(), &p);
   if(len <= 0)
   {
-    throw InvalidPrivateKey();
+    throw E();
   }
-  return CORBA::OctetSeq (len, len, buf);
+  return CORBA::OctetSeq(len, len, buf.release(), true);  
+}
+
+CORBA::OctetSeq PubKey2byteSeq(pkey key) 
+{
+  return key2byteSeq<InvalidPublicKey>(key);
 }
 
 pkey byteSeq2PrvKey(const unsigned char *buf, size_t len) 
@@ -43,13 +53,7 @@ pkey byteSeq2PrvKey(const unsigned char *buf, size_t len)
 
 CORBA::OctetSeq PrvKey2byteSeq(pkey key) 
 {
-  unsigned char *buf = 0;
-  size_t len = i2d_PrivateKey(key.get(), &buf);
-  if(len <= 0)
-  {
-    throw InvalidPrivateKey();
-  }
-  return CORBA::OctetSeq (len, len, buf);
+  return key2byteSeq<InvalidPrivateKey>(key);
 }
 
 CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len) 
@@ -73,7 +77,8 @@ CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len)
     throw InvalidPrivateKey();
   }
 
-  openssl_buffer encrypted ((unsigned char*) OPENSSL_malloc(encryptedLen));
+  openssl_buffer encrypted(CORBA::OctetSeq::allocbuf(encryptedLen));
+  encrypted.deleter(CORBA::OctetSeq::freebuf);
   if(!encrypted)
   {
     throw std::bad_alloc();
@@ -85,7 +90,7 @@ CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len)
     throw InvalidPrivateKey();
   }
 
-  return CORBA::OctetSeq (encryptedLen, encryptedLen, encrypted.get());
+  return CORBA::OctetSeq(encryptedLen, encryptedLen, encrypted.release(), true);
 }
 
 CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len) 
@@ -104,7 +109,8 @@ CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len)
       throw InvalidPrivateKey();
     }
 
-    openssl_buffer secret ((unsigned char*) OPENSSL_malloc(secretLen));
+    openssl_buffer secret(CORBA::OctetSeq::allocbuf(secretLen));
+    secret.deleter(CORBA::OctetSeq::freebuf);
     if(!secret)
     {
       throw std::bad_alloc();
@@ -114,7 +120,7 @@ CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len)
     {
       throw InvalidPrivateKey();
     }
-    CORBA::OctetSeq seq (secretLen, secretLen, secret.get());
+    CORBA::OctetSeq seq (secretLen, secretLen, secret.release(), true);
     return seq;
   }
   return 0;
