@@ -385,7 +385,7 @@ public:
    * \throw CORBA::NO_PERMISSION {minor = InvalidTargetCode}
    * \throw CORBA::NO_PERMISSION {minor = UnavailableBusCode}
    */
-  CallerChain makeChainFor(const char *loginId);
+  CallerChain makeChainFor(const std::string loginId);
 
   /**
    * \brief Codifica uma cadeia de chamadas (CallerChain) para um stream de
