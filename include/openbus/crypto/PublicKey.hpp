@@ -11,6 +11,13 @@
 
 namespace openbus
 {
+struct InvalidPublicKey : public std::exception
+{ 
+  const char *what() const throw() 
+  { 
+    return "openbus::InvalidPublicKey";
+  } 
+};
 
 class PublicKey
 {

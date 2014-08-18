@@ -192,10 +192,9 @@ void ServerInterceptor::receive_request_service_contexts(
   unsigned char buf[bufSize];
   Connection *_c = &conn;
   std::memcpy(buf, &_c, bufSize);
-  idl::OctetSeq_var connectionAddrOctetSeq =
-    new idl::OctetSeq(bufSize, bufSize, buf);
+  idl::OctetSeq connectionAddrOctetSeq(bufSize, bufSize, buf);
   CORBA::Any connectionAddrAny;
-  connectionAddrAny <<= *(connectionAddrOctetSeq);
+  connectionAddrAny <<= connectionAddrOctetSeq;
   r->set_slot(_orb_info->slot.requester_conn, connectionAddrAny);
   r->set_slot(_orb_info->slot.receive_conn, connectionAddrAny);
   _openbus_ctx->setCurrentConnection(&conn);

@@ -47,15 +47,16 @@ CORBA::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
   assert(r == 1);
   r = EVP_PKEY_encrypt(ctx.get(), 0, &encryptedLen, buf, size);
   assert(r == 1);
-  openssl::openssl_buffer encrypted ((unsigned char*) 
-                                     OPENSSL_malloc(encryptedLen));
+  openssl::openssl_buffer encrypted(CORBA::OctetSeq::allocbuf(encryptedLen));
+  encrypted.deleter(CORBA::OctetSeq::freebuf);
+  if(encrypted.get() == 0)
   if(!encrypted)
   {
     throw std::bad_alloc();
   }
   r = EVP_PKEY_encrypt(ctx.get(), encrypted.get(), &encryptedLen, buf, size);
   assert(r == 1);
-  return CORBA::OctetSeq (encryptedLen, encryptedLen, encrypted.get());
+  return CORBA::OctetSeq(encryptedLen, encryptedLen, encrypted.release(), true);
 }
 
 bool PublicKey::verify(const unsigned char *sig, std::size_t siglen, 

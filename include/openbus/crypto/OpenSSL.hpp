@@ -6,6 +6,7 @@
 #include <CORBA.h>
 #include <openssl/pem.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 
 namespace openbus 
 {
@@ -58,7 +59,8 @@ private:
 
 struct openssl_buffer
 {
-  explicit openssl_buffer(unsigned char *buffer) : buffer(buffer) 
+  explicit openssl_buffer(unsigned char *buffer)
+    : buffer(buffer), deleter_(CRYPTO_free)
   {
   }
 
@@ -66,8 +68,13 @@ struct openssl_buffer
   {
     if(buffer)
     {
-      OPENSSL_free(buffer);
+      deleter_(buffer);
     }
+  }
+
+  void deleter(boost::function<void (unsigned char *)> p)
+  {
+    deleter_ = p;
   }
 
   unsigned char &operator[](std::size_t s)
@@ -106,6 +113,7 @@ struct openssl_buffer
   }
 private:
   unsigned char *buffer;
+  boost::function<void (unsigned char *)> deleter_;
 };
 
 struct pkey
