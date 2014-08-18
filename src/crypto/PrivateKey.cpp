@@ -122,8 +122,9 @@ CORBA::OctetSeq PrivateKey::decrypt(const unsigned char *data,
     throw InvalidPrivateKey();
   }
   
-  openssl::openssl_buffer secret ((unsigned char*) OPENSSL_malloc(secretLen));
-  if(!secret)
+  openssl::openssl_buffer secret(CORBA::OctetSeq::allocbuf(secretLen));
+  secret.deleter(CORBA::OctetSeq::freebuf);
+  if(!secret.get())
   {
     throw std::bad_alloc();
   }
@@ -132,8 +133,7 @@ CORBA::OctetSeq PrivateKey::decrypt(const unsigned char *data,
   {
     throw InvalidPrivateKey();
   }
-  CORBA::OctetSeq seq (secretLen, secretLen, secret.get());
-  return seq;
+  return CORBA::OctetSeq(secretLen, secretLen, secret.release(), true);
 }
 
 }
