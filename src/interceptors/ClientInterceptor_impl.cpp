@@ -298,7 +298,7 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
   {
     l.level_vlog(debug_level, "creating credential session");
     IOP::ServiceContext_var sctx;
-    sctx = r->get_request_service_context(idl_cr::CredentialContextId);
+    sctx = r->get_reply_service_context(idl_cr::CredentialContextId);
     CORBA::Any_var any;
     idl_cr::CredentialReset credential_reset;
     try 
