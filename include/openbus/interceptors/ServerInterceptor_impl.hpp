@@ -47,7 +47,7 @@ struct OPENBUS_SDK_DECL Session
 
 struct credential
 {
-  tecgraf::openbus::core::v2_0::credential::CredentialData data;
+  tecgraf::openbus::core::v2_0::credential::CredentialData_var data;
   openbus::legacy::v1_5::Credential legacy;
 };
 
@@ -71,7 +71,7 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
     const std::string &bus,
     const std::string &login,
     const std::string &operation);
-  credential get_credential(PI::ServerRequestInfo &);
+  credential get_credential(const PI::ServerRequestInfo_ptr);
   void build_legacy_chain(
     PI::ServerRequestInfo &,
     std::string target,
