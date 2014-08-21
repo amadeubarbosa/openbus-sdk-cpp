@@ -13,7 +13,7 @@
 #include <cstring>
 #include <sstream>
 
-const std::size_t LRUSize = 128;
+const std::size_t LRUSize(128);
 
 namespace openbus 
 {
@@ -23,8 +23,8 @@ namespace interceptors
 hash_value session_key(PI::ClientRequestInfo &r) 
 {
   hash_value profile_data_hash;
-  ::IOP::TaggedProfile::_profile_data_seq profile = 
-    r.effective_profile()->profile_data;
+  ::IOP::TaggedProfile::_profile_data_seq profile(
+    r.effective_profile()->profile_data);
   SHA256(profile.get_buffer(), profile.length(), profile_data_hash.c_array());
   return profile_data_hash;
 }
@@ -33,7 +33,7 @@ Connection &ClientInterceptor::get_current_connection(PI::ClientRequestInfo &r)
 {
   log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::get_current_connection");
-  Connection *conn = 0;
+  Connection *conn(0);
   CORBA::Any_var connectionAddrAny(r.get_slot(_orb_info->slot.requester_conn));
   const idl::OctetSeq *connectionAddrOctetSeq;
   if (*connectionAddrAny >>= connectionAddrOctetSeq) 
@@ -77,7 +77,7 @@ CallerChain ClientInterceptor::get_joined_chain(Connection &conn,
 bool ClientInterceptor::ignore_request(PI::ClientRequestInfo &r)
 {
   CORBA::Any_var any(r.get_slot(_orb_info->slot.ignore_interceptor));
-  CORBA::Boolean ignore = false;
+  CORBA::Boolean ignore(false);
   any >>= CORBA::Any::to_boolean(ignore);
   return ignore;
 }
@@ -88,7 +88,7 @@ idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::get_signed_chain");
   idl_cr::SignedCallChain chain;
-  bool cached = false;
+  bool cached(false);
   {
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
@@ -151,11 +151,11 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
     credential.session = session.id;
     credential.ticket = ++session.ticket;
 
-    hash_value hash = ::openbus::hash(r.operation(), credential.ticket, 
-                                      session.secret);
+    hash_value hash(::openbus::hash(r.operation(), credential.ticket, 
+                                    session.secret));
     std::copy(hash.cbegin(), hash.cend(), credential.hash);
         
-    CallerChain caller_chain = get_joined_chain(conn, r);
+    CallerChain caller_chain(get_joined_chain(conn, r));
     if (session.remote_id == std::string(idl::BusLogin)) 
     {
       if (caller_chain == CallerChain())
@@ -172,10 +172,10 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
       std::string login(conn._login()->id.in());
       hash_value hash;
       {
-        std::size_t size = login.size() + session.remote_id.size() 
-          + idl::EncryptedBlockSize;
+        std::size_t size(login.size() + session.remote_id.size() 
+                         + idl::EncryptedBlockSize);
         boost::scoped_array<unsigned char> buf (new unsigned char[size]());
-        std::size_t pos = 0;
+        std::size_t pos(0);
         std::memcpy(buf.get(), login.c_str(), login.size());
         pos += login.size();
         std::memcpy(buf.get() + pos, session.remote_id.c_str(), 
@@ -201,7 +201,7 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
   sctx.context_id = idl_cr::CredentialContextId;
   CORBA::Any any;
   any <<= credential;
-  CORBA::OctetSeq_var o = _orb_info->codec->encode_value(any);
+  CORBA::OctetSeq_var o(_orb_info->codec->encode_value(any));
   sctx.context_data = o;
 
   r.add_request_service_context(sctx, true);
@@ -213,7 +213,7 @@ void ClientInterceptor::build_legacy_credential(PI::ClientRequestInfo &r,
   legacy::v1_5::Credential credential;
   credential.identifier = CORBA::string_dup(conn._login()->id);
   credential.owner = CORBA::string_dup(conn._login()->entity);
-  CallerChain caller_chain = get_joined_chain(conn, r);
+  CallerChain caller_chain(get_joined_chain(conn, r));
   if (caller_chain == CallerChain())
   {
     credential.delegate = "";
@@ -236,7 +236,7 @@ void ClientInterceptor::build_legacy_credential(PI::ClientRequestInfo &r,
   sctx.context_id = 1234;
   CORBA::Any any;
   any <<= credential;
-  CORBA::OctetSeq_var o = _orb_info->codec->encode_value(any);
+  CORBA::OctetSeq_var o(_orb_info->codec->encode_value(any));
   sctx.context_data = o;
   r.add_request_service_context(sctx, true);
 }
@@ -257,7 +257,7 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
   {
     return;
   }
-  Connection &conn = get_current_connection(*r);
+  Connection &conn(get_current_connection(*r));
   if (!conn._login()) 
   {
     l.log("throw NoLoginCode");
@@ -284,15 +284,15 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
     return;
   }
 
-  CORBA::SystemException &ex = 
-    *CORBA::SystemException::_decode(*r->received_exception());
+  CORBA::SystemException &ex(
+    *CORBA::SystemException::_decode(*r->received_exception()));
   if (ex.completed() != CORBA::COMPLETED_NO) 
   {
     return;
   }
 
   l.level_vlog(debug_level, "minor: %d", ex.minor());
-  Connection &conn = get_current_connection(*r);
+  Connection &conn(get_current_connection(*r));
   if (ex.minor() == idl_ac::InvalidCredentialCode) 
   {
     l.level_vlog(debug_level, "creating credential session");
@@ -311,8 +311,8 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
       throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode,CORBA::COMPLETED_NO);
     }
         
-    CORBA::OctetSeq secret = conn._key.decrypt(credential_reset->challenge,
-                                               idl::EncryptedBlockSize);
+    CORBA::OctetSeq secret(conn._key.decrypt(credential_reset->challenge,
+                                             idl::EncryptedBlockSize));
 
     Connection::SecretSession session;
     session.id = credential_reset->session;

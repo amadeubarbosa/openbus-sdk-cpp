@@ -18,7 +18,7 @@
 #include <cstring>
 #include <ctime>
 
-const std::size_t LRUSize = 128;
+const std::size_t LRUSize(128);
 
 namespace openbus 
 {
@@ -92,19 +92,19 @@ public:
   {
     log_scope l(log().general_logger(), info_level, "RenewLogin::renew");
     assert(_access_control);
-    idl_ac::ValidityTime validityTime = _validityTime;
-    Connection *c = 0;
+    idl_ac::ValidityTime validityTime(_validityTime);
+    Connection *conn(0);
     try 
     {
-      c = _openbusContext.getCurrentConnection();
+      conn = _openbusContext.getCurrentConnection();
       _openbusContext.setCurrentConnection(&_conn);
       validityTime = _access_control->renew();
-      _openbusContext.setCurrentConnection(c);
+      _openbusContext.setCurrentConnection(conn);
     } 
     catch (const CORBA::Exception &) 
     {
       l.level_vlog(warning_level, "Falha na renovacao da credencial.");
-      _openbusContext.setCurrentConnection(c);
+      _openbusContext.setCurrentConnection(conn);
     }
     return validityTime;
   }
@@ -126,12 +126,12 @@ Connection::Connection(
     _legacyDelegate(CALLER), _legacyEnabled(true), _profile2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
-  CORBA::Object_var init_ref = _orb->resolve_initial_references("PICurrent");
+  CORBA::Object_var init_ref(_orb->resolve_initial_references("PICurrent"));
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent.in()));
   std::stringstream corbaloc;
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
-  CORBA::Object_var obj = _orb->string_to_object(corbaloc.str().c_str());
+  CORBA::Object_var obj(_orb->string_to_object(corbaloc.str().c_str()));
   {
     interceptors::ignore_interceptor _i(_orb_info);
     _iComponent = scs::core::IComponent::_narrow(obj);
@@ -150,7 +150,7 @@ Connection::Connection(
   {
     interceptors::ignore_interceptor _i(_orb_info);
     _busid = _access_control->busid();
-    CORBA::OctetSeq_var o = _access_control->buskey();
+    CORBA::OctetSeq_var o(_access_control->buskey());
     _buskey.reset(new PublicKey(o));
   }
   
@@ -231,7 +231,7 @@ void Connection::loginByPassword(const std::string &entity,
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-  bool state = _state;
+  bool state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
@@ -243,7 +243,7 @@ void Connection::loginByPassword(const std::string &entity,
   interceptors::ignore_interceptor _i(_orb_info);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
-  idl::OctetSeq &seq = loginAuthenticationInfo.data;
+  idl::OctetSeq &seq(loginAuthenticationInfo.data);
   seq.length(static_cast<CORBA::ULong>(password.size()));
   for (CORBA::ULong i = 0; i != seq.length(); ++i)
   {
@@ -256,15 +256,15 @@ void Connection::loginByPassword(const std::string &entity,
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orb_info->codec->encode_value(any);
 
-  CORBA::OctetSeq encrypted = 
+  CORBA::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
-                     encodedLoginAuthenticationInfo->length());
+                     encodedLoginAuthenticationInfo->length()));
 
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
     
   idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo *loginInfo = 0;
+  idl_ac::LoginInfo *loginInfo(0);
   try 
   {
     loginInfo = _access_control->loginByPassword(entity.c_str(), _key.pubKey(), 
@@ -286,7 +286,7 @@ void Connection::loginByCertificate(const std::string &entity,
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);;
 #endif
-  bool state = _state;
+  bool state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
@@ -312,19 +312,19 @@ void Connection::loginByCertificate(const std::string &entity,
   
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = 
-    _orb_info->codec->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
+    _orb_info->codec->encode_value(any));
   
-  CORBA::OctetSeq encrypted = _buskey->encrypt(
+  CORBA::OctetSeq encrypted(_buskey->encrypt(
     encodedLoginAuthenticationInfo->get_buffer(), 
-    encodedLoginAuthenticationInfo->length());
+    encodedLoginAuthenticationInfo->length()));
 
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
   
   interceptors::ignore_interceptor _i(_orb_info);
   idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo *loginInfo = 0;
+  idl_ac::LoginInfo *loginInfo(0);
   try 
   {
     loginInfo = loginProcess->login(_key.pubKey(), encryptedBlock, 
@@ -344,21 +344,21 @@ Connection::startSharedAuth()
   log_scope l(log().general_logger(), info_level, 
               "Connection::startSharedAuth");
   idl::EncryptedBlock challenge;
-  Connection *c = 0;
+  Connection *conn(0);
   idl_ac::LoginProcess_ptr loginProcess;
   try 
   {
-    c = _openbusContext.getCurrentConnection();
+    conn = _openbusContext.getCurrentConnection();
     _openbusContext.setCurrentConnection(this);
     loginProcess = _access_control->startLoginBySharedAuth(challenge);
-    _openbusContext.setCurrentConnection(c);
+    _openbusContext.setCurrentConnection(conn);
   } 
   catch (...) 
   {
-    _openbusContext.setCurrentConnection(c);
+    _openbusContext.setCurrentConnection(conn);
     throw;
   }
-  CORBA::OctetSeq secretBuf = _key.decrypt(challenge, idl::EncryptedBlockSize);
+  CORBA::OctetSeq secretBuf(_key.decrypt(challenge, idl::EncryptedBlockSize));
   return std::make_pair(loginProcess, secretBuf);
 }
   
@@ -370,7 +370,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-  bool state = _state;
+  bool state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
@@ -388,18 +388,18 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo = 
-    _orb_info->codec->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
+    _orb_info->codec->encode_value(any));
 
-  CORBA::OctetSeq encrypted = 
+  CORBA::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
-                     encodedLoginAuthenticationInfo->length());
+                     encodedLoginAuthenticationInfo->length()));
 
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
 
   idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo *loginInfo = 0; 
+  idl_ac::LoginInfo *loginInfo(0);
   try 
   {
     loginInfo = loginProcess->login(_key.pubKey(), encryptedBlock, 
@@ -415,11 +415,11 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 
 bool Connection::_logout(bool local) 
 {
-  bool success = false;
+  bool success(false);
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-  bool state = _state;
+  bool state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif

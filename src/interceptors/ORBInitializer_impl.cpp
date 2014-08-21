@@ -12,11 +12,11 @@ namespace openbus
 hash_value hash(std::string operation, CORBA::ULong ticket, 
                 boost::array<unsigned char, secret_size> secret)
 {
-  size_t size = sizeof(idl::MajorVersion) + sizeof(idl::MinorVersion) 
+  size_t size(sizeof(idl::MajorVersion) + sizeof(idl::MinorVersion) 
     + secret_size + sizeof(CORBA::ULong) /* ticket */ 
-    + operation.size();
+              + operation.size());
   boost::scoped_array<unsigned char> buf (new unsigned char[size]());
-  size_t pos = 0;
+  size_t pos(0);
   buf.get()[pos] = idl::MajorVersion;
   pos += sizeof(idl::MajorVersion);
   buf.get()[pos] = idl::MinorVersion;
@@ -59,10 +59,10 @@ ignore_interceptor::~ignore_interceptor()
 orb_info::orb_info(PI::ORBInitInfo_ptr i)
   : info(i), slot(info)
 {
-  IOP::CodecFactory_var codec_factory = info->codec_factory();
+  IOP::CodecFactory_var codec_factory(info->codec_factory());
   IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
   codec = codec_factory->create_codec(cdr_encoding);
-  CORBA::Object_var init_ref = info->resolve_initial_references("PICurrent");
+  CORBA::Object_var init_ref(info->resolve_initial_references("PICurrent"));
   pi_current = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(pi_current));
 }
