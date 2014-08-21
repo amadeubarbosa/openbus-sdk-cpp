@@ -117,20 +117,18 @@ credential ServerInterceptor::get_credential(const PI::ServerRequestInfo_ptr r)
       new tecgraf::openbus::core::v2_0::credential::CredentialData(*tmp);
   }
   catch (const CORBA::BAD_PARAM &) 
-  {
-    openbus::legacy::v1_5::Credential legacy_credential;
-    CORBA::Any_var any_legacy_credential;
+  {    
     try 
     {
       IOP::ServiceContext_var sc = r->get_request_service_context(1234);
-      IOP::ServiceContext::_context_data_seq &cd = sc->context_data;
-      CORBA::OctetSeq context_data(cd.length(), cd.length(), cd.get_buffer(),0);
-      any_legacy_credential = _orb_info->codec->decode_value(
-        context_data, openbus::legacy::v1_5::_tc_Credential);
-      any_legacy_credential >>= legacy_credential;
-      credential_.legacy.identifier = legacy_credential.identifier;
-      credential_.legacy.owner = legacy_credential.owner;
-      credential_.legacy.delegate = legacy_credential.delegate;
+      CORBA::Any_var any_legacy_credential(
+        _orb_info->codec->decode_value(sc->context_data,
+                                       openbus::legacy::v1_5::_tc_Credential));
+      const openbus::legacy::v1_5::Credential *legacy_credential;
+      *any_legacy_credential >>= legacy_credential;
+      credential_.legacy.identifier = legacy_credential->identifier;
+      credential_.legacy.owner = legacy_credential->owner;
+      credential_.legacy.delegate = legacy_credential->delegate;
       credential_.data->login = credential_.legacy.identifier;
     }
     catch (const CORBA::BAD_PARAM &) 
@@ -281,16 +279,16 @@ void ServerInterceptor::receive_request_service_contexts(
     }
     else
     {
-      CORBA::Any_var callChainAny =
+      CORBA::Any_var callChainAny(
         _orb_info->codec->decode_value(
-          credential_.data->chain.encoded, idl_ac::_tc_CallChain);
-      idl_ac::CallChain callChain;
-      callChainAny >>= callChain;
-      if (std::strcmp(callChain.target, conn._login()->entity)) 
+          credential_.data->chain.encoded, idl_ac::_tc_CallChain));
+      const idl_ac::CallChain *callChain;
+      *callChainAny >>= callChain;
+      if (std::strcmp(callChain->target, conn._login()->entity)) 
       { 
         send_credential_reset(conn, caller, *r);
       }
-      else if (std::strcmp(callChain.caller.id, caller->loginInfo->id)) 
+      else if (std::strcmp(callChain->caller.id, caller->loginInfo->id)) 
       {
         throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode,
                                    CORBA::COMPLETED_NO);

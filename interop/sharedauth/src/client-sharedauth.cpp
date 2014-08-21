@@ -82,12 +82,12 @@ int main(int argc, char** argv) {
 
       CORBA::Any_var any = codec->decode_value(secret,
                                                sharedauth::_tc_EncodedSharedAuth);
-      sharedauth::EncodedSharedAuth sharedauth;
-      if((*any) >>= sharedauth)
+      const sharedauth::EncodedSharedAuth *sharedauth;
+      if(*any >>= sharedauth)
       {
         openbus::idl_ac::LoginProcess_var login
-          = openbus::idl_ac::LoginProcess::_narrow(sharedauth.attempt);
-        conn->loginBySharedAuth(login, sharedauth.secret);
+          = openbus::idl_ac::LoginProcess::_narrow(sharedauth->attempt);
+        conn->loginBySharedAuth(login, sharedauth->secret);
       }
       else
       {

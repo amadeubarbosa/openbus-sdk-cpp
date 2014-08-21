@@ -192,13 +192,13 @@ int main(int argc, char** argv)
          , secret.length());
 
       CORBA::Any_var any = codec->decode_value(secret, _tc_EncodedSharedAuth);
-      EncodedSharedAuth sharedauth;
-      if((*any) >>= sharedauth)
+      const EncodedSharedAuth *sharedauth;
+      if(*any >>= sharedauth)
       {
         access_control::LoginProcess_var login
-          = access_control::LoginProcess::_narrow(sharedauth.attempt);
-        conn->onInvalidLogin( ::onReloginCallback(sharedauth.secret, login));
-        conn->loginBySharedAuth(login, sharedauth.secret);
+          = access_control::LoginProcess::_narrow(sharedauth->attempt);
+        conn->onInvalidLogin( ::onReloginCallback(sharedauth->secret, login));
+        conn->loginBySharedAuth(login, sharedauth->secret);
       }
       else
       {
