@@ -24,10 +24,10 @@ pkey byteSeq2PubKey(const unsigned char *buf, size_t len) {
 template <class E>
 CORBA::OctetSeq key2byteSeq(pkey key)
 {
-  size_t buf_size = i2d_PUBKEY(key.get(), 0);
+  size_t buf_size(i2d_PUBKEY(key.get(), 0));
   openssl_buffer buf(CORBA::OctetSeq::allocbuf(buf_size));
   buf.deleter(CORBA::OctetSeq::freebuf);
-  unsigned char *p = buf.get();
+  unsigned char *p(buf.get());
   size_t len = i2d_PUBKEY(key.get(), &p);
   if(len <= 0)
   {
@@ -65,7 +65,7 @@ CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len)
     throw InvalidPrivateKey();
   }
 
-  int r = EVP_PKEY_encrypt_init(ctx.get());
+  int r(EVP_PKEY_encrypt_init(ctx.get()));
   if(r < 1)
   {
     throw InvalidPrivateKey();

@@ -43,7 +43,7 @@ CORBA::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
   size_t encryptedLen;
   openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(_pkey.get(), 0));
   assert(!!ctx);
-  int r = EVP_PKEY_encrypt_init(ctx.get());
+  int r(EVP_PKEY_encrypt_init(ctx.get()));
   assert(r == 1);
   r = EVP_PKEY_encrypt(ctx.get(), 0, &encryptedLen, buf, size);
   assert(r == 1);

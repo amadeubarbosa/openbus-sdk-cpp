@@ -65,7 +65,7 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
    * *CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "")
    * retorna o mesmo ORB.
   */
-  CORBA::ORB_ptr orb = CORBA::ORB_init(argc, argv);
+  CORBA::ORB_ptr orb(CORBA::ORB_init(argc, argv));
   try 
   {
     orb->resolve_initial_references("OpenBusContext");

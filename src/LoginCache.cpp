@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <boost/make_shared.hpp>
 
-const std::size_t cacheSize = 128;
+const std::size_t cacheSize(128);
 
 namespace openbus
 {
@@ -19,7 +19,7 @@ boost::shared_ptr<Login> LoginCache::validateLogin(const std::string &id)
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-  boost::shared_ptr<Login> login = _loginLRUCache.fetch(id);
+  boost::shared_ptr<Login> login(_loginLRUCache.fetch(id));
   if (!login) 
   {
     login = boost::make_shared<Login>();
@@ -38,7 +38,7 @@ boost::shared_ptr<Login> LoginCache::validateLogin(const std::string &id)
 #ifdef OPENBUS_SDK_MULTITHREAD
     lock.lock();
 #endif
-    boost::shared_ptr<Login> again = _loginLRUCache.fetch(id);
+    boost::shared_ptr<Login> again(_loginLRUCache.fetch(id));
     if (again)
     {
       login = again;

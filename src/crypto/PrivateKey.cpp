@@ -6,11 +6,11 @@
 namespace openbus
 {
 
-const std::size_t RSASize = 2048;
+const std::size_t RSASize(2048);
 
 void PrivateKey::set_pkey(const CORBA::OctetSeq &key)
 {
-  const unsigned char *buf = key.get_buffer();
+  const unsigned char *buf(key.get_buffer());
   _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, key.length()));
   assert(_key.get());
 }  
@@ -19,7 +19,7 @@ PrivateKey::PrivateKey()
 {
   openssl::pkey_ctx ctx (EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0));
   assert(ctx.get());
-  int r = EVP_PKEY_keygen_init(ctx.get());
+  int r(EVP_PKEY_keygen_init(ctx.get()));
   assert(r == 1);
   r = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), RSASize);
   assert(r == 1);
@@ -27,11 +27,11 @@ PrivateKey::PrivateKey()
   r = EVP_PKEY_keygen(ctx.get(), &key);
   assert((r == 1) && key);
   _key = openssl::pkey(key);
-  std::size_t buf_size = i2d_PrivateKey(_key.get(), 0);
+  std::size_t buf_size(i2d_PrivateKey(_key.get(), 0));
   openssl::openssl_buffer buf(CORBA::OctetSeq::allocbuf(buf_size));
   buf.deleter(CORBA::OctetSeq::freebuf);
-  unsigned char *p = buf.get();
-  size_t len = i2d_PrivateKey(_key.get(), &p);
+  unsigned char *p(buf.get());
+  size_t len(i2d_PrivateKey(_key.get(), &p));
   _keySeq = CORBA::OctetSeq(len, len, buf.release(), true);
 }
 
@@ -55,12 +55,12 @@ PrivateKey::PrivateKey(const std::string &filename)
     throw InvalidPrivateKey();
   }
   key.seekg(0, std::ios::end);
-  const std::size_t size = key.tellg();
+  const std::size_t size(key.tellg());
   key.seekg(0, std::ios::beg);
   _keySeq.length(size);
   key.rdbuf()->sgetn(static_cast<char *> (static_cast<void *> 
                                           (_keySeq.get_buffer())), size);
-  const unsigned char *buf = _keySeq.get_buffer();
+  const unsigned char *buf(_keySeq.get_buffer());
   _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, size));
   assert(_key.get());
 }
@@ -95,11 +95,11 @@ CORBA::OctetSeq PrivateKey::pubKey()
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
-  size_t buf_size = i2d_PUBKEY(_key.get(), 0);
+  size_t buf_size(i2d_PUBKEY(_key.get(), 0));
   openssl::openssl_buffer buf(CORBA::OctetSeq::allocbuf(buf_size));
   buf.deleter(CORBA::OctetSeq::freebuf);
-  unsigned char *p = buf.get();
-  size_t len = i2d_PUBKEY(_key.get(), &p);
+  unsigned char *p(buf.get());
+  size_t len(i2d_PUBKEY(_key.get(), &p));
   return CORBA::OctetSeq(len, len, buf.release(), true);
 }
 

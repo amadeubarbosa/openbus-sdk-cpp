@@ -18,7 +18,7 @@ namespace openbus
 namespace interceptors 
 {
 
-const std::size_t LRUSize = 128;
+  const std::size_t LRUSize(128);
 
 Session::Session(const std::string &login) 
   : remote_id(login)
@@ -44,8 +44,9 @@ void ServerInterceptor::send_credential_reset(
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
-    boost::shared_ptr<Session> session = boost::shared_ptr<Session>(
-      new Session(caller->loginInfo->id.in()));
+    boost::shared_ptr<Session> session(
+      boost::shared_ptr<Session>(
+        new Session(caller->loginInfo->id.in())));
     _sessionLRUCache.insert(session->id, session);
     credentialReset.session = session->id;
     secret = caller->pubKey->encrypt(session->secret.data, 
@@ -56,7 +57,7 @@ void ServerInterceptor::send_credential_reset(
               idl::EncryptedBlockSize);
   CORBA::Any any;
   any <<= credentialReset;
-  CORBA::OctetSeq_var o = _orb_info->codec->encode_value(any);
+  CORBA::OctetSeq_var o(_orb_info->codec->encode_value(any));
   IOP::ServiceContext serviceContext;
   serviceContext.context_id = idl_cr::CredentialContextId;
   IOP::ServiceContext::_context_data_seq s(o->length(), o->length(),
@@ -71,7 +72,7 @@ Connection &ServerInterceptor::get_dispatcher(
   boost::shared_ptr<OpenBusContext> ctx, const std::string &bus, 
   const std::string &login, const std::string &operation)
 {
-  Connection *conn = 0;
+  Connection *conn(0);
   log_scope l(log().general_logger(), debug_level, 
               "ServerInterceptor::get_dispatcher");
   if (ctx->onCallDispatch())
@@ -120,7 +121,7 @@ credential ServerInterceptor::get_credential(const PI::ServerRequestInfo_ptr r)
   {    
     try 
     {
-      IOP::ServiceContext_var sc = r->get_request_service_context(1234);
+      IOP::ServiceContext_var sc(r->get_request_service_context(1234));
       CORBA::Any_var any_legacy_credential(
         _orb_info->codec->decode_value(sc->context_data,
                                        openbus::legacy::v1_5::_tc_Credential));
@@ -169,7 +170,7 @@ void ServerInterceptor::build_legacy_chain(
   }
   CORBA::Any legacy_chain_any;
   legacy_chain_any <<= legacyChain;
-  CORBA::OctetSeq_var o = _orb_info->codec->encode_value(legacy_chain_any);
+  CORBA::OctetSeq_var o(_orb_info->codec->encode_value(legacy_chain_any));
   idl_cr::SignedCallChain signed_legacy_chain;
   signed_legacy_chain.encoded = o;
   CORBA::Any signed_legacy_chain_any;
@@ -183,13 +184,13 @@ void ServerInterceptor::receive_request_service_contexts(
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::receive_request_service_contexts");
   l.level_vlog(debug_level, "operation: %s", r->operation());
-  credential credential_ = get_credential(r);
-  Connection &conn = get_dispatcher(
+  credential credential_(get_credential(r));
+  Connection &conn(get_dispatcher(
     _openbus_ctx, std::string(credential_.data->bus),
-    std::string(credential_.data->login), r->operation());
-  size_t const bufSize = sizeof(Connection *);
+    std::string(credential_.data->login), r->operation()));
+  size_t const bufSize(sizeof(Connection *));
   unsigned char buf[bufSize];
-  Connection *_c = &conn;
+  Connection *_c(&conn);
   std::memcpy(buf, &_c, bufSize);
   idl::OctetSeq connectionAddrOctetSeq(bufSize, bufSize, buf);
   CORBA::Any connectionAddrAny;
