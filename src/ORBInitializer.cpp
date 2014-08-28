@@ -6,11 +6,11 @@
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 
+#include <TAO/ORBInitializer_Registry.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
   #include <boost/thread/once.hpp>
 #endif
-
 #include <memory>
 
 namespace openbus 
@@ -21,7 +21,7 @@ namespace openbus
 #if defined(OPENBUS_SDK_THREAD) && !(defined(__GNUC__) && __cplusplus == 201103L)
 namespace {
 
-log_type& get_log()
+log_type &get_log()
 {
   log_type l;
   return l;
@@ -35,13 +35,13 @@ inline void init_log()
 
 }
 
-OPENBUS_SDK_DECL log_type& log()
+OPENBUS_SDK_DECL log_type &log()
 {
   init_log();
   return get_log();
 }
 #else
-OPENBUS_SDK_DECL log_type& log()
+OPENBUS_SDK_DECL log_type &log()
 {
   static log_type l;
   return l;
@@ -68,10 +68,11 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
   CORBA::ORB_ptr orb(CORBA::ORB_init(argc, argv));
   try 
   {
-    orb->resolve_initial_references("OpenBusContext");
+    ACE_Time_Value t(0);
+    orb->resolve_initial_references("OpenBusContext", &t);
     l.log("Este ORB ja foi criado.");
   } 
-  catch (const CORBA::ORB_InvalidName &) 
+  catch (const CORBA::ORB::InvalidName &) 
   {
     boost::shared_ptr<OpenBusContext> openbusContext
       (new OpenBusContext(orb, orbInitializer._orb_info));

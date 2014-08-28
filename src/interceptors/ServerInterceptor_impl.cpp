@@ -5,7 +5,7 @@
 #include "openbus/LoginCache.hpp"
 #include "openbus/crypto/PublicKey.hpp"
 #include "openbus/log.hpp"
-#include "stubs/credential_v1_5.h"
+#include "stubs/credential_v1_5C.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -17,9 +17,7 @@ namespace openbus
 {
 namespace interceptors 
 {
-
-  const std::size_t LRUSize(128);
-
+const std::size_t LRUSize(128);
 Session::Session(const std::string &login) 
   : remote_id(login)
 {
@@ -36,10 +34,12 @@ ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p)
 }
 
 void ServerInterceptor::send_credential_reset(
-  Connection &conn, boost::shared_ptr<Login> caller, PI::ServerRequestInfo &r) 
+  Connection &conn,
+  boost::shared_ptr<Login> caller,
+  PortableInterceptor::ServerRequestInfo &r) 
 {
   idl_cr::CredentialReset credentialReset;
-  CORBA::OctetSeq secret;
+  idl::OctetSeq secret;
   {
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
@@ -60,8 +60,7 @@ void ServerInterceptor::send_credential_reset(
   CORBA::OctetSeq_var o(_orb_info->codec->encode_value(any));
   IOP::ServiceContext serviceContext;
   serviceContext.context_id = idl_cr::CredentialContextId;
-  IOP::ServiceContext::_context_data_seq s(o->length(), o->length(),
-                                           o->get_buffer(), 0);
+  CORBA::OctetSeq s(o->length(), o->length(), o->get_buffer(), 0);
   serviceContext.context_data = s;
   r.add_reply_service_context(serviceContext, true);
   throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, 
@@ -69,8 +68,10 @@ void ServerInterceptor::send_credential_reset(
 }
 
 Connection &ServerInterceptor::get_dispatcher(
-  boost::shared_ptr<OpenBusContext> ctx, const std::string &bus, 
-  const std::string &login, const std::string &operation)
+  boost::shared_ptr<OpenBusContext> ctx,
+  const std::string &bus, 
+  const std::string &login,
+  const std::string &operation)
 {
   Connection *conn(0);
   log_scope l(log().general_logger(), debug_level, 
@@ -102,7 +103,8 @@ Connection &ServerInterceptor::get_dispatcher(
   return *conn;
 }
 
-credential ServerInterceptor::get_credential(const PI::ServerRequestInfo_ptr r)
+credential ServerInterceptor::get_credential(
+  const PortableInterceptor::ServerRequestInfo_ptr r)
 {
   credential credential_;
   try 
@@ -142,7 +144,7 @@ credential ServerInterceptor::get_credential(const PI::ServerRequestInfo_ptr r)
 }
 
 void ServerInterceptor::build_legacy_chain(
-  PI::ServerRequestInfo &r,
+  PortableInterceptor::ServerRequestInfo &r,
   std::string target,
   const openbus::legacy::v1_5::Credential &credential)
 {
@@ -172,14 +174,15 @@ void ServerInterceptor::build_legacy_chain(
   legacy_chain_any <<= legacyChain;
   CORBA::OctetSeq_var o(_orb_info->codec->encode_value(legacy_chain_any));
   idl_cr::SignedCallChain signed_legacy_chain;
-  signed_legacy_chain.encoded = o;
+  signed_legacy_chain.encoded = idl::OctetSeq(o->maximum(), o->length(),
+                                              o->get_buffer());
   CORBA::Any signed_legacy_chain_any;
   signed_legacy_chain_any <<= signed_legacy_chain;
   r.set_slot(_orb_info->slot.signed_call_chain, signed_legacy_chain_any);
 }
 
 void ServerInterceptor::receive_request_service_contexts(
-  PI::ServerRequestInfo_ptr r)
+  PortableInterceptor::ServerRequestInfo_ptr r)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::receive_request_service_contexts");
@@ -280,9 +283,11 @@ void ServerInterceptor::receive_request_service_contexts(
     }
     else
     {
+      CORBA::OctetSeq o(credential_.data->chain.encoded.maximum(),
+                        credential_.data->chain.encoded.length(),
+                        credential_.data->chain.encoded.get_buffer());
       CORBA::Any_var callChainAny(
-        _orb_info->codec->decode_value(
-          credential_.data->chain.encoded, idl_ac::_tc_CallChain));
+        _orb_info->codec->decode_value(o, idl_ac::_tc_CallChain));
       const idl_ac::CallChain *callChain;
       *callChainAny >>= callChain;
       if (std::strcmp(callChain->target, conn._login()->entity)) 
@@ -308,19 +313,23 @@ void ServerInterceptor::receive_request_service_contexts(
   }
 }
 
-void ServerInterceptor::receive_request(PI::ServerRequestInfo_ptr) 
+void ServerInterceptor::receive_request(
+  PortableInterceptor::ServerRequestInfo_ptr) 
 { 
 }
 
-void ServerInterceptor::send_reply(PI::ServerRequestInfo_ptr) 
+void ServerInterceptor::send_reply(
+  PortableInterceptor::ServerRequestInfo_ptr) 
 { 
 }
 
-void ServerInterceptor::send_exception(PI::ServerRequestInfo_ptr) 
+void ServerInterceptor::send_exception(
+  PortableInterceptor::ServerRequestInfo_ptr) 
 { 
 }
 
-void ServerInterceptor::send_other(PI::ServerRequestInfo_ptr) 
+void ServerInterceptor::send_other(
+  PortableInterceptor::ServerRequestInfo_ptr) 
 { 
 }
 

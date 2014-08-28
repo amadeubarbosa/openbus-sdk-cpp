@@ -10,11 +10,11 @@
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/decl.hpp"
 #include "openbus/Connection.hpp"
-#include "stubs/credential.h"
-#include "stubs/access_control.h"
-#include "stubs/offer_registry.h"
+#include "stubs/credentialC.h"
+#include "stubs/access_controlC.h"
+#include "stubs/offer_registryC.h"
 
-#include <CORBA.h>
+#include <TAO/LocalObject.h>
 #include <boost/function.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -51,10 +51,33 @@ namespace access_control
 inline bool operator==(const LoginInfo &lhs, const LoginInfo &rhs)
 {
   return lhs.id.in() == rhs.id.in() 
-    || (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
+    || (lhs.id.in()
+        && rhs.id.in()
+        && !std::strcmp(lhs.id.in(), rhs.id.in()));
 }
 
 inline bool operator!=(const LoginInfo &lhs, const LoginInfo &rhs)
+{
+  return !(lhs == rhs);
+}
+
+inline bool operator==(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
+{
+  if (lhs.length() != rhs.length())
+  {
+    return false;
+  }
+  for (std::size_t i = 0; i < rhs.length(); ++i)
+  {
+    if (lhs[i] != rhs[i])
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+inline bool operator!=(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
 {
   return !(lhs == rhs);
 }
@@ -174,7 +197,8 @@ private:
   friend inline bool operator==(CallerChain const &lhs, 
                                 CallerChain const &rhs) 
   {
-    return lhs._busid == rhs._busid && lhs._originators == rhs._originators
+    return lhs._busid == rhs._busid
+      && lhs._originators == rhs._originators
       && lhs._caller == rhs._caller;
   }
 };
@@ -188,8 +212,10 @@ class OPENBUS_SDK_DECL OpenBusContext : public CORBA::LocalObject
 {
 public:
   typedef boost::function<Connection* (
-    OpenBusContext &context, const std::string busId, 
-    const std::string loginId, const std::string operation)> 
+    OpenBusContext &context,
+    const std::string busId,
+    const std::string loginId,
+    const std::string operation)> 
   CallDispatchCallback;
 
   void onCallDispatch(CallDispatchCallback c);
@@ -229,7 +255,8 @@ public:
    * @return Conexão criada.
    */
   std::auto_ptr<Connection> createConnection(
-    const std::string host, unsigned short port, 
+    const std::string host,
+    unsigned short port, 
     const Connection::ConnectionProperties &props = 
     Connection::ConnectionProperties());
    

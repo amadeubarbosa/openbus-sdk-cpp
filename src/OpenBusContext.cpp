@@ -16,7 +16,7 @@ namespace openbus
 }
 
 std::auto_ptr<Connection> OpenBusContext::createConnection(
-  const std::string host, unsigned short port, 
+  const std::string host, unsigned short port,
   const Connection::ConnectionProperties &props)
 {
   log_scope l(log().general_logger(), debug_level, 
@@ -94,7 +94,11 @@ CallerChain OpenBusContext::getCallerChain()
     {
       CORBA::Any_var any(
         _orb_info->codec->decode_value(
-          sig->encoded, idl_ac::_tc_CallChain));
+          CORBA::OctetSeq(sig->encoded.maximum(),
+                          sig->encoded.length(),
+                          const_cast<unsigned char *>
+                          (sig->encoded.get_buffer())),
+          idl_ac::_tc_CallChain));
       const idl_ac::CallChain *chain;
       *any >>= chain;
       return CallerChain(
@@ -132,8 +136,12 @@ CallerChain OpenBusContext::getJoinedChain()
     if (*sig_any >>= sig) 
     {
       CORBA::Any_var any(
-        _orb_info->codec->decode_value(sig->encoded, 
-                                       idl_ac::_tc_CallChain));
+        _orb_info->codec->decode_value(
+          CORBA::OctetSeq(sig->encoded.maximum(),
+                          sig->encoded.length(),
+                          const_cast<unsigned char *>
+                          (sig->encoded.get_buffer())),
+          idl_ac::_tc_CallChain));
       const idl_ac::CallChain *chain;
       if (*any >>= chain) 
       {
@@ -172,7 +180,10 @@ CallerChain OpenBusContext::makeChainFor(const std::string loginId)
                                  CORBA::COMPLETED_NO);
     }
     CORBA::Any_var any(_orb_info->codec->decode_value(
-      sig->encoded, idl_ac::_tc_CallChain));
+                         CORBA::OctetSeq(sig->encoded.maximum(),
+                                         sig->encoded.length(),
+                                         sig->encoded.get_buffer()),
+                         idl_ac::_tc_CallChain));
     const idl_ac::CallChain *chain;
     if (*any >>= chain)
     {
@@ -239,8 +250,13 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq encoded)
       const idl_cr::ExportedCallChain *impChain;
       if (*impChainAny >>= impChain)
       {
-        CORBA::Any_var callChainAny(_orb_info->codec->decode_value(
-          impChain->signedChain.encoded, idl_ac::_tc_CallChain));
+        CORBA::Any_var callChainAny(
+          _orb_info->codec->decode_value(
+            CORBA::OctetSeq(impChain->signedChain.encoded.maximum(),
+                            impChain->signedChain.encoded.length(),
+                            const_cast<unsigned char *>
+                            (impChain->signedChain.encoded.get_buffer())),
+            idl_ac::_tc_CallChain));
         const idl_ac::CallChain *callChain;
         *callChainAny >>= callChain;
         return CallerChain(impChain->bus.in(), callChain->target.in(),

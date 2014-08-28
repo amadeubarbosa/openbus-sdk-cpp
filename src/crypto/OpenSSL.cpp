@@ -12,7 +12,10 @@ namespace openbus
 namespace openssl 
 {
 
-pkey byteSeq2PubKey(const unsigned char *buf, size_t len) {
+pkey byteSeq2PubKey(
+  const unsigned char *buf,
+  size_t len)
+{
   pkey key (d2i_PUBKEY(0, &buf, len));
   if(!key)
   {
@@ -21,8 +24,7 @@ pkey byteSeq2PubKey(const unsigned char *buf, size_t len) {
   return pkey(key);
 }
 
-template <class E>
-CORBA::OctetSeq key2byteSeq(pkey key)
+template <class E> CORBA::OctetSeq key2byteSeq(pkey key)
 {
   size_t buf_size(i2d_PUBKEY(key.get(), 0));
   openssl_buffer buf(CORBA::OctetSeq::allocbuf(buf_size));
@@ -41,7 +43,7 @@ CORBA::OctetSeq PubKey2byteSeq(pkey key)
   return key2byteSeq<InvalidPublicKey>(key);
 }
 
-pkey byteSeq2PrvKey(const unsigned char *buf, size_t len) 
+pkey byteSeq2PrvKey(const unsigned char *buf, size_t len)
 {
   pkey key ( d2i_AutoPrivateKey(0, &buf, len) );
   if(!key)
@@ -56,7 +58,9 @@ CORBA::OctetSeq PrvKey2byteSeq(pkey key)
   return key2byteSeq<InvalidPrivateKey>(key);
 }
 
-CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len) 
+CORBA::OctetSeq encrypt(pkey key,
+                        const unsigned char *buf,
+                        size_t len) 
 {
   size_t encryptedLen;
   pkey_ctx ctx ( EVP_PKEY_CTX_new(key.get(), 0) );
@@ -93,7 +97,9 @@ CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len)
   return CORBA::OctetSeq(encryptedLen, encryptedLen, encrypted.release(), true);
 }
 
-CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len) 
+CORBA::OctetSeq decrypt(pkey key,
+                        const unsigned char *buf,
+                        size_t len) 
 {
   size_t secretLen;
   pkey_ctx ctx (EVP_PKEY_CTX_new(key.get(), 0));

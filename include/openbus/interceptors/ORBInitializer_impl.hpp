@@ -3,9 +3,10 @@
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 
 #include "openbus/decl.hpp"
-#include "stubs/core.h"
+#include "stubs/coreC.h"
 
-#include <CORBA.h>
+#include <tao/ORB.h>
+#include <tao/PI/PI.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/array.hpp>
 #include <memory>
@@ -13,34 +14,33 @@
 namespace openbus 
 {
 namespace idl = tecgraf::openbus::core::v2_0;
-const size_t secret_size = 16;
+const size_t secret_size(16);
 typedef boost::array<CORBA::Octet, idl::HashValueSize> hash_value;
 hash_value hash(std::string, CORBA::ULong ticket, 
                 boost::array<unsigned char, secret_size> secret);
 
 namespace interceptors 
 {
-namespace PI = PortableInterceptor;
 struct ClientInterceptor;
 struct ServerInterceptor;
 
 struct OPENBUS_SDK_DECL Slot
 {
-  Slot(PI::ORBInitInfo_ptr info)
+  Slot(PortableInterceptor::ORBInitInfo_ptr info)
     : requester_conn(info->allocate_slot_id()),
     receive_conn(info->allocate_slot_id()),
     joined_call_chain(info->allocate_slot_id()),
     signed_call_chain(info->allocate_slot_id()),
     ignore_interceptor(info->allocate_slot_id())
   {}
-  const PI::SlotId requester_conn, receive_conn, joined_call_chain, 
-    signed_call_chain, ignore_interceptor;
+  const PortableInterceptor::SlotId requester_conn, receive_conn,
+    joined_call_chain, signed_call_chain, ignore_interceptor;
 };
 
 struct orb_info
 {
-  orb_info(PI::ORBInitInfo_ptr);
-  PI::ORBInitInfo_ptr info;
+  orb_info(PortableInterceptor::ORBInitInfo_ptr);
+  PortableInterceptor::ORBInitInfo_ptr info;
   Slot slot;
   IOP::Codec_var codec;
   PortableInterceptor::Current_var pi_current;

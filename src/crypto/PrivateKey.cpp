@@ -8,7 +8,7 @@ namespace openbus
 
 const std::size_t RSASize(2048);
 
-void PrivateKey::set_pkey(const CORBA::OctetSeq &key)
+void PrivateKey::set_pkey(const idl::OctetSeq &key)
 {
   const unsigned char *buf(key.get_buffer());
   _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, key.length()));
@@ -28,14 +28,14 @@ PrivateKey::PrivateKey()
   assert((r == 1) && key);
   _key = openssl::pkey(key);
   std::size_t buf_size(i2d_PrivateKey(_key.get(), 0));
-  openssl::openssl_buffer buf(CORBA::OctetSeq::allocbuf(buf_size));
-  buf.deleter(CORBA::OctetSeq::freebuf);
+  openssl::openssl_buffer buf(idl::OctetSeq::allocbuf(buf_size));
+  buf.deleter(idl::OctetSeq::freebuf);
   unsigned char *p(buf.get());
   size_t len(i2d_PrivateKey(_key.get(), &p));
-  _keySeq = CORBA::OctetSeq(len, len, buf.release(), true);
+  _keySeq = idl::OctetSeq(len, len, buf.release(), true);
 }
 
-PrivateKey::PrivateKey(const CORBA::OctetSeq &key) : _keySeq(key)
+PrivateKey::PrivateKey(const idl::OctetSeq &key) : _keySeq(key)
 {
   set_pkey(_keySeq);
 }
@@ -74,7 +74,7 @@ PrivateKey::PrivateKey(const PrivateKey &o)
   _keySeq = o._keySeq;
 }
 
-PrivateKey& PrivateKey::operator=(const PrivateKey &o)
+PrivateKey &PrivateKey::operator=(const PrivateKey &o)
 {
   if (this == &o)
   {
@@ -90,21 +90,21 @@ PrivateKey& PrivateKey::operator=(const PrivateKey &o)
 }
 
 
-CORBA::OctetSeq PrivateKey::pubKey()
+idl::OctetSeq PrivateKey::pubKey()
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
   size_t buf_size(i2d_PUBKEY(_key.get(), 0));
-  openssl::openssl_buffer buf(CORBA::OctetSeq::allocbuf(buf_size));
-  buf.deleter(CORBA::OctetSeq::freebuf);
+  openssl::openssl_buffer buf(idl::OctetSeq::allocbuf(buf_size));
+  buf.deleter(idl::OctetSeq::freebuf);
   unsigned char *p(buf.get());
   size_t len(i2d_PUBKEY(_key.get(), &p));
-  return CORBA::OctetSeq(len, len, buf.release(), true);
+  return idl::OctetSeq(len, len, buf.release(), true);
 }
 
-CORBA::OctetSeq PrivateKey::decrypt(const unsigned char *data, 
-                                    std::size_t len) const
+idl::OctetSeq PrivateKey::decrypt(const unsigned char *data,
+                                  std::size_t len) const
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -122,8 +122,8 @@ CORBA::OctetSeq PrivateKey::decrypt(const unsigned char *data,
     throw InvalidPrivateKey();
   }
   
-  openssl::openssl_buffer secret(CORBA::OctetSeq::allocbuf(secretLen));
-  secret.deleter(CORBA::OctetSeq::freebuf);
+  openssl::openssl_buffer secret(idl::OctetSeq::allocbuf(secretLen));
+  secret.deleter(idl::OctetSeq::freebuf);
   if(!secret.get())
   {
     throw std::bad_alloc();
@@ -133,7 +133,7 @@ CORBA::OctetSeq PrivateKey::decrypt(const unsigned char *data,
   {
     throw InvalidPrivateKey();
   }
-  return CORBA::OctetSeq(secretLen, secretLen, secret.release(), true);
+  return idl::OctetSeq(secretLen, secretLen, secret.release(), true);
 }
 
 }

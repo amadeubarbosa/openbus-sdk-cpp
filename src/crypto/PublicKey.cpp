@@ -4,7 +4,7 @@
 namespace openbus
 {
 
-PublicKey::PublicKey(const CORBA::OctetSeq &key)
+PublicKey::PublicKey(const idl::OctetSeq &key)
   : _keySeq(key)
 {
   _pkey = openssl::byteSeq2PubKey(_keySeq.get_buffer(), _keySeq.length());
@@ -19,7 +19,8 @@ PublicKey::PublicKey(const PublicKey &o)
   _keySeq = o._keySeq;
 }
 
-PublicKey& PublicKey::operator=(const PublicKey &o)
+PublicKey&
+PublicKey::operator=(const PublicKey &o)
 {
   if (this == &o)
   {
@@ -34,8 +35,8 @@ PublicKey& PublicKey::operator=(const PublicKey &o)
   return *this;
 }
 
-
-CORBA::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
+idl::OctetSeq PublicKey::encrypt(const unsigned char *buf,
+                                 std::size_t size)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -47,8 +48,8 @@ CORBA::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
   assert(r == 1);
   r = EVP_PKEY_encrypt(ctx.get(), 0, &encryptedLen, buf, size);
   assert(r == 1);
-  openssl::openssl_buffer encrypted(CORBA::OctetSeq::allocbuf(encryptedLen));
-  encrypted.deleter(CORBA::OctetSeq::freebuf);
+  openssl::openssl_buffer encrypted(idl::OctetSeq::allocbuf(encryptedLen));
+  encrypted.deleter(idl::OctetSeq::freebuf);
   if(encrypted.get() == 0)
   if(!encrypted)
   {
@@ -56,11 +57,13 @@ CORBA::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
   }
   r = EVP_PKEY_encrypt(ctx.get(), encrypted.get(), &encryptedLen, buf, size);
   assert(r == 1);
-  return CORBA::OctetSeq(encryptedLen, encryptedLen, encrypted.release(), true);
+  return idl::OctetSeq(encryptedLen, encryptedLen, encrypted.release(), true);
 }
 
-bool PublicKey::verify(const unsigned char *sig, std::size_t siglen, 
-                       const unsigned char *tbs, std::size_t tbslen)
+bool PublicKey::verify(const unsigned char *sig,
+                       std::size_t siglen, 
+                       const unsigned char *tbs,
+                       std::size_t tbslen)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);

@@ -4,6 +4,7 @@
 
 #include "openbus/decl.hpp"
 #include "openbus/crypto/OpenSSL.hpp"
+#include "stubs/coreC.h"
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
@@ -11,6 +12,7 @@
 
 namespace openbus
 {
+namespace idl = tecgraf::openbus::core::v2_0;
 struct InvalidPublicKey : public std::exception
 { 
   const char *what() const throw() 
@@ -22,19 +24,19 @@ struct InvalidPublicKey : public std::exception
 class PublicKey
 {
 public:
-  PublicKey(const CORBA::OctetSeq &key);
+  PublicKey(const idl::OctetSeq &key);
   PublicKey(const PublicKey&);
   PublicKey& operator=(const PublicKey &);
-  CORBA::OctetSeq encrypt(const unsigned char *, std::size_t);
+  idl::OctetSeq encrypt(const unsigned char *, std::size_t);
   bool verify(const unsigned char *sig, std::size_t siglen, 
               const unsigned char *tbs, std::size_t tbslen);
-  const CORBA::OctetSeq &octetSeq() const
+  const idl::OctetSeq &octetSeq() const
   {
     return _keySeq;
   }
 private:
   openssl::pkey _pkey;
-  CORBA::OctetSeq _keySeq;
+  idl::OctetSeq _keySeq;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif

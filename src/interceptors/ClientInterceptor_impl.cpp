@@ -3,10 +3,14 @@
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
-#include "stubs/core.h"
-#include "stubs/credential_v1_5.h"
+#include "stubs/coreC.h"
+#include "stubs/credential_v1_5C.h"
 #include "openbus/log.hpp"
 
+//??
+#include <TAO/AnyTypeCode/AnyTypeCode_Adapter_Impl.h>
+#include <TAO/AnyTypeCode/ExceptionA.h>
+#include <TAO/AnyTypeCode/Any_Dual_Impl_T.h>
 #include <boost/scoped_ptr.hpp>
 #include <openssl/sha.h>
 #include <cstddef>
@@ -15,21 +19,77 @@
 
 const std::size_t LRUSize(128);
 
+namespace TAO
+{
+  template<>
+  inline void
+  Any_Dual_Impl_T<CORBA::Exception>::value (const CORBA::Exception & val)
+  {
+    this->value_ = val._tao_duplicate ();
+  }
+
+  template<>
+  inline CORBA::Boolean
+  Any_Dual_Impl_T<CORBA::Exception>::marshal_value (TAO_OutputCDR &cdr)
+  {
+    try
+    {
+      this->value_->_tao_encode (cdr);
+      return true;
+    }
+    catch (const CORBA::Exception &)
+    {
+    }
+    return false;
+  }
+
+  template<>
+  inline CORBA::Boolean
+  Any_Dual_Impl_T<CORBA::Exception>::demarshal_value (TAO_InputCDR &cdr)
+  {
+    try
+    {
+      this->value_->_tao_decode (cdr);
+      return true;
+    }
+    catch (const CORBA::Exception &)
+    {
+    }
+    return false;
+  }
+
+  // This should never get called since we don't have extraction operators
+  // for CORBA::Exception, but it is here to sidestep the constructor call
+  // in the unspecialized version that causes a problem with compilers that
+  // require explicit instantiation
+  template<>
+  inline CORBA::Boolean
+  Any_Dual_Impl_T<CORBA::Exception>::extract(
+    const CORBA::Any &,
+    _tao_destructor,
+    CORBA::TypeCode_ptr,
+    const CORBA::Exception *&)
+  {
+    return false;
+  }
+}
+
 namespace openbus 
 {
 namespace interceptors 
 { 
 
-hash_value session_key(PI::ClientRequestInfo &r) 
+hash_value session_key(PortableInterceptor::ClientRequestInfo &r) 
 {
   hash_value profile_data_hash;
-  ::IOP::TaggedProfile::_profile_data_seq profile(
+  CORBA::OctetSeq profile(
     r.effective_profile()->profile_data);
   SHA256(profile.get_buffer(), profile.length(), profile_data_hash.c_array());
   return profile_data_hash;
 }
 
-Connection &ClientInterceptor::get_current_connection(PI::ClientRequestInfo &r)
+Connection &ClientInterceptor::get_current_connection(
+  PortableInterceptor::ClientRequestInfo &r)
 {
   log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::get_current_connection");
@@ -55,15 +115,20 @@ Connection &ClientInterceptor::get_current_connection(PI::ClientRequestInfo &r)
   return *conn;
 }
 
-CallerChain ClientInterceptor::get_joined_chain(Connection &conn, 
-                                                PI::ClientRequestInfo &r)
+CallerChain ClientInterceptor::get_joined_chain(
+  Connection &conn,
+  PortableInterceptor::ClientRequestInfo &r)
 {
   CORBA::Any_var any(r.get_slot(_orb_info->slot.joined_call_chain));
   const idl_cr::SignedCallChain *signed_chain;
   if (*any >>= signed_chain) 
   {
-    any = _orb_info->codec->decode_value(signed_chain->encoded,
-                                         idl_ac::_tc_CallChain);
+    any = _orb_info->codec->decode_value(
+      CORBA::OctetSeq(signed_chain->encoded.maximum(),
+                      signed_chain->encoded.length(),
+                      const_cast<unsigned char *>
+                      (signed_chain->encoded.get_buffer())),
+      idl_ac::_tc_CallChain);
     const idl_ac::CallChain *chain;
     if (*any >>= chain)
     {
@@ -74,7 +139,8 @@ CallerChain ClientInterceptor::get_joined_chain(Connection &conn,
   return CallerChain();
 }
 
-bool ClientInterceptor::ignore_request(PI::ClientRequestInfo &r)
+bool ClientInterceptor::ignore_request(
+  PortableInterceptor::ClientRequestInfo &r)
 {
   CORBA::Any_var any(r.get_slot(_orb_info->slot.ignore_interceptor));
   CORBA::Boolean ignore(false);
@@ -83,7 +149,9 @@ bool ClientInterceptor::ignore_request(PI::ClientRequestInfo &r)
 }
 
 idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
-  Connection &conn, hash_value &hash, const std::string &remote_id)
+  Connection &conn,
+  hash_value &hash,
+  const std::string &remote_id)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::get_signed_chain");
@@ -124,8 +192,9 @@ idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
   return chain;
 }
 
-void ClientInterceptor::build_credential(PI::ClientRequestInfo &r, 
-                                         Connection &conn)
+void ClientInterceptor::build_credential(
+  PortableInterceptor::ClientRequestInfo &r,
+  Connection &conn)
 {
   idl_cr::CredentialData credential;
   credential.bus = CORBA::string_dup(conn._busid.c_str());
@@ -207,8 +276,9 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
   r.add_request_service_context(sctx, true);
 }
 
-void ClientInterceptor::build_legacy_credential(PI::ClientRequestInfo &r, 
-                                                Connection &conn)
+void ClientInterceptor::build_legacy_credential(
+  PortableInterceptor::ClientRequestInfo &r, 
+  Connection &conn)
 {
   legacy::v1_5::Credential credential;
   credential.identifier = CORBA::string_dup(conn._login()->id);
@@ -248,7 +318,8 @@ ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p)
               "ClientInterceptor::ClientInterceptor");
 }
 
-void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
+void ClientInterceptor::send_request(
+  PortableInterceptor::ClientRequestInfo_ptr r)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::send_request");
@@ -271,29 +342,33 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
   }
 }
 
-void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
+void ClientInterceptor::receive_exception(
+  PortableInterceptor::ClientRequestInfo_ptr r)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::receive_exception");
   l.level_vlog(debug_level, "operation: %s", r->operation()); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
 
-  if (std::string(r->received_exception_id())
-      != "IDL:omg.org/CORBA/NO_PERMISSION:1.0")
+  CORBA::Any_var any = r->received_exception();
+
+  TAO::Any_Dual_Impl_T<CORBA::Exception> *any_impl =
+    dynamic_cast <TAO::Any_Dual_Impl_T<CORBA::Exception> *> (any->impl());
+  if (!any_impl)
+  {
+    return;
+  }
+  const CORBA::Exception *p =
+    static_cast<const CORBA::Exception *>(any_impl->value());
+  const CORBA::NO_PERMISSION *ex = static_cast<const CORBA::NO_PERMISSION *>(p);
+  if (ex->completed() != CORBA::COMPLETED_NO) 
   {
     return;
   }
 
-  CORBA::SystemException &ex(
-    *CORBA::SystemException::_decode(*r->received_exception()));
-  if (ex.completed() != CORBA::COMPLETED_NO) 
-  {
-    return;
-  }
-
-  l.level_vlog(debug_level, "minor: %d", ex.minor());
+  l.level_vlog(debug_level, "minor: %d", ex->minor());
   Connection &conn(get_current_connection(*r));
-  if (ex.minor() == idl_ac::InvalidCredentialCode) 
+  if (ex->minor() == idl_ac::InvalidCredentialCode) 
   {
     l.level_vlog(debug_level, "creating credential session");
     IOP::ServiceContext_var sctx;
@@ -311,8 +386,8 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
       throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode,CORBA::COMPLETED_NO);
     }
         
-    CORBA::OctetSeq secret(conn._key.decrypt(credential_reset->challenge,
-                                             idl::EncryptedBlockSize));
+    idl::OctetSeq secret(conn._key.decrypt(credential_reset->challenge,
+                                           idl::EncryptedBlockSize));
 
     Connection::SecretSession session;
     session.id = credential_reset->session;
@@ -327,13 +402,13 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
       conn._profile2session.insert(session_key(*r), session);
     }
     l.log("Retransmissao da requisicao...");
-    throw PI::ForwardRequest(r->target(), false);
+    throw PortableInterceptor::ForwardRequest(r->target());
   } 
-  else if (ex.minor() == idl_ac::NoCredentialCode) 
+  else if (ex->minor() == idl_ac::NoCredentialCode) 
   {
     throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
   }
-  else if (ex.minor() == idl_ac::InvalidLoginCode) 
+  else if (ex->minor() == idl_ac::InvalidLoginCode) 
   {
     idl_ac::LoginInfo oldLogin;
     {
@@ -359,7 +434,7 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
 
     if (conn._state == Connection::LOGGED)
     {
-      throw PI::ForwardRequest(r->target(), false); 
+      throw PortableInterceptor::ForwardRequest(r->target()); 
     }
     else if (conn._state == Connection::UNLOGGED) 
     {
@@ -376,21 +451,23 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
       }
       else
       {
-        throw PI::ForwardRequest(r->target(), false);
+        throw PortableInterceptor::ForwardRequest(r->target());
       }
     }
   }
 }
 
-void ClientInterceptor::send_poll(PI::ClientRequestInfo_ptr) 
+void ClientInterceptor::send_poll(PortableInterceptor::ClientRequestInfo_ptr) 
 { 
 }
 
-void ClientInterceptor::receive_reply(PI::ClientRequestInfo_ptr) 
+void ClientInterceptor::receive_reply(
+  PortableInterceptor::ClientRequestInfo_ptr)
 { 
 }
 
-void ClientInterceptor::receive_other(PI::ClientRequestInfo_ptr) 
+void ClientInterceptor::receive_other(
+  PortableInterceptor::ClientRequestInfo_ptr)
 { 
 }
 

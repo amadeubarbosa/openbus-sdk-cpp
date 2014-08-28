@@ -3,8 +3,8 @@
 #define TECGRAF_SDK_OPENBUS_LOGIN_CACHE_H_
 
 #include "openbus/decl.hpp"
-#include "stubs/core.h"
-#include "stubs/access_control.h"
+#include "stubs/coreC.h"
+#include "stubs/access_controlC.h"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
   #include "openbus/LRUCache_impl.hpp"

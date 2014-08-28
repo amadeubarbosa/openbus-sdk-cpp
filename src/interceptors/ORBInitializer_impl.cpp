@@ -9,7 +9,8 @@
 
 namespace openbus 
 {
-hash_value hash(std::string operation, CORBA::ULong ticket, 
+hash_value hash(std::string operation,
+                CORBA::ULong ticket, 
                 boost::array<unsigned char, secret_size> secret)
 {
   size_t size(sizeof(idl::MajorVersion) + sizeof(idl::MinorVersion) 
@@ -56,15 +57,9 @@ ignore_interceptor::~ignore_interceptor()
   }
 }
 
-orb_info::orb_info(PI::ORBInitInfo_ptr i)
+orb_info::orb_info(PortableInterceptor::ORBInitInfo_ptr i)
   : info(i), slot(info)
 {
-  IOP::CodecFactory_var codec_factory(info->codec_factory());
-  IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
-  codec = codec_factory->create_codec(cdr_encoding);
-  CORBA::Object_var init_ref(info->resolve_initial_references("PICurrent"));
-  pi_current = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(pi_current));
 }
 
 ORBInitializer::ORBInitializer() 
@@ -88,8 +83,14 @@ void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo_ptr info)
   info->add_server_request_interceptor(serverInterceptor.get());
 }
 
-void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr)
+void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr info)
 {
+  IOP::CodecFactory_var codec_factory(info->codec_factory());
+  IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
+  _orb_info->codec = codec_factory->create_codec(cdr_encoding);
+  CORBA::Object_var init_ref(info->resolve_initial_references("PICurrent"));
+  _orb_info->pi_current = PortableInterceptor::Current::_narrow(init_ref);
+  assert(!CORBA::is_nil(_orb_info->pi_current));
 }
 
 }}

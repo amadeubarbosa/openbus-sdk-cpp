@@ -9,7 +9,7 @@
 
 #include "openbus/decl.hpp"
 
-#include <CORBA.h>
+#include <tao/ORB.h>
 
 /**
 * \brief openbus

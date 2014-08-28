@@ -10,10 +10,10 @@
 #define TECGRAF_SDK_OPENBUS_CONNECTION_H_
 
 #include "openbus/decl.hpp"
-#include "stubs/scs.h"
-#include "stubs/core.h"
-#include "stubs/access_control.h"
-#include "stubs/offer_registry.h"
+#include "stubs/scsC.h"
+#include "stubs/coreC.h"
+#include "stubs/access_controlC.h"
+#include "stubs/offer_registryC.h"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
@@ -21,7 +21,6 @@
 #include "openbus/LRUCache_impl.hpp"
 #endif
 
-#include <CORBA.h>
 #include <boost/array.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -48,7 +47,7 @@ namespace openbus
   class PublicKey;
   class LoginCache;
 #ifndef OPENBUS_SDK_MULTITHREAD
-  class RenewLogin;
+  // class RenewLogin;
 #endif
 
   namespace interceptors
@@ -239,7 +238,7 @@ public:
   *        estabelecimento da conexão.
   * @throw CORBA::Exception
   */
-  void loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess, 
+  void loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
                          const idl::OctetSeq &secret);
   
  /**
@@ -253,7 +252,7 @@ public:
   * temporariamente desautenticada.
   * 
   * @return Verdadeiro se o processo de logout for concluído com êxito e falso
-  *         se a conexão já estiver desautenticada (login inválido) ou se houver 
+  *         se a conexão já estiver desautenticada (login inválido) ou se houver
   *         uma falha durante o processo remoto do logout.
   *
   */
@@ -299,24 +298,32 @@ public:
    * Identificador do barramento ao qual essa conexão se refere.
    */
   const std::string busid() const;
+  
   ~Connection();  
 private:
   /**
   * Connection deve ser adquirido atraves de: OpenBusContext::createConnection()
   */
-  Connection(const std::string host, const unsigned short port, CORBA::ORB_ptr, 
-             boost::shared_ptr<interceptors::orb_info>, OpenBusContext &, 
+  Connection(const std::string host,
+             const unsigned short port,
+             CORBA::ORB_ptr, 
+             boost::shared_ptr<interceptors::orb_info>,
+             OpenBusContext &, 
              const ConnectionProperties &props);
 
   Connection(const Connection &);
   Connection &operator=(const Connection &);
 
 #ifdef OPENBUS_SDK_MULTITHREAD  
-  static void renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
-                         OpenBusContext &ctx, idl_ac::ValidityTime t);
+  static void renewLogin(
+    Connection &conn,
+    idl_ac::AccessControl_ptr acs, 
+    OpenBusContext &ctx,
+    idl_ac::ValidityTime t);
 #endif
-  void login(idl_ac::LoginInfo &loginInfo, 
-             idl_ac::ValidityTime validityTime);
+  void login(
+    idl_ac::LoginInfo &loginInfo, 
+    idl_ac::ValidityTime validityTime);
 
   void checkBusid() const;
   bool _logout(bool local = true);
@@ -361,7 +368,7 @@ private:
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;
 #else
-  boost::scoped_ptr<RenewLogin> _renewLogin;
+  // boost::scoped_ptr<RenewLogin> _renewLogin;
 #endif
   boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo;
   InvalidLoginCallback_t _onInvalidLogin;
@@ -418,7 +425,7 @@ private:
 };
 
 inline bool operator==(const Connection::SecretSession &lhs, 
-                const Connection::SecretSession &rhs)
+                       const Connection::SecretSession &rhs)
 {
   return lhs.id == rhs.id
     && lhs.remote_id == rhs.remote_id
@@ -427,7 +434,7 @@ inline bool operator==(const Connection::SecretSession &lhs,
 }
 
 inline bool operator!=(const Connection::SecretSession &lhs, 
-                const Connection::SecretSession &rhs)
+                       const Connection::SecretSession &rhs)
 {
   return !(lhs == rhs);
 }

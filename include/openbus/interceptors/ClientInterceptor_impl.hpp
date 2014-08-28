@@ -8,13 +8,13 @@
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
 #endif
-#include "stubs/credential.h"
+#include "stubs/credentialC.h"
 
+#include <tao/PI/PI.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
 #include <boost/shared_ptr.hpp>
-#include <CORBA.h>
 
 namespace openbus 
 {
@@ -26,26 +26,28 @@ struct CallerChain;
 
 namespace interceptors 
 {
-namespace PI = PortableInterceptor;
 struct OPENBUS_SDK_DECL 
-ClientInterceptor : public PI::ClientRequestInterceptor 
+ClientInterceptor : public PortableInterceptor::ClientRequestInterceptor 
 {
   ClientInterceptor(boost::shared_ptr<orb_info>);
 
-  void send_request(PI::ClientRequestInfo_ptr);
-  void receive_exception(PI::ClientRequestInfo_ptr);
-  void send_poll(PI::ClientRequestInfo_ptr);
-  void receive_reply(PI::ClientRequestInfo_ptr);
-  void receive_other(PI::ClientRequestInfo_ptr);
+  void send_request(PortableInterceptor::ClientRequestInfo_ptr);
+  void receive_exception(PortableInterceptor::ClientRequestInfo_ptr);
+  void send_poll(PortableInterceptor::ClientRequestInfo_ptr);
+  void receive_reply(PortableInterceptor::ClientRequestInfo_ptr);
+  void receive_other(PortableInterceptor::ClientRequestInfo_ptr);
   char *name();
   void destroy();
-  Connection &get_current_connection(PI::ClientRequestInfo &);
-  bool ignore_request(PI::ClientRequestInfo &);
+  Connection &get_current_connection(PortableInterceptor::ClientRequestInfo &);
+  bool ignore_request(PortableInterceptor::ClientRequestInfo &);
   idl_cr::SignedCallChain get_signed_chain(Connection &, hash_value &hash, 
                                            const std::string &remote_id);
-  void build_credential(PI::ClientRequestInfo &, Connection &conn);
-  void build_legacy_credential(PI::ClientRequestInfo &, Connection &conn);
-  openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
+  void build_credential(PortableInterceptor::ClientRequestInfo &,
+                        Connection &conn);
+  void build_legacy_credential(PortableInterceptor::ClientRequestInfo &,
+                               Connection &conn);
+  openbus::CallerChain get_joined_chain(
+    Connection &, PortableInterceptor::ClientRequestInfo &);
   boost::shared_ptr<orb_info> _orb_info;
   boost::shared_ptr<OpenBusContext> _openbus_ctx;
   LRUCache<hash_value, idl_cr::SignedCallChain> _callChainLRUCache;

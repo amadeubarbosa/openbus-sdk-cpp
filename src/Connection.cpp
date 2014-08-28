@@ -6,7 +6,6 @@
 #include "openbus/LoginCache.hpp"
 #include "openbus/crypto/PublicKey.hpp"
 
-#include <CORBA.h>
 #include <boost/bind.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -25,8 +24,11 @@ namespace openbus
 class Connection;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
-                            OpenBusContext &ctx, idl_ac::ValidityTime t)
+void Connection::renewLogin(
+  Connection &conn,
+  idl_ac::AccessControl_ptr acs, 
+  OpenBusContext &ctx,
+  idl_ac::ValidityTime t)
 {
   log_scope l(log().general_logger(), info_level, "Connection::renewLogin()");
   ctx.setCurrentConnection(&conn);
@@ -52,74 +54,77 @@ void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs,
   
 #else
 
-class RenewLogin : public CORBA::DispatcherCallback 
-{
-public:
-  RenewLogin(CORBA::ORB_ptr o, Connection &c, idl_ac::AccessControl_ptr a, 
-             OpenBusContext &m, idl_ac::ValidityTime t)
-   : _orb(o), _conn(c), _access_control(a), _openbusContext(m), _validityTime(t)
-  { 
-    log_scope l(log().general_logger(), info_level, "RenewLogin::RenewLogin");
-    _orb->dispatcher()->tm_event(this, _validityTime*1000);
-  }
+// class RenewLogin : public CORBA::DispatcherCallback 
+// {
+// public:
+//   RenewLogin(CORBA::ORB_ptr o, Connection &c, idl_ac::AccessControl_ptr a, 
+//              OpenBusContext &m, idl_ac::ValidityTime t)
+//    : _orb(o), _conn(c), _access_control(a), _openbusContext(m), _validityTime(t)
+//   { 
+//     log_scope l(log().general_logger(), info_level, "RenewLogin::RenewLogin");
+//     _orb->dispatcher()->tm_event(this, _validityTime*1000);
+//   }
 
-  ~RenewLogin() 
-  {
-    log_scope l(log().general_logger(), info_level, "RenewLogin::~RenewLogin");
-    try
-    {
-      _orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);    
-    }
-    catch (...)
-    {
-      try
-      {
-        l.log("Exception thrown in ~RenewLogin. Ignoring exception");
-      }
-      catch (...)
-      {
-      }
-    }
-  }
+//   ~RenewLogin() 
+//   {
+//     log_scope l(log().general_logger(), info_level, "RenewLogin::~RenewLogin");
+//     try
+//     {
+//       _orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);    
+//     }
+//     catch (...)
+//     {
+//       try
+//       {
+//         l.log("Exception thrown in ~RenewLogin. Ignoring exception");
+//       }
+//       catch (...)
+//       {
+//       }
+//     }
+//   }
 
-  void callback(CORBA::Dispatcher *dispatcher, Event event) 
-  {
-    _validityTime = renew(dispatcher);
-    dispatcher->tm_event(this, _validityTime*1000);
-  }
+//   void callback(CORBA::Dispatcher *dispatcher, Event event) 
+//   {
+//     _validityTime = renew(dispatcher);
+//     dispatcher->tm_event(this, _validityTime*1000);
+//   }
 
-  idl_ac::ValidityTime renew(CORBA::Dispatcher *dispatcher) 
-  {
-    log_scope l(log().general_logger(), info_level, "RenewLogin::renew");
-    assert(_access_control);
-    idl_ac::ValidityTime validityTime(_validityTime);
-    Connection *conn(0);
-    try 
-    {
-      conn = _openbusContext.getCurrentConnection();
-      _openbusContext.setCurrentConnection(&_conn);
-      validityTime = _access_control->renew();
-      _openbusContext.setCurrentConnection(conn);
-    } 
-    catch (const CORBA::Exception &) 
-    {
-      l.level_vlog(warning_level, "Falha na renovacao da credencial.");
-      _openbusContext.setCurrentConnection(conn);
-    }
-    return validityTime;
-  }
-private:
-  CORBA::ORB_ptr _orb;
-  Connection &_conn;
-  idl_ac::AccessControl_ptr _access_control;
-  OpenBusContext &_openbusContext;
-  idl_ac::ValidityTime _validityTime;
-};
+//   idl_ac::ValidityTime renew(CORBA::Dispatcher *dispatcher) 
+//   {
+//     log_scope l(log().general_logger(), info_level, "RenewLogin::renew");
+//     assert(_access_control);
+//     idl_ac::ValidityTime validityTime(_validityTime);
+//     Connection *conn(0);
+//     try 
+//     {
+//       conn = _openbusContext.getCurrentConnection();
+//       _openbusContext.setCurrentConnection(&_conn);
+//       validityTime = _access_control->renew();
+//       _openbusContext.setCurrentConnection(conn);
+//     } 
+//     catch (const CORBA::Exception &) 
+//     {
+//       l.level_vlog(warning_level, "Falha na renovacao da credencial.");
+//       _openbusContext.setCurrentConnection(conn);
+//     }
+//     return validityTime;
+//   }
+// private:
+//   CORBA::ORB_ptr _orb;
+//   Connection &_conn;
+//   idl_ac::AccessControl_ptr _access_control;
+//   OpenBusContext &_openbusContext;
+//   idl_ac::ValidityTime _validityTime;
+// };
 #endif
 
 Connection::Connection(
-  const std::string host, const unsigned short port, CORBA::ORB_ptr orb, 
-  boost::shared_ptr<interceptors::orb_info> i, OpenBusContext &m, 
+  const std::string host,
+  const unsigned short port,
+  CORBA::ORB_ptr orb, 
+  boost::shared_ptr<interceptors::orb_info> i,
+  OpenBusContext &m, 
   const ConnectionProperties &props) 
   : _host(host), _port(port), _orb(orb), _orb_info(i), _loginInfo(0), 
     _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m),
@@ -150,7 +155,7 @@ Connection::Connection(
   {
     interceptors::ignore_interceptor _i(_orb_info);
     _busid = _access_control->busid();
-    CORBA::OctetSeq_var o(_access_control->buskey());
+    idl::OctetSeq_var o(_access_control->buskey());
     _buskey.reset(new PublicKey(o));
   }
   
@@ -199,7 +204,7 @@ Connection::~Connection()
   }
 }
 
-void Connection::login(idl_ac::LoginInfo &loginInfo, 
+void Connection::login(idl_ac::LoginInfo &loginInfo,
                        idl_ac::ValidityTime validityTime)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -217,13 +222,13 @@ void Connection::login(idl_ac::LoginInfo &loginInfo,
     boost::bind(renewLogin, boost::ref(*this), _access_control, 
                 boost::ref(_openbusContext), validityTime));
 #else
-  assert(!_renewLogin.get());
-  _renewLogin.reset(new RenewLogin(_orb, *this, _access_control, 
-                                   _openbusContext, validityTime));
+  // assert(!_renewLogin.get());
+  // _renewLogin.reset(new RenewLogin(_orb, *this, _access_control, 
+  //                                  _openbusContext, validityTime));
 #endif
 }
 
-void Connection::loginByPassword(const std::string &entity, 
+void Connection::loginByPassword(const std::string &entity,
                                  const std::string &password) 
 {
   log_scope l(log().general_logger(), info_level, 
@@ -254,9 +259,10 @@ void Connection::loginByPassword(const std::string &entity,
          loginAuthenticationInfo.hash);
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orb_info->codec->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
+    _orb_info->codec->encode_value(any));
 
-  CORBA::OctetSeq encrypted(
+  idl::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length()));
 
@@ -278,7 +284,7 @@ void Connection::loginByPassword(const std::string &entity,
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-void Connection::loginByCertificate(const std::string &entity, 
+void Connection::loginByCertificate(const std::string &entity,
                                     const PrivateKey &privKey) 
 {
   log_scope l(log().general_logger(), info_level, 
@@ -315,7 +321,7 @@ void Connection::loginByCertificate(const std::string &entity,
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
     _orb_info->codec->encode_value(any));
   
-  CORBA::OctetSeq encrypted(_buskey->encrypt(
+  idl::OctetSeq encrypted(_buskey->encrypt(
     encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length()));
 
@@ -338,7 +344,7 @@ void Connection::loginByCertificate(const std::string &entity,
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> 
+std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq>
 Connection::startSharedAuth() 
 {
   log_scope l(log().general_logger(), info_level, 
@@ -358,7 +364,7 @@ Connection::startSharedAuth()
     _openbusContext.setCurrentConnection(conn);
     throw;
   }
-  CORBA::OctetSeq secretBuf(_key.decrypt(challenge, idl::EncryptedBlockSize));
+  idl::OctetSeq secretBuf(_key.decrypt(challenge, idl::EncryptedBlockSize));
   return std::make_pair(loginProcess, secretBuf);
 }
   
@@ -391,7 +397,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
     _orb_info->codec->encode_value(any));
 
-  CORBA::OctetSeq encrypted(
+  idl::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length()));
 
@@ -433,7 +439,7 @@ bool Connection::_logout(bool local)
     _renewLogin.interrupt();
     _renewLogin.join();
   #else
-    _renewLogin.reset();
+    // _renewLogin.reset();
   #endif
     if (!local)
     {
