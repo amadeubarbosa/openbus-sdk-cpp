@@ -1,0 +1,93 @@
+import os ;
+
+local tao-install-path = [ os.environ TAO_INSTALL_PATH ] ;
+if (tao-install-path)
+{
+  tao-install-path = "../../install/tao" ;
+}
+  
+local openssl-install-path = [ os.environ OPENSSL_INSTALL_PATH ] ;
+if (openssl-install-path)
+{
+  openssl-install-path = "../../install/openssl" ;
+}
+
+local boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
+if (boost-root-path)
+{
+  boost-root-path = "../../build/boost" ;
+}
+
+local scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
+if (scs-root-path)
+{
+  scs-root-path = "../../build/scs" ;
+}
+
+local logger-root-path = [ os.environ LOGGER_ROOT_PATH ] ;
+if (logger-root-path)
+{
+  logger-root-path = "../../build/logger" ;
+}
+
+use-project boost : $(boost-root-path) ;
+use-project scs : $(scs-root-path) ;
+use-project logger : $(logger-root-path) ;
+
+project openssl
+  : requirements <include>$(openssl-install-path)/include
+  ;
+
+lib crypto
+  :
+  : <search>$(openssl-install-path)/lib
+  ;
+  
+lib openssl
+  : crypto
+  : <name>ssl <search>$(openssl-install-path)/lib
+  ;  
+
+project TAO
+  : requirements <include>$(tao-install-path)/include
+  ;
+  
+lib ACE
+  :
+  : <search>$(tao-install-path)/lib
+  ;
+
+lib TAO_AnyTypeCode
+  : 
+  : <search>$(tao-install-path)/lib
+  ;
+
+lib TAO_PortableServer
+  : 
+  : <search>$(tao-install-path)/lib
+  ;
+
+lib TAO_PI
+  : 
+  : <search>$(tao-install-path)/lib
+  ;
+
+lib TAO_PI_Server
+  : 
+  : <search>$(tao-install-path)/lib
+  ;
+
+lib TAO_CodecFactory
+  : 
+  : <search>$(tao-install-path)/lib
+  ;
+
+lib TAO
+  : ACE TAO_AnyTypeCode
+    TAO_PortableServer
+    TAO_PI
+    TAO_PI_Server
+    TAO_AnyTypeCode
+    TAO_CodecFactory
+  : <search>$(tao-install-path)/lib
+  ;
