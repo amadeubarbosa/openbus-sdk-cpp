@@ -1,31 +1,31 @@
 import os ;
 
 local tao-install-path = [ os.environ TAO_INSTALL_PATH ] ;
-if (tao-install-path)
+if ! $(tao-install-path)
 {
   tao-install-path = "../../install/tao" ;
 }
   
 local openssl-install-path = [ os.environ OPENSSL_INSTALL_PATH ] ;
-if (openssl-install-path)
+if ! $(openssl-install-path)
 {
   openssl-install-path = "../../install/openssl" ;
 }
 
 local boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
-if (boost-root-path)
+if ! $(boost-root-path)
 {
   boost-root-path = "../../build/boost" ;
 }
 
 local scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
-if (scs-root-path)
+if ! $(scs-root-path)
 {
   scs-root-path = "../../build/scs" ;
 }
 
 local logger-root-path = [ os.environ LOGGER_ROOT_PATH ] ;
-if (logger-root-path)
+if ! $(logger-root-path)
 {
   logger-root-path = "../../build/logger" ;
 }
