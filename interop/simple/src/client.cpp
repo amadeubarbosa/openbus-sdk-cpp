@@ -54,15 +54,16 @@ int main(int argc, char **argv)
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+    CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
+    CORBA::Object_var o(orb->resolve_initial_references("RootPOA"));
+    PortableServer::POA_var poa(PortableServer::POA::_narrow(o));
     assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+    PortableServer::POAManager_var poa_manager(poa->the_POAManager());
     poa_manager->activate();
 
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
+    openbus::OpenBusContext *const ctx(
+      dynamic_cast<openbus::OpenBusContext *>
+      (orb->resolve_initial_references("OpenBusContext")));
     std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host, 
                                                                   bus_port));
     ctx->setDefaultConnection(conn.get());
@@ -76,15 +77,15 @@ int main(int argc, char **argv)
     props[static_cast<CORBA::ULong>(1)].value = 
       "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers(
+      ctx->getOfferRegistry()->findServices(props));
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
-      CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
-      tecgraf::openbus::interop::simple::Hello *hello = 
-        tecgraf::openbus::interop::simple::Hello::_narrow(o);
-      const char *msg = hello->sayHello();
-      std::string s = "Hello " + entity + "!";
+      CORBA::Object_var o(offers[idx].service_ref->getFacetByName("Hello"));
+      tecgraf::openbus::interop::simple::Hello *hello(
+        tecgraf::openbus::interop::simple::Hello::_narrow(o));
+      const char *msg(hello->sayHello());
+      std::string s("Hello " + entity + "!");
       if (!(msg == s))
       {
         throw std::runtime_error("msg != s");

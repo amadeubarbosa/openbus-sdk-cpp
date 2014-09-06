@@ -483,7 +483,7 @@ private:
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif
-  CORBA::ORB_ptr _orb;
+  CORBA::ORB_var _orb;
   boost::shared_ptr<interceptors::orb_info> _orb_info;
   PortableInterceptor::Current_var _piCurrent;
   Connection *_defaultConnection;

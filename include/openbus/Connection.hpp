@@ -362,7 +362,7 @@ private:
 
   const std::string _host;
   const unsigned short _port;
-  CORBA::ORB_ptr _orb;
+  CORBA::ORB_var _orb;
   boost::shared_ptr<interceptors::orb_info> _orb_info;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;

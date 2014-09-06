@@ -2,9 +2,10 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <iostream>
-#include <stubs/hello.h>
+#include <stubs/helloC.h>
 
 #include <boost/program_options.hpp>
+#include <tao/PortableServer/PortableServer.h>
 
 #ifdef _WIN32
 #include <windows.h>

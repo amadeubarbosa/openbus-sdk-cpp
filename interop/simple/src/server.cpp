@@ -63,9 +63,9 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 
   char *sayHello() 
   {
-    openbus::CallerChain chain = ctx.getCallerChain();
+    openbus::CallerChain chain(ctx.getCallerChain());
     assert(chain != openbus::CallerChain());
-    std::string msg = "Hello " + std::string(chain.caller().entity) + "!";
+    std::string msg("Hello " + std::string(chain.caller().entity) + "!");
     std::cout << msg << std::endl;
     CORBA::String_var r = CORBA::string_dup(msg.c_str());
     return r._retn();
@@ -133,21 +133,22 @@ int main(int argc, char **argv)
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
+    CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
+    CORBA::Object_var o(orb->resolve_initial_references("RootPOA"));
+    PortableServer::POA_var poa(PortableServer::POA::_narrow(o));
     assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+    PortableServer::POAManager_var poa_manager(poa->the_POAManager());
     poa_manager->activate();
     
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host, 
-                                                                    bus_port);
+    openbus::OpenBusContext *const ctx(
+      dynamic_cast<openbus::OpenBusContext *>
+      (orb->resolve_initial_references("OpenBusContext")));
+    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host, 
+                                                                  bus_port));
     ctx->setDefaultConnection(conn.get());
-    
+
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orb_run(boost::bind(ORBRun, ctx->orb()));
+    boost::thread orb_run(boost::bind(ORBRun, orb));
 #endif
     
     scs::core::ComponentId componentId;
@@ -156,7 +157,7 @@ int main(int argc, char **argv)
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "c++";
-    scs::core::ComponentContext comp(ctx->orb(), componentId);
+    scs::core::ComponentContext comp(orb, componentId);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);

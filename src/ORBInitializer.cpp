@@ -54,7 +54,7 @@ interceptors::ORBInitializer orbInitializer;
 boost::mutex _mutex;
 #endif
 
-CORBA::ORB *ORBInitializer(int &argc, char **argv) 
+CORBA::ORB_ptr ORBInitializer(int &argc, char **argv) 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -65,7 +65,7 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
    * *CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "")
    * retorna o mesmo ORB.
   */
-  CORBA::ORB_ptr orb(CORBA::ORB_init(argc, argv));
+  CORBA::ORB_var orb(CORBA::ORB_init(argc, argv));
   try 
   {
     ACE_Time_Value t(0);
@@ -82,6 +82,6 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
     orbInitializer.serverInterceptor->_openbus_ctx = openbusContext;
   }
   l.log("Retornando ORB");
-  return orb;
+  return orb._retn();
 }
 }
