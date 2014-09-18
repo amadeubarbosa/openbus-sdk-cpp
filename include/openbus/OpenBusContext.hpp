@@ -10,9 +10,9 @@
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/decl.hpp"
 #include "openbus/Connection.hpp"
-#include "stubs/credentialC.h"
-#include "stubs/access_controlC.h"
-#include "stubs/offer_registryC.h"
+#include "credentialC.h"
+#include "access_controlC.h"
+#include "offer_registryC.h"
 
 #include <TAO/LocalObject.h>
 #include <boost/function.hpp>

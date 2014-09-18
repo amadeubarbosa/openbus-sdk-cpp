@@ -4,8 +4,8 @@
 
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/decl.hpp"
-#include "stubs/credentialC.h"
-#include "stubs/credential_v1_5C.h"
+#include "credentialC.h"
+#include "credential_v1_5C.h"
 
 extern "C" 
 {

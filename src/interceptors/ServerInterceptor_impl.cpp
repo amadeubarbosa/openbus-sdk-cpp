@@ -5,7 +5,7 @@
 #include "openbus/LoginCache.hpp"
 #include "openbus/crypto/PublicKey.hpp"
 #include "openbus/log.hpp"
-#include "stubs/credential_v1_5C.h"
+#include "credential_v1_5C.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>

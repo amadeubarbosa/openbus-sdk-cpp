@@ -10,10 +10,10 @@
 #define TECGRAF_SDK_OPENBUS_CONNECTION_H_
 
 #include "openbus/decl.hpp"
-#include "stubs/scsC.h"
-#include "stubs/coreC.h"
-#include "stubs/access_controlC.h"
-#include "stubs/offer_registryC.h"
+#include "scsC.h"
+#include "coreC.h"
+#include "access_controlC.h"
+#include "offer_registryC.h"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_

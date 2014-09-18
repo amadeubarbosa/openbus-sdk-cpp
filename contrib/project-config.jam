@@ -91,3 +91,9 @@ lib TAO
     TAO_CodecFactory
   : <search>$(tao-install-path)/lib
   ;
+
+project dl ;
+lib dl
+  :
+  : <link>shared
+  ;

@@ -3,8 +3,8 @@
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
-#include "stubs/coreC.h"
-#include "stubs/credential_v1_5C.h"
+#include "coreC.h"
+#include "credential_v1_5C.h"
 #include "openbus/log.hpp"
 
 //??

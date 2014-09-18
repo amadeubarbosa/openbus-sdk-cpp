@@ -7,45 +7,6 @@ import modules ;
 import "class" : new ;
 import property-set ;
 
-if [ option.get openbus-with-puts : : 1 ]
-{
-  local scs-idl-path-env = [ os.environ SCS_IDL_PATH ] ;
-  local scs-path-env = [ os.environ SCS_PATH ] ;
-  local openssl-lib-path-env = [ os.environ OPENSSL_LIB_PATH ] ;
-  local openssl-include-path-env = [ os.environ OPENSSL_INCLUDE_PATH ] ;
-  local logger-path-env = [ os.environ LOGGER_PATH ] ;
-  local openbus-idl-path-env = [ os.environ OPENBUS_IDL_PATH ] ;
-
-  path-constant scs-path : $(scs-path-env) ;
-  path-constant openssl-lib-path : $(openssl-lib-path-env) ;
-  path-constant openssl-include-path : $(openssl-include-path-env) ;
-  path-constant openbus-idl-path : $(openbus-idl-path-env) ;
-  path-constant scs-idl-path : $(scs-idl-path-env) ;
-
-  use-project scs : $(scs-path) ;
-  use-project logger : $(logger-path-env) ;
-
-  local search_path = [ modules.peek : BOOST_BUILD_PATH ] ;
-  search_path += $(scs-path) ;
-  modules.poke : BOOST_BUILD_PATH : $(search_path) ;
-
-  project openssl ;
-
-  lib crypto : : <name>crypto <search>$(openssl-lib-path)
-   <target-os>darwin,<link>static:<file>$(openssl-lib-path)/libcrypto.a
-   ;
-
-  lib openssl : crypto : <name>ssl <search>$(openssl-lib-path)
-   <target-os>darwin,<link>static:<file>$(openssl-lib-path)/libssl.a
-   : : <include>$(openssl-include-path)
-   ;
-}
-else
-{
-  path-constant scs-idl-path : [ scs-idl-path ] ;
-  path-constant openbus-idl-path : [ openbus-idl-path ] ;
-}
-
 import version ;
 
 #### To add requirements for version >= or < than determinate version for specific toolset
@@ -75,46 +36,26 @@ rule add-Wno-unused-local-typedefs-gcc>=4.8 ( properties * )
     return [ add-conditions <cxxflags>-Wno-unused-local-typedefs : gcc : 4.8 : : $(properties) ] ;
 }
 
-import mico-idl ;
-
-project dl ;
-lib dl : : <name>dl <link>shared ;
-
-project openbus : build-dir bin
- : requirements <tag>@tag <define>BOOST_ALL_NO_LIB=1
-   <link>shared:<define>OPENBUS_SDK_SHARED <define>OPENBUS_SDK_SOURCE
-   <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
- : usage-requirements <link>shared:<define>OPENBUS_SDK_SHARED
- : default-build <threading>multi <variant>debug <link>shared
- ;
+import tao-idl ;
 
 path-constant here : . ;
 
-local rule core-idl-obj ( name )
+tao-install-path = [ os.environ TAO_INSTALL_PATH ] ;
+if ! $(tao-install-path)
 {
-  obj $(name).obj : $(openbus-idl-path)/$(name).idl
-    /scs//idls
-   : <include>$(openbus-idl-path)  <include>$(scs-idl-path) <implicit-dependency>/scs//idls
-   : : <include>$(openbus-idl-path)
-  ;
-  explicit $(name).obj ;
+  tao-install-path = $(here)/../../install/tao ;
 }
 
-core-idl-obj access_control ;
-core-idl-obj core ;
-core-idl-obj credential ;
-core-idl-obj offer_registry ;
+openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
+if ! $(openbus-idl-path)
+{
+  openbus-idl-path = $(here)/../../build/openbus-idl/src ;
+}
 
-obj credential_v1_5.obj : $(here)/legacy/idl/credential_v1_5.idl
- /scs//idls
- : <include>$(openbus-idl-path) <implicit-dependency>/scs//idls
- : : <include>$(openbus-idl-path)
- ;
-explicit credential_v1_5.obj ;
-
-alias core-idls : access_control.obj core.obj credential.obj
- offer_registry.obj credential_v1_5.obj ;
-explicit core-idls ;
+using tao-idl
+  : $(tao-install-path)/bin
+  : $(tao-install-path)/lib
+  ;
 
 rule tag ( name : type ? : property-set )
 {
@@ -133,56 +74,84 @@ rule tag ( name : type ? : property-set )
     }
     if <threading>multi in [ $(property-set).raw ]
     {
-      result = [ common.format-name <base> -mico
+      result = [ common.format-name <base>openbus
         -mt $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     else
     {
-      result = [ common.format-name <base> -mico
+      result = [ common.format-name <base>openbus
         $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     return $(result) ;
   }
 }
 
-lib openbus : src/Connection.cpp src/OpenBusContext.cpp
- src/LoginCache.cpp src/ORBInitializer.cpp
- src/interceptors/ClientInterceptor_impl.cpp
- src/interceptors/ORBInitializer_impl.cpp
- src/interceptors/ServerInterceptor_impl.cpp
- src/crypto/OpenSSL.cpp src/crypto/PrivateKey.cpp 
- src/crypto/PublicKey.cpp src/Ticket_impl.c
- /mico//mico /scs//scs /boost//headers /logger//logger
- core-idls /openssl//openssl
+project openbus
+  : build-dir bin
+  : requirements <tag>@tag
+    <define>BOOST_ALL_NO_LIB=1
+    <link>shared:<define>OPENBUS_SDK_SHARED
+    <define>OPENBUS_SDK_SOURCE
+    <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
+    <library>/TAO//TAO
+  : usage-requirements <link>shared:<define>OPENBUS_SDK_SHARED
+  : default-build <threading>multi <link>static
+  ;
+
+obj access_control-stub
+  : $(openbus-idl-path)/access_control.idl
+  ;
+
+obj core-stub
+  : $(openbus-idl-path)/core.idl
+  ;
+
+obj credential-stub
+  : $(openbus-idl-path)/credential.idl
+  ;
+
+obj credential_v1_5-stub
+  : $(here)/legacy/idl/credential_v1_5.idl
+  ;
+
+obj offer_registry-stub
+  : $(openbus-idl-path)/offer_registry.idl
+    /scs//idls
+  : <include>/Users/rcosme/build/scs-idl/src
+    <implicit-dependency>/scs//idls
+  :
+  : <implicit-dependency>/scs//idls
+  ;
+
+alias idls
+  : access_control-stub
+    core-stub
+    credential-stub
+    credential_v1_5-stub
+    offer_registry-stub
+  ;
+
+lib openbus
+  : [ glob-tree *.cpp *.c : bin assistant demo interop tests ]
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    idls
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
    <include>include
    <threading>multi:<source>/boost//thread
-   <implicit-dependency>core-idls
-   <toolset>msvc:<source>/scs//idls
+   <dependency>idls
+   <implicit-dependency>idls
  :
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
    <include>include
+   <dependency>idls
+   <implicit-dependency>idls
  ;
 explicit openbus ;
 
-install stage-libs : openbus : <location>stage ;
-
-feature.feature core-idl-diff : off on : composite link-incompatible ;
-mico-idl.cpp-h cpp-h-stub : [ alias cpp-h-stub-idl : $(openbus-idl-path)/access_control.idl
- $(openbus-idl-path)/core.idl $(openbus-idl-path)/credential.idl
- $(openbus-idl-path)/offer_registry.idl
- $(here)/legacy/idl/credential_v1_5.idl
- $(scs-idl-path)/scs.idl
- : : : <include>$(scs-idl-path)
- ]
- : <core-idl-diff>on
- ;
-install stage-stubs : cpp-h-stub : <location>stage/stubs
- <install-dependencies>on <install-type>CPP <install-type>H
- <link>static <variant>release <threading>single
- ;
-explicit stage-stubs ;
-alias stage : stage-libs stage-stubs ;
+install stage : openbus ;
 explicit stage ;
 
 install stage-tests : tests//tests : <location>stage-tests ;
@@ -265,4 +234,3 @@ explicit run-tests ;
 
 alias assistant : assistant//assistant ;
 explicit assistant ;
-

@@ -8,7 +8,7 @@
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
 #endif
-#include "stubs/credentialC.h"
+#include "credentialC.h"
 
 #include <tao/PI/PI.h>
 #ifdef OPENBUS_SDK_MULTITHREAD

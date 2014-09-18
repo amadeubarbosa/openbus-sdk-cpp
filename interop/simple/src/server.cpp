@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/helloS.h"
+#include "helloS.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>

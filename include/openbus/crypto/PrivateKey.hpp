@@ -4,7 +4,7 @@
 
 #include "openbus/decl.hpp"
 #include "openbus/crypto/OpenSSL.hpp"
-#include "stubs/coreC.h"
+#include "coreC.h"
 
 #include <string>
 #include <exception>

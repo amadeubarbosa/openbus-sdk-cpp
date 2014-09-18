@@ -3,7 +3,7 @@
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 
 #include "openbus/decl.hpp"
-#include "stubs/coreC.h"
+#include "coreC.h"
 
 #include <tao/ORB.h>
 #include <tao/PI/PI.h>
