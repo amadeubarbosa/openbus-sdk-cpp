@@ -101,27 +101,31 @@ project openbus
 obj access_control-stub
   : $(openbus-idl-path)/access_control.idl
   ;
+explicit access_control-stub ;
 
 obj core-stub
   : $(openbus-idl-path)/core.idl
   ;
+explicit core-stub ;
 
 obj credential-stub
   : $(openbus-idl-path)/credential.idl
   ;
+explicit credential-stub ;
 
 obj credential_v1_5-stub
   : $(here)/legacy/idl/credential_v1_5.idl
   ;
+explicit credential_v1_5-stub ;
 
 obj offer_registry-stub
   : $(openbus-idl-path)/offer_registry.idl
     /scs//idls
-  : <include>/Users/rcosme/build/scs-idl/src
-    <implicit-dependency>/scs//idls
+  : <implicit-dependency>/scs//idls
   :
   : <implicit-dependency>/scs//idls
   ;
+explicit offer_registry-stub ;
 
 alias idls
   : access_control-stub
@@ -130,6 +134,7 @@ alias idls
     credential_v1_5-stub
     offer_registry-stub
   ;
+explicit idls ;
 
 lib openbus
   : [ glob-tree *.cpp *.c : bin assistant demo interop tests ]
@@ -152,9 +157,9 @@ lib openbus
 explicit openbus ;
 
 install stage : openbus ;
-explicit stage ;
 
 install stage-tests : tests//tests : <location>stage-tests ;
+explicit stage-tests ;
 
 feature.feature <openbus-stage-demo-name> : : free ;
 
@@ -173,7 +178,7 @@ for local d in $(all-demos)
   explicit stage-demo-$(d) ;
 }
 alias stage-demos : stage-demo-$(all-demos) : <conditional>@stage-demos-location ;
-#explicit stage-demos ;
+explicit stage-demos ;
 
 rule stage-interop-location ( requirements * )
 {
@@ -190,6 +195,7 @@ for local d in $(all-interops)
   explicit stage-interop-$(d) ;
 }
 alias stage-interops : stage-interop-$(all-interops) ;
+explicit stage-interops ;
 
 rule stage-assistant-demos-location ( requirements * )
 {
@@ -207,14 +213,14 @@ for local d in $(all-assistant-demos)
   explicit stage-assistant-demo-$(d) ;
 }
 alias stage-assistant-demos : stage-assistant-demo-$(all-assistant-demos) ;
-#explicit stage-assistant-demos ;
+explicit stage-assistant-demos ;
 
 install stage-assistant : assistant//assistant : <location>stage ;
-#explicit stage-assistant ;
+explicit stage-assistant ;
 
 install stage-assistant-tests : assistant/tests//tests
  : <location>stage-tests/assistant ;
-#explicit stage-assistant-tests ;
+explicit stage-assistant-tests ;
 
 alias assistant-doc-onehtml : assistant/doc//documentation-html/<location>assistant-doc
   assistant/doc//documentation-images/<location>assistant-doc
@@ -228,6 +234,7 @@ explicit assistant-doc ;
 
 install stage-libs-deps : stage-demo-$(all-demos) stage-interop-$(all-interops)
  : <install-dependencies>on <install-type>SHARED_LIB <location>stage ;
+explicit stage-libs-deps ;
 
 alias run-tests : tests//run-tests ;
 explicit run-tests ;
