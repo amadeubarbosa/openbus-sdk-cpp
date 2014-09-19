@@ -5,10 +5,12 @@ path-constant here : . ;
 obj hello-stub
   : $(here)/idl/hello/hello.idl
   ;
+explicit hello-stub ;
 
 obj encoding-stub
   : $(here)/idl/sharedauth/encoding.idl
   ;
+explicit encoding-stub ;
 
 exe encoding_client
  : src/client.cpp

@@ -1,14 +1,13 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/proxy.h"
-#include "stubs/hello.h"
+#include "proxyS.h"
+#include "helloC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 #include <openbus/log.hpp>
 #include <scs/ComponentContext.h>
 
-#include <CORBA.h>
 #include <iostream>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -62,9 +61,15 @@ struct HelloProxyImpl : virtual public POA_tecgraf::openbus::interop::simple::He
   {
   }
 
-  char *fetchHello(CORBA::OctetSeq encodedChain)
+  char *fetchHello(const tecgraf::openbus::interop::simple::OctetSeq& encodedChain)
   {
-    openbus::CallerChain chain = ctx.decodeChain(encodedChain);
+    CORBA::OctetSeq seq;
+    seq.length(encodedChain.length());
+    for (CORBA::ULong i(0); i != seq.length(); ++i)
+    {
+      seq[i] = encodedChain[i];
+    }    
+    openbus::CallerChain chain = ctx.decodeChain(seq);
     assert(chain != openbus::CallerChain());
     ctx.joinChain(chain);
     

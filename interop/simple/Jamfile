@@ -5,17 +5,13 @@ path-constant here : . ;
 obj hello-stub
   : $(here)/idl/hello.idl
   ;
+explicit hello-stub ;
 
 obj hello-skeleton
   : $(here)/idl/hello.idl
   : <generate>skeleton
   ;
-
-alias idls
-  : hello-stub
-    hello-skeleton
-  ;
-explicit idls ;
+explicit hello-skeleton ;
 
 exe simple_client
  : src/client.cpp
@@ -25,10 +21,10 @@ exe simple_client
    /boost//headers
    /logger//logger
    /openssl//openssl
-   idls
+   hello-stub
  : <threading>multi:<source>/boost//thread
-   <dependency>idls
-   <implicit-dependency>idls
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
    <link>static,<target-os>linux:<source>/dl//dl
    
  ;
@@ -42,10 +38,13 @@ exe simple_server
    /boost//headers
    /logger//logger
    /openssl//openssl
-   idls
+   hello-stub
+   hello-skeleton
  : <threading>multi:<source>/boost//thread
-   <dependency>idls
-   <implicit-dependency>idls
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
+   <dependency>hello-skeleton
+   <implicit-dependency>hello-skeleton
    <link>static,<target-os>linux:<source>/dl//dl   
  ;
 explicit simple_server ;

@@ -5,17 +5,14 @@ path-constant here : . ;
 obj hello-stub
   : $(here)/idl/hello.idl
   ;
+explicit hello-stub ;
 
 obj hello-skeleton
   : $(here)/idl/hello.idl
   : <generate>skeleton
   ;
+explicit hello-skeleton ;
 
-alias idls
-  : hello-stub
-    hello-skeleton
-  ;
-explicit idls ;
 
 exe reloggedjoin_client
  : src/client.cpp

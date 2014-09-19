@@ -5,17 +5,13 @@ path-constant here : . ;
 obj messages-stub
   : $(here)/idl/messages.idl
   ;
+explicit messages-stub ;
 
 obj messages-skeleton
   : $(here)/idl/messages.idl
   : <generate>skeleton
   ;
-
-alias idls
-  : messages-stub
-    messages-skeleton
-  ;
-explicit idls ;
+explicit messages-skeleton ;
 
 exe delegation_client
  : src/client.cpp
@@ -25,10 +21,10 @@ exe delegation_client
    /boost//headers
    /logger//logger
    /openssl//openssl
-   idls
+   messages-stub
  : <threading>multi:<source>/boost//thread
-   <dependency>idls
-   <implicit-dependency>idls
+   <dependency>messages-stub
+   <implicit-dependency>messages-stub
    <link>static,<target-os>linux:<source>/dl//dl
    
  ;
