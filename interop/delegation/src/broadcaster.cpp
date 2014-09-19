@@ -1,13 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/messages.h"
+#include "messagesS.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <scs/ComponentContext.h>
 #include <log/output/file_output.h>
 
-#include <CORBA.h>
 #include <iostream>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>

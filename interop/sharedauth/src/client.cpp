@@ -1,11 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/hello.h"
-#include "stubs/encoding.h"
+#include "helloC.h"
+#include "encodingC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 
+#include <tao/PortableServer/PortableServer.h>
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
@@ -75,11 +76,16 @@ int main(int argc, char** argv) {
       
       IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
       IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
-
+      tecgraf::openbus::interop::sharedauth::SecretSeq seq;
+      seq.length(credential.second.length());
+      for (CORBA::ULong i(0); i != credential.second.length(); ++i)
+      {
+        seq[i] = credential.second[i];
+      }      
       sharedauth::EncodedSharedAuth sharedauth
         =
         {
-          credential.first, credential.second
+          credential.first, seq
         };
 
       CORBA::Any any;

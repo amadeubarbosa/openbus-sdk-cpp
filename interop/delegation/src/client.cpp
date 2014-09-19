@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/messages.h"
+#include "messagesC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>

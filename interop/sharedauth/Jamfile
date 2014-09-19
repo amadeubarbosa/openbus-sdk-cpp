@@ -1,47 +1,55 @@
-project openbus/interop ;
+project openbus/interop/sharedauth ;
 
 path-constant here : . ;
 
-obj hello-idl : $(here)/idl/hello/hello.idl /mico//mico ;
-obj encoding-idl : $(here)/idl/sharedauth/encoding.idl /mico//mico ;
+obj hello-stub
+  : $(here)/idl/hello/hello.idl
+  ;
 
-exe sharedauth_client
-  : src/client.cpp 
-    hello-idl 
-    encoding-idl
-    /openbus//openbus 
-    /scs//scs 
-    /logger//logger 
-    /mico//mico
-    /boost//headers 
-    /boost//program_options 
-    /openssl//openssl
-  : <threading>multi:<source>/boost//thread
-    <implicit-dependency>/openbus//core-idls
-    <implicit-dependency>hello-idl
-    <implicit-dependency>encoding-idl
-    <link>static:<source>/dl//dl
-;
+obj encoding-stub
+  : $(here)/idl/sharedauth/encoding.idl
+  ;
 
-exe sharedauth_client-sharedauth
-  : src/client-sharedauth.cpp 
-    hello-idl 
-    encoding-idl
-    /openbus//openbus 
-    /scs//scs 
-    /logger//logger 
-    /mico//mico
-    /boost//headers 
-    /boost//program_options 
-    /openssl//openssl
-  : <threading>multi:<source>/boost//thread
-    <implicit-dependency>/openbus//core-idls
-    <implicit-dependency>hello-idl
-    <implicit-dependency>encoding-idl
-    <link>static:<source>/dl//dl
-;
+exe encoding_client
+ : src/client.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   hello-stub
+   encoding-stub
+ : <threading>multi:<source>/boost//thread
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
+   <dependency>encoding-stub
+   <implicit-dependency>encoding-stub
+   <link>static,<target-os>linux:<source>/dl//dl
+   
+ ;
+explicit encoding_client ;
 
-alias sharedauth
-  : sharedauth_client
-    sharedauth_client-sharedauth
-;
+exe encoding_client-sharedauth
+ : src/client-sharedauth.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   hello-stub
+   encoding-stub
+ : <threading>multi:<source>/boost//thread
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
+   <dependency>encoding-stub
+   <implicit-dependency>encoding-stub
+   <link>static,<target-os>linux:<source>/dl//dl   
+ ;
+explicit encoding_client-sharedauth ;
+
+alias encoding
+  : encoding_client
+    encoding_client-sharedauth
+  ;

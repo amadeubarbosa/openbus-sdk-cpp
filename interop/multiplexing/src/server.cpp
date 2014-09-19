@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/hello.h"
+#include "helloS.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -11,7 +11,6 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include <CORBA.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif

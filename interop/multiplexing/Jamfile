@@ -1,29 +1,56 @@
-
-project openbus/interop ;
+project openbus/interop/multiplexing ;
 
 path-constant here : . ;
 
-obj hello-idl : $(here)/idl/hello.idl /mico//mico ;
+obj hello-stub
+  : $(here)/idl/hello.idl
+  ;
+
+obj hello-skeleton
+  : $(here)/idl/hello.idl
+  : <generate>skeleton
+  ;
+
+alias idls
+  : hello-stub
+    hello-skeleton
+  ;
+explicit idls ;
 
 exe multiplexing_client
-    : src/client.cpp hello-idl
-      /openbus//openbus /scs//scs /logger//logger /mico//mico
-      /boost//headers /boost//program_options /openssl//openssl
-    : <threading>multi:<source>/boost//thread
-      <implicit-dependency>/openbus//core-idls
-      <implicit-dependency>hello-idl
-      <link>static:<source>/dl//dl
-    ;
+ : src/client.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   idls
+ : <threading>multi:<source>/boost//thread
+   <dependency>idls
+   <implicit-dependency>idls
+   <link>static,<target-os>linux:<source>/dl//dl
+   
+ ;
+explicit multiplexing_client ;
 
 exe multiplexing_server
-    : src/server.cpp hello-idl
-      /openbus//openbus /scs//scs /logger//logger /mico//mico
-      /boost//headers /boost//program_options /openssl//openssl
-    : <threading>multi:<source>/boost//thread
-      <implicit-dependency>/openbus//core-idls
-      <implicit-dependency>hello-idl
-      <link>static:<source>/dl//dl
-    ;
+ : src/server.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   idls
+ : <threading>multi:<source>/boost//thread
+   <dependency>idls
+   <implicit-dependency>idls
+   <link>static,<target-os>linux:<source>/dl//dl   
+ ;
+explicit multiplexing_server ;
 
-alias multiplexing : multiplexing_client multiplexing_server test.properties
- admin/interop_multiplexing_cpp_server.key ;
+alias multiplexing
+  : multiplexing_client
+    multiplexing_server
+  ;

@@ -1,49 +1,79 @@
-project openbus/interop ;
+project openbus/interop/reloggedjoin ;
 
 path-constant here : . ;
 
-obj hello-idl : 
-  $(here)/idl/hello.idl 
-  /mico//mico
-;
+obj hello-stub
+  : $(here)/idl/hello.idl
+  ;
+
+obj hello-skeleton
+  : $(here)/idl/hello.idl
+  : <generate>skeleton
+  ;
+
+alias idls
+  : hello-stub
+    hello-skeleton
+  ;
+explicit idls ;
 
 exe reloggedjoin_client
-  : src/client.cpp hello-idl
-    /openbus//openbus /scs//scs /logger//logger /mico//mico
-    /boost//headers /boost//program_options /openssl//openssl
-  : <threading>multi:<source>/boost//thread
-    <include>../properties_reader/include
-    <implicit-dependency>/openbus//core-idls
-    <implicit-dependency>hello-idl
-    <link>static:<source>/dl//dl
-;
+ : src/client.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   hello-stub
+ : <threading>multi:<source>/boost//thread
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
+   <link>static,<target-os>linux:<source>/dl//dl
+   
+ ;
+explicit reloggedjoin_client ;
 
 exe reloggedjoin_server
-  : src/server.cpp hello-idl
-    /openbus//openbus /scs//scs /logger//logger /mico//mico
-    /boost//headers /boost//program_options /openssl//openssl
-  : <threading>multi:<source>/boost//thread
-    <include>../properties_reader/include
-    <implicit-dependency>/openbus//core-idls
-    <implicit-dependency>hello-idl
-    <link>static:<source>/dl//dl
-;
+ : src/server.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   hello-stub
+   hello-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
+   <dependency>hello-skeleton
+   <implicit-dependency>hello-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
+ ;
+explicit reloggedjoin_server ;
 
 exe reloggedjoin_proxy
-  : src/proxy.cpp hello-idl
-    /openbus//openbus /scs//scs /logger//logger /mico//mico
-    /boost//headers /boost//program_options /openssl//openssl
-  : <threading>multi:<source>/boost//thread
-    <include>../properties_reader/include
-    <implicit-dependency>/openbus//core-idls
-    <implicit-dependency>hello-idl
-    <link>static:<source>/dl//dl
-;
+ : src/proxy.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   hello-stub
+   hello-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
+   <dependency>hello-skeleton
+   <implicit-dependency>hello-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
+ ;
+explicit reloggedjoin_proxy ;
 
-alias reloggedjoin : 
-  reloggedjoin_client 
-  reloggedjoin_server 
-  reloggedjoin_proxy
-  test.properties 
-  admin/interop_reloggedjoin_cpp_server.key 
-;
+alias reloggedjoin
+  : reloggedjoin_client
+    reloggedjoin_server
+    reloggedjoin_proxy
+  ;

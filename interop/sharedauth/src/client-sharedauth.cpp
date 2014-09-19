@@ -1,11 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/hello.h"
-#include "stubs/encoding.h"
+#include "helloC.h"
+#include "encodingC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 
+#include <tao/PortableServer/PortableServer.h>
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
@@ -80,14 +81,20 @@ int main(int argc, char** argv) {
         (static_cast<char*>(static_cast<void*>(secret.get_buffer()))
          , secret.length());
 
-      CORBA::Any_var any = codec->decode_value(secret,
-                                               sharedauth::_tc_EncodedSharedAuth);
+      CORBA::Any_var any(codec->decode_value(secret,
+                                             sharedauth::_tc_EncodedSharedAuth));
       const sharedauth::EncodedSharedAuth *sharedauth;
       if(*any >>= sharedauth)
       {
         openbus::idl_ac::LoginProcess_var login
           = openbus::idl_ac::LoginProcess::_narrow(sharedauth->attempt);
-        conn->loginBySharedAuth(login, sharedauth->secret);
+        openbus::idl::OctetSeq seq;
+        seq.length(sharedauth->secret.length());
+        for (CORBA::ULong i(0); i != sharedauth->secret.length(); ++i)
+        {
+          seq[i] = sharedauth->secret[i];
+        }
+        conn->loginBySharedAuth(login, seq);
       }
       else
       {
