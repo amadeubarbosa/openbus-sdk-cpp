@@ -92,18 +92,25 @@ CallerChain OpenBusContext::getCallerChain()
     const idl_cr::SignedCallChain *sig;
     if (*sig_any >>= sig) 
     {
-      CORBA::Any_var any(
-        _orb_info->codec->decode_value(
-          CORBA::OctetSeq(sig->encoded.maximum(),
-                          sig->encoded.length(),
-                          const_cast<unsigned char *>
-                          (sig->encoded.get_buffer())),
-          idl_ac::_tc_CallChain));
-      const idl_ac::CallChain *chain;
-      *any >>= chain;
-      return CallerChain(
-        conn->busid(), conn->login()->entity.in(), chain->originators, 
-        chain->caller, *sig);
+      try
+      {
+        CORBA::Any_var any(
+          _orb_info->codec->decode_value(
+            CORBA::OctetSeq(sig->encoded.maximum(),
+                            sig->encoded.length(),
+                            const_cast<unsigned char *>
+                            (sig->encoded.get_buffer())),
+            idl_ac::_tc_CallChain));
+        const idl_ac::CallChain *chain;
+        *any >>= chain;
+        return CallerChain(
+          conn->busid(), conn->login()->entity.in(), chain->originators, 
+          chain->caller, *sig);
+      }
+      catch (const IOP::Codec::FormatMismatch &)
+      {
+        /* empty */
+      }
     } 
   }
   return CallerChain();
@@ -113,7 +120,7 @@ void OpenBusContext::joinChain(CallerChain const &chain)
 {
   log_scope l(log().general_logger(), info_level, "OpenBusContext::joinChain");
   CORBA::Any sig_any;
-  sig_any <<= *(chain.signedCallChain());
+  sig_any <<= chain.signedCallChain();
   _piCurrent->set_slot(_orb_info->slot.joined_call_chain, sig_any);
 }
 
@@ -135,19 +142,26 @@ CallerChain OpenBusContext::getJoinedChain()
     const idl_cr::SignedCallChain *sig;
     if (*sig_any >>= sig) 
     {
-      CORBA::Any_var any(
-        _orb_info->codec->decode_value(
-          CORBA::OctetSeq(sig->encoded.maximum(),
-                          sig->encoded.length(),
-                          const_cast<unsigned char *>
-                          (sig->encoded.get_buffer())),
-          idl_ac::_tc_CallChain));
-      const idl_ac::CallChain *chain;
-      if (*any >>= chain) 
+      try
       {
-        return CallerChain(
-          conn->busid(), conn->login()->entity.in(), chain->originators, 
-          chain->caller, *sig);
+        CORBA::Any_var any(
+          _orb_info->codec->decode_value(
+            CORBA::OctetSeq(sig->encoded.maximum(),
+                            sig->encoded.length(),
+                            const_cast<unsigned char *>
+                            (sig->encoded.get_buffer())),
+            idl_ac::_tc_CallChain));
+        const idl_ac::CallChain *chain;
+        if (*any >>= chain) 
+        {
+          return CallerChain(
+            conn->busid(), conn->login()->entity.in(), chain->originators, 
+            chain->caller, *sig);
+        }
+      }
+      catch (const IOP::Codec::FormatMismatch &)
+      {
+        /* empty */
       }
     }
   }
@@ -203,7 +217,7 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
   CORBA::OctetSeq_var ctxIdEnc(_orb_info->codec->encode_value(ctxIdAny));
   CORBA::Any chainAny;
   chainAny <<= (idl_cr::ExportedCallChain) { chain.busid().c_str(),
-    *(chain.signedCallChain()) };
+    chain.signedCallChain() };
   CORBA::OctetSeq_var chainEnc(_orb_info->codec->encode_value(chainAny));
   CORBA::OctetSeq encoded;
   encoded.length(ctxIdEnc->length() + chainEnc->length());

@@ -123,17 +123,24 @@ CallerChain ClientInterceptor::get_joined_chain(
   const idl_cr::SignedCallChain *signed_chain;
   if (*any >>= signed_chain) 
   {
-    any = _orb_info->codec->decode_value(
-      CORBA::OctetSeq(signed_chain->encoded.maximum(),
-                      signed_chain->encoded.length(),
-                      const_cast<unsigned char *>
-                      (signed_chain->encoded.get_buffer())),
-      idl_ac::_tc_CallChain);
-    const idl_ac::CallChain *chain;
-    if (*any >>= chain)
+    try
+    {      
+      any = _orb_info->codec->decode_value(
+        CORBA::OctetSeq(signed_chain->encoded.maximum(),
+                        signed_chain->encoded.length(),
+                        const_cast<unsigned char *>
+                        (signed_chain->encoded.get_buffer())),
+        idl_ac::_tc_CallChain);
+      const idl_ac::CallChain *chain;
+      if (*any >>= chain)
+      {
+        return CallerChain(conn.busid(), conn.login()->entity.in(), 
+                           chain->originators, chain->caller, *signed_chain);
+      }
+    }
+    catch (const IOP::Codec::FormatMismatch &)
     {
-      return CallerChain(conn.busid(), conn.login()->entity.in(), 
-                         chain->originators, chain->caller, *signed_chain);
+      /* empty */
     }
   }
   return CallerChain();
@@ -233,7 +240,7 @@ void ClientInterceptor::build_credential(
       }
       else
       {
-        credential.chain = *(caller_chain.signedCallChain());
+        credential.chain = caller_chain.signedCallChain();
       }
     }
     else
@@ -253,7 +260,7 @@ void ClientInterceptor::build_credential(
         if (caller_chain != CallerChain())
         {
           std::memcpy(buf.get() + pos, 
-                      caller_chain.signedCallChain()->signature, 
+                      caller_chain.signedCallChain().signature, 
                       idl::EncryptedBlockSize);
         } 
         else

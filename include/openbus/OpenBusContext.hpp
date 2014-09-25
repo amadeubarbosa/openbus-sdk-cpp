@@ -184,9 +184,9 @@ private:
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
-  const idl_cr::SignedCallChain *signedCallChain() const 
+  idl_cr::SignedCallChain signedCallChain() const 
   { 
-    return &_signedCallChain; 
+    return _signedCallChain; 
   }
   void signedCallChain(idl_cr::SignedCallChain p) 
   { 
