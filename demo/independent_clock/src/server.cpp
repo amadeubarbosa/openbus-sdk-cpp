@@ -4,52 +4,40 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include <helloS.h>
+#include <independent_clockS.h>
+#include <time.h>
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
+#ifndef OPENBUS_SDK_MULTITHREAD
+#error This demo requires multithread
 #endif
 
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
 #include <boost/program_options.hpp>
 #include <fstream>
-#include <boost/bind.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-void mysleep()
-{
-#ifndef _WIN32
-  unsigned int t = 30u;
-  do { t = sleep(t); } while(t);
-#else
-  Sleep(3000);
-#endif
-}
-
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
-namespace simple = tecgraf::openbus::interop::simple;
+namespace demo = tecgraf::openbus::demo;
 namespace services = tecgraf::openbus::core::v2_0::services;
-namespace access_control
- = tecgraf::openbus::core::v2_0::services::access_control;
+namespace access_control = tecgraf::openbus::core::v2_0::services::access_control;
 
-struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
+struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
 {
-  void sayHello()
+  CORBA::Long getTimeInTicks()
   {
-    std::cout << "Hello" << std::endl;
+    return time(0);
   }
 };
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void run_orb(CORBA::ORB_var orb)
 {
   orb->run();
 }
-#endif
 
 struct onReloginCallback
 {
@@ -87,15 +75,33 @@ struct onReloginCallback
       {
         std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
       }
-      mysleep();
+#ifndef _WIN32
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
     }
     while(true);
   }
 };
 
+void clock_loop()
+{
+  while(true)
+  {
+    std::cout << "Hora local atual em ticks: " << time(0) << std::endl;
+#ifndef _WIN32
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
+  }
+}
+
 int main(int argc, char** argv)
 {
-  // Inicializando CORBA e ativando o RootPOA
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
   CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
   PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
@@ -129,9 +135,7 @@ int main(int argc, char** argv)
     f.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(private_key.get_buffer())), size);
   }
 
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread orb_thread(boost::bind(&run_orb, orb));
-#endif
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
@@ -171,26 +175,28 @@ int main(int argc, char** argv)
     {
       std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
     }
-    mysleep();
+#ifndef _WIN32
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
   }
   while(true);
 
-  scs::core::ComponentId componentId;
-  componentId.name = "Hello";
-  componentId.major_version = '1';
-  componentId.minor_version = '0';
-  componentId.patch_version = '0';
-  componentId.platform_spec = "";
-  scs::core::ComponentContext hello_component
+  scs::core::ComponentId componentId
+    = { "IndependentClock", '1', '0', '0', ""};
+  scs::core::ComponentContext clock_component
     (openbusContext->orb(), componentId);
-  HelloImpl hello_servant;
-  hello_component.addFacet
-    ("hello", simple::_tc_Hello->id(), &hello_servant);
-  
+  ClockImpl clock_servant;
+  clock_component.addFacet
+    ("clock", demo::_tc_Clock->id(), &clock_servant);
   offer_registry::ServicePropertySeq properties;
   properties.length(1);
   properties[0].name = "offer.domain";
   properties[0].value = "Demos";
+
+  boost::thread local_clock_thread(& ::clock_loop);
 
   try
   {
@@ -198,7 +204,7 @@ int main(int argc, char** argv)
     {
       try
       {
-        openbusContext->getOfferRegistry()->registerService(hello_component.getIComponent(), properties);
+        openbusContext->getOfferRegistry()->registerService(clock_component.getIComponent(), properties);
         break;
       }
       catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
@@ -228,15 +234,17 @@ int main(int argc, char** argv)
       {
         std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
       }
-      mysleep();
+#ifndef _WIN32
+      unsigned int t = 30u;
+      do { t = sleep(t); } while(t);
+#else
+      Sleep(3000);
+#endif
     }
     while(true);
   
-#ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
-#else
-    orb->run();
-#endif
+    local_clock_thread.join();
   }
   catch(offer_registry::InvalidService const&)
   {
@@ -247,4 +255,3 @@ int main(int argc, char** argv)
     std::cout << "Barramento diz que o servico ofertado possui ofertas" << std::endl;
   }
 }
-

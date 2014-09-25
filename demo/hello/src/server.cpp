@@ -5,7 +5,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include <stubs/helloS.h>
+#include <helloS.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>

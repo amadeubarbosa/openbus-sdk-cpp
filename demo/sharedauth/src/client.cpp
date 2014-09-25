@@ -2,8 +2,9 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <iostream>
-#include <stubs/hello.h>
-#include <stubs/sharedauth.h>
+#include <helloC.h>
+#include <sharedauthC.h>
+#include <tao/PortableServer/PortableServer.h>
 
 #include <fstream>
 #include <iterator>
@@ -241,7 +242,7 @@ int main(int argc, char** argv)
   }
   while(try_again);
 
-  std::pair< access_control::LoginProcess_ptr, CORBA::OctetSeq> 
+  std::pair< access_control::LoginProcess_ptr, openbus::idl::OctetSeq> 
     login = conn->startSharedAuth();
   
   CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");
@@ -252,10 +253,17 @@ int main(int argc, char** argv)
   IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
   IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
 
+  OctetSeq seq;
+  seq.length(login.second.length());
+  for (CORBA::ULong i(0); i != login.second.length(); ++i)
+  {
+    seq[i] = login.second[i];
+  }
+
   EncodedSharedAuth sharedauth
     =
     {
-      login.first, login.second
+      login.first, seq
     };
 
   CORBA::Any any;

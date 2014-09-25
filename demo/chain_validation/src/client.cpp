@@ -2,41 +2,42 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <iostream>
-#include <stubs/greetings.h>
+#include <chain_validationC.h>
+#include <tao/PortableServer/PortableServer.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace services = tecgraf::openbus::core::v2_0::services;
 
-::Greetings_ptr get_greetings(offer_registry::ServiceOfferDescSeq_var offers)
+::Message_ptr get_message(offer_registry::ServiceOfferDescSeq_var offers)
 {
   if (offers->length() == 0)
   {
-    std::cout << "O servico Greetings nao se encontra no barramento." << std::endl;
-    return ::Greetings::_nil();
+    std::cout << "O servico Message nao se encontra no barramento." << std::endl;
+    return ::Message::_nil();
   }
   else if(offers->length() == 1)
   {
     CORBA::ULong i = 0;
-    return ::Greetings::_narrow
-      (offers[i].service_ref->getFacetByName("greetings"));
+    return ::Message::_narrow
+      (offers[i].service_ref->getFacetByName("message"));
   }
   else
   {
-    std::cout << "Existe mais de um servico Greetings no barramento. Tentaremos encontrar uma funcional." << std::endl;
+    std::cout << "Existe mais de um servico Hello no barramento. Tentaremos encontrar uma funcional." << std::endl;
 
     for(CORBA::ULong i = 0; i != offers->length(); ++i)
     {
       try
       {
         CORBA::Object_var o = offers[i].service_ref
-          ->getFacetByName("greetings");
-        return ::Greetings::_narrow(o);
+          ->getFacetByName("message");
+        return ::Message::_narrow(o);
       }
       catch(CORBA::TRANSIENT const&) {}
       catch(CORBA::OBJECT_NOT_EXIST const&) {}
     }
-    return ::Greetings::_nil();
+    return ::Message::_nil();
   }
 }
 
@@ -68,30 +69,44 @@ int main(int argc, char** argv)
     }
     openbusContext->setDefaultConnection(conn.get());
 
-    // Recebendo ofertas
+    // Recebendo oferta de secretaria
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);
-    props[0].name  = "openbus.component.facet";
-    props[0].value = "greetings";
-
-    const char* entities[] = { "demo1", "demo2", "demo3" };
-    const char* languages[] = { "english", "portuguese", "german" };
-    for(std::size_t i = 0; i != 3; ++i)
+    props[0].name  = "openbus.offer.entity";
+    props[0].value = "secretary";
+    props[1].name  = "openbus.component.facet";
+    props[1].value = "message";
+    offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
+    // Pegando uma oferta valida
+    ::Message_var message = ::get_message(offers);
+    if(!CORBA::is_nil(message))
     {
-      props[1].name  = "openbus.offer.entity";
-      props[1].value = entities[i];
-      props[2].name  = "language";
-      props[2].value = languages[i];
-      offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
-      // Pegando uma oferta valida
-      ::Greetings_ptr greetings = ::get_greetings(offers);
-      if(!CORBA::is_nil(greetings))
+      // Chama a funcao
+      message->sendMessage("Message");
+      return 0;
+    }
+
+    // Recebendo oferta de executivo
+    props[0].name  = "openbus.offer.entity";
+    props[0].value = "executive";
+    props[1].name  = "openbus.component.facet";
+    props[1].value = "message";
+    offers = openbusContext->getOfferRegistry()->findServices(props);
+    // Pegando uma oferta valida
+    message = ::get_message(offers);
+    if(!CORBA::is_nil(message))
+    {
+      try
       {
         // Chama a funcao
-        std::cout << "for language " << languages[i] << " we say: " << greetings->sayGreetings() << std::endl;
+        message->sendMessage("Message");
+        std::cout << "Chamada nao deveria ter sido aceita" << std::endl;
+      }
+      catch(Unavailable const&)
+      {
+        std::cout << "Chamada foi recusada como esperado" << std::endl;
       }
     }
-    return 0;
   }
   catch (services::ServiceFailure e)
   {

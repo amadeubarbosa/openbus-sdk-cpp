@@ -2,7 +2,8 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <iostream>
-#include <stubs/helloC.h>
+#include <helloC.h>
+#include <tao/PortableServer/PortableServer.h>
 
 #include <boost/program_options.hpp>
 #include <tao/PortableServer/PortableServer.h>

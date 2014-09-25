@@ -4,7 +4,8 @@
 
 #include <iostream>
 
-#include <stubs/independent_clock.h>
+#include <independent_clockC.h>
+#include <tao/PortableServer/PortableServer.h>
 
 #ifdef _WIN32
 #include <windows.h>

@@ -22,6 +22,16 @@ Entity {
 }
 
 Certificate {
+  id = "secretary",
+  certificate = "DemoCppChainValidation.crt",
+}
+
+Certificate {
+  id = "executive",
+  certificate = "DemoCppChainValidation.crt",
+}
+
+Certificate {
   id = "demo",
   certificate = "DemoCppChainValidation.crt",
 }

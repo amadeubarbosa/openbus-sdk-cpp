@@ -2,8 +2,9 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <iostream>
-#include <stubs/hello.h>
-#include <stubs/sharedauth.h>
+#include <helloC.h>
+#include <sharedauthC.h>
+#include <tao/PortableServer/PortableServer.h>
 
 #include <fstream>
 #include <iterator>
@@ -101,7 +102,7 @@ struct sayHello
 
 struct onReloginCallback
 {
-  onReloginCallback(CORBA::OctetSeq secret, access_control::LoginProcess_var attempt)
+  onReloginCallback(openbus::idl::OctetSeq secret, access_control::LoginProcess_var attempt)
     : secret(secret), attempt(attempt) {}
 
   typedef void result_type;
@@ -142,7 +143,7 @@ struct onReloginCallback
     while(true);
   }
 
-  CORBA::OctetSeq secret;
+  openbus::idl::OctetSeq secret;
   access_control::LoginProcess_var attempt;
 };
 
@@ -183,22 +184,33 @@ int main(int argc, char** argv)
       IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
 
       std::ifstream file(argv[1]);
-      CORBA::OctetSeq secret;
+      openbus::idl::OctetSeq secret;
       file.seekg(0, std::ios::end);
       secret.length(file.tellg());
       file.seekg(0, std::ios::beg);
       file.rdbuf()->sgetn
         (static_cast<char*>(static_cast<void*>(secret.get_buffer()))
          , secret.length());
-
-      CORBA::Any_var any = codec->decode_value(secret, _tc_EncodedSharedAuth);
+      CORBA::OctetSeq seq;
+      seq.length(secret.length());
+      for (CORBA::ULong i(0); i != secret.length(); ++i)
+      {
+        seq[i] = secret[i];
+      }
+      CORBA::Any_var any = codec->decode_value(seq, _tc_EncodedSharedAuth);
       const EncodedSharedAuth *sharedauth;
       if(*any >>= sharedauth)
       {
+        openbus::idl::OctetSeq seq;
+        seq.length(sharedauth->secret.length());
+        for (CORBA::ULong i(0); i != sharedauth->secret.length(); ++i)
+        {
+          seq[i] = sharedauth->secret[i];
+        }
         access_control::LoginProcess_var login
           = access_control::LoginProcess::_narrow(sharedauth->attempt);
-        conn->onInvalidLogin( ::onReloginCallback(sharedauth->secret, login));
-        conn->loginBySharedAuth(login, sharedauth->secret);
+        conn->onInvalidLogin( ::onReloginCallback(seq, login));
+        conn->loginBySharedAuth(login, seq);
       }
       else
       {

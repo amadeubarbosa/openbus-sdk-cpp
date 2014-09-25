@@ -1,22 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
-#include <scs/ComponentContext.h>
 #include <iostream>
-
-#include <stubs/dedicated_clock.h>
-#include <CORBA.h>
-#include <time.h>
-
-#ifdef OPENBUS_SDK_MULTITHREAD
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
-#endif
-
-#include <boost/program_options.hpp>
-#include <boost/bind.hpp>
-
-#include <fstream>
+#include <greetingsC.h>
+#include <tao/PortableServer/PortableServer.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -24,36 +11,90 @@
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
-namespace demo = tecgraf::openbus::demo;
 namespace services = tecgraf::openbus::core::v2_0::services;
-namespace access_control = tecgraf::openbus::core::v2_0::services::access_control;
+namespace access_control
+ = tecgraf::openbus::core::v2_0::services::access_control;
 
-struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
+template <typename F>
+void try_call_with_found_reference(offer_registry::ServiceOfferDescSeq_var offers, F f)
 {
-  CORBA::Long getTimeInTicks()
+  if (offers->length() == 0)
   {
-    return time(0);
+    std::cout << "O servico Hello nao se encontra no barramento." << std::endl;
+    return;
   }
-};
+  else if(offers->length() == 1)
+  {
+    CORBA::ULong i = 0;
+    ::Greetings_var greetings = ::Greetings::_narrow
+      (offers[i].service_ref->getFacetByName("greetings"));
+    if(!CORBA::is_nil(greetings))
+    {
+      f(greetings);
+      return;
+    }
+  }
+  else
+  {
+    std::cout << "Existe mais de um servico Hello no barramento. Tentaremos encontrar uma funcional." << std::endl;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-void run_orb(CORBA::ORB_var orb)
-{
-  orb->run();
+    for(CORBA::ULong i = 0; i != offers->length(); ++i)
+    {
+      try
+      {
+        CORBA::Object_var o = offers[i].service_ref
+          ->getFacetByName("greetings");
+        ::Greetings_var greetings = ::Greetings::_narrow(o);
+        if(!CORBA::is_nil(greetings))
+        {
+          f(greetings);
+          return;
+        }
+      }
+      catch (CORBA::TRANSIENT const&)
+      {
+        std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
+          "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+      }
+      catch (CORBA::OBJECT_NOT_EXIST const&)
+      {
+        std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
+      }
+      catch (CORBA::COMM_FAILURE const&)
+      {
+        std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
+          "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+      }
+    }
+  }
 }
-#endif
+
+struct sayGreetings
+{
+  sayGreetings(bool& try_again, const char* language)
+    : try_again(&try_again), language(language) {}
+
+  typedef void result_type;
+  result_type operator()(::Greetings_var greetings) const
+  {
+    std::cout << "for language " << language << " we say: " << greetings->sayGreetings() << std::endl;
+    *try_again = false;
+  }
+
+  bool* try_again;
+  const char* language;
+};
 
 struct onReloginCallback
 {
   typedef void result_type;
-  result_type operator()(openbus::Connection& c, access_control::LoginInfo info
-                         , CORBA::OctetSeq private_key) const
+  result_type operator()(openbus::Connection& c, access_control::LoginInfo info) const
   {
     do
     {
       try
       {
-        c.loginByCertificate("demo", private_key);
+        c.loginByPassword("demo", "demo");
         break;
       }
       catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
@@ -92,6 +133,7 @@ struct onReloginCallback
 
 int main(int argc, char** argv)
 {
+  // Inicializando CORBA e ativando o RootPOA
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
   CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
   PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
@@ -99,48 +141,19 @@ int main(int argc, char** argv)
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
   poa_manager->activate();
 
-  CORBA::OctetSeq private_key;
-  {
-    namespace po = boost::program_options;
-    po::options_description desc("Allowed options");
-    desc.add_options()
-      ("help", "This help message")
-      ("private-key", po::value<std::string>(), "Path to private key")
-      ;
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
-    
-    if(vm.count("help") || !vm.count("private-key"))
-    {
-      std::cout << desc << std::endl;
-      return 0;
-    }
-    std::string private_key_filename = vm["private-key"].as<std::string>();
-    std::ifstream f(private_key_filename.c_str());
-    f.seekg(0, std::ios::end);
-    std::size_t size = f.tellg();
-    f.seekg(0, std::ios::beg);
-    private_key.length(size);
-    f.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(private_key.get_buffer())), size);
-  }
-
-#ifdef OPENBUS_SDK_MULTITHREAD
-  boost::thread orb_thread(boost::bind(&run_orb, orb));
-#endif
-
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
     (orb->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
   std::auto_ptr <openbus::Connection> conn;
+
   do
   {
     try
     {
       conn = openbusContext->createConnection("localhost", 2089);
-      conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, private_key) );
-      conn->loginByCertificate("demo", private_key);
+      conn->onInvalidLogin( ::onReloginCallback());
+      conn->loginByPassword("demo", "demo");
       openbusContext->setDefaultConnection(conn.get());
       break;
     }
@@ -176,46 +189,36 @@ int main(int argc, char** argv)
   }
   while(true);
 
-  scs::core::ComponentId componentId
-    = { "DedicatedClock", '1', '0', '0', ""};
-  scs::core::ComponentContext clock_component
-    (openbusContext->orb(), componentId);
-  ClockImpl clock_servant;
-  clock_component.addFacet
-    ("clock", demo::_tc_Clock->id(), &clock_servant);
-  offer_registry::ServicePropertySeq properties;
-  properties.length(1);
-  properties[0].name = "offer.domain";
-  properties[0].value = "Demos";
+  // Recebendo ofertas
+  openbus::idl_or::ServicePropertySeq props;
+  props.length(3);
+  props[0].name  = "openbus.offer.entity";
+  props[0].value = "demo";
+  props[1].name  = "openbus.component.facet";
+  props[1].value = "greetings";
   
-  try
+  const char* languages[] = { "english", "portuguese", "german" };
+  for(const char** language = languages
+        ; language != &languages[3]; ++language)
   {
+    props[2].name  = "language";
+    props[2].value = *language;
+    
+    bool try_again = true;
     do
     {
       try
       {
-        openbusContext->getOfferRegistry()->registerService(clock_component.getIComponent(), properties);
-        break;
+        offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
+        // Pegando uma oferta valida
+        ::try_call_with_found_reference(offers, sayGreetings(try_again, *language));
+        continue;
       }
-      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+      catch (services::ServiceFailure e)
       {
-        std::cout << "Falha ao tentar realizar o login por senha no barramento: "
-          "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
-      }
-      catch (services::ServiceFailure const& e)
-      {
-        std::cout << "Falha no servico remoto. Causa: " << std::endl;
-      }
-      catch (offer_registry::UnauthorizedFacets const& e)
-      {
-        std::cout << "Faceta nao autorizada no barramento: " << std::endl;
+        std::cout << "Falha no serviço remoto. Causa: " << std::endl;
       }
       catch (CORBA::TRANSIENT const&)
-      {
-        std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
-          "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
-      }
-      catch (CORBA::COMM_FAILURE const&)
       {
         std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
           "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
@@ -224,6 +227,11 @@ int main(int argc, char** argv)
       {
         std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
       }
+      catch (CORBA::COMM_FAILURE const&)
+      {
+        std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
+          "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+      }
 #ifndef _WIN32
       unsigned int t = 30u;
       do { t = sleep(t); } while(t);
@@ -231,20 +239,6 @@ int main(int argc, char** argv)
       Sleep(3000);
 #endif
     }
-    while(true);
-  
-#ifdef OPENBUS_SDK_MULTITHREAD
-    orb_thread.join();
-#else
-    orb->run();
-#endif
-  }
-  catch(offer_registry::InvalidService const&)
-  {
-    std::cout << "Barramento diz que o servico ofertado nao e um componente valido" << std::endl;
-  }
-  catch(offer_registry::InvalidProperties const&)
-  {
-    std::cout << "Barramento diz que o servico ofertado possui ofertas" << std::endl;
+    while(try_again);
   }
 }

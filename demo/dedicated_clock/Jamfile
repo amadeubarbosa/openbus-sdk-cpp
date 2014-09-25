@@ -1,30 +1,55 @@
-
-project openbus/demos ;
+project openbus/demo/dedicated_clock ;
 
 path-constant here : . ;
 
-alias dedicated-clock-idl : $(here)/idl/dedicated_clock.idl ;
+obj dedicated_clock-stub
+  : $(here)/idl/dedicated_clock.idl
+  ;
+explicit dedicated_clock-stub ;
+
+obj dedicated_clock-skeleton
+  : $(here)/idl/dedicated_clock.idl
+  : <generate>skeleton
+  ;
+explicit dedicated_clock-skeleton ;
 
 exe dedicated_clock_client
- : client/client.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl dedicated-clock-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) 
+ : src/client.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   dedicated_clock-stub
+ : <threading>multi:<source>/boost//thread
+   <dependency>dedicated_clock-stub
+   <implicit-dependency>dedicated_clock-stub
    <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>dedicated-clock-idl
+   
  ;
+explicit dedicated_clock_client ;
+
 exe dedicated_clock_server
- : server/server.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl dedicated-clock-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) 
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>dedicated-clock-idl
+ : src/server.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   dedicated_clock-stub
+   dedicated_clock-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>dedicated_clock-stub
+   <implicit-dependency>dedicated_clock-stub
+   <dependency>dedicated_clock-skeleton
+   <implicit-dependency>dedicated_clock-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
  ;
+explicit dedicated_clock_server ;
 
-alias dedicated_clock : dedicated_clock_client dedicated_clock_server ;
-
+alias dedicated_clock
+  : dedicated_clock_client
+    dedicated_clock_server
+  ;

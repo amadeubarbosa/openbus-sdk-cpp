@@ -1,38 +1,76 @@
-
-project openbus/demos ;
+project openbus/demo/audit ;
 
 path-constant demo-hello : ../hello ;
 
-obj hello-idl : $(demo-hello)/idl/hello.idl /mico//mico ;
+obj hello-stub
+  : $(demo-hello)/idl/hello.idl
+  ;
+explicit hello-stub ;
+
+obj hello-skeleton
+  : $(demo-hello)/idl/hello.idl
+  : <generate>skeleton
+  ;
+explicit hello-skeleton ;
+
 
 exe audit_client
- : client/client.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
+ : src/client.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   hello-stub
+ : <threading>multi:<source>/boost//thread
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
    <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>hello-idl
+   
  ;
+explicit audit_client ;
+
 exe audit_server
- : server/server.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>hello-idl
+ : src/server.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   hello-stub
+   hello-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
+   <dependency>hello-skeleton
+   <implicit-dependency>hello-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
  ;
+explicit audit_server ;
 
 exe audit_proxy
- : proxy/proxy.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>hello-idl
+ : src/proxy.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   hello-stub
+   hello-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>hello-stub
+   <implicit-dependency>hello-stub
+   <dependency>hello-skeleton
+   <implicit-dependency>hello-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
  ;
+explicit audit_proxy ;
 
-alias audit : audit_client audit_server audit_proxy ;
-
+alias audit
+  : audit_client
+    audit_server
+    audit_proxy
+  ;

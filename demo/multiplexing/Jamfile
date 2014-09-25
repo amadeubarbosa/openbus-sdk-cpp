@@ -1,30 +1,55 @@
-
-project openbus/demos ;
+project openbus/demo/multiplexing_clock ;
 
 path-constant here : . ;
 
-alias greetings-idl : $(here)/idl/greetings.idl ;
+obj greetings_clock-stub
+  : $(here)/idl/greetings.idl
+  ;
+explicit greetings_clock-stub ;
 
-exe multiplexing_client
- : client/client.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl greetings-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl)
+obj greetings_clock-skeleton
+  : $(here)/idl/greetings.idl
+  : <generate>skeleton
+  ;
+explicit greetings_clock-skeleton ;
+
+exe multiplexing_clock_client
+ : src/client.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   greetings_clock-stub
+ : <threading>multi:<source>/boost//thread
+   <dependency>greetings_clock-stub
+   <implicit-dependency>greetings_clock-stub
    <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>greetings-idl
+   
  ;
-exe multiplexing_server
- : server/server.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl greetings-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl)
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>greetings-idl
+explicit multiplexing_clock_client ;
+
+exe multiplexing_clock_server
+ : src/server.cpp
+   /openbus//openbus
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   greetings_clock-stub
+   greetings_clock-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>greetings_clock-stub
+   <implicit-dependency>greetings_clock-stub
+   <dependency>greetings_clock-skeleton
+   <implicit-dependency>greetings_clock-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
  ;
+explicit multiplexing_clock_server ;
 
-alias multiplexing : multiplexing_client multiplexing_server ;
-
+alias multiplexing_clock
+  : multiplexing_clock_client
+    multiplexing_clock_server
+  ;

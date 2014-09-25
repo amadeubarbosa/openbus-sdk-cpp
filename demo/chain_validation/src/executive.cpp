@@ -4,8 +4,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include <stubs/chain_validation.h>
-#include <CORBA.h>
+#include <chain_validationS.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
@@ -19,72 +18,31 @@ namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace services = tecgraf::openbus::core::v2_0::services;
 
-struct MessageImpl : POA_Message
+struct MessageImpl : public POA_Message
 {
-  MessageImpl(Message_var executive_message
-              , openbus::OpenBusContext& openbusContext)
-    : executive_message(executive_message), openbusContext(openbusContext) {}
+  MessageImpl(openbus::OpenBusContext& openbusContext)
+    : openbusContext(openbusContext) {}
 
   void sendMessage(const char* message)
   {
-    std::cout << "Relaying message " << message << std::endl;
-    try
+    openbus::CallerChain chain = openbusContext.getCallerChain();
+    if(chain != openbus::CallerChain()
+       && !std::strcmp(chain.caller().entity, "secretary"))
     {
-      openbusContext.joinChain(openbusContext.getCallerChain());
-      executive_message->sendMessage(message);
-      std::cout << "Execution succesful" << std::endl;
+      std::cout << "Hello" << std::endl;
     }
-    catch(::Unavailable const& e)
+    else
     {
-      std::cout << "Unavaible was thrown" << std::endl;
-      throw;
+      const char* name = "[unknown]";
+      if(chain != openbus::CallerChain())
+        name = chain.caller().entity;
+      std::cout << "I'm unavailable to " << name << std::endl;
+      throw ::Unavailable();
     }
   }
 
-  Message_var executive_message;
   openbus::OpenBusContext& openbusContext;
 };
-
-struct MeetingImpl : POA_Meeting
-{
-  CORBA::Long bookMeeting()
-  {
-    std::cout << "Meeting has been booked" << std::endl;
-    return 0;
-  }
-};
-
-::Message_ptr get_message(offer_registry::ServiceOfferDescSeq_var offers)
-{
-  if (offers->length() == 0)
-  {
-    std::cout << "O servico Hello nao se encontra no barramento." << std::endl;
-    return ::Message::_nil();
-  }
-  else if(offers->length() == 1)
-  {
-    CORBA::ULong i = 0;
-    return ::Message::_narrow
-      (offers[i].service_ref->getFacetByName("message"));
-  }
-  else
-  {
-    std::cout << "Existe mais de um servico Hello no barramento. Tentaremos encontrar uma funcional." << std::endl;
-
-    for(CORBA::ULong i = 0; i != offers->length(); ++i)
-    {
-      try
-      {
-        CORBA::Object_var o = offers[i].service_ref
-          ->getFacetByName("message");
-        return ::Message::_narrow(o);
-      }
-      catch(CORBA::TRANSIENT const&) {}
-      catch(CORBA::OBJECT_NOT_EXIST const&) {}
-    }
-    return ::Message::_nil();
-  }
-}
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 void run_orb(CORBA::ORB_var orb)
@@ -105,7 +63,7 @@ int main(int argc, char** argv)
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    CORBA::OctetSeq private_key;
+    openbus::idl::OctetSeq private_key;
     {
       namespace po = boost::program_options;
       po::options_description desc("Allowed options");
@@ -142,7 +100,7 @@ int main(int argc, char** argv)
     std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
     try
     {
-      conn->loginByCertificate("secretary", private_key);
+      conn->loginByCertificate("executive", private_key);
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
     {
@@ -152,26 +110,10 @@ int main(int argc, char** argv)
     }
     openbusContext->setDefaultConnection(conn.get());
 
-    // Recebendo ofertas
-    openbus::idl_or::ServicePropertySeq props;
-    props.length(3);
-    props[0].name  = "openbus.offer.entity";
-    props[0].value = "executive";
-    props[1].name  = "openbus.component.facet";
-    props[1].value = "message";
-    offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
-    // Pegando uma oferta valida
-    ::Message_var message_executive = ::get_message(offers);
-    if(CORBA::is_nil(message_executive))
-    {
-      std::cout << "Error" << std::endl;
-      return 1;
-    }
-
-    scs::core::ComponentId message_componentId = { "Message", '1', '0', '0', "" };
+    scs::core::ComponentId componentId = { "Message", '1', '0', '0', "" };
     scs::core::ComponentContext message_component
-      (openbusContext->orb(), message_componentId);
-    MessageImpl message_servant(message_executive, *openbusContext);
+      (openbusContext->orb(), componentId);
+    MessageImpl message_servant(*openbusContext);
     message_component.addFacet
       ("message", ::_tc_Message->id(), &message_servant);
     
@@ -180,15 +122,6 @@ int main(int argc, char** argv)
     properties[0].name = "offer.domain";
     properties[0].value = "Demos";
     openbusContext->getOfferRegistry()->registerService(message_component.getIComponent(), properties);
-
-    scs::core::ComponentId meeting_componentId = { "Meeting", '1', '0', '0', "" };
-    scs::core::ComponentContext meeting_component
-      (openbusContext->orb(), meeting_componentId);
-    MeetingImpl meeting_servant;
-    meeting_component.addFacet
-      ("meeting", ::_tc_Meeting->id(), &meeting_servant);
-    
-    openbusContext->getOfferRegistry()->registerService(meeting_component.getIComponent(), properties);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();

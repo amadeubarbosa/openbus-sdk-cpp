@@ -4,8 +4,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include <stubs/greetings.h>
-#include <CORBA.h>
+#include <greetingsS.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
@@ -48,7 +47,7 @@ struct onReloginCallback
 {
   typedef void result_type;
   result_type operator()(openbus::Connection& c, access_control::LoginInfo info
-                         , CORBA::OctetSeq private_key) const
+                         , openbus::idl::OctetSeq private_key) const
   {
     do
     {
@@ -161,7 +160,7 @@ int main(int argc, char** argv)
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
   poa_manager->activate();
 
-  CORBA::OctetSeq private_key;
+  openbus::idl::OctetSeq private_key;
   {
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
