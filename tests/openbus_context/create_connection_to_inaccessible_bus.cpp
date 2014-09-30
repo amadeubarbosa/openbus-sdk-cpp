@@ -2,7 +2,6 @@
 
 #include <openbus/OpenBusContext.hpp>
 #include <configuration.h>
-#include <cstdlib>
 
 int main(int argc, char **argv)
 {
@@ -10,9 +9,15 @@ int main(int argc, char **argv)
   CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
   CORBA::Object_ptr o(orb->resolve_initial_references("OpenBusContext"));
   openbus::OpenBusContext *bus_ctx(dynamic_cast<openbus::OpenBusContext*>(o));
-  openbus::CallerChain chain(bus_ctx->decodeChain(CORBA::OctetSeq(0)));
-  if (chain != openbus::CallerChain())
+  assert(bus_ctx != 0);
+  try
   {
-    std::abort();
+    std::auto_ptr<openbus::Connection> conn(
+      bus_ctx->createConnection(cfg.host(), 2090));
   }
+  catch (...)
+  {
+    return 0;
+  }
+  std::abort();
 }

@@ -3,7 +3,7 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <configuration.h>
-#include <stubs/hello.h>
+#include <helloC.h>
 
 int main(int argc, char* argv[])
 {

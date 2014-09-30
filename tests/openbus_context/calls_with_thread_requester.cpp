@@ -3,22 +3,7 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <configuration.h>
-#include <stubs/hello.h>
-
-#include <string>
-
-struct dispatcher
-{
-  typedef openbus::Connection* result_type;
-  result_type r;
-  dispatcher(result_type r) : r(r) {}
-
-  result_type operator()(openbus::OpenBusContext &context, const std::string busId
-                         , const std::string loginId, const std::string operation) const
-  {
-    return r;
-  }  
-};
+#include <helloC.h>
 
 int main(int argc, char* argv[])
 {
@@ -28,7 +13,7 @@ int main(int argc, char* argv[])
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
   std::auto_ptr<openbus::Connection> conn(openbusContext->createConnection(cfg.host(), cfg.port()));
   conn->loginByPassword(cfg.user(), cfg.password());
-  openbusContext->onCallDispatch(dispatcher(conn.get()));
+  openbusContext->setCurrentConnection(conn.get());
   
   openbus::idl_or::ServicePropertySeq properties;
   openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(properties);

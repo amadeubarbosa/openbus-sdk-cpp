@@ -7,179 +7,185 @@ path-constant here : . ;
 
 project openbus/tests ;
 
-local rule exe-test ( test-name : filename : idl ? )
+local rule exe-test ( test-name : filename : deps * : requirements * )
 {
-  local test-dependencies = /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl ;
-  local test-requirements = <implicit-dependency>/openbus//core-idls
-    <threading>multi:<source>/boost//thread <include>.
-    <implicit-dependency>$(idl) <target-os>linux,<link>static:<source>/dl//dl
+  local test-dependencies =
+    /openbus//openbus
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
   ;
-  exe $(test-name) : $(filename) $(idl) $(test-dependencies)
-   : $(test-requirements) ;
+  local test-requirements = <threading>multi:<source>/boost//thread <include>.
+    <target-os>linux,<link>static:<source>/dl//dl ;
+  exe $(test-name)
+    : $(filename)
+      $(test-dependencies)
+      $(deps)
+    : $(test-requirements)
+      $(requirements)
+    ;
   explicit $(test-name) ;
 }
 
+obj test-hello-stub
+  : $(here)/idl/hello.idl
+  ;
+explicit test-hello-stub ;
 
-alias test-hello-idl : $(here)/idl/hello.idl ;
-explicit test-hello-idl ;
+obj test-hello-skeleton
+  : $(here)/idl/hello.idl
+  : <generate>skeleton
+  ;
+explicit test-hello-skeleton ;
 
 exe-test connect_host_port_connect_to_right_host_and_port
- : connect/host_port/connect_to_right_host_and_port.cpp
- ;
-exe-test connect_host_port_connect_to_wrong_host_and_port
- : connect/host_port/connect_to_wrong_host_and_port.cpp
- ;
-#exe-test connect_host_port_connect_with_empty_host
-# : connect/host_port/connect_with_empty_host.cpp
-# ;
-#exe-test connect_orb_connect_getting_orb_with_ORB_init
-# : connect/orb/connect_getting_orb_with_ORB_init.cpp
-# ;
-exe-test connect_orb_connect_getting_orb_with_createORB
- : connect/orb/connect_getting_orb_with_createORB.cpp
- ;
-exe-test connection_caller_chain_decode_chain_wrong_context_id
- : connection/caller_chain/decode_chain_wrong_context_id.cpp
- ;
-exe-test connection_caller_chain_decode_default_octet_sequence
- : connection/caller_chain/decode_default_octet_sequence.cpp
- ;
-exe-test connection_caller_chain_encode_and_decode_chain
- : connection/caller_chain/encode_and_decode_chain.cpp
- ;
-exe-test connection_caller_chain_encode_default_caller_chain
- : connection/caller_chain/encode_default_caller_chain.cpp
- ;
-exe-test connection_caller_chain_make_chain_for_invalid_login
- : connection/caller_chain/make_chain_for_invalid_login.cpp
- ;
-exe-test connection_caller_chain_make_chain_for_valid_login
- : connection/caller_chain/make_chain_for_valid_login.cpp
- ;
-exe-test connection_caller_chain_receive_call_with_default_connection_get_caller_chain
- : connection/caller_chain/receive_call_with_default_connection_get_caller_chain.cpp
- : test-hello-idl
- ;
-exe-test connection_loginByCertificate_entity_id_and_file_private_key_ok
- : connection/loginByCertificate/entity_id_and_file_private_key_ok.cpp
- ;
-exe-test connection_loginByPassword_after_logout
- : connection/loginByPassword/after_logout.cpp
- ;
-exe-test connection_loginByPassword_entity_id_and_password_ok
- : connection/loginByPassword/entity_id_and_password_ok.cpp
- ;
-exe-test connection_loginByPassword_login_when_already_logged
- : connection/loginByPassword/login_when_already_logged.cpp
- ;
-exe-test connection_loginByPassword_wrong_password
- : connection/loginByPassword/wrong_password.cpp
- ;
-exe-test connection_login_login_info_after_login
- : connection/login/login_info_after_login.cpp
- ;
-exe-test connection_manager_calls_with_default_connection
- : connection_manager/calls_with_default_connection.cpp
- : test-hello-idl
- ;
-exe-test connection_manager_calls_with_dispatcher
- : connection_manager/calls_with_dispatcher.cpp
- : test-hello-idl
- ;
-exe-test connection_manager_calls_with_thread_requester
- : connection_manager/calls_with_thread_requester.cpp
- : test-hello-idl
- ;
-exe-test connection_manager_create_connection_to_accessible_bus
- : connection_manager/create_connection_to_accessible_bus.cpp
- ;
-exe-test connection_manager_create_connection_to_inaccessible_bus
- : connection_manager/create_connection_to_inaccessible_bus.cpp
- ;
-exe-test connection_manager_create_connection_to_invalid_host
- : connection_manager/create_connection_to_invalid_host.cpp
- ;
-exe-test connection_manager_get_manager
- : connection_manager/get_manager.cpp
- ;
-exe-test connection_manager_receive_call_with_default_connection
- : connection_manager/receive_call_with_default_connection.cpp
- : test-hello-idl
- ;
-exe-test fail_user_created_orb
- : fail_user_created_orb.cpp
- ;
-exe-test get_offer
- : get_offer.cpp
- : test-hello-idl
- ;
-exe-test register_service
- : register_service.cpp
- : test-hello-idl
- ;
+  : connect/host_port/connect_to_right_host_and_port.cpp
+  ;
 
-alias tests : connect_host_port_connect_to_right_host_and_port
- connect_host_port_connect_to_wrong_host_and_port
- connect_orb_connect_getting_orb_with_createORB
- connection_caller_chain_decode_chain_wrong_context_id
- connection_caller_chain_decode_default_octet_sequence
- connection_caller_chain_encode_and_decode_chain
- connection_caller_chain_encode_default_caller_chain
- connection_caller_chain_make_chain_for_invalid_login
- connection_caller_chain_make_chain_for_valid_login
- connection_caller_chain_receive_call_with_default_connection_get_caller_chain
- connection_loginByCertificate_entity_id_and_file_private_key_ok
- connection_loginByPassword_after_logout
- connection_loginByPassword_entity_id_and_password_ok
- connection_loginByPassword_login_when_already_logged
- connection_loginByPassword_wrong_password
- connection_login_login_info_after_login
- connection_manager_calls_with_default_connection
- connection_manager_calls_with_dispatcher
- connection_manager_calls_with_thread_requester
- connection_manager_create_connection_to_accessible_bus
- connection_manager_create_connection_to_inaccessible_bus
- connection_manager_create_connection_to_invalid_host
- connection_manager_get_manager
- connection_manager_receive_call_with_default_connection
- fail_user_created_orb
- get_offer
- register_service
- ;
-explicit tests ;
+exe-test connect_host_port_connect_to_wrong_host_and_port
+  : connect/host_port/connect_to_wrong_host_and_port.cpp
+  ;
+
+exe-test connect_orb_connect_getting_orb_with_createORB
+  : connect/orb/connect_getting_orb_with_createORB.cpp
+  ;
+
+exe-test connection_caller_chain_decode_chain_wrong_context_id
+  : connection/caller_chain/decode_chain_wrong_context_id.cpp
+  ;
+
+exe-test connection_caller_chain_decode_default_octet_sequence
+  : connection/caller_chain/decode_default_octet_sequence.cpp
+  ;
+
+exe-test connection_caller_chain_encode_and_decode_chain
+  : connection/caller_chain/encode_and_decode_chain.cpp
+  ;
+
+exe-test connection_caller_chain_encode_default_caller_chain
+  : connection/caller_chain/encode_default_caller_chain.cpp
+  ;
+
+exe-test connection_caller_chain_make_chain_for_invalid_login
+  : connection/caller_chain/make_chain_for_invalid_login.cpp
+  ;
+
+exe-test connection_caller_chain_make_chain_for_valid_login
+  : connection/caller_chain/make_chain_for_valid_login.cpp
+  ;
+
+exe-test connection_caller_chain_receive_call_with_default_connection_get_caller_chain
+  : connection/caller_chain/receive_call_with_default_connection_get_caller_chain.cpp
+  : test-hello-stub
+    test-hello-skeleton
+  : <dependency>test-hello-stub
+    <implicit-dependency>test-hello-stub
+    <dependency>test-hello-skeleton
+    <implicit-dependency>test-hello-skeleton
+  ;
+
+exe-test connection_loginByCertificate_entity_id_and_file_private_key_ok
+  : connection/loginByCertificate/entity_id_and_file_private_key_ok.cpp
+  ;
+
+exe-test connection_loginByPassword_after_logout
+  : connection/loginByPassword/after_logout.cpp
+  ;
+
+exe-test connection_loginByPassword_entity_id_and_password_ok
+  : connection/loginByPassword/entity_id_and_password_ok.cpp
+  ;
+
+exe-test connection_loginByPassword_login_when_already_logged
+  : connection/loginByPassword/login_when_already_logged.cpp
+  ;
+
+exe-test connection_loginByPassword_wrong_password
+  : connection/loginByPassword/wrong_password.cpp
+  ;
+
+exe-test connection_login_login_info_after_login
+  : connection/login/login_info_after_login.cpp
+  ;
+
+exe-test openbus_context_calls_with_default_connection
+  : openbus_context/calls_with_default_connection.cpp
+  : test-hello-stub
+  : <dependency>test-hello-stub
+    <implicit-dependency>test-hello-stub
+  ;
+
+exe-test openbus_context_calls_with_dispatcher
+  : openbus_context/calls_with_dispatcher.cpp
+  : test-hello-stub
+  : <dependency>test-hello-stub
+    <implicit-dependency>test-hello-stub
+  ;
+
+exe-test openbus_context_calls_with_thread_requester
+  : openbus_context/calls_with_thread_requester.cpp
+  : test-hello-stub
+  : <dependency>test-hello-stub
+    <implicit-dependency>test-hello-stub
+  ;
+
+exe-test openbus_context_create_connection_to_accessible_bus
+  : openbus_context/create_connection_to_accessible_bus.cpp
+  ;
+
+exe-test openbus_context_create_connection_to_inaccessible_bus
+  : openbus_context/create_connection_to_inaccessible_bus.cpp
+  ;
+
+exe-test openbus_context_create_connection_to_invalid_host
+  : openbus_context/create_connection_to_invalid_host.cpp
+  ;
+
+exe-test openbus_context_get_manager
+  : openbus_context/get_manager.cpp
+  ;
+
+exe-test fail_user_created_orb
+  : fail_user_created_orb.cpp
+  ;
+
+exe-test register_and_get_offer
+  : register_and_get_offer.cpp
+  : test-hello-stub
+    test-hello-skeleton
+  : <dependency>test-hello-stub
+    <implicit-dependency>test-hello-stub
+    <dependency>test-hello-skeleton
+    <implicit-dependency>test-hello-skeleton
+  ;
 
 alias run-tests
- : [ run connect_host_port_connect_to_right_host_and_port ]
-   [ run connect_host_port_connect_to_wrong_host_and_port
-     : -wrong-port [ ob-tests.openbus-wrong-port ] ]
-#   connection_caller_chain_receive_call_with_default_connection_get_caller_chain-run
-   [ run connect_orb_connect_getting_orb_with_createORB ]
-#   [ run connection_caller_chain_receive_call_with_default_connection_get_caller_chain ]
-   [ run connection_caller_chain_decode_chain_wrong_context_id ]
-   [ run connection_caller_chain_decode_default_octet_sequence ]
-   [ run connection_caller_chain_encode_and_decode_chain ]
-   [ run connection_caller_chain_encode_default_caller_chain ]
-   [ run connection_caller_chain_make_chain_for_invalid_login ]
-   [ run connection_caller_chain_make_chain_for_valid_login ]
-   [ run connection_loginByCertificate_entity_id_and_file_private_key_ok : : admin/TestCppHello.key ]
-   [ run connection_loginByPassword_after_logout ]
-   [ run connection_loginByPassword_entity_id_and_password_ok ]
-   [ run connection_loginByPassword_login_when_already_logged ]
-   [ run connection_loginByPassword_wrong_password ]
-   [ run connection_login_login_info_after_login ]
-#   [ run connection_manager_calls_with_default_connection ]
-#   [ run connection_manager_calls_with_dispatcher ]
-#   [ run connection_manager_calls_with_thread_requester ]
-   [ run connection_manager_create_connection_to_accessible_bus ]
-   [ run connection_manager_create_connection_to_inaccessible_bus ]
-   [ run connection_manager_create_connection_to_invalid_host ]
-   [ run connection_manager_get_manager ]
-   [ run connection_manager_receive_call_with_default_connection ]
-   [ run fail_user_created_orb ]
-   [ run get_offer ]
-#   [ run register_service ]
- ;
-explicit run-tests ;
-
+  : [ run connect_host_port_connect_to_right_host_and_port ]
+    [ run connect_host_port_connect_to_wrong_host_and_port 
+      : -wrong-port [ ob-tests.openbus-wrong-port ] ]
+    [ run connect_orb_connect_getting_orb_with_createORB ]
+    [ run connection_caller_chain_decode_chain_wrong_context_id ]
+    [ run connection_caller_chain_decode_default_octet_sequence ]
+    [ run connection_caller_chain_encode_and_decode_chain ]
+    [ run connection_caller_chain_encode_default_caller_chain ]
+    [ run connection_caller_chain_make_chain_for_invalid_login ]
+    [ run connection_caller_chain_make_chain_for_valid_login ]
+    # [ run connection_caller_chain_receive_call_with_default_connection_get_caller_chain ]
+    [ run connection_loginByCertificate_entity_id_and_file_private_key_ok
+      : : admin/TestCppHello.key ]
+    [ run connection_loginByPassword_after_logout ]
+    [ run connection_loginByPassword_entity_id_and_password_ok ]
+    [ run connection_loginByPassword_login_when_already_logged ]
+    [ run connection_loginByPassword_wrong_password ]
+    [ run connection_login_login_info_after_login ]
+    # [ run openbus_context_calls_with_default_connection ]
+    # [ run openbus_context_calls_with_dispatcher ]
+    # [ run openbus_context_calls_with_thread_requester ]
+    [ run openbus_context_create_connection_to_accessible_bus ]
+    [ run openbus_context_create_connection_to_inaccessible_bus ]
+    [ run openbus_context_create_connection_to_invalid_host ]
+    [ run openbus_context_get_manager ]
+    [ run fail_user_created_orb ]
+    [ run register_and_get_offer ]
+  ;
