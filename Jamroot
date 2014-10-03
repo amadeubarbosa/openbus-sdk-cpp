@@ -40,10 +40,10 @@ import tao-idl ;
 
 path-constant here : . ;
 
-tao-install-path = [ os.environ TAO_INSTALL_PATH ] ;
-if ! $(tao-install-path)
+ace-root-path = [ os.environ ACE_ROOT_PATH ] ;
+if ! $(ace-root-path)
 {
-  tao-install-path = $(here)/../../install/tao ;
+  ace-root-path = $(here)/../../build/ACE_wrappers ;
 }
 
 openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
@@ -53,8 +53,8 @@ if ! $(openbus-idl-path)
 }
 
 using tao-idl
-  : $(tao-install-path)/bin
-  : $(tao-install-path)/lib
+  : $(ace-root-path)/bin
+  : $(ace-root-path)/lib
   ;
 
 rule tag ( name : type ? : property-set )
@@ -144,6 +144,7 @@ lib openbus
     /openssl//openssl
     idls
  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
+   <target-os>windows:<library>/scs//scs-stub
    <include>include
    <threading>multi:<source>/boost//thread
    <dependency>idls

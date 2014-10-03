@@ -1,9 +1,15 @@
 import os ;
 
-local tao-install-path = [ os.environ TAO_INSTALL_PATH ] ;
-if ! $(tao-install-path)
+local ace-root-path = [ os.environ ACE_ROOT_PATH ] ;
+if ! $(ace-root-path)
 {
-  tao-install-path = "../../install/tao" ;
+  ace-root-path = "../../build/ACE_wrappers" ;
+}
+
+local tao-root-path = [ os.environ TAO_ROOT_PATH ] ;
+if ! $(tao-root-path)
+{
+  tao-root-path = $(ace-root-path)/TAO ;
 }
   
 local openssl-install-path = [ os.environ OPENSSL_INSTALL_PATH ] ;
@@ -39,57 +45,78 @@ project openssl
   ;
 
 lib crypto
-  :
+  : 
   : <search>$(openssl-install-path)/lib
-  ;
-  
-lib openssl
-  : crypto
-  : <name>ssl <search>$(openssl-install-path)/lib
   ;  
 
-project TAO
-  : requirements <include>$(tao-install-path)/include
-  ;
-  
-lib ACE
-  :
-  : <search>$(tao-install-path)/lib
+lib crypto
+  : 
+  : <name>libeay32
+    <search>$(openssl-install-path)/lib
+    <target-os>windows
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssl 
+    <search>$(openssl-install-path)/lib
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssleay32 
+    <search>$(openssl-install-path)/lib
+    <target-os>windows
+  ;  
+
+project ACE
+  : requirements <include>$(ace-root-path)
+    <target-os>windows:<define>WIN32
   ;
 
+lib ACE
+  : 
+  : <search>$(ace-root-path)/lib
+  ;
+
+project TAO
+  : requirements <include>$(tao-root-path)
+  ;
+  
 lib TAO_AnyTypeCode
   : 
-  : <search>$(tao-install-path)/lib
+  : <search>$(ace-root-path)/lib
   ;
 
 lib TAO_PortableServer
   : 
-  : <search>$(tao-install-path)/lib
+  : <search>$(ace-root-path)/lib
   ;
 
 lib TAO_PI
   : 
-  : <search>$(tao-install-path)/lib
+  : <search>$(ace-root-path)/lib
   ;
 
 lib TAO_PI_Server
   : 
-  : <search>$(tao-install-path)/lib
+  : <search>$(ace-root-path)/lib
   ;
 
 lib TAO_CodecFactory
   : 
-  : <search>$(tao-install-path)/lib
+  : <search>$(ace-root-path)/lib
   ;
 
 lib TAO
-  : ACE TAO_AnyTypeCode
+  : /ACE//ACE
+    TAO_AnyTypeCode
     TAO_PortableServer
     TAO_PI
     TAO_PI_Server
     TAO_AnyTypeCode
     TAO_CodecFactory
-  : <search>$(tao-install-path)/lib
+  : <search>$(ace-root-path)/lib
   ;
 
 project dl ;

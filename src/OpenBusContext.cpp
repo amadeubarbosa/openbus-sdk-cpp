@@ -216,8 +216,13 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
   ctxIdAny <<= idl_cr::CredentialContextId;
   CORBA::OctetSeq_var ctxIdEnc(_orb_info->codec->encode_value(ctxIdAny));
   CORBA::Any chainAny;
-  chainAny <<= (idl_cr::ExportedCallChain) { chain.busid().c_str(),
-    chain.signedCallChain() };
+
+  //MSVC 2008
+  idl_cr::ExportedCallChain exported_chain;
+  exported_chain.bus = chain.busid().c_str();
+  exported_chain.signedChain = chain.signedCallChain();
+  chainAny <<= exported_chain;
+
   CORBA::OctetSeq_var chainEnc(_orb_info->codec->encode_value(chainAny));
   CORBA::OctetSeq encoded;
   encoded.length(ctxIdEnc->length() + chainEnc->length());

@@ -23,6 +23,8 @@ exe simple_client
    /openssl//openssl
    hello-stub
  : <threading>multi:<source>/boost//thread
+   <target-os>windows:<library>/openbus//idls
+   <target-os>windows:<library>/scs//scs-stub
    <dependency>hello-stub
    <implicit-dependency>hello-stub
    <link>static,<target-os>linux:<source>/dl//dl
@@ -41,6 +43,8 @@ exe simple_server
    hello-stub
    hello-skeleton
  : <threading>multi:<source>/boost//thread
+   <target-os>windows:<library>/openbus//idls
+   <target-os>windows:<library>/scs//scs-stub
    <dependency>hello-stub
    <implicit-dependency>hello-stub
    <dependency>hello-skeleton
