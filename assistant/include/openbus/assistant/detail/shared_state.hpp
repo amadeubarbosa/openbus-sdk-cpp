@@ -24,7 +24,7 @@
 
 namespace openbus { namespace assistant {
 
-unsigned int const default_retry_wait = 30u;
+float const default_retry_wait = 30.0f;
 
 namespace assistant_detail {
 

@@ -37,6 +37,8 @@ exe-test create_assistant_with_private_key_with_login_callback_with_register_ser
 exe-test find_service_and_immediate_timeout : find_service_and_immediate_timeout.cpp ;
 exe-test find_service_and_never_timeout : find_service_and_never_timeout.cpp ;
 exe-test find_service_and_timeout : find_service_and_timeout.cpp ;
+exe-test set_interval_ok : set_interval_ok.cpp ;
+exe-test set_interval_zero : set_interval_zero.cpp ;
 
 alias tests : $(all-tests) ;
 explicit tests ;

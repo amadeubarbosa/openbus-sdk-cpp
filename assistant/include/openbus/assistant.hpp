@@ -28,8 +28,10 @@
 #include <scs/IComponent.h>
 #include <openbus/OpenBusContext.hpp>
 
+#include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/mpl/void.hpp>
 #include <boost/mpl/vector.hpp>
+#include <stdexcept>
 
 namespace openbus { namespace assistant {
 
@@ -89,6 +91,7 @@ protected:
   template <typename ArgumentPack>
   AssistantImpl(ArgumentPack const& args)
   {
+    namespace math = boost::math;
     namespace mpl = boost::mpl;
     namespace parameter = boost::parameter;
     namespace tag = keywords::tag;
@@ -209,11 +212,16 @@ protected:
        , args[_log_level | logger::warning_level]
        );
 
-
-    typedef boost::chrono::seconds seconds;
-    unsigned int retry_wait
+    typedef boost::chrono::milliseconds milliseconds;
+    float retry_wait
       = args[_retry_wait | assistant::default_retry_wait];
-    state->retry_wait = seconds(retry_wait);
+
+    if (!(math::isfinite)(retry_wait) || retry_wait < 1.0f)
+    {
+      throw std::invalid_argument("retry_wait < 1s"); 
+    }
+    state->retry_wait = milliseconds(
+      static_cast<int>(ceil(retry_wait * 1000.0f)));
   }
 
   typedef boost::mpl::void_ void_;
@@ -593,7 +601,7 @@ struct Assistant : AssistantImpl
     (private_key, (openbus::PrivateKey))
     (in_out(argc), (int))
     (in_out(argv), (char**))
-    (retry_wait, (unsigned int))
+    (retry_wait, (float))
     (on_login_error, (login_error_callback_type))
     (on_register_error, (register_error_callback_type))
     (on_fatal_error, (fatal_error_callback_type))

@@ -496,7 +496,7 @@ e o seu retorno não deve se repetir, já que o objeto `LoginProcess` só é vá
   [
         [`_retry_wait`]
 [Número de segundos de espera em caso de erros. Esse argumento modifica o tempo entre tentativas de operações
-com o barramento.]
+com o barramento. Não deve ser menor do que 1 segundo.]
   ]
   [
         [`_log_level`]

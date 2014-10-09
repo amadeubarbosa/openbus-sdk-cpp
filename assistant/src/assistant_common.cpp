@@ -17,6 +17,7 @@
 #include <boost/utility/result_of.hpp>
 
 #include <boost/chrono/include.hpp>
+#include <boost/chrono/ceil.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/preprocessor/facilities/empty.hpp>
 
