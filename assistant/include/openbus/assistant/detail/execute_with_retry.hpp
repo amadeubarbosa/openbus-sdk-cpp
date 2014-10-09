@@ -58,14 +58,6 @@
     {                                                                   \
       x(e);                                                             \
     }                                                                   \
-  catch(CORBA::SystemException const& e)                                \
-    {                                                                   \
-      x(e);                                                             \
-    }                                                                   \
-  catch(CORBA::UserException const& e)                                  \
-    {                                                                   \
-      x(e);                                                             \
-    }                                                                   \
   catch(std::exception& e)                                              \
     {                                                                   \
       x(e);                                                             \

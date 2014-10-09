@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 #include <openbus/assistant.hpp>
 #include <iostream>
-#include <stubs/greetings.h>
+#include <greetingsC.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -24,7 +24,8 @@ namespace access_control
  = tecgraf::openbus::core::v2_0::services::access_control;
 
 template <typename F>
-void try_call_with_found_reference(offer_registry::ServiceOfferDescSeq offers, F f)
+void try_call_with_found_reference(offer_registry::ServiceOfferDescSeq offers,
+                                   F f)
 {
   if (offers.length() == 0)
   {
@@ -44,7 +45,8 @@ void try_call_with_found_reference(offer_registry::ServiceOfferDescSeq offers, F
   }
   else
   {
-    std::cout << "Existe mais de um servico Hello no barramento. Tentaremos encontrar uma funcional." << std::endl;
+    std::cout << "Existe mais de um servico Hello no barramento. "
+      "Tentaremos encontrar uma funcional." << std::endl;
 
     for(CORBA::ULong i = 0; i != offers.length(); ++i)
     {
@@ -71,7 +73,8 @@ void try_call_with_found_reference(offer_registry::ServiceOfferDescSeq offers, F
       catch (CORBA::COMM_FAILURE const&)
       {
         std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
-          "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+          "ainda disponivel ou se sua conexao com o mesmo foi interrompida"
+                  << std::endl;
       }
     }
   }
@@ -93,7 +96,7 @@ struct sayGreetings
   const char* language;
 };
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   // Inicializando CORBA e ativando o RootPOA
   using namespace openbus::assistant::keywords;
@@ -110,8 +113,8 @@ int main(int argc, char** argv)
   props[1].name  = "openbus.component.facet";
   props[1].value = "greetings";
   
-  const char* languages[] = { "english", "portuguese", "german" };
-  for(const char** language = languages
+  const char *languages[] = { "english", "portuguese", "german" };
+  for(const char **language = languages
         ; language != &languages[3]; ++language)
   {
     props[2].name  = "language";

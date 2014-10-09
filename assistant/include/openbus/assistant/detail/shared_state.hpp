@@ -20,8 +20,6 @@
 #include <boost/chrono/include.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <CORBA.h>
-
 #include <iostream>
 
 namespace openbus { namespace assistant {

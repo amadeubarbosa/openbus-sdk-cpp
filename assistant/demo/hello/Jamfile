@@ -3,33 +3,55 @@ project openbus/assistant/demos ;
 
 path-constant here : . ;
 
-obj hello-idl : $(here)/idl/hello.idl /mico//mico ;
+obj hello-stub
+  : $(here)/idl/hello.idl
+  ;
+explicit hello-stub ;
+
+obj hello-skeleton
+  : $(here)/idl/hello.idl
+  : <generate>skeleton
+  ;
+explicit hello-skeleton ;
 
 exe hello_client
- : client/client.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
-   /openbus/assistant//assistant
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl)
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>hello-idl
-   <target-os>windows,<link>shared:<source>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/scs//idls
- ;
-exe hello_server
- : server/server.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl hello-idl
-   /openbus/assistant//assistant
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl)
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>hello-idl
-   <target-os>windows,<link>shared:<source>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/scs//idls
- ;
+  : src/client.cpp
+    /openbus//openbus
+    /openbus/assistant//assistant
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    hello-stub
+  : <threading>multi:<source>/boost//thread
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
+explicit hello_client ;
 
-alias hello : hello_client hello_server ;
+exe hello_server
+  : src/server.cpp
+    /openbus//openbus
+    /openbus/assistant//assistant
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    hello-stub
+    hello-skeleton
+  : <threading>multi:<source>/boost//thread
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>hello-skeleton
+    <implicit-dependency>hello-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
+explicit hello_server ;
+
+alias hello
+  : hello_client
+    hello_server
+  ;

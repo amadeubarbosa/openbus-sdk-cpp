@@ -3,8 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include <stubs/greetings.h>
-#include <CORBA.h>
+#include <greetingsS.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
@@ -23,7 +22,7 @@ struct GreetingsImpl : virtual public ::POA_Greetings
 {
   GreetingsImpl(std::string const& greeting)
     : greeting(greeting) {}
-  char* sayGreetings()
+  char *sayGreetings()
   {
     return CORBA::string_dup(greeting.c_str());
   }
@@ -37,7 +36,7 @@ void run_orb(CORBA::ORB_var orb)
 }
 #endif
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   std::string private_key_filename;
   {

@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 #include <openbus/assistant.hpp>
-#include <stubs/hello.h>
+#include <helloS.h>
 
 #include <boost/program_options.hpp>
 
@@ -16,7 +16,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
   }
 };
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   std::string private_key_filename;
   {
@@ -58,4 +58,3 @@ int main(int argc, char** argv)
 
   assistant.orb()->run();
 }
-

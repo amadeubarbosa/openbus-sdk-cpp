@@ -4,8 +4,6 @@
 
 #include <boost/iterator/iterator_facade.hpp>
 
-#include <CORBA.h>
-
 namespace openbus { namespace assistant { namespace corba {
 
 template <typename Seq, typename E>

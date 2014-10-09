@@ -5,33 +5,44 @@ import string ;
 import feature ;
 import modules ;
 
-
 project rt ;
 
-lib real_rt : : <name>rt <link>shared ;
+lib real_rt
+  :
+  : <link>shared
+  ;
 explicit real_rt ;
-alias rt : : : : <target-os>linux:<source>real_rt ;
+
+alias rt
+  :
+  :
+  :
+  : <target-os>linux:<source>real_rt
+  ;
 
 project openbus/assistant ;
 
-lib assistant : src/assistant_common.cpp
- /mico//mico /scs//scs /boost//headers /logger//logger
- /openssl//openssl /openbus//openbus
- /boost//chrono /boost//system rt
- : <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
-   <include>include
-   <threading>multi:<source>src/assistant_mt.cpp
-   <threading>single:<source>src/assistant_st.cpp 
-   <threading>multi:<source>/boost//thread
-   <implicit-dependency>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/scs//idls
-   <link>shared:<define>OPENBUS_ASSISTANT_SHARED
-   <define>OPENBUS_ASSISTANT_SOURCE
- : :
-   <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
-   <include>include
-   <link>shared:<define>OPENBUS_ASSISTANT_SHARED
- ;
+lib assistant
+  : src/assistant_common.cpp
+    /scs//scs
+    /logger//logger
+    /openssl//openssl
+    /openbus//openbus
+    /boost//headers
+    /boost//chrono
+    /boost//system
+    rt
+  : <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
+    <link>shared:<define>OPENBUS_ASSISTANT_SHARED
+    <define>OPENBUS_ASSISTANT_SOURCE
+    <include>include
+    <threading>multi:<source>src/assistant_mt.cpp
+    <threading>multi:<source>/boost//thread
+    <threading>single:<source>src/assistant_st.cpp 
+  :
+  :
+    <threading>multi:<define>ASSISTANT_SDK_MULTITHREAD
+    <link>shared:<define>OPENBUS_ASSISTANT_SHARED
+    <include>include
+  ;
 explicit assistant ;
-

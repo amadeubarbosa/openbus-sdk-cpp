@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 #include <openbus/assistant.hpp>
 #include <iostream>
-#include <stubs/chain_validation.h>
+#include <chain_validationC.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;

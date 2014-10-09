@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include <stubs/independent_clock.h>
+#include <independent_clockC.h>
 
 #ifdef _WIN32
 #include <windows.h>

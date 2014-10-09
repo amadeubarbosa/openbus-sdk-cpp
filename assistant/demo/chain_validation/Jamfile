@@ -3,49 +3,79 @@ project openbus/assistant/demos ;
 
 path-constant here : . ;
 
-obj chain-validation-idl : $(here)/idl/chain_validation.idl /mico//mico ;
+obj chain_validation-stub
+  : $(here)/idl/chain_validation.idl
+  ;
+explicit chain_validation-stub ;
+
+obj chain_validation-skeleton
+  : $(here)/idl/chain_validation.idl
+  : <generate>skeleton
+  ;
+explicit chain_validation-skeleton ;
+
 
 exe chain_validation_client
- : client/client.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl chain-validation-idl
+ : src/client.cpp
+   /openbus//openbus
    /openbus/assistant//assistant
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) 
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   chain_validation-stub
+ : <threading>multi:<source>/boost//thread
+   <dependency>chain_validation-stub
+   <implicit-dependency>chain_validation-stub
    <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>chain-validation-idl
-   <target-os>windows,<link>shared:<source>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/scs//idls
+   
  ;
+explicit chain_validation_client ;
+
 exe chain_validation_executive
- : executive/executive.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl chain-validation-idl
+ : src/executive.cpp
+   /openbus//openbus
    /openbus/assistant//assistant
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl)
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>chain-validation-idl
-   <target-os>windows,<link>shared:<source>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/scs//idls
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   chain_validation-stub
+   chain_validation-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>chain_validation-stub
+   <implicit-dependency>chain_validation-stub
+   <dependency>chain_validation-skeleton
+   <implicit-dependency>chain_validation-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
  ;
+explicit chain_validation_executive ;
 
 exe chain_validation_secretary
- : secretary/secretary.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl chain-validation-idl
+ : src/secretary.cpp
+   /openbus//openbus
    /openbus/assistant//assistant
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl)
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>chain-validation-idl
-   <target-os>windows,<link>shared:<source>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/scs//idls
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   chain_validation-stub
+   chain_validation-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>chain_validation-stub
+   <implicit-dependency>chain_validation-stub
+   <dependency>chain_validation-skeleton
+   <implicit-dependency>chain_validation-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
  ;
+explicit chain_validation_secretary ;
 
-alias chain_validation : chain_validation_client chain_validation_executive
- chain_validation_secretary ;
+alias chain_validation
+  : chain_validation_client
+    chain_validation_executive
+    chain_validation_secretary
+  ;
 

@@ -27,8 +27,6 @@
 
 #include <scs/IComponent.h>
 #include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <CORBA.h>
 
 #include <boost/mpl/void.hpp>
 #include <boost/mpl/vector.hpp>

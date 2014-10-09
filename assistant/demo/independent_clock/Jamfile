@@ -3,34 +3,56 @@ project openbus/assistant/demos ;
 
 path-constant here : . ;
 
-obj independent-clock-idl : $(here)/idl/independent_clock.idl /mico//mico ;
+obj independent_clock-stub
+  : $(here)/idl/independent_clock.idl
+  ;
+explicit independent_clock-stub ;
+
+obj independent_clock-skeleton
+  : $(here)/idl/independent_clock.idl
+  : <generate>skeleton
+  ;
+explicit independent_clock-skeleton ;
 
 exe independent_clock_client
- : client/client.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl independent-clock-idl
+ : src/client.cpp
+   /openbus//openbus
    /openbus/assistant//assistant
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl)
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   independent_clock-stub
+ : <threading>multi:<source>/boost//thread
+   <dependency>independent_clock-stub
+   <implicit-dependency>independent_clock-stub
    <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>independent-clock-idl
-   <target-os>windows,<link>shared:<source>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/scs//idls
+   
  ;
+explicit independent_clock_client ;
+
 exe independent_clock_server
- : server/server.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openbus//core-idls /openssl//openssl independent-clock-idl
+ : src/server.cpp
+   /openbus//openbus
    /openbus/assistant//assistant
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl)
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>independent-clock-idl
-   <target-os>windows,<link>shared:<source>/openbus//core-idls
-   <target-os>windows,<link>shared:<source>/scs//idls
+   /boost//program_options
+   /scs//scs
+   /boost//headers
+   /logger//logger
+   /openssl//openssl
+   independent_clock-stub
+   independent_clock-skeleton
+ : <threading>multi:<source>/boost//thread
+   <dependency>independent_clock-stub
+   <implicit-dependency>independent_clock-stub
+   <dependency>independent_clock-skeleton
+   <implicit-dependency>independent_clock-skeleton
+   <link>static,<target-os>linux:<source>/dl//dl   
  ;
+explicit independent_clock_server ;
 
-alias independent_clock : independent_clock_client independent_clock_server ;
-
+alias independent_clock
+  : independent_clock_client
+    independent_clock_server
+  ;

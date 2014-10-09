@@ -17,12 +17,6 @@
 #include <boost/type_traits/add_const.hpp>
 
 #include <stdexcept>
-#include <CORBA.h>
-#include <stubs/scs.h>
-#include <stubs/core.h>
-#include <stubs/credential.h>
-#include <stubs/access_control.h>
-#include <stubs/offer_registry.h>
 
 namespace openbus { namespace assistant {
 

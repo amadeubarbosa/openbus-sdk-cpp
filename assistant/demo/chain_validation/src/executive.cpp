@@ -3,8 +3,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include <stubs/chain_validation.h>
-#include <CORBA.h>
+#include <chain_validationS.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>

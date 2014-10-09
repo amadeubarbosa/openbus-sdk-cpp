@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 #include <openbus/assistant.hpp>
 #include <iostream>
-#include <stubs/dedicated_clock.h>
+#include <dedicated_clockC.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -39,12 +39,11 @@ demo::Clock_ptr get_clock(offer_registry::ServiceOfferDescSeq const& offers)
   {
     std::cout << "Existe mais de um servico Clock no barramento. Tentaremos encontrar uma funcional." << std::endl;
 
-    for(CORBA::ULong i = 0; i != offers.length(); ++i)
+    for(CORBA::ULong i(0); i != offers.length(); ++i)
     {
       try
       {
-        CORBA::Object_var o = offers[i].service_ref
-          ->getFacetByName("clock");
+        CORBA::Object_var o(offers[i].service_ref->getFacetByName("clock"));
         return demo::Clock::_narrow(o);
       }
       catch(CORBA::TRANSIENT const&) {}
@@ -73,7 +72,8 @@ int main(int argc, char** argv)
       if(!CORBA::is_nil(clock))
       {
         // Chama a funcao
-        std::cout << "Hora no servidor em ticks: " << clock->getTimeInTicks() << std::endl;
+        std::cout << "Hora no servidor em ticks: "
+                  << clock->getTimeInTicks() << std::endl;
       }
     }
     catch (services::ServiceFailure e)
@@ -83,11 +83,13 @@ int main(int argc, char** argv)
     catch (CORBA::TRANSIENT const&)
     {
       std::cout << "Erro de comunicacao. Verifique se o sistema se encontra "
-        "ainda disponivel ou se sua conexao com o mesmo foi interrompida" << std::endl;
+        "ainda disponivel ou se sua conexao com o mesmo foi interrompida"
+                << std::endl;
     }
     catch (CORBA::OBJECT_NOT_EXIST const&)
     {
-      std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel" << std::endl;
+      std::cout << "Objeto remoto nao existe mais. Verifique se o sistema se encontra disponivel"
+                << std::endl;
     }
 
     mysleep();

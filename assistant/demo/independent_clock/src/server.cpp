@@ -3,11 +3,31 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include <stubs/dedicated_clock.h>
-#include <CORBA.h>
+#include <independent_clockS.h>
 #include <time.h>
 
+#ifndef OPENBUS_SDK_MULTITHREAD
+#error This demo requires multithread
+#endif
+
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+
 #include <boost/program_options.hpp>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+void mysleep()
+{
+#ifndef _WIN32
+  unsigned int t = 30u;
+  do { t = sleep(t); } while(t);
+#else
+  Sleep(3000);
+#endif
+}
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
@@ -22,6 +42,20 @@ struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
     return time(0);
   }
 };
+
+void run_orb(CORBA::ORB_var orb)
+{
+  orb->run();
+}
+
+void clock_loop()
+{
+  while(true)
+  {
+    std::cout << "Hora local atual em ticks: " << time(0) << std::endl;
+    mysleep();
+  }
+}
 
 int main(int argc, char** argv)
 {
@@ -51,8 +85,10 @@ int main(int argc, char** argv)
      , _private_key_filename = private_key_filename
      , _argc = argc, _argv = argv);
 
+  boost::thread orb_thread(boost::bind(&run_orb, assistant.orb()));
+
   scs::core::ComponentId componentId
-    = { "DedicatedClock", '1', '0', '0', ""};
+    = { "IndependentClock", '1', '0', '0', ""};
   scs::core::ComponentContext clock_component
     (assistant.orb(), componentId);
   ClockImpl clock_servant;
@@ -64,7 +100,8 @@ int main(int argc, char** argv)
   properties[0].value = "Demos";
   assistant.registerService(clock_component.getIComponent(), properties);
 
-  assistant.orb()->run();
-
-  return 0;
+  boost::thread local_clock_thread(& ::clock_loop);
+  
+  orb_thread.join();
+  local_clock_thread.join();
 }
