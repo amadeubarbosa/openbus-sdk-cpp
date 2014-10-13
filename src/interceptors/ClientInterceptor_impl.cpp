@@ -8,9 +8,9 @@
 #include "openbus/log.hpp"
 
 //??
-#include <TAO/AnyTypeCode/AnyTypeCode_Adapter_Impl.h>
-#include <TAO/AnyTypeCode/ExceptionA.h>
-#include <TAO/AnyTypeCode/Any_Dual_Impl_T.h>
+#include <tao/AnyTypeCode/AnyTypeCode_Adapter_Impl.h>
+#include <tao/AnyTypeCode/ExceptionA.h>
+#include <tao/AnyTypeCode/Any_Dual_Impl_T.h>
 #include <boost/scoped_ptr.hpp>
 #include <openssl/sha.h>
 #include <cstddef>

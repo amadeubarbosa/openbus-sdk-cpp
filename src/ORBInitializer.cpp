@@ -6,7 +6,7 @@
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 
-#include <TAO/ORBInitializer_Registry.h>
+#include <tao/ORBInitializer_Registry.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
   #include <boost/thread/once.hpp>

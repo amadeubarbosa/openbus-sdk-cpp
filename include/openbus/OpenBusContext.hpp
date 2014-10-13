@@ -14,7 +14,7 @@
 #include "access_controlC.h"
 #include "offer_registryC.h"
 
-#include <TAO/LocalObject.h>
+#include <tao/LocalObject.h>
 #include <boost/function.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
