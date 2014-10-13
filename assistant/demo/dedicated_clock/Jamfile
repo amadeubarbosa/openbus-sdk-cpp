@@ -1,5 +1,5 @@
 
-project openbus/assistant/demos ;
+project openbus/assistant/demo/dedicated_clock ;
 
 path-constant here : . ;
 

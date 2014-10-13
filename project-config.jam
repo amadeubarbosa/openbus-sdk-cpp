@@ -12,10 +12,10 @@ if ! $(tao-root-path)
   tao-root-path = $(ace-root-path)/TAO ;
 }
   
-local openssl-install-path = [ os.environ OPENSSL_INSTALL_PATH ] ;
-if ! $(openssl-install-path)
+local openssl-root-path = [ os.environ OPENSSL_ROOT_PATH ] ;
+if ! $(openssl-root-path)
 {
-  openssl-install-path = "../../install/openssl" ;
+  openssl-root-path = "../../build/openssl" ;
 }
 
 local boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
@@ -41,31 +41,31 @@ use-project scs : $(scs-root-path) ;
 use-project logger : $(logger-root-path) ;
 
 project openssl
-  : requirements <include>$(openssl-install-path)/include
+  : requirements <include>$(openssl-root-path)/include
   ;
 
 lib crypto
   : 
-  : <search>$(openssl-install-path)/lib
+  : <search>$(openssl-root-path)
   ;  
 
 lib crypto
   : 
   : <name>libeay32
-    <search>$(openssl-install-path)/lib
+    <search>$(openssl-root-path)
     <target-os>windows
   ;  
 
 lib openssl
   : crypto
   : <name>ssl 
-    <search>$(openssl-install-path)/lib
+    <search>$(openssl-root-path)
   ;  
 
 lib openssl
   : crypto
   : <name>ssleay32 
-    <search>$(openssl-install-path)/lib
+    <search>$(openssl-root-path)
     <target-os>windows
   ;  
 

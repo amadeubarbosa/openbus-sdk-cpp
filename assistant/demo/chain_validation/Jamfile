@@ -1,5 +1,5 @@
 
-project openbus/assistant/demos ;
+project openbus/assistant/demo/chain_validation ;
 
 path-constant here : . ;
 

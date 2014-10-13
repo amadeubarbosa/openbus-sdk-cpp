@@ -25,8 +25,7 @@ exe hello_client
  : <threading>multi:<source>/boost//thread
    <dependency>hello-stub
    <implicit-dependency>hello-stub
-   <link>static,<target-os>linux:<source>/dl//dl
-   
+   <link>static,<target-os>linux:<source>/dl//dl   
  ;
 explicit hello_client ;
 

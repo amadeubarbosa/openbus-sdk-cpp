@@ -258,7 +258,7 @@ public:
     const std::string host,
     unsigned short port, 
     const Connection::ConnectionProperties &props = 
-    Connection::ConnectionProperties());
+      Connection::ConnectionProperties());
    
   /**
    * \brief Define a conexão padrão a ser usada nas chamadas.

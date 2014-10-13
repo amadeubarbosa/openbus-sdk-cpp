@@ -1,4 +1,4 @@
-project openbus/assistant/demos ;
+project openbus/assistant/demo/greetings ;
 
 path-constant here : . ;
 

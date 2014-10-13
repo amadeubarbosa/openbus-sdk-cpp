@@ -1,4 +1,4 @@
-project openbus/demo/multiplexing_clock ;
+project openbus/demo/multiplexing ;
 
 path-constant here : . ;
 
@@ -13,7 +13,7 @@ obj greetings_clock-skeleton
   ;
 explicit greetings_clock-skeleton ;
 
-exe multiplexing_clock_client
+exe multiplexing_client
  : src/client.cpp
    /openbus//openbus
    /boost//program_options
@@ -28,9 +28,9 @@ exe multiplexing_clock_client
    <link>static,<target-os>linux:<source>/dl//dl
    
  ;
-explicit multiplexing_clock_client ;
+explicit multiplexing_client ;
 
-exe multiplexing_clock_server
+exe multiplexing_server
  : src/server.cpp
    /openbus//openbus
    /boost//program_options
@@ -47,9 +47,9 @@ exe multiplexing_clock_server
    <implicit-dependency>greetings_clock-skeleton
    <link>static,<target-os>linux:<source>/dl//dl   
  ;
-explicit multiplexing_clock_server ;
+explicit multiplexing_server ;
 
-alias multiplexing_clock
-  : multiplexing_clock_client
-    multiplexing_clock_server
+alias multiplexing
+  : multiplexing_client
+    multiplexing_server
   ;
