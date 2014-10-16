@@ -51,6 +51,13 @@ lib crypto
 
 lib crypto
   : 
+  : <file>$(openssl-root-path)/libcrypto.a
+    <link>static
+    <target-os>darwin
+  ;  
+
+lib crypto
+  : 
   : <name>libeay32
     <search>$(openssl-root-path)
     <target-os>windows
@@ -60,6 +67,14 @@ lib openssl
   : crypto
   : <name>ssl 
     <search>$(openssl-root-path)
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssl 
+    <file>$(openssl-root-path)/libssl.a
+    <link>static
+    <target-os>darwin
   ;  
 
 lib openssl
@@ -77,6 +92,7 @@ project ACE
 lib ACE
   : 
   : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libACE.a
   ;
 
 project TAO
@@ -86,26 +102,31 @@ project TAO
 lib TAO_AnyTypeCode
   : 
   : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.a
   ;
 
 lib TAO_PortableServer
   : 
   : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PortableServer.a
   ;
 
 lib TAO_PI
   : 
   : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PI.a
   ;
 
 lib TAO_PI_Server
   : 
   : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PI_Server.a
   ;
 
 lib TAO_CodecFactory
   : 
   : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_CodecFactory.a
   ;
 
 lib TAO
@@ -117,6 +138,7 @@ lib TAO
     TAO_AnyTypeCode
     TAO_CodecFactory
   : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO.a
   ;
 
 project dl ;
