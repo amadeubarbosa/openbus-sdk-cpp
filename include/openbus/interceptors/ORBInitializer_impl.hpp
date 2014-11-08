@@ -7,6 +7,7 @@
 
 #include <tao/ORB.h>
 #include <tao/PI/PI.h>
+#include <tao/LocalObject.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/array.hpp>
 #include <memory>
@@ -54,7 +55,8 @@ struct OPENBUS_SDK_DECL ignore_interceptor
 };
 
 struct OPENBUS_SDK_DECL ORBInitializer : 
-  public PortableInterceptor::ORBInitializer 
+  public PortableInterceptor::ORBInitializer,
+  public CORBA::LocalObject  
 {
   ORBInitializer();
   ~ORBInitializer();
