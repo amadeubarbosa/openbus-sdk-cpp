@@ -48,7 +48,7 @@ OPENBUS_SDK_DECL log_type& log()
 }
 #endif
 
-interceptors::ORBInitializer orbInitializer;
+PortableInterceptor::ORBInitializer_var orb_initializer;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 boost::mutex _mutex;
@@ -60,7 +60,11 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
   boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
   log_scope l(log().general_logger(), info_level, "ORBInitializer");
-  PortableInterceptor::register_orb_initializer(&orbInitializer);
+  if (!orb_initializer.in())
+  {
+    orb_initializer = new interceptors::ORBInitializer;
+  }
+  PortableInterceptor::register_orb_initializer(orb_initializer.in());
   /* [obs] Mico 2.3.13 só permite a criação de apenas *um* ORB.
    * *CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "")
    * retorna o mesmo ORB.
@@ -73,12 +77,15 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
   } 
   catch (const CORBA::ORB_InvalidName &) 
   {
+    interceptors::ORBInitializer *_orb_initializer
+      (dynamic_cast<interceptors::ORBInitializer *>(orb_initializer.in()));
+    assert(_orb_initializer != 0);
     boost::shared_ptr<OpenBusContext> openbusContext
-      (new OpenBusContext(orb, orbInitializer._orb_info));
+      (new OpenBusContext(orb, _orb_initializer->_orb_info));
     l.level_log(debug_level, "Registrando OpenBusContext");
     orb->register_initial_reference("OpenBusContext", openbusContext.get());
-    orbInitializer.clientInterceptor->_openbus_ctx = openbusContext;
-    orbInitializer.serverInterceptor->_openbus_ctx = openbusContext;
+    _orb_initializer->clientInterceptor->_openbus_ctx = openbusContext;
+    _orb_initializer->serverInterceptor->_openbus_ctx = openbusContext;
   }
   l.log("Retornando ORB");
   return orb;

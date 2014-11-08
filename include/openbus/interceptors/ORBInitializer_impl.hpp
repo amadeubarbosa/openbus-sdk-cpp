@@ -54,7 +54,8 @@ struct OPENBUS_SDK_DECL ignore_interceptor
 };
 
 struct OPENBUS_SDK_DECL ORBInitializer : 
-  public PortableInterceptor::ORBInitializer 
+  public PortableInterceptor::ORBInitializer,
+  public CORBA::LocalObject
 {
   ORBInitializer();
   ~ORBInitializer();
