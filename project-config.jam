@@ -1,0 +1,118 @@
+# -*- coding: iso-8859-1-unix -*-
+
+import os ;
+
+local mico-dbg-root-path = [ os.environ MICO_DBG_ROOT_PATH ] ;
+if ! $(mico-dbg-root-path)
+{
+  mico-dbg-root-path = ../mico-mt-d ;
+}
+
+local mico-root-path = [ os.environ MICO_ROOT_PATH ] ;
+if ! $(mico-root-path)
+{
+  mico-root-path = ../mico-mt ;
+}
+
+local openssl-root-path = [ os.environ OPENSSL_ROOT_PATH ] ;
+if ! $(openssl-root-path)
+{
+  openssl-root-path = "../../build/openssl" ;
+}
+
+local scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
+if ! $(scs-root-path)
+{
+  scs-root-path = ../scs ;
+}
+
+local scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
+if ! $(scs-idl-path)
+{
+  scs-idl-path = ../scs-idl/src ;
+}
+
+local boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
+if ! $(boost-root-path)
+{
+  boost-root-path = "../boost" ;
+}
+
+local logger-root-path = [ os.environ LOGGER_ROOT_PATH ] ;
+if ! $(logger-root-path)
+{
+  logger-root-path = "../logger" ;
+}
+
+use-project boost : $(boost-root-path) ;
+use-project scs : $(scs-root-path) ;
+use-project logger : $(logger-root-path) ;
+
+project openssl
+  : requirements <include>$(openssl-root-path)/include
+  ;
+
+lib crypto
+  : 
+  : <search>$(openssl-root-path)
+  ;  
+
+lib crypto
+  : 
+  : <file>$(openssl-root-path)/libcrypto.a
+    <link>static
+    <target-os>darwin
+  ;  
+
+lib crypto
+  : 
+  : <name>libeay32
+    <search>$(openssl-root-path)
+    <target-os>windows
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssl 
+    <search>$(openssl-root-path)
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssl 
+    <file>$(openssl-root-path)/libssl.a
+    <link>static
+    <target-os>darwin
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssleay32 
+    <search>$(openssl-root-path)
+    <target-os>windows
+  ;  
+
+project mico
+  : requirements <threading>multi
+  ;
+
+lib mico
+  :
+  : <name>mico2.3.13
+    <variant>debug
+    <search>$(mico-dbg-root-path)/libs
+    <target-os>darwin,<link>static>:<file>$(mico-dbg-root-path)/libs/libmico2.3.13.a
+  :
+  : <include>$(mico-dbg-root-path)/include
+  ;
+
+lib mico
+  :
+  : <name>mico2.3.13
+    <variant>release
+    <search>$(mico-root-path)/libs
+    <target-os>darwin,<link>static>:<file>$(mico-root-path)/libs/libmico2.3.13.a
+  :
+  : <include>$(mico-root-path)/include
+  ;
+
