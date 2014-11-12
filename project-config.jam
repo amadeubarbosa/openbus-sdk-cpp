@@ -2,22 +2,22 @@
 
 import os ;
 
-local mico-dbg-root-path = [ os.environ MICO_DBG_ROOT_PATH ] ;
-if ! $(mico-dbg-root-path)
+local mico-dbg-install-path = [ os.environ MICO_DBG_INSTALL_PATH ] ;
+if ! $(mico-dbg-install-path)
 {
-  mico-dbg-root-path = ../mico-mt-d ;
+  mico-dbg-install-path = ../../install/mico-mt-d ;
 }
 
-local mico-root-path = [ os.environ MICO_ROOT_PATH ] ;
-if ! $(mico-root-path)
+local mico-install-path = [ os.environ MICO_INSTALL_PATH ] ;
+if ! $(mico-install-path)
 {
-  mico-root-path = ../mico-mt ;
+  mico-install-path = ../../install/mico-mt ;
 }
 
-local openssl-root-path = [ os.environ OPENSSL_ROOT_PATH ] ;
-if ! $(openssl-root-path)
+local openssl-install-path = [ os.environ OPENSSL_INSTALL_PATH ] ;
+if ! $(openssl-install-path)
 {
-  openssl-root-path = "../../build/openssl" ;
+  openssl-install-path = "../../install/openssl" ;
 }
 
 local scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
@@ -49,17 +49,17 @@ use-project scs : $(scs-root-path) ;
 use-project logger : $(logger-root-path) ;
 
 project openssl
-  : requirements <include>$(openssl-root-path)/include
+  : requirements <include>$(openssl-install-path)/include
   ;
 
 lib crypto
   : 
-  : <search>$(openssl-root-path)
+  : <search>$(openssl-install-path)/lib
   ;  
 
 lib crypto
   : 
-  : <file>$(openssl-root-path)/libcrypto.a
+  : <file>$(openssl-install-path)/lib/libcrypto.a
     <link>static
     <target-os>darwin
   ;  
@@ -67,20 +67,22 @@ lib crypto
 lib crypto
   : 
   : <name>libeay32
-    <search>$(openssl-root-path)
+    <search>$(openssl-install-path)/lib
     <target-os>windows
+  :
+  : <target-os>windows:<linkflags>"gdi32.lib user32.lib advapi32.lib"
   ;  
 
 lib openssl
   : crypto
   : <name>ssl 
-    <search>$(openssl-root-path)
+    <search>$(openssl-install-path)/lib
   ;  
 
 lib openssl
   : crypto
   : <name>ssl 
-    <file>$(openssl-root-path)/libssl.a
+    <file>$(openssl-install-path)/lib/libssl.a
     <link>static
     <target-os>darwin
   ;  
@@ -88,31 +90,114 @@ lib openssl
 lib openssl
   : crypto
   : <name>ssleay32 
-    <search>$(openssl-root-path)
+    <search>$(openssl-install-path)
     <target-os>windows
+  :
+  : <target-os>windows:<linkflags>"gdi32.lib user32.lib advapi32.lib"
   ;  
 
 project mico
   : requirements <threading>multi
   ;
 
+lib pthreads
+  : 
+  : <target-os>windows
+    <variant>debug
+    <search>$(mico-dbg-install-path)/lib
+  : 
+  : <define>HAVE_THREADS
+    <define>HAVE_PTHREADS
+    <define>HAVE_PTHREADS_VC
+    <link>static:<define>PTW32_STATIC_LIB
+    <include>$(mico-dbg-install-path)/include/pthreads
+  ;
+
+lib pthreads
+  : 
+  : <target-os>windows
+    <variant>release
+    <search>$(mico-install-path)/lib
+  : 
+  : <define>HAVE_THREADS
+    <define>HAVE_PTHREADS
+    <define>HAVE_PTHREADS_VC
+    <link>static:<define>PTW32_STATIC_LIB
+    <include>$(mico-install-path)/include/pthreads
+  ;
+
 lib mico
   :
   : <name>mico2.3.13
     <variant>debug
-    <search>$(mico-dbg-root-path)/libs
-    <target-os>darwin,<link>static>:<file>$(mico-dbg-root-path)/libs/libmico2.3.13.a
+    <link>shared
+    <search>$(mico-dbg-install-path)/lib
+    <target-os>darwin,<link>static>:<file>$(mico-dbg-install-path)/lib/libmico2.3.13.a
   :
-  : <include>$(mico-dbg-root-path)/include
+  : <include>$(mico-dbg-install-path)/include
+    <toolset>msvc:<source>pthreads
+    <toolset>msvc:<define>__MICO_ORB__
+    <toolset>msvc:<define>USE_MESSAGING
+    <toolset>msvc:<define>NEED_THREADID_OPERATORS
+    <toolset>msvc:<define>THREADING_POLICIES
+    <toolset>msvc:<linkflags>ws2_32.lib
+    <toolset>msvc,<link>shared:<define>MICO_SHARED
+    <toolset>msvc:<include>$(mico-dbg-install-path)/include/windows
+  ;
+
+lib mico
+  :
+  : <name>libmico2.3.13
+    <variant>debug
+    <link>static
+    <search>$(mico-dbg-install-path)/lib
+    <target-os>darwin,<link>static>:<file>$(mico-dbg-install-path)/lib/libmico2.3.13.a
+  :
+  : <include>$(mico-dbg-install-path)/include
+    <toolset>msvc:<source>pthreads
+    <toolset>msvc:<define>__MICO_ORB__
+    <toolset>msvc:<define>USE_MESSAGING
+    <toolset>msvc:<define>NEED_THREADID_OPERATORS
+    <toolset>msvc:<define>THREADING_POLICIES
+    <toolset>msvc:<linkflags>ws2_32.lib
+    <toolset>msvc,<link>shared:<define>MICO_SHARED
+    <toolset>msvc:<include>$(mico-dbg-install-path)/include/windows
   ;
 
 lib mico
   :
   : <name>mico2.3.13
     <variant>release
-    <search>$(mico-root-path)/libs
-    <target-os>darwin,<link>static>:<file>$(mico-root-path)/libs/libmico2.3.13.a
+    <link>shared
+    <search>$(mico-install-path)/lib
+    <target-os>darwin,<link>static>:<file>$(mico-install-path)/lib/libmico2.3.13.a
   :
-  : <include>$(mico-root-path)/include
+  : <include>$(mico-install-path)/include
+    <toolset>msvc:<source>pthreads
+    <toolset>msvc:<define>__MICO_ORB__
+    <toolset>msvc:<define>USE_MESSAGING
+    <toolset>msvc:<define>NEED_THREADID_OPERATORS
+    <toolset>msvc:<define>THREADING_POLICIES
+    <toolset>msvc:<linkflags>ws2_32.lib
+    <toolset>msvc,<link>shared:<define>MICO_SHARED
+    <toolset>msvc:<include>$(mico-install-path)/include/windows
   ;
 
+lib mico
+  :
+  : <name>libmico2.3.13
+    <variant>release
+    <link>static
+    <search>$(mico-install-path)/lib
+    <target-os>darwin,<link>static>:<file>$(mico-install-path)/lib/libmico2.3.13.a
+  :
+  : <include>$(mico-install-path)/include
+    <toolset>msvc:<source>pthreads
+    <toolset>msvc:<define>__MICO_ORB__
+    <toolset>msvc:<define>USE_MESSAGING
+    <toolset>msvc:<define>NEED_THREADID_OPERATORS
+    <toolset>msvc:<define>THREADING_POLICIES
+    <toolset>msvc:<linkflags>ws2_32.lib
+    <toolset>msvc,<link>shared:<define>MICO_SHARED
+    <toolset>msvc:<include>$(mico-install-path)/include/windows
+  ;

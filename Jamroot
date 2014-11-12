@@ -10,10 +10,10 @@ import version ;
 
 path-constant here : . ;
 
-mico-dbg-root-path = [ os.environ MICO_DBG_ROOT_PATH ] ;
-if ! $(mico-dbg-root-path)
+mico-dbg-install-path = [ os.environ MICO_DBG_INSTALL_PATH ] ;
+if ! $(mico-dbg-install-path)
 {
-  mico-dbg-root-path = $(here)/../mico-mt-d ;
+  mico-dbg-install-path = $(here)/../../install/mico-mt-d ;
 }
 
 scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
@@ -29,9 +29,8 @@ if ! $(openbus-idl-path)
 }
 
 using mico-idl
-  : $(mico-dbg-root-path)/idl
-    $(mico-dbg-root-path)/cpp
-  : $(mico-dbg-root-path)/libs
+  : $(mico-dbg-install-path)/bin
+  : $(mico-dbg-install-path)/lib
   : stubs
 ;
 
@@ -214,8 +213,14 @@ rule stage-demos-location ( requirements * )
 local all-demos = [ MATCH demo/(.*)/Jamfile : [ glob demo/*/Jamfile ] ] ;
 for local d in $(all-demos)
 {
-  install stage-demo-$(d) : demo/$(d)//$(d) : <conditional>@stage-demos-location
-   : <openbus-stage-demo-name>$(d) ;
+  install stage-demo-$(d)
+    : demo/$(d)//$(d)
+    : <conditional>@stage-demos-location
+      <install-dependencies>on
+      <install-type>EXE
+      <install-type>LIB
+    : <openbus-stage-demo-name>$(d)
+  ;
   explicit stage-demo-$(d) ;
 }
 alias stage-demos : stage-demo-$(all-demos) : <conditional>@stage-demos-location ;
