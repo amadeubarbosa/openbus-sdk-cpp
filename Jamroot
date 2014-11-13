@@ -7,13 +7,49 @@ import property-set ;
 import "class" : new ;
 import mico-idl ;
 import version ;
+import path ;
 
 path-constant here : . ;
 
-mico-dbg-install-path = [ os.environ MICO_DBG_INSTALL_PATH ] ;
-if ! $(mico-dbg-install-path)
+mico-debug-install-path = [ os.environ MICO_DEBUG_INSTALL_PATH ] ;
+if ! $(mico-debug-install-path)
 {
-  mico-dbg-install-path = $(here)/../../install/mico-mt-d ;
+  mico-debug-install-path = $(here)/../../install/mico-mt-d ;
+}
+
+mico-debug-static-install-path = [ os.environ MICO_DEBUG_STATIC_INSTALL_PATH ] ;
+if ! $(mico-debug-static-install-path)
+{
+  mico-debug-static-install-path = $(here)/../../install/mico-mt-s-d ;
+}
+
+mico-static-install-path = [ os.environ MICO_STATIC_INSTALL_PATH ] ;
+if ! $(mico-static-install-path)
+{
+  mico-static-install-path = $(here)/../../install/mico-mt-s ;
+}
+
+mico-install-path = [ os.environ MICO_INSTALL_PATH ] ;
+if ! $(mico-install-path)
+{
+  mico-install-path = $(here)/../../install/mico-mt ;
+}
+
+if [ path.exists $(mico-debug-install-path) ] 
+{
+  mico-idl-install-path = $(mico-debug-install-path) ;
+}
+else if [ path.exists $(mico-debug-static-install-path) ]
+{
+  mico-idl-install-path = $(mico-debug-static-install-path) ;
+}
+else if [ path.exists $(mico-static-install-path) ]
+{
+  mico-idl-install-path = $(mico-static-install-path) ;
+}
+else
+{
+  mico-idl-install-path = $(mico-install-path) ;
 }
 
 scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
@@ -29,8 +65,8 @@ if ! $(openbus-idl-path)
 }
 
 using mico-idl
-  : $(mico-dbg-install-path)/bin
-  : $(mico-dbg-install-path)/lib
+  : $(mico-idl-install-path)/bin
+  : $(mico-idl-install-path)/lib
   : stubs
 ;
 
@@ -77,12 +113,12 @@ rule tag ( name : type ? : property-set )
     }
     if <threading>multi in [ $(property-set).raw ]
     {
-      result = [ common.format-name <base> -mico
+      result = [ common.format-name <base> 
         -mt $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     else
     {
-      result = [ common.format-name <base> -mico
+      result = [ common.format-name <base> 
         $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     return $(result) ;
@@ -109,6 +145,7 @@ local rule core-idl-obj ( name : deps * )
   obj $(name).obj
     : $(openbus-idl-path)/$(name).idl
       # /scs//idls
+      /mico//mico
     : <include>$(openbus-idl-path)
       <include>$(scs-idl-path)
       <implicit-dependency>/scs//idls
@@ -126,6 +163,7 @@ core-idl-obj offer_registry : core.obj ;
 obj credential_v1_5.obj
   : $(here)/legacy/idl/credential_v1_5.idl
     /scs//idls
+    /mico//mico
   : <include>$(openbus-idl-path)
     <implicit-dependency>/scs//idls
   :
@@ -161,11 +199,9 @@ lib openbus
   ;
 explicit openbus ;
 
-install stage-libs
+install stage
   : openbus
-  : <location>stage
   ;
-explicit stage-libs ;
 
 feature.feature core-idl-diff
   : off on
@@ -193,13 +229,8 @@ install stage-stubs
   ;
 explicit stage-stubs ;
 
-alias stage
-  : stage-libs
-    stage-stubs
-  ;
-explicit stage ;
-
 install stage-tests : tests//tests : <location>stage-tests ;
+explicit stage-tests ;
 
 feature.feature <openbus-stage-demo-name> : : free ;
 
@@ -216,15 +247,15 @@ for local d in $(all-demos)
   install stage-demo-$(d)
     : demo/$(d)//$(d)
     : <conditional>@stage-demos-location
-      <install-dependencies>on
-      <install-type>EXE
-      <install-type>LIB
     : <openbus-stage-demo-name>$(d)
   ;
   explicit stage-demo-$(d) ;
 }
-alias stage-demos : stage-demo-$(all-demos) : <conditional>@stage-demos-location ;
-#explicit stage-demos ;
+alias stage-demos
+  : stage-demo-$(all-demos)
+  : <conditional>@stage-demos-location
+  ;
+explicit stage-demos ;
 
 rule stage-interop-location ( requirements * )
 {
@@ -236,49 +267,22 @@ rule stage-interop-location ( requirements * )
 local all-interops = [ MATCH interop/(.*)/Jamfile : [ glob interop/*/Jamfile ] ] ;
 for local d in $(all-interops)
 {
-  install stage-interop-$(d) : interop/$(d)//$(d) : <conditional>@stage-interop-location
-   : <openbus-stage-demo-name>$(d) ;
+  install stage-interop-$(d)
+    : interop/$(d)//$(d)
+    : <conditional>@stage-interop-location
+    : <openbus-stage-demo-name>$(d)
+    ;
   explicit stage-interop-$(d) ;
 }
 alias stage-interops : stage-interop-$(all-interops) ;
 
-rule stage-assistant-demos-location ( requirements * )
-{
-  local ps = [ new property-set $(requirements) ] ;
-  local name = [ $(ps).get <openbus-stage-demo-name> ] ;
-  return <location>stage-demos/assistant/$(name) ;
-}
-
-local all-assistant-demos = [ MATCH assistant/demo/(.*)/Jamfile : [ glob assistant/demo/*/Jamfile ] ] ;
-for local d in $(all-assistant-demos)
-{
-  install stage-assistant-demo-$(d) : assistant/demo/$(d)//$(d) : <conditional>@stage-assistant-demos-location
-   : <openbus-stage-demo-name>$(d)
+install stage-libs
+  : stage-demo-$(all-demos)
+  : <install-dependencies>on
+    <install-type>LIB
+    <location>stage-libs
   ;
-  explicit stage-assistant-demo-$(d) ;
-}
-alias stage-assistant-demos : stage-assistant-demo-$(all-assistant-demos) ;
-#explicit stage-assistant-demos ;
-
-install stage-assistant : assistant//assistant : <location>stage ;
-#explicit stage-assistant ;
-
-install stage-assistant-tests : assistant/tests//tests
- : <location>stage-tests/assistant ;
-#explicit stage-assistant-tests ;
-
-alias assistant-doc-onehtml : assistant/doc//documentation-html/<location>assistant-doc
-  assistant/doc//documentation-images/<location>assistant-doc
-  assistant/doc//documentation-tests
- : <format>onehtml ;
-explicit assistant-doc-onehtml ;
-
-alias assistant-doc : assistant-doc-onehtml
- ;
-explicit assistant-doc ;
-
-install stage-libs-deps : stage-demo-$(all-demos) stage-interop-$(all-interops)
- : <install-dependencies>on <install-type>SHARED_LIB <location>stage ;
+explicit stage-libs ;
 
 alias run-tests : tests//run-tests ;
 explicit run-tests ;
