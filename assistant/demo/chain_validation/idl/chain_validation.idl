@@ -1,9 +1,0 @@
-exception Unavailable {}; 
-
-interface Meeting {
-  long bookMeeting();
-};
-
-interface Message {
-  void sendMessage(in string message) raises (Unavailable);
-};
