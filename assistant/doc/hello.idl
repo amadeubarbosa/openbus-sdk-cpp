@@ -1,6 +1,0 @@
-//[say_hello_idl
-interface Hello {
-  void sayHello();
-};
-//]
-
