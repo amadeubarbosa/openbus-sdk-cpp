@@ -6,6 +6,7 @@ set BOOST_BUILD_ROOT_PATH=%BUILD%\boost-build
 set SCS_ROOT_PATH=%BUILD%\scs
 set LOGGER_ROOT_PATH=%BUILD%\logger
 set MICO_ROOT_PATH=%BUILD%\mico
+set MICO_BB_ROOT_PATH=%BUILD%\mico-bb
 set BOOST_BUILD_INSTALL_PATH=%INSTALL%\boost-build
 set OPENBUS_IDL_ROOT_PATH=%BUILD%\openbus-idl
 set SCS_IDL_ROOT_PATH=%BUILD%\scs-idl
@@ -73,3 +74,5 @@ copy stage-deps\* %PACK%\lib
 
 b2 -d+2 warnings=off stage-stubs
 robocopy /MIR stage-stubs %PACK%\include\openbus\stubs
+copy contrib\pack\demo\* %PACK%\demo
+copy %MICO_BB_ROOT_PATH%\mico-idl.jam %PACK%\demo
