@@ -1,28 +1,37 @@
-
-project openbus/demos ;
+project openbus/demos/greetings ;
 
 path-constant here : . ;
 
-alias greetings-idl : $(here)/idl/greetings.idl ;
+obj greetings-idl
+  : $(here)/idl/greetings.idl
+    /mico//mico
+  ;
+explicit greetings-idl ;
 
-exe greetings_client
- : client/client.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl greetings-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>greetings-idl
- ;
-exe greetings_server
- : server/server.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl greetings-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>greetings-idl
- ;
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /mico//mico
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      $(deps)
+    : <implicit-dependency>/openbus//core-idls
+      <threading>multi:<source>/boost//thread
+      <link>static,<target-os>linux:<source>/dl//dl
+      <implicit-dependency>$(deps)
+    ;
+  explicit $(name) ;
+}
 
-alias greetings : greetings_client greetings_server ;
+demo-exe greetings_client : client : greetings-idl ;
+demo-exe greetings_server : server : greetings-idl ;
 
+alias greetings
+  : greetings_client
+    greetings_server
+  ;

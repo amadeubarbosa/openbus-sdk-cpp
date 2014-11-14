@@ -1,38 +1,40 @@
 
-project openbus/demos ;
+project openbus/demo/audit ;
 
 path-constant demo-hello : ../hello ;
 
-obj hello-idl : $(demo-hello)/idl/hello.idl /mico//mico ;
+obj hello-idl
+  : $(demo-hello)/idl/hello.idl
+    /mico//mico
+  ;
+explicit hello-idl ;
 
-exe audit_client
- : client/client.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
-exe audit_server
- : server/server.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /mico//mico
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      $(deps)
+    : <implicit-dependency>/openbus//core-idls
+      <threading>multi:<source>/boost//thread
+      <link>static,<target-os>linux:<source>/dl//dl
+      <implicit-dependency>$(deps)
+    ;
+  explicit $(name) ;
+}
 
-exe audit_proxy
- : proxy/proxy.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
+demo-exe audit_client : client : hello-idl ;
+demo-exe audit_server : server : hello-idl ;
+demo-exe audit_proxy : proxy : hello-idl ;
 
-alias audit : audit_client audit_server audit_proxy ;
-
+alias audit
+  : audit_client
+    audit_server
+    audit_proxy
+;

@@ -73,6 +73,8 @@ int main(int argc, char** argv)
       desc.add_options()
         ("help", "This help message")
         ("private-key", po::value<std::string>(), "Path to private key")
+        ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
+        ("bus-port", po::value<unsigned int>(), "Host to Openbus (default: 2089)")
         ;
       po::variables_map vm;
       po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -85,6 +87,11 @@ int main(int argc, char** argv)
       }
       std::string private_key_filename = vm["private-key"].as<std::string>();
       private_key = openbus::PrivateKey(private_key_filename);
+
+      if(vm.count("bus-host"))
+        bus_host = vm["bus-host"].as<std::string>();
+      if(vm.count("bus-port"))
+        bus_port = vm["bus-port"].as<unsigned int>();
     }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -95,7 +102,7 @@ int main(int argc, char** argv)
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
     assert(openbusContext != 0);
-    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(bus_host, bus_port));
     try
     {
       conn->loginByCertificate("server", *private_key);

@@ -1,30 +1,37 @@
-
-project openbus/demos ;
+project openbus/demos/dedicated_clock ;
 
 path-constant here : . ;
 
-alias dedicated-clock-idl : $(here)/idl/dedicated_clock.idl ;
+obj dedicated_clock-idl
+  : $(here)/idl/dedicated_clock.idl
+    /mico//mico
+  ;
+explicit dedicated_clock-idl ;
 
-exe dedicated_clock_client
- : client/client.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl dedicated-clock-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) 
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>dedicated-clock-idl
- ;
-exe dedicated_clock_server
- : server/server.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl dedicated-clock-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <implicit-dependency>$(idl) 
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>dedicated-clock-idl
- ;
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /mico//mico
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      $(deps)
+    : <implicit-dependency>/openbus//core-idls
+      <threading>multi:<source>/boost//thread
+      <link>static,<target-os>linux:<source>/dl//dl
+      <implicit-dependency>$(deps)
+    ;
+  explicit $(name) ;
+}
 
-alias dedicated_clock : dedicated_clock_client dedicated_clock_server ;
+demo-exe dedicated_clock_client : client : dedicated_clock-idl ;
+demo-exe dedicated_clock_server : server : dedicated_clock-idl ;
 
+alias dedicated_clock
+  : dedicated_clock_client
+    dedicated_clock_server
+  ;
