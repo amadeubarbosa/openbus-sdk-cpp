@@ -1,39 +1,41 @@
 
-project openbus/demos ;
+project openbus/demos/chain_validation ;
 
 path-constant here : . ;
 
-obj chain-validation-idl : $(here)/idl/chain_validation.idl /mico//mico ;
+obj chain_validation-idl
+  : $(here)/idl/chain_validation.idl
+    /mico//mico
+  ;
+explicit chain_validation-idl ;
 
-exe chain_validation_client
- : client/client.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl chain-validation-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>chain-validation-idl
- ;
-exe chain_validation_executive
- : executive/executive.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl chain-validation-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>chain-validation-idl
- ;
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /mico//mico
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      $(deps)
+    : <implicit-dependency>/openbus//core-idls
+      <threading>multi:<source>/boost//thread
+      <link>static,<target-os>linux:<source>/dl//dl
+      <implicit-dependency>$(deps)
+    ;
+  explicit $(name) ;
+}
 
-exe chain_validation_secretary
- : secretary/secretary.cpp /openbus//openbus /boost//program_options
-   /mico//mico /scs//scs /boost//headers /logger//logger
-   /openssl//openssl chain-validation-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread <include>tests
-   <link>static,<target-os>linux:<source>/dl//dl
-   <implicit-dependency>chain-validation-idl
- ;
+demo-exe chain_validation_client : client : chain_validation-idl ;
+demo-exe chain_validation_executive : executive : chain_validation-idl ;
+demo-exe chain_validation_secretary : secretary : chain_validation-idl ;
 
-alias chain_validation : chain_validation_client chain_validation_executive
- chain_validation_secretary ;
+alias chain_validation
+  : chain_validation_client
+    chain_validation_executive
+    chain_validation_secretary
+  ;
 

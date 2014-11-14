@@ -2,6 +2,8 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <iostream>
+#include <boost/program_options.hpp>
+
 #include <stubs/hello.h>
 #include <stubs/sharedauth.h>
 
@@ -148,6 +150,32 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  unsigned short bus_port = 2089;
+  std::string bus_host = "localhost";
+  {
+    namespace po = boost::program_options;
+    po::options_description desc("Allowed options");
+    desc.add_options()
+      ("help", "This help message")
+      ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
+      ("bus-port", po::value<unsigned short>(), "Host to Openbus (default: 2089)")
+      ;
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+    
+    if(vm.count("help"))
+    {
+      std::cout << desc << std::endl;
+      return 0;
+    }
+ 
+    if(vm.count("bus-host"))
+      bus_host = vm["bus-host"].as<std::string>();
+    if(vm.count("bus-port"))
+      bus_port = vm["bus-port"].as<unsigned short>();
+  }
+
   // Inicializando CORBA e ativando o RootPOA
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
   CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
@@ -166,7 +194,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn = openbusContext->createConnection("localhost", 2089);
+      conn = openbusContext->createConnection(bus_host, bus_port);
 
       conn->onInvalidLogin( ::onReloginCallback());
 

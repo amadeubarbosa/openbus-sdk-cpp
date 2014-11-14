@@ -4,7 +4,7 @@
 #include <scs/ComponentContext.h>
 #include <iostream>
 
-#include <stubs/chain_validation.h>
+#include <stubs/hello.h>
 #include <CORBA.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -12,60 +12,55 @@
 #include <boost/bind.hpp>
 #endif
 
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <fstream>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
+namespace simple = tecgraf::openbus::interop::simple;
 namespace services = tecgraf::openbus::core::v2_0::services;
+namespace access_control = tecgraf::openbus::core::v2_0::services::access_control;
 
-struct MessageImpl : POA_Message
+struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 {
-  MessageImpl(Message_var executive_message
-              , openbus::OpenBusContext& openbusContext)
-    : executive_message(executive_message), openbusContext(openbusContext) {}
+  HelloImpl(simple::Hello_var hello
+            , openbus::OpenBusContext& openbusContext)
+    : hello(hello), openbusContext(openbusContext) {}
 
-  void sendMessage(const char* message)
+  void sayHello()
   {
-    std::cout << "Relaying message " << message << std::endl;
-    try
+    std::cout << "Hello called on proxy" << std::endl;
+    openbus::CallerChain chain = openbusContext.getCallerChain();
+    openbusContext.joinChain(chain);
+    if(chain != openbus::CallerChain())
     {
-      openbusContext.joinChain(openbusContext.getCallerChain());
-      executive_message->sendMessage(message);
-      std::cout << "Execution succesful" << std::endl;
+      std::cout << "Caller: " << chain.caller().entity << std::endl;
+      access_control::LoginInfoSeq originators = chain.originators();
+      for(std::size_t i = 0; i != originators.length(); ++i)
+      {
+        std::cout << "Originator: " << originators[i].entity << std::endl;
+      }
     }
-    catch(::Unavailable const& e)
-    {
-      std::cout << "Unavaible was thrown" << std::endl;
-      throw;
-    }
+    hello->sayHello();
   }
 
-  Message_var executive_message;
+  simple::Hello_var hello;
   openbus::OpenBusContext& openbusContext;
 };
 
-struct MeetingImpl : POA_Meeting
-{
-  CORBA::Long bookMeeting()
-  {
-    std::cout << "Meeting has been booked" << std::endl;
-    return 0;
-  }
-};
-
-::Message_ptr get_message(offer_registry::ServiceOfferDescSeq_var offers)
+simple::Hello_ptr get_hello(offer_registry::ServiceOfferDescSeq_var offers)
 {
   if (offers->length() == 0)
   {
     std::cout << "O servico Hello nao se encontra no barramento." << std::endl;
-    return ::Message::_nil();
+    return simple::Hello::_nil();
   }
   else if(offers->length() == 1)
   {
     CORBA::ULong i = 0;
-    return ::Message::_narrow
-      (offers[i].service_ref->getFacetByName("message"));
+    return simple::Hello::_narrow
+      (offers[i].service_ref->getFacetByName("hello"));
   }
   else
   {
@@ -76,13 +71,14 @@ struct MeetingImpl : POA_Meeting
       try
       {
         CORBA::Object_var o = offers[i].service_ref
-          ->getFacetByName("message");
-        return ::Message::_narrow(o);
+          ->getFacetByName("hello");
+        return simple::Hello::_narrow(o);
       }
       catch(CORBA::TRANSIENT const&) {}
       catch(CORBA::OBJECT_NOT_EXIST const&) {}
+      catch(CORBA::COMM_FAILURE const&) {}
     }
-    return ::Message::_nil();
+    return simple::Hello::_nil();
   }
 }
 
@@ -105,13 +101,17 @@ int main(int argc, char** argv)
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    CORBA::OctetSeq private_key;
+    boost::optional<openbus::PrivateKey> private_key;
+    unsigned short bus_port = 2089;
+    std::string bus_host = "localhost";
     {
       namespace po = boost::program_options;
       po::options_description desc("Allowed options");
       desc.add_options()
         ("help", "This help message")
         ("private-key", po::value<std::string>(), "Path to private key")
+        ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
+        ("bus-port", po::value<unsigned int>(), "Host to Openbus (default: 2089)")
         ;
       po::variables_map vm;
       po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -123,12 +123,12 @@ int main(int argc, char** argv)
         return 0;
       }
       std::string private_key_filename = vm["private-key"].as<std::string>();
-      std::ifstream f(private_key_filename.c_str());
-      f.seekg(0, std::ios::end);
-      std::size_t size = f.tellg();
-      f.seekg(0, std::ios::beg);
-      private_key.length(size);
-      f.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(private_key.get_buffer())), size);
+      private_key = openbus::PrivateKey(private_key_filename);
+
+      if(vm.count("bus-host"))
+        bus_host = vm["bus-host"].as<std::string>();
+      if(vm.count("bus-port"))
+        bus_port = vm["bus-port"].as<unsigned int>();
     }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -139,10 +139,10 @@ int main(int argc, char** argv)
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
     assert(openbusContext != 0);
-    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(bus_host, bus_port));
     try
     {
-      conn->loginByCertificate("secretary", private_key);
+      conn->loginByCertificate("proxy", *private_key);
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
     {
@@ -154,47 +154,40 @@ int main(int argc, char** argv)
 
     // Recebendo ofertas
     openbus::idl_or::ServicePropertySeq props;
-    props.length(3);
+    props.length(2);
     props[0].name  = "openbus.offer.entity";
-    props[0].value = "executive";
+    props[0].value = "server";
     props[1].name  = "openbus.component.facet";
-    props[1].value = "message";
+    props[1].value = "hello";
     offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     // Pegando uma oferta valida
-    ::Message_var message_executive = ::get_message(offers);
-    if(CORBA::is_nil(message_executive))
+    simple::Hello_ptr hello = ::get_hello(offers);
+    if(!CORBA::is_nil(hello))
     {
-      std::cout << "Error" << std::endl;
-      return 1;
-    }
-
-    scs::core::ComponentId message_componentId = { "Message", '1', '0', '0', "" };
-    scs::core::ComponentContext message_component
-      (openbusContext->orb(), message_componentId);
-    MessageImpl message_servant(message_executive, *openbusContext);
-    message_component.addFacet
-      ("message", ::_tc_Message->id(), &message_servant);
+      scs::core::ComponentId componentId;
+      componentId.name = "Hello";
+      componentId.major_version = '1';
+      componentId.minor_version = '0';
+      componentId.patch_version = '0';
+      componentId.platform_spec = "";
+      scs::core::ComponentContext hello_component
+        (openbusContext->orb(), componentId);
+      HelloImpl hello_servant(hello, *openbusContext);
+      hello_component.addFacet
+        ("hello", simple::_tc_Hello->id(), &hello_servant);
     
-    offer_registry::ServicePropertySeq properties;
-    properties.length(2);
-    properties[0].name = "offer.domain";
-    properties[0].value = "Demos";
-    openbusContext->getOfferRegistry()->registerService(message_component.getIComponent(), properties);
-
-    scs::core::ComponentId meeting_componentId = { "Meeting", '1', '0', '0', "" };
-    scs::core::ComponentContext meeting_component
-      (openbusContext->orb(), meeting_componentId);
-    MeetingImpl meeting_servant;
-    meeting_component.addFacet
-      ("meeting", ::_tc_Meeting->id(), &meeting_servant);
-    
-    openbusContext->getOfferRegistry()->registerService(meeting_component.getIComponent(), properties);
+      offer_registry::ServicePropertySeq properties;
+      properties.length(1);
+      properties[0].name = "offer.domain";
+      properties[0].value = "Demos";
+      openbusContext->getOfferRegistry()->registerService(hello_component.getIComponent(), properties);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-    orb_thread.join();
+      orb_thread.join();
 #else
-    orb->run();
+      orb->run();
 #endif
+    }
   }
   catch (services::ServiceFailure e)
   {
@@ -211,4 +204,3 @@ int main(int argc, char** argv)
   }
   return 1;
 }
-

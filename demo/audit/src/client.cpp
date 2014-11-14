@@ -2,24 +2,27 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <iostream>
-#include <stubs/chain_validation.h>
+#include <stubs/hello.h>
+
+#include <boost/program_options.hpp>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
+namespace simple = tecgraf::openbus::interop::simple;
 namespace services = tecgraf::openbus::core::v2_0::services;
 
-::Message_ptr get_message(offer_registry::ServiceOfferDescSeq_var offers)
+simple::Hello_ptr get_hello(offer_registry::ServiceOfferDescSeq_var offers)
 {
   if (offers->length() == 0)
   {
-    std::cout << "O servico Message nao se encontra no barramento." << std::endl;
-    return ::Message::_nil();
+    std::cout << "O servico Hello nao se encontra no barramento." << std::endl;
+    return simple::Hello::_nil();
   }
   else if(offers->length() == 1)
   {
     CORBA::ULong i = 0;
-    return ::Message::_narrow
-      (offers[i].service_ref->getFacetByName("message"));
+    return simple::Hello::_narrow
+      (offers[i].service_ref->getFacetByName("hello"));
   }
   else
   {
@@ -30,13 +33,13 @@ namespace services = tecgraf::openbus::core::v2_0::services;
       try
       {
         CORBA::Object_var o = offers[i].service_ref
-          ->getFacetByName("message");
-        return ::Message::_narrow(o);
+          ->getFacetByName("hello");
+        return simple::Hello::_narrow(o);
       }
       catch(CORBA::TRANSIENT const&) {}
       catch(CORBA::OBJECT_NOT_EXIST const&) {}
     }
-    return ::Message::_nil();
+    return simple::Hello::_nil();
   }
 }
 
@@ -52,11 +55,37 @@ int main(int argc, char** argv)
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
+    unsigned short bus_port = 2089;
+    std::string bus_host = "localhost";
+    {
+      namespace po = boost::program_options;
+      po::options_description desc("Allowed options");
+      desc.add_options()
+        ("help", "This help message")
+        ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
+        ("bus-port", po::value<unsigned short>(), "Host to Openbus (default: 2089)")
+        ;
+      po::variables_map vm;
+      po::store(po::parse_command_line(argc, argv, desc), vm);
+      po::notify(vm);
+      
+      if(vm.count("help"))
+      {
+        std::cout << desc << std::endl;
+        return 0;
+      }
+   
+      if(vm.count("bus-host"))
+        bus_host = vm["bus-host"].as<std::string>();
+      if(vm.count("bus-port"))
+        bus_port = vm["bus-port"].as<unsigned short>();
+    }
+
     // Construindo e logando conexao
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
     assert(openbusContext != 0);
-    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(bus_host, bus_port));
     try
     {
       conn->loginByPassword("demo", "demo");
@@ -68,43 +97,21 @@ int main(int argc, char** argv)
     }
     openbusContext->setDefaultConnection(conn.get());
 
-    // Recebendo oferta de secretaria
+    // Recebendo ofertas
     openbus::idl_or::ServicePropertySeq props;
-    props.length(3);
+    props.length(2);
     props[0].name  = "openbus.offer.entity";
-    props[0].value = "secretary";
+    props[0].value = "proxy";
     props[1].name  = "openbus.component.facet";
-    props[1].value = "message";
+    props[1].value = "hello";
     offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
     // Pegando uma oferta valida
-    ::Message_var message = ::get_message(offers);
-    if(!CORBA::is_nil(message))
+    simple::Hello_ptr hello = ::get_hello(offers);
+    if(!CORBA::is_nil(hello))
     {
       // Chama a funcao
-      message->sendMessage("Message");
+      hello->sayHello();
       return 0;
-    }
-
-    // Recebendo oferta de executivo
-    props[0].name  = "openbus.offer.entity";
-    props[0].value = "executive";
-    props[1].name  = "openbus.component.facet";
-    props[1].value = "message";
-    offers = openbusContext->getOfferRegistry()->findServices(props);
-    // Pegando uma oferta valida
-    message = ::get_message(offers);
-    if(!CORBA::is_nil(message))
-    {
-      try
-      {
-        // Chama a funcao
-        message->sendMessage("Message");
-        std::cout << "Chamada nao deveria ter sido aceita" << std::endl;
-      }
-      catch(Unavailable const&)
-      {
-        std::cout << "Chamada foi recusada como esperado" << std::endl;
-      }
     }
   }
   catch (services::ServiceFailure e)

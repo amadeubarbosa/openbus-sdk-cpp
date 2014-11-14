@@ -13,6 +13,7 @@
 #include <boost/bind.hpp>
 #endif
 
+#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/bind.hpp>
 
@@ -47,7 +48,7 @@ struct onReloginCallback
 {
   typedef void result_type;
   result_type operator()(openbus::Connection& c, access_control::LoginInfo info
-                         , CORBA::OctetSeq private_key) const
+                         , openbus::PrivateKey private_key) const
   {
     do
     {
@@ -99,13 +100,17 @@ int main(int argc, char** argv)
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
   poa_manager->activate();
 
-  CORBA::OctetSeq private_key;
+  boost::optional<openbus::PrivateKey> private_key;
+  unsigned short bus_port = 2089;
+  std::string bus_host = "localhost";
   {
     namespace po = boost::program_options;
     po::options_description desc("Allowed options");
     desc.add_options()
       ("help", "This help message")
       ("private-key", po::value<std::string>(), "Path to private key")
+      ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
+      ("bus-port", po::value<unsigned int>(), "Host to Openbus (default: 2089)")
       ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -117,12 +122,12 @@ int main(int argc, char** argv)
       return 0;
     }
     std::string private_key_filename = vm["private-key"].as<std::string>();
-    std::ifstream f(private_key_filename.c_str());
-    f.seekg(0, std::ios::end);
-    std::size_t size = f.tellg();
-    f.seekg(0, std::ios::beg);
-    private_key.length(size);
-    f.rdbuf()->sgetn(static_cast<char*>(static_cast<void*>(private_key.get_buffer())), size);
+    private_key = openbus::PrivateKey(private_key_filename);
+
+    if(vm.count("bus-host"))
+      bus_host = vm["bus-host"].as<std::string>();
+    if(vm.count("bus-port"))
+      bus_port = vm["bus-port"].as<unsigned int>();
   }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -138,9 +143,9 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn = openbusContext->createConnection("localhost", 2089);
-      conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, private_key) );
-      conn->loginByCertificate("demo", private_key);
+      conn = openbusContext->createConnection(bus_host, bus_port);
+      conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, *private_key) );
+      conn->loginByCertificate("demo", *private_key);
       openbusContext->setDefaultConnection(conn.get());
       break;
     }
