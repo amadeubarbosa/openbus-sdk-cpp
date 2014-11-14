@@ -281,6 +281,7 @@ alias stage-interops : stage-interop-$(all-interops) ;
 install stage-deps
   : openbus
     /boost//program_options
+    /boost//date_time
   : <install-dependencies>on
     <install-type>LIB
     <install-type>PDB

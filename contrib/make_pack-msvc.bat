@@ -65,11 +65,11 @@ CALL "c:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86
 cd %OPENBUS_ROOT_PATH%
 robocopy /MIR demo %PACK%\demo
 robocopy /MIR include\openbus %PACK%\include\openbus
-b2 -j%JOBS% -d+2 toolset=%TOOLSET% pch=off address-model=32 link=shared runtime-link=shared variant=release variant=debug debug-symbols=on stage-deps
+b2 -j%JOBS% -d+2 toolset=%TOOLSET% pch=off address-model=32 link=shared runtime-link=shared variant=release variant=debug debug-symbols=on warnings=off stage-deps
 copy stage-deps\* %PACK%\lib
 
-b2 -j%JOBS% -d+2 toolset=%TOOLSET% pch=off address-model=32 link=static runtime-link=static variant=release variant=debug debug-symbols=on stage-deps
+b2 -j%JOBS% -d+2 toolset=%TOOLSET% pch=off address-model=32 link=static runtime-link=static variant=release variant=debug debug-symbols=on warnings=off stage-deps
 copy stage-deps\* %PACK%\lib
 
-b2 -d+2 stage-stubs
+b2 -d+2 warnings=off stage-stubs
 robocopy /MIR stage-stubs %PACK%\include\openbus\stubs
