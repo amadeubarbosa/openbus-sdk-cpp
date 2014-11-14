@@ -144,12 +144,12 @@ local rule core-idl-obj ( name : deps * )
 {
   obj $(name).obj
     : $(openbus-idl-path)/$(name).idl
-      # /scs//idls
+      /scs//scs-idl
       /mico//mico
     : <include>$(openbus-idl-path)
       <include>$(scs-idl-path)
-      <implicit-dependency>/scs//idls
-      <dependency>/scs//idls
+      <implicit-dependency>/scs//scs-idl
+      <dependency>/scs//scs-idl
       <dependency>$(deps)
     ;
   explicit $(name).obj ;
@@ -162,10 +162,10 @@ core-idl-obj offer_registry : core.obj ;
 
 obj credential_v1_5.obj
   : $(here)/legacy/idl/credential_v1_5.idl
-    /scs//idls
+    /scs//scs-idl
     /mico//mico
   : <include>$(openbus-idl-path)
-    <implicit-dependency>/scs//idls
+    <implicit-dependency>/scs//scs-idl
   :
   ;
 explicit credential_v1_5.obj ;
@@ -192,7 +192,7 @@ lib openbus
     <threading>multi:<source>/boost//thread
     <dependency>core-idls
     <implicit-dependency>core-idls    
-    <toolset>msvc:<source>/scs//idls
+    <toolset>msvc:<source>/scs//scs-idl
   :
   : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
     <include>include
@@ -215,15 +215,17 @@ mico-idl.cpp-h cpp-h-stub
         $(openbus-idl-path)/credential.idl
         $(openbus-idl-path)/offer_registry.idl
         $(here)/legacy/idl/credential_v1_5.idl
-        $(scs-idl-path)/scs.idl ]
+        $(scs-idl-path)/scs.idl
+      :
+      :
+      : <include>$(scs-idl-path) ]
   : <core-idl-diff>on
   ;
 explicit cpp-h-stub ;
 
 install stage-stubs
   : cpp-h-stub
-  : <location>stage/stubs
-    <install-dependencies>on
+  : <install-dependencies>on
     <install-type>CPP
     <install-type>H
   ;
@@ -276,13 +278,14 @@ for local d in $(all-interops)
 }
 alias stage-interops : stage-interop-$(all-interops) ;
 
-install stage-libs
-  : stage-demo-$(all-demos)
+install stage-deps
+  : openbus
+    /boost//program_options
   : <install-dependencies>on
     <install-type>LIB
-    <location>stage-libs
+    <install-type>PDB
   ;
-explicit stage-libs ;
+explicit stage-deps ;
 
 alias run-tests : tests//run-tests ;
 explicit run-tests ;
