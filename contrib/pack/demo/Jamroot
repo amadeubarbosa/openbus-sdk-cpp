@@ -29,15 +29,15 @@ project openbus
 lib openbus 
   : 
   : <name>openbus-mt-d
-    <search>../lib/openbus-mt-d
+    <search>../lib
     <link>shared
     <variant>debug
  ;
 
 lib openbus 
   : 
-  : <name>openbus-mt-s-d
-    <search>../lib/openbus-mt-s-d
+  : <name>libopenbus-mt-s-d
+    <search>../lib
     <link>static
     <variant>debug
  ;
@@ -45,15 +45,15 @@ lib openbus
 lib openbus 
   : 
   : <name>openbus-mt
-    <search>../lib/openbus-mt
+    <search>../lib
     <link>shared
     <variant>release
  ;
 
 lib openbus 
   : 
-  : <name>openbus-mt-s
-    <search>../lib/openbus-mt-s
+  : <name>libopenbus-mt-s
+    <search>../lib
     <link>static
     <variant>release
  ;
@@ -78,15 +78,15 @@ project scs
 lib scs 
   : 
   : <name>scs-mt-d
-    <search>../lib/scs-mt-d
+    <search>../lib
     <link>shared
     <variant>debug
  ;
 
 lib scs 
   : 
-  : <name>scs-mt-s-d
-    <search>../lib/scs-mt-s-d
+  : <name>libscs-mt-s-d
+    <search>../lib
     <link>static
     <variant>debug
  ;
@@ -94,15 +94,15 @@ lib scs
 lib scs 
   : 
   : <name>scs-mt
-    <search>../lib/scs-mt
+    <search>../lib
     <link>shared
     <variant>release
  ;
 
 lib scs 
   : 
-  : <name>scs-mt-s
-    <search>../lib/scs-mt-s
+  : <name>libscs-mt-s
+    <search>../lib
     <link>static
     <variant>release
  ;
@@ -118,15 +118,15 @@ project logger
 lib logger 
   : 
   : <name>logger-mt-d
-    <search>../lib/logger-mt-d
+    <search>../lib
     <link>shared
     <variant>debug
  ;
 
 lib logger 
   : 
-  : <name>logger-mt-s-d
-    <search>../lib/logger-mt-s-d
+  : <name>liblogger-mt-s-d
+    <search>../lib
     <link>static
     <variant>debug
  ;
@@ -134,15 +134,15 @@ lib logger
 lib logger 
   : 
   : <name>logger-mt
-    <search>../lib/logger-mt
+    <search>../lib
     <link>shared
     <variant>release
  ;
 
 lib logger 
   : 
-  : <name>logger-mt-s
-    <search>../lib/logger-mt-s
+  : <name>liblogger-mt-s
+    <search>../lib
     <link>static
     <variant>release
  ;
