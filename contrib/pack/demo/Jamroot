@@ -1,0 +1,148 @@
+# -*- coding: iso-8859-1-unix -*-
+
+import path ;
+import mico-idl ;
+
+path-constant bin 
+  : "../bin"
+;
+
+path-constant lib 
+  : "../lib/mico-mt-s-d"
+;
+
+using mico-idl 
+  : $(bin)
+  : $(lib)
+  : stubs 
+;
+
+project openbus
+  : requirements
+    <threading>multi
+  : usage-requirements
+    <link>shared:<define>OPENBUS_SDK_SHARED
+    <define>OPENBUS_SDK_MULTITHREAD
+    <include>../include/openbus
+;
+
+lib openbus 
+  : 
+  : <name>openbus-mt-d
+    <search>../lib/openbus-mt-d
+    <link>shared
+    <variant>debug
+ ;
+
+lib openbus 
+  : 
+  : <name>openbus-mt-s-d
+    <search>../lib/openbus-mt-s-d
+    <link>static
+    <variant>debug
+ ;
+
+lib openbus 
+  : 
+  : <name>openbus-mt
+    <search>../lib/openbus-mt
+    <link>shared
+    <variant>release
+ ;
+
+lib openbus 
+  : 
+  : <name>openbus-mt-s
+    <search>../lib/openbus-mt-s
+    <link>static
+    <variant>release
+ ;
+
+alias core-idls
+  :
+  :
+  :
+  : <include>../include/openbus
+    <include>../include/openbus/stubs
+ ;
+
+project scs
+  : requirements
+    <threading>multi
+  : usage-requirements
+    <link>shared:<define>SCS_SHARED
+    <define>SCS_THREADING_ENABLED
+    <include>../include/scs
+;
+
+lib scs 
+  : 
+  : <name>scs-mt-d
+    <search>../lib/scs-mt-d
+    <link>shared
+    <variant>debug
+ ;
+
+lib scs 
+  : 
+  : <name>scs-mt-s-d
+    <search>../lib/scs-mt-s-d
+    <link>static
+    <variant>debug
+ ;
+
+lib scs 
+  : 
+  : <name>scs-mt
+    <search>../lib/scs-mt
+    <link>shared
+    <variant>release
+ ;
+
+lib scs 
+  : 
+  : <name>scs-mt-s
+    <search>../lib/scs-mt-s
+    <link>static
+    <variant>release
+ ;
+
+project logger
+  : requirements
+    <threading>multi
+  : usage-requirements
+    <link>shared:<define>LOGGER_SHARED
+    <include>../include/logger
+;
+
+lib logger 
+  : 
+  : <name>logger-mt-d
+    <search>../lib/logger-mt-d
+    <link>shared
+    <variant>debug
+ ;
+
+lib logger 
+  : 
+  : <name>logger-mt-s-d
+    <search>../lib/logger-mt-s-d
+    <link>static
+    <variant>debug
+ ;
+
+lib logger 
+  : 
+  : <name>logger-mt
+    <search>../lib/logger-mt
+    <link>shared
+    <variant>release
+ ;
+
+lib logger 
+  : 
+  : <name>logger-mt-s
+    <search>../lib/logger-mt-s
+    <link>static
+    <variant>release
+ ;
