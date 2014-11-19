@@ -1,11 +1,12 @@
 #!/bin/bash
 
-BUILD=$HOME/build
-INSTALL=$HOME/install
-
+ROOT=$HOME
 JOBS=8
+MICO_ROOT_PATH=$ROOT/build/mico
 
-MICO_ROOT_PATH=$BUILD/mico
+## Do not touch here, please.
+INSTALL=$ROOT/install
+##
 
 COMMON_FLAGS="--disable-ssl --disable-elf"
 SHARED_FLAGS="--disable-static"
@@ -36,7 +37,7 @@ function build
   execute "make distclean"
 }
 
-execute "cd $MICO_ROOT_PATH"
+cd $MICO_ROOT_PATH
 build "$COMMON_FLAGS $SHARED_FLAGS $DEBUG_FLAGS --prefix=$INSTALL/mico-mt-d"
 build "$COMMON_FLAGS $STATIC_FLAGS $DEBUG_FLAGS --prefix=$INSTALL/mico-mt-s-d"
 build "$COMMON_FLAGS $SHARED_FLAGS --prefix=$INSTALL/mico-mt"
