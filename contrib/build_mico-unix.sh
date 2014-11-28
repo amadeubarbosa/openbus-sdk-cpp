@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ROOT=$HOME
-JOBS=8
+ROOT=${ROOT:=$HOME}
+JOBS=${JOBS:=8}
 MICO_ROOT_PATH=$ROOT/build/mico
 
 ## Do not touch here, please.
