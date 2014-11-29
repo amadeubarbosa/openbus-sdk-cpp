@@ -11,64 +11,104 @@ import path ;
 
 path-constant here : . ;
 
-mico-debug-install-path = [ os.environ MICO_DEBUG_INSTALL_PATH ] ;
-if ! $(mico-debug-install-path)
+mico-debug-shared-bin-path = [ os.environ MICO_DEBUG_SHARED_BIN_PATH ] ;
+if ! $(mico-debug-shared-bin-path)
 {
-  mico-debug-install-path = $(here)/../../install/mico-mt-d ;
+  mico-debug-shared-bin-path = $(here)/../../install/mico-mt-d/bin ;
 }
 
-mico-debug-static-install-path = [ os.environ MICO_DEBUG_STATIC_INSTALL_PATH ] ;
-if ! $(mico-debug-static-install-path)
+mico-debug-shared-lib-path = [ os.environ MICO_DEBUG_SHARED_LIB_PATH ] ;
+if ! $(mico-debug-shared-lib-path)
 {
-  mico-debug-static-install-path = $(here)/../../install/mico-mt-s-d ;
+  mico-debug-shared-lib-path = $(here)/../../install/mico-mt-d/lib ;
 }
 
-mico-static-install-path = [ os.environ MICO_STATIC_INSTALL_PATH ] ;
-if ! $(mico-static-install-path)
+mico-debug-static-bin-path = [ os.environ MICO_DEBUG_STATIC_BIN_PATH ] ;
+if ! $(mico-debug-static-bin-path)
 {
-  mico-static-install-path = $(here)/../../install/mico-mt-s ;
+  mico-debug-static-bin-path = $(here)/../../install/mico-mt-s-d/bin ;
 }
 
-mico-install-path = [ os.environ MICO_INSTALL_PATH ] ;
-if ! $(mico-install-path)
+mico-debug-static-lib-path = [ os.environ MICO_DEBUG_STATIC_LIB_PATH ] ;
+if ! $(mico-debug-static-lib-path)
 {
-  mico-install-path = $(here)/../../install/mico-mt ;
+  mico-debug-static-lib-path = $(here)/../../install/mico-mt-s-d/lib ;
 }
 
-if [ path.exists $(mico-debug-install-path) ] 
+mico-release-shared-bin-path = [ os.environ MICO_RELEASE_SHARED_BIN_PATH ] ;
+if ! $(mico-release-shared-bin-path)
 {
-  mico-idl-install-path = $(mico-debug-install-path) ;
+  mico-release-shared-bin-path = $(here)/../../install/mico-mt/bin ;
 }
-else if [ path.exists $(mico-debug-static-install-path) ]
+
+mico-release-shared-lib-path = [ os.environ MICO_RELEASE_SHARED_LIB_PATH ] ;
+if ! $(mico-release-shared-lib-path)
 {
-  mico-idl-install-path = $(mico-debug-static-install-path) ;
+  mico-release-shared-lib-path = $(here)/../../install/mico-mt/lib ;
 }
-else if [ path.exists $(mico-static-install-path) ]
+
+mico-release-static-bin-path = [ os.environ MICO_RELEASE_STATIC_BIN_PATH ] ;
+if ! $(mico-release-static-bin-path)
 {
-  mico-idl-install-path = $(mico-static-install-path) ;
+  mico-release-static-bin-path = $(here)/../../install/mico-mt-s/bin ;
+}
+
+mico-release-static-lib-path = [ os.environ MICO_RELEASE_STATIC_LIB_PATH ] ;
+if ! $(mico-release-static-lib-path)
+{
+  mico-release-static-lib-path = $(here)/../../install/mico-mt-s/lib ;
+}
+
+if [ path.exists $(mico-debug-shared-bin-path) ] 
+{
+  mico-idl-bin-path = $(mico-debug-shared-bin-path) ;
+  mico-idl-lib-path = $(mico-debug-shared-lib-path) ;
+}
+else if [ path.exists $(mico-debug-static-bin-path) ]
+{
+  mico-idl-bin-path = $(mico-debug-static-bin-path) ;
+  mico-idl-lib-path = $(mico-debug-static-lib-path) ;
+}
+else if [ path.exists $(mico-release-static-bin-path) ]
+{
+  mico-idl-bin-path = $(mico-release-static-bin-path) ;
+  mico-idl-lib-path = $(mico-release-static-lib-path) ;
 }
 else
 {
-  mico-idl-install-path = $(mico-install-path) ;
+  mico-idl-bin-path = $(mico-release-shared-bin-path) ;
+  mico-idl-lib-path = $(mico-release-shared-lib-path) ;
 }
+
+mico-bin-path = [ os.environ MICO_BIN_PATH ] ;
+if $(mico-bin-path)
+{
+  mico-idl-bin-path = $(mico-bin-path) ;
+}
+
+mico-lib-path = [ os.environ MICO_LIB_PATH ] ;
+if $(mico-lib-path)
+{
+  mico-idl-lib-path = $(mico-lib-path) ;
+}
+
+using mico-idl
+  : $(mico-idl-bin-path)
+  : $(mico-idl-lib-path)
+  : stubs
+;
 
 scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
 if ! $(scs-idl-path)
 {
-  scs-idl-path = $(here)/../scs-idl/src ;
+  scs-idl-path = $(here)/../scs/idl/src ;
 }
 
 openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
 if ! $(openbus-idl-path)
 {
-  openbus-idl-path = $(here)/../openbus-idl/src ;
+  openbus-idl-path = $(here)/idl/src ;
 }
-
-using mico-idl
-  : $(mico-idl-install-path)/bin
-  : $(mico-idl-install-path)/lib
-  : stubs
-;
 
 # To add requirements for version >= or < than determinate version for specific toolset
 rule version-less ( lhs rhs )
@@ -284,6 +324,7 @@ for local d in $(all-interops)
   explicit stage-interop-$(d) ;
 }
 alias stage-interops : stage-interop-$(all-interops) ;
+explicit stage-interops ;
 
 install stage-deps
   : openbus

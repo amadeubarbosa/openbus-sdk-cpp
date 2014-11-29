@@ -1,5 +1,5 @@
 
-project openbus/interop ;
+project openbus/interop/multiplexing ;
 
 path-constant here : . ;
 
