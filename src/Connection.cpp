@@ -231,7 +231,7 @@ void Connection::loginByPassword(const std::string &entity,
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-  bool state(_state);
+  State state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
@@ -286,7 +286,7 @@ void Connection::loginByCertificate(const std::string &entity,
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);;
 #endif
-  bool state(_state);
+  State state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
@@ -370,7 +370,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-  bool state(_state);
+  State state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
@@ -419,7 +419,7 @@ bool Connection::_logout(bool local)
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
-  bool state(_state);
+  State state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
 #endif
@@ -463,7 +463,7 @@ bool Connection::_logout(bool local)
         _access_control->logout();
         success = true;
       }
-      catch (const CORBA::SystemException &e)
+      catch (const CORBA::SystemException &)
       { 
         success = false;
       }

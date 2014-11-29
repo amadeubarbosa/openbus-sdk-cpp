@@ -6,7 +6,7 @@
 
 #include <stubs/dedicated_clock.h>
 #include <CORBA.h>
-#include <time.h>
+#include <ctime>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
@@ -33,7 +33,7 @@ struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
 {
   CORBA::Long getTimeInTicks()
   {
-    return time(0);
+    return static_cast<CORBA::Long>(time(0));
   }
 };
 
@@ -57,7 +57,7 @@ struct onReloginCallback
         c.loginByCertificate("demo", private_key);
         break;
       }
-      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
       openbusContext->setDefaultConnection(conn.get());
       break;
     }
-    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: "
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -202,16 +202,16 @@ int main(int argc, char** argv)
         openbusContext->getOfferRegistry()->registerService(clock_component.getIComponent(), properties);
         break;
       }
-      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       }
-      catch (services::ServiceFailure const& e)
+      catch (services::ServiceFailure const&)
       {
         std::cout << "Falha no servico remoto. Causa: " << std::endl;
       }
-      catch (offer_registry::UnauthorizedFacets const& e)
+      catch (offer_registry::UnauthorizedFacets const&)
       {
         std::cout << "Faceta nao autorizada no barramento: " << std::endl;
       }
