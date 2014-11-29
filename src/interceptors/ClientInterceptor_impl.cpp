@@ -152,7 +152,7 @@ bool ClientInterceptor::ignore_request(
   CORBA::Any_var any(r.get_slot(_orb_info->slot.ignore_interceptor));
   CORBA::Boolean ignore(false);
   any >>= CORBA::Any::to_boolean(ignore);
-  return ignore;
+  return !!ignore;
 }
 
 idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(

@@ -33,7 +33,7 @@ struct MessageImpl : POA_Message
       executive_message->sendMessage(message);
       std::cout << "Execution succesful" << std::endl;
     }
-    catch(::Unavailable const& e)
+    catch(::Unavailable const&)
     {
       std::cout << "Unavaible was thrown" << std::endl;
       throw;
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     {
       conn->loginByCertificate("secretary", private_key);
     }
-    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: "
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;

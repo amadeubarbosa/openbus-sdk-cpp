@@ -70,9 +70,9 @@ bool PublicKey::verify(const unsigned char *sig,
 #endif
   openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(_pkey.get(), 0));
   assert(!!ctx);
-  int r = EVP_PKEY_verify_init(ctx.get());
+  int r (EVP_PKEY_verify_init(ctx.get()));
   assert(r == 1);
-  return EVP_PKEY_verify(ctx.get(), sig, siglen, tbs, tbslen);
+  return (EVP_PKEY_verify(ctx.get(), sig, siglen, tbs, tbslen) == 1);
 }
 
 }
