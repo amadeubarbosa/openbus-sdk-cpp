@@ -128,6 +128,13 @@ rule tag ( name : type ? : property-set )
 project openbus
   : requirements
     <tag>@tag
+    <threading>multi
+    <target-os>windows:<pch>off
+    <target-os>windows,<link>shared:<runtime-link>shared
+    <target-os>windows,<link>static:<runtime-link>static
+    <target-os>windows:<debug-store>database
+    <target-os>windows:<define>_SCL_SECURE_NO_WARNINGS
+    <debug-symbols>on
     <define>BOOST_ALL_NO_LIB=1
     <link>shared:<define>OPENBUS_SDK_SHARED
     <define>OPENBUS_SDK_SOURCE

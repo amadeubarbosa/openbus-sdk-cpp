@@ -66,7 +66,7 @@ struct onReloginCallback
         c.loginByCertificate("demo", private_key);
         break;
       }
-      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
       openbusContext->setDefaultConnection(conn.get());
       break;
     }
-    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: "
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -207,16 +207,16 @@ int main(int argc, char** argv)
         openbusContext->getOfferRegistry()->registerService(hello_component.getIComponent(), properties);
         break;
       }
-      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       }
-      catch (services::ServiceFailure const& e)
+      catch (services::ServiceFailure const&)
       {
         std::cout << "Falha no servico remoto. Causa: " << std::endl;
       }
-      catch (offer_registry::UnauthorizedFacets const& e)
+      catch (offer_registry::UnauthorizedFacets const&)
       {
         std::cout << "Faceta nao autorizada no barramento: " << std::endl;
       }
