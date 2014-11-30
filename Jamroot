@@ -248,6 +248,7 @@ explicit openbus ;
 
 install stage
   : openbus
+  : <location>install
   ;
 
 feature.feature core-idl-diff
@@ -330,7 +331,8 @@ install stage-deps
   : openbus
     /boost//program_options
     /boost//date_time
-  : <install-dependencies>on
+  : <location>install/deps
+    <install-dependencies>on
     <install-type>LIB
     <install-type>PDB
   ;
@@ -338,7 +340,4 @@ explicit stage-deps ;
 
 alias run-tests : tests//run-tests ;
 explicit run-tests ;
-
-alias assistant : assistant//assistant ;
-explicit assistant ;
 
