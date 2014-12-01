@@ -98,10 +98,16 @@ using mico-idl
   : stubs
 ;
 
+scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
+if ! $(scs-root-path)
+{
+  scs-root-path = ../scs ;
+}
+
 scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
 if ! $(scs-idl-path)
 {
-  scs-idl-path = $(here)/../scs/idl/src ;
+  scs-idl-path = $(scs-root-path)/idl/src ;
 }
 
 openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;

@@ -5,7 +5,7 @@
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
-#include <scs/ComponentContext.h>
+#include <scs/ComponentContext.hpp>
 #include <log/output/file_output.h>
 
 #ifdef _WIN32
