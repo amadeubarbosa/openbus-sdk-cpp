@@ -233,7 +233,7 @@ alias core-idls
 explicit core-idls ;
 
 lib openbus
-  : [ glob-tree *.cpp *.c : bin demo tests stage assistant interop ]
+  : [ glob-tree *.cpp *.c : bin demo tests install assistant interop ]
     core-idls
     /mico//mico
     /scs//scs
@@ -279,7 +279,8 @@ explicit cpp-h-stub ;
 
 install stage-stubs
   : cpp-h-stub
-  : <install-dependencies>on
+  : <location>install/stubs
+    <install-dependencies>on
     <install-type>CPP
     <install-type>H
   ;
