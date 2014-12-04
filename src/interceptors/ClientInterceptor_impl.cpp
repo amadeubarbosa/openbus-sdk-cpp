@@ -125,12 +125,12 @@ CallerChain ClientInterceptor::get_joined_chain(
   {
     try
     {      
-      any = _orb_info->codec->decode_value(
+      CORBA::Any_var any(_orb_info->codec->decode_value(
         CORBA::OctetSeq(signed_chain->encoded.maximum(),
                         signed_chain->encoded.length(),
                         const_cast<unsigned char *>
                         (signed_chain->encoded.get_buffer())),
-        idl_ac::_tc_CallChain);
+        idl_ac::_tc_CallChain));
       const idl_ac::CallChain *chain;
       if (*any >>= chain)
       {
