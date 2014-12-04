@@ -62,8 +62,8 @@ CallerChain ClientInterceptor::get_joined_chain(Connection &conn,
   const idl_cr::SignedCallChain *signed_chain;
   if (*any >>= signed_chain) 
   {
-    any = _orb_info->codec->decode_value(signed_chain->encoded,
-                                         idl_ac::_tc_CallChain);
+    CORBA::Any_var any(_orb_info->codec->decode_value(signed_chain->encoded,
+                                                      idl_ac::_tc_CallChain));
     const idl_ac::CallChain *chain;
     if (*any >>= chain)
     {
