@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ROOT=${ROOT:=$HOME}
-JOBS=${JOBS:=8}
+JOBS=${JOBS:=1} #It is seems that OpenSSL does not support jobs>1 :(
 OPENSSL_ROOT_PATH=$ROOT/build/openssl
 
 ## Do not touch here, please.

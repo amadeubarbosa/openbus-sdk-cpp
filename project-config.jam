@@ -184,7 +184,7 @@ lib crypto
   : <variant>debug
     <link>static
     <target-os>darwin
-    <file>$(openssl-debug-static-lib-path)/lib/libcrypto.a    
+    <file>$(openssl-debug-static-lib-path)/libcrypto.a    
   :
   : <include>$(openssl-debug-static-include-path)
   ;  
@@ -212,7 +212,7 @@ lib crypto
   : <variant>release
     <link>static    
     <target-os>darwin
-    <file>$(openssl-release-static-lib-path)/lib/libcrypto.a    
+    <file>$(openssl-release-static-lib-path)/libcrypto.a    
   :
   : <include>$(openssl-release-static-include-path)
   ;  
@@ -283,7 +283,7 @@ lib openssl
     <variant>debug
     <link>static
     <search>$(openssl-debug-static-lib-path)
-    <target-os>darwin:<file>$(openssl-debug-static-lib-path)/lib/libssl.a    
+    <target-os>darwin:<file>$(openssl-debug-static-lib-path)/libssl.a    
   :
   : <include>$(openssl-debug-static-include-path)
   ;  
@@ -294,7 +294,7 @@ lib openssl
     <variant>debug
     <link>static
     <target-os>darwin
-    <file>$(openssl-debug-static-lib-path)/lib/libssl.a    
+    <file>$(openssl-debug-static-lib-path)/libssl.a    
   :
   : <include>$(openssl-debug-static-include-path)
   ;  
@@ -325,7 +325,7 @@ lib openssl
     <variant>release
     <link>static
     <target-os>darwin
-    <file>$(openssl-release-static-lib-path)/lib/libssl.a    
+    <file>$(openssl-release-static-lib-path)/libssl.a    
   :
   : <include>$(openssl-release-static-include-path)
   ;  

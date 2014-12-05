@@ -101,7 +101,7 @@ using mico-idl
 scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
 if ! $(scs-root-path)
 {
-  scs-root-path = ../scs ;
+  scs-root-path = $(here)/../scs ;
 }
 
 scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
