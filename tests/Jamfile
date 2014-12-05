@@ -40,17 +40,23 @@ exe-test connect_host_port_connect_to_wrong_host_and_port
 exe-test connect_orb_connect_getting_orb_with_createORB
  : connect/orb/connect_getting_orb_with_createORB.cpp
  ;
-exe-test connection_caller_chain_decode_chain_wrong_context_id
- : connection/caller_chain/decode_chain_wrong_context_id.cpp
+exe-test connection_caller_chain_encode_and_decode_chain_A_B
+ : connection/caller_chain/encode_and_decode_chain_A_B.cpp
  ;
-exe-test connection_caller_chain_decode_default_octet_sequence
- : connection/caller_chain/decode_default_octet_sequence.cpp
+exe-test connection_caller_chain_encode_and_decode_chain_A_B_C
+ : connection/caller_chain/encode_and_decode_chain_A_B_C.cpp
  ;
-exe-test connection_caller_chain_encode_and_decode_chain
- : connection/caller_chain/encode_and_decode_chain.cpp
+exe-test connection_caller_chain_encode_and_decode_legacy_chain_A_B
+ : connection/caller_chain/encode_and_decode_legacy_chain_A_B.cpp
  ;
-exe-test connection_caller_chain_encode_default_caller_chain
- : connection/caller_chain/encode_default_caller_chain.cpp
+exe-test connection_caller_chain_encode_and_decode_legacy_chain_A_B_C
+ : connection/caller_chain/encode_and_decode_legacy_chain_A_B_C.cpp
+ ;
+exe-test connection_caller_chain_decode_incompatible_version_chain
+ : connection/caller_chain/decode_incompatible_version_chain.cpp
+ ;
+exe-test connection_caller_chain_decode_incompatible_type_chain
+ : connection/caller_chain/decode_incompatible_type_chain.cpp
  ;
 exe-test connection_caller_chain_make_chain_for_invalid_login
  : connection/caller_chain/make_chain_for_invalid_login.cpp
@@ -157,10 +163,12 @@ alias run-tests
 #   connection_caller_chain_receive_call_with_default_connection_get_caller_chain-run
    [ run connect_orb_connect_getting_orb_with_createORB ]
 #   [ run connection_caller_chain_receive_call_with_default_connection_get_caller_chain ]
-   [ run connection_caller_chain_decode_chain_wrong_context_id ]
-   [ run connection_caller_chain_decode_default_octet_sequence ]
-   [ run connection_caller_chain_encode_and_decode_chain ]
-   [ run connection_caller_chain_encode_default_caller_chain ]
+   [ run connection_caller_chain_encode_and_decode_chain_A_B ]
+   [ run connection_caller_chain_encode_and_decode_chain_A_B_C ]
+   [ run connection_caller_chain_encode_and_decode_legacy_chain_A_B ]
+   [ run connection_caller_chain_encode_and_decode_legacy_chain_A_B_C ]
+   [ run connection_caller_chain_decode_incompatible_version_chain ]
+   [ run connection_caller_chain_decode_incompatible_type_chain ]
    [ run connection_caller_chain_make_chain_for_invalid_login ]
    [ run connection_caller_chain_make_chain_for_valid_login ]
    [ run connection_loginByCertificate_entity_id_and_file_private_key_ok : : admin/TestCppHello.key ]
@@ -182,4 +190,3 @@ alias run-tests
 #   [ run register_service ]
  ;
 explicit run-tests ;
-

@@ -13,6 +13,7 @@
 #include "stubs/credential.h"
 #include "stubs/access_control.h"
 #include "stubs/offer_registry.h"
+#include "stubs/data_export.h"
 
 #include <CORBA.h>
 #include <boost/function.hpp>
@@ -27,6 +28,7 @@ namespace openbus
   namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
   namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+  namespace idl_data_export = tecgraf::openbus::core::v2_0::data_export;
 
   namespace interceptors
   {
@@ -66,6 +68,20 @@ inline bool operator!=(const LoginInfo &lhs, const LoginInfo &rhs)
 */
 namespace openbus 
 {
+
+struct OPENBUS_SDK_DECL InvalidEncodedStream : public std::exception
+{
+  InvalidEncodedStream();
+  InvalidEncodedStream(const std::string &msg);
+  ~InvalidEncodedStream() throw();
+  const char *what() const throw()
+  {
+    return msg_.c_str();
+  }
+private:
+  std::string msg_;
+};
+  
 /**
  * \brief Cadeia de chamadas oriundas de um barramento.
  * 
@@ -161,14 +177,19 @@ private:
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
+  
   const idl_cr::SignedCallChain *signedCallChain() const 
   { 
     return &_signedCallChain; 
   }
+
   void signedCallChain(idl_cr::SignedCallChain p) 
   { 
     _signedCallChain = p; 
   }
+  
+  bool is_legacy() const;
+  
   friend class OpenBusContext;
   friend struct openbus::interceptors::ClientInterceptor;
   friend inline bool operator==(CallerChain const &lhs, 
@@ -423,8 +444,11 @@ public:
    * \param encoded O stream de bytes que representa a cadeia.
    * \return A cadeia de chamadas no formato CallerChain, 'vazia' em caso de
    * falha da decodificação.
+   * 
+   * \throw InvalidEncodedStream Caso o stream de bytes não seja do
+   * formato esperado.
    */
-  CallerChain decodeChain(const CORBA::OctetSeq encoded);
+  CallerChain decodeChain(const CORBA::OctetSeq &encoded) const;
   
   /** 
    * ORB utilizado pela conexão. 
@@ -451,7 +475,15 @@ private:
     _orb = o;
   }
 
+  CORBA::OctetSeq encode_exported_versions(idl_data_export::ExportedVersionSeq,
+                                           const std::string &tag);
+
+  std::string decode_exported_versions(
+    const CORBA::OctetSeq &stream,
+    idl_data_export::ExportedVersionSeq_out exported_version_seq) const;
+
   Connection *getDispatchConnection();
+  
   typedef std::map<std::string, Connection *> BusidConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
