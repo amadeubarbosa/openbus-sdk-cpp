@@ -5,7 +5,7 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 #include <openbus/log.hpp>
-#include <scs/ComponentContext.h>
+#include <scs/ComponentContext.hpp>
 
 #include <CORBA.h>
 #include <iostream>

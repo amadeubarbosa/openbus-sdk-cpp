@@ -3,7 +3,7 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include "stubs/hello.h"
-#include <scs/ComponentContext.h>
+#include <scs/ComponentContext.hpp>
 #include <configuration.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>

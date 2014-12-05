@@ -4,7 +4,7 @@
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
-#include <scs/ComponentContext.h>
+#include <scs/ComponentContext.hpp>
 #include <log/output/file_output.h>
 
 #include <CORBA.h>

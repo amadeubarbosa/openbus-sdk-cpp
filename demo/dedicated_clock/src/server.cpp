@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
-#include <scs/ComponentContext.h>
+#include <scs/ComponentContext.hpp>
 #include <iostream>
 
 #include <stubs/dedicated_clock.h>

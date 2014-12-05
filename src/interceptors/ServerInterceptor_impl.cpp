@@ -172,6 +172,7 @@ void ServerInterceptor::build_legacy_chain(
   legacy_chain_any <<= legacyChain;
   CORBA::OctetSeq_var o(_orb_info->codec->encode_value(legacy_chain_any));
   idl_cr::SignedCallChain signed_legacy_chain;
+  memset(signed_legacy_chain.signature, 0, idl::EncryptedBlockSize);
   signed_legacy_chain.encoded = o;
   CORBA::Any signed_legacy_chain_any;
   signed_legacy_chain_any <<= signed_legacy_chain;

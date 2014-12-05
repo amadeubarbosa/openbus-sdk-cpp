@@ -1,4 +1,4 @@
-project openbus/interop ;
+project openbus/interop/reloggedjoin ;
 
 path-constant here : . ;
 

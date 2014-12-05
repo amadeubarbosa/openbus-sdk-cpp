@@ -2,7 +2,7 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
-#include <scs/ComponentContext.h>
+#include <scs/ComponentContext.hpp>
 #include <iostream>
 
 #include <stubs/hello.h>

@@ -3,7 +3,7 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include "stubs/hello.h"
-#include <scs/ComponentContext.h>
+#include <scs/ComponentContext.hpp>
 #include <configuration.h>
 
 struct hello_impl : public POA_Hello

@@ -2,64 +2,144 @@
 
 import os ;
 
-mico-debug-install-path = [ os.environ MICO_DEBUG_INSTALL_PATH ] ;
-if ! $(mico-debug-install-path)
+path-constant here : . ;
+
+mico-debug-shared-include-path = [ os.environ MICO_DEBUG_SHARED_INCLUDE_PATH ] ;
+if ! $(mico-debug-shared-include-path)
 {
-  mico-debug-install-path = ../../install/mico-mt-d ;
+  mico-debug-shared-include-path = $(here)/../../install/mico-mt-d/include ;
 }
 
-mico-debug-static-install-path = [ os.environ MICO_DEBUG_STATIC_INSTALL_PATH ] ;
-if ! $(mico-debug-static-install-path)
+mico-debug-shared-lib-path = [ os.environ MICO_DEBUG_SHARED_LIB_PATH ] ;
+if ! $(mico-debug-shared-lib-path)
 {
-  mico-debug-static-install-path = ../../install/mico-mt-s-d ;
+  mico-debug-shared-lib-path = $(here)/../../install/mico-mt-d/lib ;
 }
 
-mico-static-install-path = [ os.environ MICO_STATIC_INSTALL_PATH ] ;
-if ! $(mico-static-install-path)
+mico-debug-static-include-path = [ os.environ MICO_DEBUG_STATIC_INCLUDE_PATH ] ;
+if ! $(mico-debug-static-include-path)
 {
-  mico-static-install-path = ../../install/mico-mt-s ;
+  mico-debug-static-include-path = $(here)/../../install/mico-mt-s-d/include ;
 }
 
-mico-install-path = [ os.environ MICO_INSTALL_PATH ] ;
-if ! $(mico-install-path)
+mico-debug-static-lib-path = [ os.environ MICO_DEBUG_STATIC_LIB_PATH ] ;
+if ! $(mico-debug-static-lib-path)
 {
-  mico-install-path = ../../install/mico-mt ;
+  mico-debug-static-lib-path = $(here)/../../install/mico-mt-s-d/lib ;
 }
 
-openssl-debug-install-path = [ os.environ OPENSSL_DEBUG_INSTALL_PATH ] ;
-if ! $(openssl-debug-install-path)
+mico-release-shared-include-path = [ os.environ MICO_RELEASE_SHARED_INCLUDE_PATH ] ;
+if ! $(mico-release-shared-include-path)
 {
-  openssl-debug-install-path = ../../install/openssl-mt-d ;
+  mico-release-shared-include-path = $(here)/../../install/mico-mt/include ;
 }
 
-openssl-debug-static-install-path = [ os.environ OPENSSL_DEBUG_STATIC_INSTALL_PATH ] ;
-if ! $(openssl-debug-static-install-path)
+mico-release-shared-lib-path = [ os.environ MICO_RELEASE_SHARED_LIB_PATH ] ;
+if ! $(mico-release-shared-lib-path)
 {
-  openssl-debug-static-install-path = ../../install/openssl-mt-s-d ;
+  mico-release-shared-lib-path = $(here)/../../install/mico-mt/lib ;
 }
 
-openssl-static-install-path = [ os.environ OPENSSL_STATIC_INSTALL_PATH ] ;
-if ! $(openssl-static-install-path)
+mico-release-static-include-path = [ os.environ MICO_RELEASE_STATIC_INCLUDE_PATH ] ;
+if ! $(mico-release-static-include-path)
 {
-  openssl-static-install-path = ../../install/openssl-mt-s ;
+  mico-release-static-include-path = $(here)/../../install/mico-mt-s/include ;
 }
 
-openssl-install-path = [ os.environ OPENSSL_INSTALL_PATH ] ;
-if ! $(openssl-install-path)
+mico-release-static-lib-path = [ os.environ MICO_RELEASE_STATIC_LIB_PATH ] ;
+if ! $(mico-release-static-lib-path)
 {
-  openssl-install-path = ../../install/openssl-mt ;
+  mico-release-static-lib-path = $(here)/../../install/mico-mt-s/lib ;
+}
+
+mico-include-path = [ os.environ MICO_INCLUDE_PATH ] ;
+if $(mico-include-path)
+{
+  mico-debug-shared-include-path = $(mico-include-path) ;
+  mico-debug-static-include-path = $(mico-include-path) ;
+  mico-release-shared-include-path = $(mico-include-path) ;
+  mico-release-static-include-path = $(mico-include-path) ;
+}
+
+mico-lib-path = [ os.environ MICO_LIB_PATH ] ;
+if $(mico-lib-path)
+{
+  mico-debug-shared-lib-path = $(mico-lib-path) ;
+  mico-debug-static-lib-path = $(mico-lib-path) ;
+  mico-release-shared-lib-path = $(mico-lib-path) ;
+  mico-release-static-lib-path = $(mico-lib-path) ;
+}
+
+openssl-debug-shared-include-path = [ os.environ OPENSSL_DEBUG_SHARED_INCLUDE_PATH ] ;
+if ! $(openssl-debug-shared-include-path)
+{
+  openssl-debug-shared-include-path = $(here)/../../install/openssl-mt-d/include ;
+}
+
+openssl-debug-shared-lib-path = [ os.environ OPENSSL_DEBUG_SHARED_LIB_PATH ] ;
+if ! $(openssl-debug-shared-lib-path)
+{
+  openssl-debug-shared-lib-path = $(here)/../../install/openssl-mt-d/lib ;
+}
+
+openssl-debug-static-include-path = [ os.environ OPENSSL_DEBUG_STATIC_INCLUDE_PATH ] ;
+if ! $(openssl-debug-static-include-path)
+{
+  openssl-debug-static-include-path = $(here)/../../install/openssl-mt-s-d/include ;
+}
+
+openssl-debug-static-lib-path = [ os.environ OPENSSL_DEBUG_STATIC_LIB_PATH ] ;
+if ! $(openssl-debug-static-lib-path)
+{
+  openssl-debug-static-lib-path = $(here)/../../install/openssl-mt-s-d/lib ;
+}
+
+openssl-release-shared-include-path = [ os.environ OPENSSL_RELEASE_SHARED_INCLUDE_PATH ] ;
+if ! $(openssl-release-shared-include-path)
+{
+  openssl-release-shared-include-path = $(here)/../../install/openssl-mt/include ;
+}
+
+openssl-release-shared-lib-path = [ os.environ OPENSSL_RELEASE_SHARED_LIB_PATH ] ;
+if ! $(openssl-release-shared-lib-path)
+{
+  openssl-release-shared-lib-path = $(here)/../../install/openssl-mt/lib ;
+}
+
+openssl-release-static-include-path = [ os.environ OPENSSL_RELEASE_STATIC_INCLUDE_PATH ] ;
+if ! $(openssl-release-static-include-path)
+{
+  openssl-release-static-include-path = $(here)/../../install/openssl-mt-s/include ;
+}
+
+openssl-release-static-lib-path = [ os.environ OPENSSL_RELEASE_STATIC_LIB_PATH ] ;
+if ! $(openssl-release-static-lib-path)
+{
+  openssl-release-static-lib-path = $(here)/../../install/openssl-mt-s/lib ;
+}
+
+openssl-include-path = [ os.environ OPENSSL_INCLUDE_PATH ] ;
+if $(openssl-include-path)
+{
+  openssl-debug-shared-include-path = $(openssl-include-path) ;
+  openssl-debug-static-include-path = $(openssl-include-path) ;
+  openssl-release-shared-include-path = $(openssl-include-path) ;
+  openssl-release-static-include-path = $(openssl-include-path) ;
+}
+
+openssl-lib-path = [ os.environ OPENSSL_LIB_PATH ] ;
+if $(openssl-lib-path)
+{
+  openssl-debug-shared-lib-path = $(openssl-lib-path) ;
+  openssl-debug-static-lib-path = $(openssl-lib-path) ;
+  openssl-release-shared-lib-path = $(openssl-lib-path) ;
+  openssl-release-static-lib-path = $(openssl-lib-path) ;
 }
 
 scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
 if ! $(scs-root-path)
 {
   scs-root-path = ../scs ;
-}
-
-scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
-if ! $(scs-idl-path)
-{
-  scs-idl-path = ../scs-idl/src ;
 }
 
 boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
@@ -78,39 +158,63 @@ use-project boost : $(boost-root-path) ;
 use-project scs : $(scs-root-path) ;
 use-project logger : $(logger-root-path) ;
 
-project openssl
-  : requirements <include>$(openssl-install-path)/include
-  ;
+project openssl ;
 
 #Unix
 lib crypto
   : 
   : <variant>debug
     <link>shared
-    <search>$(openssl-debug-install-path)/lib
+    <search>$(openssl-debug-shared-lib-path)
+  :
+  : <include>$(openssl-debug-shared-include-path)
   ;  
 
 lib crypto
   : 
   : <variant>debug
     <link>static
-    <search>$(openssl-debug-static-install-path)/lib
-    <target-os>darwin:<file>$(openssl-debug-static-install-path)/lib/libcrypto.a    
+    <search>$(openssl-debug-static-lib-path)
+  :
+  : <include>$(openssl-debug-static-include-path)
+  ;  
+
+lib crypto
+  : 
+  : <variant>debug
+    <link>static
+    <target-os>darwin
+    <file>$(openssl-debug-static-lib-path)/libcrypto.a    
+  :
+  : <include>$(openssl-debug-static-include-path)
   ;  
 
 lib crypto
   : 
   : <variant>release
     <link>shared
-    <search>$(openssl-install-path)/lib
+    <search>$(openssl-release-shared-lib-path)
+  :
+  : <include>$(openssl-release-shared-include-path)
   ;  
 
 lib crypto
   : 
   : <variant>release
     <link>static
-    <search>$(openssl-static-install-path)/lib
-    <target-os>darwin:<file>$(openssl-static-install-path)/lib/libcrypto.a    
+    <search>$(openssl-release-static-lib-path)
+  :
+  : <include>$(openssl-release-static-include-path)
+  ;  
+
+lib crypto
+  : 
+  : <variant>release
+    <link>static    
+    <target-os>darwin
+    <file>$(openssl-release-static-lib-path)/libcrypto.a    
+  :
+  : <include>$(openssl-release-static-include-path)
   ;  
 
 #Windows
@@ -120,9 +224,10 @@ lib crypto
     <variant>debug
     <link>shared
     <target-os>windows
-    <search>$(openssl-debug-install-path)/lib
+    <search>$(openssl-debug-shared-lib-path)
   :
-  : <target-os>windows:<linkflags>"gdi32.lib user32.lib advapi32.lib"
+  : <linkflags>"gdi32.lib user32.lib advapi32.lib"
+    <include>$(openssl-debug-shared-include-path)
   ;  
 
 lib crypto
@@ -131,9 +236,10 @@ lib crypto
     <variant>debug
     <link>static
     <target-os>windows
-    <search>$(openssl-debug-static-install-path)/lib
+    <search>$(openssl-debug-static-lib-path)
   :
-  : <target-os>windows:<linkflags>"gdi32.lib user32.lib advapi32.lib"
+  : <linkflags>"gdi32.lib user32.lib advapi32.lib"
+    <include>$(openssl-debug-static-include-path)
   ;  
 
 lib crypto
@@ -142,9 +248,10 @@ lib crypto
     <variant>release
     <link>shared
     <target-os>windows
-    <search>$(openssl-install-path)/lib
+    <search>$(openssl-release-shared-lib-path)
   :
-  : <target-os>windows:<linkflags>"gdi32.lib user32.lib advapi32.lib"
+  : <linkflags>"gdi32.lib user32.lib advapi32.lib"
+    <include>$(openssl-release-shared-include-path)
   ;  
 
 lib crypto
@@ -153,9 +260,10 @@ lib crypto
     <variant>release
     <link>static
     <target-os>windows
-    <search>$(openssl-static-install-path)/lib
+    <search>$(openssl-release-static-lib-path)
   :
-  : <target-os>windows:<linkflags>"gdi32.lib user32.lib advapi32.lib"
+  : <linkflags>"gdi32.lib user32.lib advapi32.lib"
+    <include>$(openssl-release-static-include-path)
   ;  
 
 #Unix
@@ -164,7 +272,9 @@ lib openssl
   : <name>ssl 
     <variant>debug
     <link>shared
-    <search>$(openssl-debug-install-path)/lib
+    <search>$(openssl-debug-shared-lib-path)
+  :
+  : <include>$(openssl-debug-shared-include-path)
   ;  
 
 lib openssl
@@ -172,8 +282,21 @@ lib openssl
   : <name>ssl 
     <variant>debug
     <link>static
-    <search>$(openssl-debug-static-install-path)/lib
-    <target-os>darwin:<file>$(openssl-debug-static-install-path)/lib/libssl.a    
+    <search>$(openssl-debug-static-lib-path)
+    <target-os>darwin:<file>$(openssl-debug-static-lib-path)/libssl.a    
+  :
+  : <include>$(openssl-debug-static-include-path)
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssl 
+    <variant>debug
+    <link>static
+    <target-os>darwin
+    <file>$(openssl-debug-static-lib-path)/libssl.a    
+  :
+  : <include>$(openssl-debug-static-include-path)
   ;  
 
 lib openssl
@@ -181,7 +304,9 @@ lib openssl
   : <name>ssl 
     <variant>release
     <link>shared
-    <search>$(openssl-install-path)/lib
+    <search>$(openssl-release-shared-lib-path)
+  :
+  : <include>$(openssl-release-shared-include-path)
   ;  
 
 lib openssl
@@ -189,8 +314,20 @@ lib openssl
   : <name>ssl 
     <variant>release
     <link>static
-    <search>$(openssl-static-install-path)/lib
-    <file>$(openssl-static-install-path)/lib/libssl.a    
+    <search>$(openssl-release-static-lib-path)
+  :
+  : <include>$(openssl-release-static-include-path)
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssl 
+    <variant>release
+    <link>static
+    <target-os>darwin
+    <file>$(openssl-release-static-lib-path)/libssl.a    
+  :
+  : <include>$(openssl-release-static-include-path)
   ;  
 
 #Windows
@@ -200,7 +337,9 @@ lib openssl
     <variant>debug
     <link>shared
     <target-os>windows
-    <search>$(openssl-debug-install-path)/lib
+    <search>$(openssl-debug-shared-lib-path)
+  :
+  : <include>$(openssl-debug-shared-include-path)
   ;  
 
 lib openssl
@@ -209,7 +348,9 @@ lib openssl
     <variant>debug
     <link>static
     <target-os>windows
-    <search>$(openssl-debug-static-install-path)/lib
+    <search>$(openssl-debug-static-lib-path)
+  :
+  : <include>$(openssl-debug-static-include-path)
   ;  
 
 lib openssl
@@ -218,7 +359,9 @@ lib openssl
     <variant>release
     <link>shared
     <target-os>windows
-    <search>$(openssl-install-path)/lib
+    <search>$(openssl-release-shared-lib-path)
+  :
+  : <include>$(openssl-release-shared-include-path)
   ;  
 
 lib openssl
@@ -227,16 +370,9 @@ lib openssl
     <variant>release
     <link>static
     <target-os>windows
-    <search>$(openssl-static-install-path)/lib
-  ;  
-
-lib openssl
-  : crypto
-  : <name>ssleay32 
-    <search>$(openssl-install-path)
-    <target-os>windows
+    <search>$(openssl-release-static-lib-path)
   :
-  : <target-os>windows:<linkflags>"gdi32.lib user32.lib advapi32.lib"
+  : <include>$(openssl-release-static-include-path)p
   ;  
 
 project mico
@@ -248,13 +384,13 @@ lib pthreads
   : <target-os>windows
     <variant>debug
     <link>shared
-    <search>$(mico-debug-install-path)/lib
+    <search>$(mico-debug-shared-lib-path)
   : 
   : <define>HAVE_THREADS
     <define>HAVE_PTHREADS
     <define>HAVE_PTHREADS_VC
     <link>static:<define>PTW32_STATIC_LIB
-    <include>$(mico-debug-install-path)/include/pthreads
+    <include>$(mico-debug-shared-include-path)/pthreads
   ;
 
 lib pthreads
@@ -262,13 +398,13 @@ lib pthreads
   : <target-os>windows
     <variant>debug
     <link>static
-    <search>$(mico-debug-static-install-path)/lib
+    <search>$(mico-debug-static-lib-path)
   : 
   : <define>HAVE_THREADS
     <define>HAVE_PTHREADS
     <define>HAVE_PTHREADS_VC
     <link>static:<define>PTW32_STATIC_LIB
-    <include>$(mico-debug-static-install-path)/include/pthreads
+    <include>$(mico-debug-static-include-path)/pthreads
   ;
 
 lib pthreads
@@ -276,13 +412,13 @@ lib pthreads
   : <target-os>windows
     <variant>release
     <link>shared
-    <search>$(mico-install-path)/lib
+    <search>$(mico-release-shared-lib-path)
   : 
   : <define>HAVE_THREADS
     <define>HAVE_PTHREADS
     <define>HAVE_PTHREADS_VC
     <link>static:<define>PTW32_STATIC_LIB
-    <include>$(mico-install-path)/include/pthreads
+    <include>$(mico-release-shared-include-path)/pthreads
   ;
 
 lib pthreads
@@ -290,13 +426,13 @@ lib pthreads
   : <target-os>windows
     <variant>release
     <link>static
-    <search>$(mico-static-install-path)/lib
+    <search>$(mico-release-static-lib-path)
   : 
   : <define>HAVE_THREADS
     <define>HAVE_PTHREADS
     <define>HAVE_PTHREADS_VC
     <link>static:<define>PTW32_STATIC_LIB
-    <include>$(mico-static-install-path)/include/pthreads
+    <include>$(mico-release-static-include-path)/pthreads
   ;
 
 lib mico
@@ -304,9 +440,9 @@ lib mico
   : <name>mico2.3.13
     <variant>debug
     <link>shared
-    <search>$(mico-debug-install-path)/lib
+    <search>$(mico-debug-shared-lib-path)
   :
-  : <include>$(mico-debug-install-path)/include
+  : <include>$(mico-debug-shared-include-path)
     <toolset>msvc:<source>pthreads
     <toolset>msvc:<define>__MICO_ORB__
     <toolset>msvc:<define>USE_MESSAGING
@@ -314,18 +450,17 @@ lib mico
     <toolset>msvc:<define>THREADING_POLICIES
     <toolset>msvc:<linkflags>ws2_32.lib
     <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-debug-install-path)/include/windows
+    <toolset>msvc:<include>$(mico-debug-shared-include-path)/windows
   ;
 
 lib mico
   :
-  : <name>libmico2.3.13
+  : <name>mico2.3.13
     <variant>debug
     <link>static
-    <search>$(mico-debug-static-install-path)/lib
-    <target-os>darwin,<link>static>:<file>$(mico-debug-static-install-path)/lib/libmico2.3.13.a
+    <search>$(mico-debug-static-lib-path)
   :
-  : <include>$(mico-debug-static-install-path)/include
+  : <include>$(mico-debug-static-include-path)
     <toolset>msvc:<source>pthreads
     <toolset>msvc:<define>__MICO_ORB__
     <toolset>msvc:<define>USE_MESSAGING
@@ -333,17 +468,18 @@ lib mico
     <toolset>msvc:<define>THREADING_POLICIES
     <toolset>msvc:<linkflags>ws2_32.lib
     <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-debug-static-install-path)/include/windows
+    <toolset>msvc:<include>$(mico-debug-static-include-path)/windows
   ;
+
 
 lib mico
   :
   : <name>mico2.3.13
     <variant>release
     <link>shared
-    <search>$(mico-install-path)/lib
+    <search>$(mico-release-shared-lib-path)
   :
-  : <include>$(mico-install-path)/include
+  : <include>$(mico-release-shared-include-path)
     <toolset>msvc:<source>pthreads
     <toolset>msvc:<define>__MICO_ORB__
     <toolset>msvc:<define>USE_MESSAGING
@@ -351,7 +487,45 @@ lib mico
     <toolset>msvc:<define>THREADING_POLICIES
     <toolset>msvc:<linkflags>ws2_32.lib
     <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-install-path)/include/windows
+    <toolset>msvc:<include>$(mico-release-shared-include-path)/windows
+  ;
+
+lib mico
+  :
+  : <name>mico2.3.13
+    <variant>release
+    <link>static
+    <search>$(mico-release-static-lib-path)
+  :
+  : <include>$(mico-release-static-include-path)
+    <toolset>msvc:<source>pthreads
+    <toolset>msvc:<define>__MICO_ORB__
+    <toolset>msvc:<define>USE_MESSAGING
+    <toolset>msvc:<define>NEED_THREADID_OPERATORS
+    <toolset>msvc:<define>THREADING_POLICIES
+    <toolset>msvc:<linkflags>ws2_32.lib
+    <toolset>msvc,<link>shared:<define>MICO_SHARED
+    <toolset>msvc:<include>$(mico-release-static-include-path)/windows
+  ;
+
+# MacOSX
+lib mico
+  :
+  : <name>libmico2.3.13
+    <variant>debug
+    <link>static
+    <target-os>darwin
+    <file>$(mico-debug-static-lib-path)/libmico2.3.13.a
+  :
+  : <include>$(mico-debug-static-include-path)
+    <toolset>msvc:<source>pthreads
+    <toolset>msvc:<define>__MICO_ORB__
+    <toolset>msvc:<define>USE_MESSAGING
+    <toolset>msvc:<define>NEED_THREADID_OPERATORS
+    <toolset>msvc:<define>THREADING_POLICIES
+    <toolset>msvc:<linkflags>ws2_32.lib
+    <toolset>msvc,<link>shared:<define>MICO_SHARED
+    <toolset>msvc:<include>$(mico-debug-static-include-path)/windows
   ;
 
 lib mico
@@ -359,10 +533,10 @@ lib mico
   : <name>libmico2.3.13
     <variant>release
     <link>static
-    <search>$(mico-static-install-path)/lib
-    <target-os>darwin,<link>static>:<file>$(mico-static-install-path)/lib/libmico2.3.13.a
+    <target-os>darwin
+    <file>$(mico-release-static-lib-path)/libmico2.3.13.a
   :
-  : <include>$(mico-static-install-path)/include
+  : <include>$(mico-release-static-include-path)
     <toolset>msvc:<source>pthreads
     <toolset>msvc:<define>__MICO_ORB__
     <toolset>msvc:<define>USE_MESSAGING
@@ -370,5 +544,51 @@ lib mico
     <toolset>msvc:<define>THREADING_POLICIES
     <toolset>msvc:<linkflags>ws2_32.lib
     <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-static-install-path)/include/windows
+    <toolset>msvc:<include>$(mico-release-static-include-path)/windows
+  ;
+
+# Windows
+lib mico
+  :
+  : <name>libmico2.3.13
+    <variant>debug
+    <link>static
+    <target-os>windows
+    <search>$(mico-debug-static-lib-path)
+  :
+  : <include>$(mico-debug-static-include-path)
+    <toolset>msvc:<source>pthreads
+    <toolset>msvc:<define>__MICO_ORB__
+    <toolset>msvc:<define>USE_MESSAGING
+    <toolset>msvc:<define>NEED_THREADID_OPERATORS
+    <toolset>msvc:<define>THREADING_POLICIES
+    <toolset>msvc:<linkflags>ws2_32.lib
+    <toolset>msvc,<link>shared:<define>MICO_SHARED
+    <toolset>msvc:<include>$(mico-debug-static-include-path)/windows
+  ;
+
+lib mico
+  :
+  : <name>libmico2.3.13
+    <variant>release
+    <link>static
+    <target-os>windows
+    <search>$(mico-release-static-lib-path)
+  :
+  : <include>$(mico-release-static-include-path)
+    <toolset>msvc:<source>pthreads
+    <toolset>msvc:<define>__MICO_ORB__
+    <toolset>msvc:<define>USE_MESSAGING
+    <toolset>msvc:<define>NEED_THREADID_OPERATORS
+    <toolset>msvc:<define>THREADING_POLICIES
+    <toolset>msvc:<linkflags>ws2_32.lib
+    <toolset>msvc,<link>shared:<define>MICO_SHARED
+    <toolset>msvc:<include>$(mico-release-static-include-path)/windows
+  ;
+
+project dl ;
+
+lib dl
+  :
+  : <link>shared
   ;
