@@ -11,7 +11,8 @@ INSTALL=$ROOT/install
 COMMON_FLAGS=""
 SHARED_FLAGS="shared"
 STATIC_FLAGS="no-shared"
-DEBUG_FLAGS="debug-linux-elf"
+# DEBUG_FLAGS="debug-linux-elf"
+DEBUG_FLAGS="linux-elf -g"
 RELEASE_FLAGS="linux-elf"
 
 LOG=".build_`date +%Hh%Mh%Ss`_`date +%d%m%Y`_.out"
@@ -32,14 +33,21 @@ function build
 {
   flags=$1
   execute "make clean"
+  execute "cp electric-fence-2.2.3/libefence.a ."
+  execute "cp electric-fence-2.2.3/libefence.so.* libefence.so"
   execute "./Configure $flags"
   execute "make -j$JOBS"
-  execute "make install_sw"
-  execute "make clean"
+  execute "make install"
 }
 
 cd $OPENSSL_ROOT_PATH
-# build "$COMMON_FLAGS $SHARED_FLAGS $DEBUG_FLAGS --prefix=$INSTALL/openssl-mt-d"
-# build "$COMMON_FLAGS $STATIC_FLAGS $DEBUG_FLAGS --prefix=$INSTALL/openssl-mt-s-d"
+# execute "wget http://ftp.de.debian.org/debian/pool/main/e/electric-fence/electric-fence_2.2.4.tar.gz"
+# execute "tar zxf electric-fence_2.2.4.tar.gz"
+# execute "rm -f electric-fence_2.2.4.tar.gz"
+# cd $OPENSSL_ROOT_PATH/electric-fence-2.2.3
+# execute "make"
+# cd $OPENSSL_ROOT_PATH
+build "$COMMON_FLAGS $SHARED_FLAGS $DEBUG_FLAGS --prefix=$INSTALL/openssl-mt-d"
+build "$COMMON_FLAGS $STATIC_FLAGS $DEBUG_FLAGS --prefix=$INSTALL/openssl-mt-s-d"
 build "$COMMON_FLAGS $SHARED_FLAGS $RELEASE_FLAGS --prefix=$INSTALL/openssl-mt"
 build "$COMMON_FLAGS $STATIC_FLAGS $RELEASE_FLAGS --prefix=$INSTALL/openssl-mt-s"
