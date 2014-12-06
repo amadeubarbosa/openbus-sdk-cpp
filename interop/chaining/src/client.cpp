@@ -84,8 +84,8 @@ int main(int argc, char **argv)
         continue;
       }
       CORBA::Object_var o = offers[idx].service_ref->getFacetByName("HelloProxy");
-      tecgraf::openbus::interop::simple::HelloProxy *helloProxy = 
-        tecgraf::openbus::interop::simple::HelloProxy::_narrow(o);
+      tecgraf::openbus::interop::chaining::HelloProxy *helloProxy = 
+        tecgraf::openbus::interop::chaining::HelloProxy::_narrow(o);
       openbus::idl_or::ServicePropertySeq properties = offers[idx].properties;
       char *loginId = 0;
       for (CORBA::ULong idx = 0; idx != properties.length(); ++idx)

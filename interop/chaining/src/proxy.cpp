@@ -6,7 +6,7 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 #include <openbus/log.hpp>
-#include <scs/ComponentContext.h>
+#include <scs/ComponentContext.hpp>
 
 #include <CORBA.h>
 #include <iostream>
@@ -56,13 +56,13 @@ void load_options(int argc, char **argv)
   }
 }
 
-struct HelloProxyImpl : virtual public POA_tecgraf::openbus::interop::simple::HelloProxy
+struct HelloProxyImpl : virtual public POA_tecgraf::openbus::interop::chaining::HelloProxy
 {
   HelloProxyImpl(openbus::OpenBusContext &c) : ctx(c)
   {
   }
 
-  char *fetchHello(CORBA::OctetSeq encodedChain)
+  char *fetchHello(const ::tecgraf::openbus::interop::chaining::OctetSeq &encodedChain)
   {
     openbus::CallerChain chain = ctx.decodeChain(encodedChain);
     assert(chain != openbus::CallerChain());
