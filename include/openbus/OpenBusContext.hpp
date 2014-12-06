@@ -152,7 +152,12 @@ struct OPENBUS_SDK_DECL CallerChain
   CallerChain() 
   {
   }
+//private:
+#ifndef OPENBUS_SDK_TEST
 private:
+#else
+public:
+#endif
   CallerChain(const std::string &busid, 
               const std::string &target,
               const idl_ac::LoginInfoSeq &originators, 

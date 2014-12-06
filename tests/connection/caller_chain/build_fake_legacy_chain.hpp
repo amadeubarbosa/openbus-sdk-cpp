@@ -3,11 +3,6 @@
 #ifndef TECGRAF_SDK_OPENBUS_TESTS_BUILD_IOP_CODEC_HPP
 #define TECGRAF_SDK_OPENBUS_TESTS_BUILD_IOP_CODEC_HPP
 
-//This is a dirty and naive hack to construct a CallerChain.
-#define private public
-#include <openbus/OpenBusContext.hpp>
-#define private private
-
 #include "iop_codec.hpp"
 
 openbus::CallerChain build_fake_legacy_chain(
