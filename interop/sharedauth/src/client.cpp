@@ -109,7 +109,14 @@ int main(int argc, char** argv) {
         .service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
-      hello->sayHello();
+      CORBA::String_var ret(hello->sayHello());
+      std::string msg("Hello " + entity + "!");
+      if (!(msg == std::string(ret.in())))
+      {
+        std::cerr << "sayHello() não retornou a string '"
+          + msg + "'." << std::endl;
+        std::abort();
+      }
     } 
     else 
     {

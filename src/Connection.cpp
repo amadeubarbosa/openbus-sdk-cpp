@@ -444,8 +444,8 @@ bool Connection::_logout(bool local)
           : context(context), previous_conn(context.getCurrentConnection()),
             previous_chain(context.getJoinedChain())
         {
-          context.setCurrentConnection(self);
           context.exitChain();
+          context.setCurrentConnection(self);
         }
         ~save_state()
         {

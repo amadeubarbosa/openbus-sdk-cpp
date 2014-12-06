@@ -12,7 +12,7 @@
 
 namespace sharedauth = tecgraf::openbus::interop::sharedauth;
 
-const std::string entity("interop_delegation_cpp_client-sharedauth");
+const std::string client_entity("interop_sharedauth_cpp_client");
 std::string bus_host;
 unsigned short bus_port;
 
@@ -112,7 +112,14 @@ int main(int argc, char** argv) {
         .service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello_var hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
-      hello->sayHello();
+      CORBA::String_var ret(hello->sayHello());
+      std::string msg("Hello " + client_entity + "!");
+      if (!(msg == std::string(ret.in())))
+      {
+        std::cerr << "sayHello() não retornou a string '"
+          + msg + "'." << std::endl;
+        std::abort();
+      }
     } 
     else 
     {

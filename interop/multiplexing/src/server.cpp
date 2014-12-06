@@ -112,13 +112,18 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 
   char *sayHello() 
   {
-    openbus::CallerChain chain = _ctx.getCallerChain();
-    assert(chain != openbus::CallerChain());
-    std::string msg = "Hello " + std::string(chain.caller().entity) + "@"
-      + chain.busid() + "!";
+    openbus::CallerChain chain(_ctx.getCallerChain());
+    if (chain == openbus::CallerChain())
+    {
+      std::cerr << "chain == openbus::CallerChain()"
+                << std::endl;
+      std::abort();
+    }
+    std::string msg("Hello " + std::string(chain.caller().entity) + "@"
+                    + chain.busid() + "!");
     std::cout << msg << std::endl;
-    CORBA::String_var r = CORBA::string_dup(msg.c_str());
-    return r._retn();
+    CORBA::String_var ret(msg.c_str());
+    return ret._retn();
   }
 private:
   openbus::OpenBusContext &_ctx;
@@ -156,7 +161,7 @@ int main(int argc, char **argv) {
   try 
   {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    // openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_ptr orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
