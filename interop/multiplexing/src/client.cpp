@@ -65,7 +65,7 @@ int main(int argc, char **argv)
   try 
   {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    // openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
@@ -99,9 +99,14 @@ int main(int argc, char **argv)
         CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
         tecgraf::openbus::interop::simple::Hello_var hello = 
           tecgraf::openbus::interop::simple::Hello::_narrow(o);
-        std::string msg(hello->sayHello());
-        std::string s = "Hello " + entity + "@" + conn->busid() + "!";
-        assert(s == msg);
+        CORBA::String_var ret(hello->sayHello());
+        std::string msg("Hello " + entity + "@" + conn->busid() + "!");
+        if (msg != std::string(ret.in()))
+        {
+          std::cerr << "sayHello() não retornou a string '"
+            + msg + "'." << std::endl;
+          std::abort();
+        }          
       }
     }
   } 

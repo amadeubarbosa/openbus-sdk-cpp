@@ -44,4 +44,5 @@ exe sharedauth_client-sharedauth
 alias sharedauth
   : sharedauth_client
     sharedauth_client-sharedauth
+    test.properties
 ;

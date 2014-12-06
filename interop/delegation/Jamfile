@@ -53,5 +53,8 @@ alias delegation :
   delegation_broadcaster 
   delegation_forwarder
   delegation_messenger 
-  test.properties 
+  test.properties
+  admin/interop_delegation_cpp_messenger.key
+  admin/interop_delegation_cpp_broadcaster.key
+  admin/interop_delegation_cpp_forwarder.key
 ;

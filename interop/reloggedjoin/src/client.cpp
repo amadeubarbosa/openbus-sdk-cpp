@@ -76,17 +76,23 @@ int main(int argc, char **argv)
 
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
       ctx->getOfferRegistry()->findServices(props);
-    assert(offers->length() != 0);
+    if (offers->length() < 1)
+    {
+      std::cerr << "offers->length() != 0" << std::endl;
+      std::abort();
+    }
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
       CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello_var hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
-      const char *ret = hello->sayHello();
-      std::string msg = "Hello " + entity + "!";
-      if (!(ret == msg))
+      CORBA::String_var ret(hello->sayHello());
+      std::string msg("Hello " + entity + "!");
+      if (!(msg == std::string(ret.in())))
       {
-        throw std::runtime_error("ret != msg");
+        std::cerr << "sayHello() não retornou a string '"
+          + msg + "'." << std::endl;
+        std::abort();
       }
     }
   } 

@@ -69,8 +69,8 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     std::string entity(chain.originators()[0].entity);
     std::string msg = "Hello " + entity + "!";
     std::cout << msg << std::endl;
-    CORBA::String_var r = CORBA::string_dup(msg.c_str());
-    return r._retn();
+    CORBA::String_var ret(msg.c_str());
+    return ret._retn();
   }
 private:
   openbus::OpenBusContext &ctx;

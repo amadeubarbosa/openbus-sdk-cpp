@@ -66,37 +66,56 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 
   char *sayHello() 
   {
-    openbus::Connection *const conn = ctx.getCurrentConnection();
-    conn->logout();
-    try 
+    try
     {
-      conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
-    }
-    catch(const openbus::InvalidPrivateKey &e)
-    {
-      std::cout << e.what() << std::endl;
-    }
-    openbus::CallerChain chain = ctx.getCallerChain();
-    assert(chain != openbus::CallerChain());
-    std::string entity(chain.caller().entity);
-    std::string msg = "Hello " + entity + "!";
+      openbus::Connection *const conn = ctx.getCurrentConnection();
+      conn->logout();
+      try 
+      {
+        conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
+      }
+      catch(const openbus::InvalidPrivateKey &e)
+      {
+        std::cout << e.what() << std::endl;
+      }
+      openbus::CallerChain chain = ctx.getCallerChain();
+      if (chain == openbus::CallerChain())
+      {
+        std::abort();
+      }
+      std::string entity(chain.caller().entity);
+      std::string msg("Hello " + entity + "!");
 
-    openbus::idl_or::ServicePropertySeq props;
-    props.length(2);
-    props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    props[static_cast<CORBA::ULong>(1)].name = "reloggedjoin.role";
-    props[static_cast<CORBA::ULong>(1)].value = "server";
+      openbus::idl_or::ServicePropertySeq props;
+      props.length(2);
+      props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
+      props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
+      props[static_cast<CORBA::ULong>(1)].name = "reloggedjoin.role";
+      props[static_cast<CORBA::ULong>(1)].value = "server";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx.getOfferRegistry()->findServices(props);
-    for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
-    {
-      CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
-      tecgraf::openbus::interop::simple::Hello_var hello = 
-        tecgraf::openbus::interop::simple::Hello::_narrow(o);
       ctx.joinChain(chain);
-      return hello->sayHello();
+
+      openbus::idl_or::ServiceOfferDescSeq_var offers = 
+        ctx.getOfferRegistry()->findServices(props);
+      if (offers->length() < 1)
+      {
+        std::cerr << "offers->length() != 0" << std::endl;
+        std::abort();
+      }
+      for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
+      {
+        CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
+        tecgraf::openbus::interop::simple::Hello_var hello = 
+          tecgraf::openbus::interop::simple::Hello::_narrow(o);
+        return hello->sayHello();
+      }
+    }
+    catch (const CORBA::SystemException &e)
+    {
+      //Mico does not implement CORBA::Exception::_rep_id()
+      std::cerr << "repid: " << e._repoid() << "minor code: " << e.minor()
+                << std::endl;
+      std::abort();
     }
   }
 private:
