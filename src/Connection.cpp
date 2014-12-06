@@ -243,18 +243,18 @@ void Connection::loginByPassword(const std::string &entity,
   interceptors::ignore_interceptor _i(_orb_info);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
-  idl::OctetSeq &seq(loginAuthenticationInfo.data);
-  seq.length(static_cast<CORBA::ULong>(password.size()));
-  for (CORBA::ULong i = 0; i != seq.length(); ++i)
-  {
-    seq[i] = password[i];
-  }
+  std::size_t password_size(password.size());
+  loginAuthenticationInfo.data.length(password_size);
+  std::memcpy(loginAuthenticationInfo.data.get_buffer(),
+              password.c_str(),
+              password_size);
   
   SHA256(_key.pubKey().get_buffer(), _key.pubKey().length(), 
          loginAuthenticationInfo.hash);
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo= _orb_info->codec->encode_value(any);
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
+    _orb_info->codec->encode_value(any));
 
   CORBA::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
@@ -341,6 +341,7 @@ void Connection::loginByCertificate(const std::string &entity,
 std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> 
 Connection::startSharedAuth() 
 {
+
   log_scope l(log().general_logger(), info_level, 
               "Connection::startSharedAuth");
   idl::EncryptedBlock challenge;
