@@ -411,13 +411,14 @@ CORBA::OctetSeq OpenBusContext::encode_exported_versions(
     _orb_info->codec->encode_value(any));
   
   CORBA::OctetSeq ret;
-  std::size_t size(exported_version_seq_cdr->length() + tag.size());
+  std::size_t exported_version_seq_size(exported_version_seq_cdr->length());
+  std::size_t size(exported_version_seq_size + tag.size());
   ret.length(size);
 
   std::memcpy(ret.get_buffer(), tag.c_str(), tag.size());
   std::memcpy(ret.get_buffer() + tag.size(),
               exported_version_seq_cdr->get_buffer(),
-              size);
+              exported_version_seq_size);
   return ret;
 }
 
