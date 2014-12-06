@@ -128,8 +128,8 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
                                          Connection &conn)
 {
   idl_cr::CredentialData credential;
-  credential.bus = CORBA::string_dup(conn._busid.c_str());
-  credential.login = CORBA::string_dup(conn._login()->id);
+  credential.bus = conn._busid.c_str();
+  credential.login = conn._login()->id;
 
   Connection::SecretSession session;
   {
