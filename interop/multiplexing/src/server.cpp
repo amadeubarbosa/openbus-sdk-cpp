@@ -17,6 +17,7 @@
 #endif
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
 
 const std::string entity("interop_multiplexing_cpp_server");
 std::string private_key;
@@ -26,6 +27,43 @@ struct bus
   unsigned short port;
 };
 std::map<std::size_t, bus> buses;
+boost::asio::io_service io_service;
+
+struct handler
+{
+  handler(
+    CORBA::ORB_var orb,
+    const std::vector<openbus::Connection *> &connections)
+    : orb(orb), connections(connections)
+  {
+  }
+
+  handler(const handler& o)
+  {
+    orb = o.orb;
+    connections = o.connections;
+  }
+
+  void operator()(
+    const boost::system::error_code& error,
+    int signal_number)
+  {
+    if (!error)
+    {
+      for(std::vector<openbus::Connection *>::iterator it(connections.begin());
+          it != connections.end();
+          ++it)
+      {
+        (*it)->logout();
+      }
+      orb->shutdown(true);        
+      io_service.stop();
+    }
+  }
+
+  CORBA::ORB_var orb;
+  std::vector<openbus::Connection *> connections;
+};
 
 void load_options(int argc, char **argv)
 {
@@ -46,7 +84,6 @@ void load_options(int argc, char **argv)
      "Port to second OpenBus");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::store(po::parse_config_file<char>("test.properties", desc), vm);
   po::notify(vm);
   if (vm.count("private-key"))
   {
@@ -213,6 +250,19 @@ int main(int argc, char **argv) {
     }
     
     busCtx->onCallDispatch(CallDispatchCallback(*conn1BusA, *connBusB));
+
+    std::vector<openbus::Connection *> connections;
+    connections.push_back(conn1BusA.get());
+    connections.push_back(conn2BusA.get());
+    connections.push_back(conn3BusA.get());
+    connections.push_back(connBusB.get());
+    handler io_handler(orb, connections);
+    boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
+    signals.async_wait(io_handler);
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::thread io_service_run(
+      boost::bind(&boost::asio::io_service::run, &io_service));
+#endif
 
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread register1(boost::bind(registerOffer, boost::ref(*busCtx), 

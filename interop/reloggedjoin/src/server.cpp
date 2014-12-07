@@ -14,11 +14,44 @@
 #endif
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
 
 const std::string entity("interop_reloggedjoin_cpp_server");
 std::string private_key;
 std::string bus_host;
 unsigned short bus_port;
+boost::asio::io_service io_service;
+
+struct handler
+{
+  handler(
+    CORBA::ORB_var orb,
+    openbus::Connection *conn)
+    : orb(orb), conn(conn)
+  {
+  }
+
+  handler(const handler& o)
+  {
+    orb = o.orb;
+    conn = o.conn;
+  }
+
+  void operator()(
+    const boost::system::error_code& error,
+    int signal_number)
+  {
+    if (!error)
+    {
+      conn->logout();
+      orb->shutdown(true);        
+      io_service.stop();
+    }
+  }
+
+  CORBA::ORB_var orb;
+  openbus::Connection *conn;
+};
 
 void load_options(int argc, char **argv)
 {
@@ -26,8 +59,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Opcoes permitidas");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -103,7 +135,7 @@ int main(int argc, char **argv)
   try 
   {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    // openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
@@ -139,6 +171,15 @@ int main(int argc, char **argv)
     HelloImpl srv(*ctx);
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
     login_register(*ctx, comp, props, *conn);
+
+    boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
+    handler io_handler(orb, conn.get());
+    signals.async_wait(io_handler);
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::thread io_service_run(
+      boost::bind(&boost::asio::io_service::run, &io_service));
+#endif
+
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
 #else

@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include <boost/program_options.hpp>
 
-const std::string entity("interop_hello_cpp_client");
+const std::string entity("interop_simple_cpp_client");
 std::string bus_host;
 unsigned short bus_port;
 
@@ -29,7 +29,6 @@ void load_options(int argc, char **argv)
      "Port to OpenBus");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::store(po::parse_config_file<char>("test.properties", desc), vm);
   po::notify(vm);
   if (vm.count("help")) 
   {

@@ -13,8 +13,42 @@
   #include <boost/thread.hpp>
 #endif
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
 
 namespace delegation = tecgraf::openbus::interop::delegation;
+
+boost::asio::io_service io_service;
+
+struct handler
+{
+  handler(
+    CORBA::ORB_var orb,
+    openbus::Connection *conn)
+    : orb(orb), conn(conn)
+  {
+  }
+
+  handler(const handler& o)
+  {
+    orb = o.orb;
+    conn = o.conn;
+  }
+
+  void operator()(
+    const boost::system::error_code& error,
+    int signal_number)
+  {
+    if (!error)
+    {
+      conn->logout();
+      orb->shutdown(true);        
+      io_service.stop();
+    }
+  }
+
+  CORBA::ORB_var orb;
+  openbus::Connection *conn;
+};
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 void ORBRun(CORBA::ORB_var orb)
@@ -78,8 +112,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -165,6 +198,15 @@ int main(int argc, char** argv) {
       ctx->getOfferRegistry()->registerService(
       broadcaster_component.getIComponent(), props);
       std::cout << "Broadcaster no ar" << std::endl;
+
+      boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
+      handler io_handler(orb, conn.get());
+      signals.async_wait(io_handler);
+#ifdef OPENBUS_SDK_MULTITHREAD
+      boost::thread io_service_run(
+        boost::bind(&boost::asio::io_service::run, &io_service));
+#endif
+
 #ifdef OPENBUS_SDK_MULTITHREAD
       orbRun.join();
 #endif

@@ -1,23 +1,23 @@
 Category {
-  id = "InteropHello",
+  id = "InteropSimple",
   name = "Categoria gerada pelo script",
 }
 
 Entity {
-  id = "interop_hello_cpp_server",
-  category = "InteropHello",
+  id = "interop_simple_cpp_server",
+  category = "InteropSimple",
   name = "Entidade gerada pelo script",
 }
 
 Entity {
-  id = "interop_hello_cpp_client",
-  category = "InteropHello",
+  id = "interop_simple_cpp_client",
+  category = "InteropSimple",
   name = "Entidade gerada pelo script",
 }
 
 Certificate {
-  id = "interop_hello_cpp_server",
-  certificate = "interop_hello_cpp_server.crt",
+  id = "interop_simple_cpp_server",
+  certificate = "interop_simple_cpp_server.crt",
 }
 
 Interface {
@@ -25,14 +25,14 @@ Interface {
 }
 
 Grant {
-  id = "interop_hello_cpp_server",
+  id = "interop_simple_cpp_server",
   interfaces = {
     "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
   }
 }
 
 Grant {
-  id = "interop_hello_cpp_client",
+  id = "interop_simple_cpp_client",
   interfaces = {
     "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
   }

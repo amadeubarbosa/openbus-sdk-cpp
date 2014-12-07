@@ -1,23 +1,25 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/messages.h"
+#include "stubs/hello.h"
 #include <openbus/ORBInitializer.hpp>
-#include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
+#include <openbus/Connection.hpp>
+#include <openbus/log.hpp>
 #include <scs/ComponentContext.hpp>
-#include <log/output/file_output.h>
 
 #include <CORBA.h>
 #include <iostream>
-#include <map>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
+#include <boost/bind.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 
-namespace delegation = tecgraf::openbus::interop::delegation;
-
+const std::string entity("interop_sharedauth_cpp_server");
+std::string private_key;
+std::string bus_host;
+unsigned short bus_port;
 boost::asio::io_service io_service;
 
 struct handler
@@ -50,55 +52,6 @@ struct handler
   CORBA::ORB_var orb;
   openbus::Connection *conn;
 };
-
-#ifdef OPENBUS_SDK_MULTITHREAD
-void ORBRun(CORBA::ORB_var orb)
-{
-  orb->run();
-}
-#endif
-
-struct MessengerImpl : 
-  virtual public POA_tecgraf::openbus::interop::delegation::Messenger
-{
-  MessengerImpl(openbus::OpenBusContext& c)
-    : ctx(c) {}
-
-  void post(const char* to, const char* message) 
-  {
-    std::cout << "post to " << to << " by " << ctx.getCallerChain().caller().entity
-              << std::endl;
-    std::cout << " Message content: " << message << std::endl;
-    delegation::PostDesc desc = {ctx.getCallerChain().caller().entity, message};
-    inbox.insert(std::make_pair(to, desc));
-  }
-
-  delegation::PostDescSeq* receivePosts()
-  {
-    std::string from (ctx.getCallerChain().caller().entity);
-    std::cout << "Retrieving messages for " << from << std::endl;
-    typedef std::multimap<std::string, delegation::PostDesc>::const_iterator iterator;
-    std::pair<iterator, iterator> range = inbox.equal_range(from);
-    delegation::PostDescSeq_var posts (new delegation::PostDescSeq);
-    std::cout << "Retrieving " << std::distance(range.first, range.second) 
-              << " messages" << std::endl;
-    posts->length(std::distance(range.first, range.second));
-    std::size_t index = 0;
-    for(iterator first = range.first; first != range.second; ++first, ++index)
-    {
-      (*posts)[index] = first->second;
-    }
-    return posts._retn();
-  }
-
-  openbus::OpenBusContext& ctx;
-  std::multimap<std::string, delegation::PostDesc> inbox;
-};
-
-const std::string entity("interop_delegation_cpp_messenger");
-std::string private_key;
-std::string bus_host;
-unsigned short bus_port;
 
 void load_options(int argc, char **argv)
 {
@@ -134,50 +87,123 @@ void load_options(int argc, char **argv)
   }
 }
 
-int main(int argc, char** argv) {
-  try {
+
+struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello 
+{
+  HelloImpl(openbus::OpenBusContext &c) : ctx(c) 
+  { 
+  }
+
+  char *sayHello() 
+  {
+    openbus::CallerChain chain = ctx.getCallerChain();
+    assert(chain != openbus::CallerChain());
+    std::string msg = "Hello " + std::string(chain.caller().entity) + "!";
+    std::cout << msg << std::endl;
+    CORBA::String_var r = CORBA::string_dup(msg.c_str());
+    return r._retn();
+  }
+private:
+  openbus::OpenBusContext &ctx;
+};
+
+void login_register(
+  const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp,
+  const openbus::idl_or::ServicePropertySeq &props, openbus::Connection &conn)
+{
+  try 
+  {
+    conn.loginByCertificate(entity, openbus::PrivateKey(private_key));
+  }
+  catch(const openbus::InvalidPrivateKey &e)
+  {
+    std::cout << e.what() << std::endl;
+  }
+  ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
+}
+
+struct on_invalid_login
+{
+  typedef void result_type;
+  on_invalid_login(
+    const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp, 
+    const openbus::idl_or::ServicePropertySeq &props, 
+    openbus::Connection  &conn) 
+    : ctx(ctx), comp(comp), props(props), conn(conn)
+  {
+  }
+
+  result_type operator()(openbus::Connection &c, openbus::idl_ac::LoginInfo l) 
+  {
+    try 
+    {
+      std::cout << "invalid login: " << l.id.in() << std::endl; 
+      login_register(ctx, comp, props, conn);
+    } 
+    catch (const CORBA::Exception &e) 
+    {
+      std::cout << "[error (CORBA::Exception)] " << e << std::endl;    
+    }
+  }
+private:
+  const openbus::OpenBusContext &ctx;
+  scs::core::ComponentContext &comp;
+  const openbus::idl_or::ServicePropertySeq &props;
+  openbus::Connection &conn;
+};
+
+#ifdef OPENBUS_SDK_MULTITHREAD
+void ORBRun(CORBA::ORB_ptr orb)
+{
+  orb->run();
+}
+#endif
+
+int main(int argc, char **argv) 
+{
+  try 
+  {
     load_options(argc, argv);
+    // openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
+    
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
+    
+    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
       (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host, bus_port));
+    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host, 
+                                                                    bus_port);
     ctx->setDefaultConnection(conn.get());
-
+    
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orb_run(ORBRun, ctx->orb());
+    boost::thread orb_run(boost::bind(ORBRun, ctx->orb()));
 #endif
-
+    
     scs::core::ComponentId componentId;
-    componentId.name = "Messenger";
+    componentId.name = "Hello";
     componentId.major_version = '1';
     componentId.minor_version = '0';
     componentId.patch_version = '0';
-    componentId.platform_spec = "C++";
-    scs::core::ComponentContext messenger_component(ctx->orb(), componentId);
-    MessengerImpl messenger_servant(*ctx);
-    messenger_component.addFacet(
-      "messenger", delegation::_tc_Messenger->id(), &messenger_servant);
+    componentId.platform_spec = "c++";
+    scs::core::ComponentContext comp(ctx->orb(), componentId);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
-    openbus::idl_or::ServiceProperty property;
     props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
     props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
 
-    conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
+    conn->onInvalidLogin(on_invalid_login(*ctx, comp, props, *conn));
 
-    ctx->getOfferRegistry()->registerService(
-      messenger_component.getIComponent(), props);
-    std::cout << "Messenger no ar" << std::endl;
+    HelloImpl srv(*ctx);
+    comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
+    login_register(*ctx, comp, props, *conn);
+
     boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-
     handler io_handler(orb, conn.get());
     signals.async_wait(io_handler);
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -187,21 +213,13 @@ int main(int argc, char** argv) {
 
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
+#else
+    ctx->orb()->run();
 #endif
-  } 
-  catch(const std::exception &e) 
-  {
-    std::cout << "[error (std::exception)] " << e.what() << std::endl;
-    return -1;
   } 
   catch (const CORBA::Exception &e) 
   {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   } 
-  catch (...) 
-  {
-    std::cout << "[error *unknow exception*]" << std::endl;
-    return -1;
-  }
 }

@@ -42,7 +42,6 @@ void load_options(int argc, char **argv)
      "Port to OpenBus");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::store(po::parse_config_file<char>("test.properties", desc), vm);
   po::notify(vm);
   if (vm.count("help")) 
   {
