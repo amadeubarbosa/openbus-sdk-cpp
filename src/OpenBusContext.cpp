@@ -134,8 +134,12 @@ CallerChain OpenBusContext::getCallerChain()
 void OpenBusContext::joinChain(CallerChain const &chain) 
 {
   log_scope l(log().general_logger(), info_level, "OpenBusContext::joinChain");
+  CallerChain caller_chain(chain);
   CORBA::Any sig_any;
-  sig_any <<= *(chain.signedCallChain());
+  if (caller_chain != CallerChain())
+  {
+    sig_any <<= *(caller_chain.signedCallChain());
+  }
   _piCurrent->set_slot(_orb_info->slot.joined_call_chain, sig_any);
 }
 

@@ -211,8 +211,8 @@ void ClientInterceptor::build_legacy_credential(PI::ClientRequestInfo &r,
                                                 Connection &conn)
 {
   legacy::v1_5::Credential credential;
-  credential.identifier = CORBA::string_dup(conn._login()->id);
-  credential.owner = CORBA::string_dup(conn._login()->entity);
+  credential.identifier = conn._login()->id;
+  credential.owner = conn._login()->entity;
   CallerChain caller_chain(get_joined_chain(conn, r));
   if (caller_chain == CallerChain())
   {
