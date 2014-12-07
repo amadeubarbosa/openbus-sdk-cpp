@@ -26,7 +26,6 @@ void mysleep()
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 
-openbus::CallerChain* certification;
 const std::string entity("interop_delegation_cpp_client");
 std::string bus_host;
 unsigned short bus_port;
