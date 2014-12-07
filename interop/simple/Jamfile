@@ -42,6 +42,5 @@ exe simple_server
 alias simple
   : simple_client
     simple_server
-    test.properties
-    admin/interop_hello_cpp_server.key
+    admin/interop_simple_cpp_server.key
   ;

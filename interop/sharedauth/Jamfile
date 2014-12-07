@@ -23,8 +23,26 @@ exe sharedauth_client
     <link>static:<source>/dl//dl
 ;
 
-exe sharedauth_client-sharedauth
-  : src/client-sharedauth.cpp 
+exe sharedauth_server
+  : src/server.cpp 
+    hello-idl 
+    encoding-idl
+    /openbus//openbus 
+    /scs//scs 
+    /logger//logger 
+    /mico//mico
+    /boost//headers 
+    /boost//program_options 
+    /openssl//openssl
+  : <threading>multi:<source>/boost//thread
+    <implicit-dependency>/openbus//core-idls
+    <implicit-dependency>hello-idl
+    <implicit-dependency>encoding-idl
+    <link>static:<source>/dl//dl
+;
+
+exe sharedauth_sharedauth
+  : src/sharedauth.cpp 
     hello-idl 
     encoding-idl
     /openbus//openbus 
@@ -43,6 +61,8 @@ exe sharedauth_client-sharedauth
 
 alias sharedauth
   : sharedauth_client
-    sharedauth_client-sharedauth
-    test.properties
+    sharedauth_sharedauth
+    sharedauth_server
+    admin/interop_sharedauth_cpp_sharedauth.key
+    admin/interop_sharedauth_cpp_server.key
 ;

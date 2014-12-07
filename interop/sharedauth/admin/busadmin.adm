@@ -1,0 +1,58 @@
+Category {
+  id = "InteropSharedauth",
+  name = "Categoria gerada pelo script",
+}
+
+Entity {
+  id = "interop_sharedauth_cpp_sharedauth",
+  category = "InteropSharedauth",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "interop_sharedauth_cpp_server",
+  category = "InteropSharedauth",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "interop_sharedauth_cpp_client",
+  category = "InteropSharedauth",
+  name = "Entidade gerada pelo script",
+}
+
+Certificate {
+  id = "interop_sharedauth_cpp_sharedauth",
+  certificate = "interop_sharedauth_cpp_sharedauth.crt",
+}
+
+Certificate {
+  id = "interop_sharedauth_cpp_server",
+  certificate = "interop_sharedauth_cpp_server.crt",
+}
+
+Interface {
+  id = "IDL:tecgraf/openbus/interop/simple/Hello:1.0"
+}
+
+Grant {
+  id = "interop_sharedauth_cpp_sharedauth",
+  interfaces = {
+    "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
+  }
+}
+
+Grant {
+  id = "interop_sharedauth_cpp_server",
+  interfaces = {
+    "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
+  }
+}
+
+Grant {
+  id = "interop_simple_cpp_client",
+  interfaces = {
+    "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
+  }
+}
+

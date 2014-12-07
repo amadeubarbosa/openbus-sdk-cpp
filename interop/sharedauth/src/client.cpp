@@ -12,7 +12,7 @@
 
 namespace sharedauth = tecgraf::openbus::interop::sharedauth;
 
-const std::string entity("interop_sharedauth_cpp_client");
+const std::string client_entity("interop_sharedauth_cpp_sharedauth");
 std::string bus_host;
 unsigned short bus_port;
 
@@ -28,7 +28,6 @@ void load_options(int argc, char **argv)
      "Port to OpenBus");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::store(po::parse_config_file<char>("test.properties", desc), vm);
   po::notify(vm);
   if (vm.count("help")) 
   {
@@ -62,37 +61,40 @@ int main(int argc, char** argv) {
     std::auto_ptr <openbus::Connection> conn
       (ctx->createConnection(bus_host, bus_port));
 
-    ctx->setDefaultConnection(conn.get());
-    conn->loginByPassword(entity, entity);
-
     {
-      std::pair <openbus::idl_ac::LoginProcess_ptr, openbus::idl::OctetSeq> credential
-        = conn->startSharedAuth();
       CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");
       IOP::CodecFactory_var codec_factory
         = IOP::CodecFactory::_narrow(object);
       assert(!CORBA::is_nil(codec_factory));
-      
+  
       IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
       IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
 
-      sharedauth::EncodedSharedAuth sharedauth
-        =
-        {
-          credential.first, credential.second
-        };
+      CORBA::OctetSeq secret;
+      std::ifstream file(".secret");
+      file.seekg(0, std::ios::end);
+      secret.length(file.tellg());
+      file.seekg(0, std::ios::beg);
+      file.rdbuf()->sgetn
+        (static_cast<char*>(static_cast<void*>(secret.get_buffer()))
+         , secret.length());
 
-      CORBA::Any any;
-      any <<= sharedauth;
-      CORBA::OctetSeq_var secret_seq = codec->encode_value(any);
-
-      std::ofstream file(".secret");
-      std::copy(secret_seq->get_buffer()
-                , secret_seq->get_buffer() + secret_seq->length()
-                , std::ostream_iterator<char>(file));
+      CORBA::Any_var any = codec->decode_value(secret,
+                                               sharedauth::_tc_EncodedSharedAuth);
+      const sharedauth::EncodedSharedAuth *sharedauth;
+      if(*any >>= sharedauth)
+      {
+        openbus::idl_ac::LoginProcess_var login
+          = openbus::idl_ac::LoginProcess::_narrow(sharedauth->attempt);
+        conn->loginBySharedAuth(login, sharedauth->secret);
+      }
+      else
+      {
+        std::cout << "Falhou unmarshaling os dados no arquivo de log" << std::endl;
+        return 1;
+      }
+      ctx->setDefaultConnection(conn.get());
     }
-
-    std::cout << "Chamando a faceta Hello por este cliente." << std::endl;
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
@@ -100,17 +102,17 @@ int main(int argc, char** argv) {
     props[static_cast<CORBA::ULong>(0)].value = "Hello";
     props[static_cast<CORBA::ULong>(1)].name  = "offer.domain";
     props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
-
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
       ctx->getOfferRegistry()->findServices(props);
+    
     if (offers->length())
     {
       CORBA::Object_var o = offers[static_cast<CORBA::ULong>(0)]
         .service_ref->getFacetByName("Hello");
-      tecgraf::openbus::interop::simple::Hello *hello = 
+      tecgraf::openbus::interop::simple::Hello_var hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       CORBA::String_var ret(hello->sayHello());
-      std::string msg("Hello " + entity + "!");
+      std::string msg("Hello " + client_entity + "!");
       if (!(msg == std::string(ret.in())))
       {
         std::cerr << "sayHello() não retornou a string '"
@@ -122,8 +124,6 @@ int main(int argc, char** argv) {
     {
       std::cout << "nenhuma oferta encontrada." << std::endl;
     }
-    std::cout << "orb.run()" << std::endl;
-    ctx->orb()->run();
   } 
   catch(const std::exception &e) 
   {

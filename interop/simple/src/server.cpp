@@ -16,7 +16,7 @@
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 
-const std::string entity("interop_hello_cpp_server");
+const std::string entity("interop_simple_cpp_server");
 std::string private_key;
 std::string bus_host;
 unsigned short bus_port;
@@ -59,8 +59,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -162,7 +161,6 @@ void ORBRun(CORBA::ORB_ptr orb)
 
 int main(int argc, char **argv) 
 {
-  boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
   try 
   {
     load_options(argc, argv);
@@ -205,6 +203,7 @@ int main(int argc, char **argv)
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
     login_register(*ctx, comp, props, *conn);
 
+    boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
     handler io_handler(orb, conn.get());
     signals.async_wait(io_handler);
 #ifdef OPENBUS_SDK_MULTITHREAD
