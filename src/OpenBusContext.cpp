@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/log.hpp"
+#include "openbus/any.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
@@ -31,8 +32,9 @@ bool CallerChain::is_legacy() const
 }
   
 OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb, 
-                                 boost::shared_ptr<interceptors::orb_info> i)
-  : _orb(orb), _orb_info(i), _defaultConnection(0), _callDispatchCallback(0)
+                               boost::shared_ptr<interceptors::orb_info> i)
+  : _orb(orb), _orb_info(i), _codec(_orb_info->codec), _defaultConnection(0),
+    _callDispatchCallback(0)
 {
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::OpenBusContext");
@@ -93,17 +95,15 @@ Connection *OpenBusContext::getCurrentConnection() const
               "OpenBusContext::getCurrentConnection");
   CORBA::Any_var any(
     _piCurrent->get_slot(_orb_info->slot.requester_conn));
-  const idl::OctetSeq *seq;
+  
   Connection *conn(0);
-  if (*any >>= seq)
-  {
-    assert(seq->length() == sizeof(Connection *));
-    std::memcpy(&conn, seq->get_buffer(), sizeof(Connection *));
-  } 
-  else 
+  idl::OctetSeq seq(extract<idl::OctetSeq>(any));  
+  if (seq.length() == 0)
   {
     return getDefaultConnection();
   }
+  assert(seq.length() == sizeof(Connection *));
+  std::memcpy(&conn, seq.get_buffer(), sizeof(Connection *));
   return conn;
 }
 
@@ -113,20 +113,17 @@ CallerChain OpenBusContext::getCallerChain()
               "OpenBusContext::getCallerChain");
   if (Connection *conn = getDispatchConnection())
   {
-    CORBA::Any_var sig_any(
-      _piCurrent->get_slot(_orb_info->slot.signed_call_chain));    
-    const idl_cr::SignedCallChain *sig;
-    if (*sig_any >>= sig) 
-    {
-      CORBA::Any_var any(
-        _orb_info->codec->decode_value(
-          sig->encoded, idl_ac::_tc_CallChain));
-      const idl_ac::CallChain *chain;
-      *any >>= chain;
-      return CallerChain(
-        conn->busid(), conn->login()->entity.in(), chain->originators, 
-        chain->caller, *sig);
-    } 
+    CORBA::Any_var any(
+      _piCurrent->get_slot(_orb_info->slot.signed_call_chain));
+    
+    idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+    
+    any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
+    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+    
+    return CallerChain(
+      conn->busid(), conn->login()->entity.in(), chain.originators, 
+      chain.caller, signed_chain);
   }
   return CallerChain();
 }
@@ -156,21 +153,20 @@ CallerChain OpenBusContext::getJoinedChain()
               "OpenBusContext::getJoinedChain");
   if (Connection *conn = getDispatchConnection())
   {
-    CORBA::Any_var sig_any(
-      _piCurrent->get_slot(_orb_info->slot.joined_call_chain));
-    const idl_cr::SignedCallChain *sig;
-    if (*sig_any >>= sig) 
+    CORBA::Any_var any(_piCurrent->get_slot(_orb_info->slot.joined_call_chain));
+
+    idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+    if (signed_chain.encoded.length() == 0)
     {
-      CORBA::Any_var any(
-        _orb_info->codec->decode_value(sig->encoded, idl_ac::_tc_CallChain));
-      const idl_ac::CallChain *chain;
-      if (*any >>= chain) 
-      {
-        return CallerChain(
-          conn->busid(), conn->login()->entity.in(), chain->originators, 
-          chain->caller, *sig);
-      }
+      return CallerChain();
     }
+    
+    any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
+    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+
+    return CallerChain(
+      conn->busid(), conn->login()->entity.in(), chain.originators, 
+      chain.caller, signed_chain);
   }
   return CallerChain();
 }
@@ -392,16 +388,17 @@ Connection *OpenBusContext::getDispatchConnection()
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getDispatchConnection");
-  CORBA::Any_var any(
-    _piCurrent->get_slot(_orb_info->slot.receive_conn));
-  const idl::OctetSeq *seq;
-  Connection *conn(0);
-  if (*any >>= seq)
+  CORBA::Any_var any(_piCurrent->get_slot(_orb_info->slot.receive_conn));
+
+  Connection *conn;
+  idl::OctetSeq seq(extract<idl::OctetSeq>(any));
+  if (seq.length() == 0)
   {
-    assert(seq->length() == sizeof(Connection*));
-    std::memcpy(&conn, seq->get_buffer(), sizeof(Connection*));
-    l.vlog("Connection.busid: %s", conn->busid().c_str());
-  } 
+    return 0;
+  }
+  assert(seq.length() == sizeof(Connection*));
+  std::memcpy(&conn, seq.get_buffer(), sizeof(Connection*));
+  l.vlog("Connection.busid: %s", conn->busid().c_str());
   return conn;
 }
 

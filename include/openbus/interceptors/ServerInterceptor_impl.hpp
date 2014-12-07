@@ -47,7 +47,7 @@ struct OPENBUS_SDK_DECL Session
 
 struct credential
 {
-  tecgraf::openbus::core::v2_0::credential::CredentialData_var data;
+  tecgraf::openbus::core::v2_0::credential::CredentialData data;
   openbus::legacy::v1_5::Credential legacy;
 };
 
@@ -66,6 +66,7 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   boost::mutex _mutex;
 #endif
   boost::shared_ptr<orb_info> _orb_info;
+  ::IOP::Codec_var _codec;
   Connection &get_dispatcher(
     boost::shared_ptr<OpenBusContext>, 
     const std::string &bus,

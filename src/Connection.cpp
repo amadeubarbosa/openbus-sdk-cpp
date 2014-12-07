@@ -121,8 +121,8 @@ Connection::Connection(
   const std::string host, const unsigned short port, CORBA::ORB_ptr orb, 
   boost::shared_ptr<interceptors::orb_info> i, OpenBusContext &m, 
   const ConnectionProperties &props) 
-  : _host(host), _port(port), _orb(orb), _orb_info(i), _loginInfo(0), 
-    _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m),
+  : _host(host), _port(port), _orb(orb), _orb_info(i), _codec(_orb_info->codec),
+    _loginInfo(0), _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m),
     _legacyDelegate(CALLER), _legacyEnabled(true), _profile2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
@@ -253,8 +253,7 @@ void Connection::loginByPassword(const std::string &entity,
          loginAuthenticationInfo.hash);
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
-    _orb_info->codec->encode_value(any));
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_codec->encode_value(any));
 
   CORBA::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
@@ -312,8 +311,7 @@ void Connection::loginByCertificate(const std::string &entity,
   
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
-    _orb_info->codec->encode_value(any));
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_codec->encode_value(any));
   
   CORBA::OctetSeq encrypted(_buskey->encrypt(
     encodedLoginAuthenticationInfo->get_buffer(), 
@@ -389,8 +387,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
-    _orb_info->codec->encode_value(any));
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_codec->encode_value(any));
 
   CORBA::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 

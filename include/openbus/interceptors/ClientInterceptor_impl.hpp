@@ -47,6 +47,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   void build_legacy_credential(PI::ClientRequestInfo &, Connection &conn);
   openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
   boost::shared_ptr<orb_info> _orb_info;
+  ::IOP::Codec_var _codec;
   boost::shared_ptr<OpenBusContext> _openbus_ctx;
   LRUCache<hash_value, idl_cr::SignedCallChain> _callChainLRUCache;
 #ifdef OPENBUS_SDK_MULTITHREAD

@@ -357,6 +357,7 @@ private:
   const unsigned short _port;
   CORBA::ORB_ptr _orb;
   boost::shared_ptr<interceptors::orb_info> _orb_info;
+  ::IOP::Codec_var _codec;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;
