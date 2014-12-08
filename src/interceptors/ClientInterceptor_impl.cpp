@@ -35,7 +35,7 @@ Connection &ClientInterceptor::get_current_connection(PI::ClientRequestInfo &r)
   log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::get_current_connection");
   Connection *conn(0);
-  CORBA::Any_var any(r.get_slot(_orb_info->slot.requester_conn));
+  CORBA::Any_var any(r.get_slot(_orb_info->slot.current_connection));
   idl::OctetSeq seq(extract<idl::OctetSeq>(any));
   if (seq.length() > 0)
   {

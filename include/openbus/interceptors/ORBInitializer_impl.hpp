@@ -27,14 +27,13 @@ struct ServerInterceptor;
 struct OPENBUS_SDK_DECL Slot
 {
   Slot(PI::ORBInitInfo_ptr info)
-    : requester_conn(info->allocate_slot_id()),
-    receive_conn(info->allocate_slot_id()),
+    : current_connection(info->allocate_slot_id()),
     joined_call_chain(info->allocate_slot_id()),
     signed_call_chain(info->allocate_slot_id()),
     ignore_interceptor(info->allocate_slot_id())
   {}
-  const PI::SlotId requester_conn, receive_conn, joined_call_chain, 
-    signed_call_chain, ignore_interceptor;
+  const PI::SlotId current_connection, joined_call_chain, signed_call_chain,
+    ignore_interceptor;
 };
 
 struct orb_info

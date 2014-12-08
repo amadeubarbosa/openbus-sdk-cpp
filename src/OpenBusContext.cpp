@@ -59,7 +59,7 @@ Connection *OpenBusContext::setCurrentConnection(Connection *conn)
   CORBA::Any any;
   any <<= seq;
   Connection *old(getCurrentConnection());
-  _piCurrent->set_slot(_orb_info->slot.requester_conn, any);
+  _piCurrent->set_slot(_orb_info->slot.current_connection, any);
   return old;
 }
 
@@ -68,7 +68,7 @@ Connection *OpenBusContext::getCurrentConnection() const
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCurrentConnection");
   CORBA::Any_var any(
-    _piCurrent->get_slot(_orb_info->slot.requester_conn));
+    _piCurrent->get_slot(_orb_info->slot.current_connection));
   
   Connection *conn(0);
   idl::OctetSeq seq(extract<idl::OctetSeq>(any));  
@@ -85,21 +85,23 @@ CallerChain OpenBusContext::getCallerChain()
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCallerChain");
-  if (Connection *conn = getDispatchConnection())
+  Connection *conn(getCurrentConnection());
+  if (!conn)
   {
-    CORBA::Any_var any(
-      _piCurrent->get_slot(_orb_info->slot.signed_call_chain));
-    
-    idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
-    
-    any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
-    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-    
-    return CallerChain(
-      conn->busid(), conn->login()->entity.in(), chain.originators, 
-      chain.caller, signed_chain);
+    return CallerChain();
   }
-  return CallerChain();
+    
+  CORBA::Any_var any(
+    _piCurrent->get_slot(_orb_info->slot.signed_call_chain));
+    
+  idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+    
+  any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
+  idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+    
+  return CallerChain(
+    conn->busid(), conn->login()->entity.in(), chain.originators, 
+    chain.caller, signed_chain);
 }
 
 void OpenBusContext::joinChain(CallerChain const &chain) 
@@ -125,24 +127,25 @@ CallerChain OpenBusContext::getJoinedChain()
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getJoinedChain");
-  if (Connection *conn = getDispatchConnection())
+  Connection *conn(getCurrentConnection());
+  if (!conn)
   {
-    CORBA::Any_var any(_piCurrent->get_slot(_orb_info->slot.joined_call_chain));
-
-    idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
-    if (signed_chain.encoded.length() == 0)
-    {
-      return CallerChain();
-    }
-    
-    any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
-    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-
-    return CallerChain(
-      conn->busid(), conn->login()->entity.in(), chain.originators, 
-      chain.caller, signed_chain);
+    return CallerChain();
   }
-  return CallerChain();
+  CORBA::Any_var any(_piCurrent->get_slot(_orb_info->slot.joined_call_chain));
+
+  idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+  if (signed_chain.encoded.length() == 0)
+  {
+    return CallerChain();
+  }
+    
+  any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
+  idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+
+  return CallerChain(
+    conn->busid(), conn->login()->entity.in(), chain.originators, 
+    chain.caller, signed_chain);
 }
 
 void OpenBusContext::onCallDispatch(CallDispatchCallback c) 
@@ -181,23 +184,5 @@ idl_ac::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
     ret = conn->getLoginRegistry();
   }
   return ret._retn();
-}
-
-Connection *OpenBusContext::getDispatchConnection()
-{
-  log_scope l(log().general_logger(), info_level, 
-              "OpenBusContext::getDispatchConnection");
-  CORBA::Any_var any(_piCurrent->get_slot(_orb_info->slot.receive_conn));
-
-  Connection *conn;
-  idl::OctetSeq seq(extract<idl::OctetSeq>(any));
-  if (seq.length() == 0)
-  {
-    return 0;
-  }
-  assert(seq.length() == sizeof(Connection*));
-  std::memcpy(&conn, seq.get_buffer(), sizeof(Connection*));
-  l.vlog("Connection.busid: %s", conn->busid().c_str());
-  return conn;
 }
 }

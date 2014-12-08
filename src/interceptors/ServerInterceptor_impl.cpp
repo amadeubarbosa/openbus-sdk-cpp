@@ -197,8 +197,7 @@ void ServerInterceptor::receive_request_service_contexts(
   idl::OctetSeq connectionAddrOctetSeq(bufSize, bufSize, buf);
   CORBA::Any connectionAddrAny;
   connectionAddrAny <<= connectionAddrOctetSeq;
-  r->set_slot(_orb_info->slot.requester_conn, connectionAddrAny);
-  r->set_slot(_orb_info->slot.receive_conn, connectionAddrAny);
+  r->set_slot(_orb_info->slot.current_connection, connectionAddrAny);
   _openbus_ctx->setCurrentConnection(&conn);
   if (!strcmp(credential_.legacy.owner, "")) 
   {

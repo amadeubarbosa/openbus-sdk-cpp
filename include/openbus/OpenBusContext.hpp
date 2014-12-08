@@ -383,7 +383,6 @@ private:
     _orb = o;
   }
 
-  Connection *getDispatchConnection();
   typedef std::map<std::string, Connection *> BusidConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
