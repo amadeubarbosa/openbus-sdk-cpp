@@ -141,7 +141,7 @@
         dependências.
    4.1. Boost Build (Seguir para 4.2 se o Boost Build já estiver disponível)
      4.1.1. Obter a ferramenta em:
-       http://www.tecgraf.puc-rio.br/ftp_pub/openbus/repository/boost-build_tecgraf_15112014snapshot.tgz
+       http://www.tecgraf.puc-rio.br/ftp_pub/openbus/repository/boost-build-2014-10_tecgraf_28112014snapshot.tgz
      4.1.2. Instalar o Boost Build:
        ** Recomenda-se a leitura da documentação para se realizar uma
           instalação apropriada à plataforma
