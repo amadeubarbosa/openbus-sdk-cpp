@@ -21,7 +21,7 @@ exe sharedauth_client
     <target-os>windows,<link>shared:<library>/openbus//core-idls #TODO
     <implicit-dependency>hello-idl
     <implicit-dependency>encoding-idl
-    <target-os>linux:<link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
 ;
 
 exe sharedauth_server
@@ -39,7 +39,7 @@ exe sharedauth_server
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
     <implicit-dependency>encoding-idl
-    <target-os>linux:<link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
 ;
 
 exe sharedauth_sharedauth
@@ -58,7 +58,7 @@ exe sharedauth_sharedauth
     <target-os>windows,<link>shared:<library>/openbus//core-idls #TODO
     <implicit-dependency>hello-idl
     <implicit-dependency>encoding-idl
-    <target-os>linux:<link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
 ;
 
 alias sharedauth

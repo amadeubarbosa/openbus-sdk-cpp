@@ -11,7 +11,7 @@ exe delegation_client
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread
-   <target-os>linux:<target-os>linux:<link>static:<source>/dl//dl
+   <target-os>linux,<link>static:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 
@@ -22,7 +22,7 @@ exe delegation_broadcaster
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread
-   <target-os>linux:<link>static:<source>/dl//dl
+   <target-os>linux,<link>static:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 
@@ -33,7 +33,7 @@ exe delegation_forwarder
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread
-   <target-os>linux:<link>static:<source>/dl//dl
+   <target-os>linux,<link>static:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 
@@ -44,7 +44,7 @@ exe delegation_messenger
    /openssl//openssl hello-idl
  : <implicit-dependency>/openbus//core-idls
    <threading>multi:<source>/boost//thread
-   <target-os>linux:<link>static:<source>/dl//dl
+   <target-os>linux,<link>static:<source>/dl//dl
    <implicit-dependency>hello-idl
  ;
 

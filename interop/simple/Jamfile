@@ -20,7 +20,7 @@ exe simple_client
   : <threading>multi:<source>/boost//thread
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
-    <target-os>linux:<link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
   ;
 
 exe simple_server
@@ -36,7 +36,7 @@ exe simple_server
   : <threading>multi:<source>/boost//thread
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
-    <target-os>linux:<link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
   ;
 
 alias simple
