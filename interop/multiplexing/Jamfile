@@ -20,7 +20,7 @@ exe multiplexing_client
   : <threading>multi:<source>/boost//thread
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
-    <link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
   ;
 
 exe multiplexing_server
@@ -36,7 +36,7 @@ exe multiplexing_server
   : <threading>multi:<source>/boost//thread
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
-    <link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
   ;
 
 alias multiplexing
