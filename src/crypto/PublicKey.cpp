@@ -67,8 +67,11 @@ bool PublicKey::verify(const unsigned char *sig, std::size_t siglen,
 #endif
   openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(_pkey.get(), 0));
   assert(!!ctx);
-  int r (EVP_PKEY_verify_init(ctx.get()));
-  assert(r == 1);
+  int r(EVP_PKEY_verify_init(ctx.get()));
+  if (r != 1)
+  {
+    return false;
+  }
   return (EVP_PKEY_verify(ctx.get(), sig, siglen, tbs, tbslen) == 1);
 }
 

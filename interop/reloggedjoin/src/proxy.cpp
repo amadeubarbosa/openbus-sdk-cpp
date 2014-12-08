@@ -149,6 +149,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
                 << std::endl;
       std::abort();
     }
+    return "";
   }
 private:
   openbus::OpenBusContext &ctx;
