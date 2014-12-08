@@ -15,7 +15,7 @@ exe reloggedjoin_client
     <include>../properties_reader/include
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
-    <target-os>linux:<link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
 ;
 
 exe reloggedjoin_server
@@ -26,7 +26,7 @@ exe reloggedjoin_server
     <include>../properties_reader/include
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
-    <target-os>linux:<link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
 ;
 
 exe reloggedjoin_proxy
@@ -37,7 +37,7 @@ exe reloggedjoin_proxy
     <include>../properties_reader/include
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
-    <target-os>linux:<link>static:<source>/dl//dl
+    <target-os>linux,<link>static:<source>/dl//dl
 ;
 
 alias reloggedjoin : 
