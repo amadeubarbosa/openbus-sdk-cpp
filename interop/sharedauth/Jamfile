@@ -15,12 +15,13 @@ exe sharedauth_client
     /mico//mico
     /boost//headers 
     /boost//program_options 
-    /openssl//openssl
+    /openssl//openssl    
   : <threading>multi:<source>/boost//thread
     <implicit-dependency>/openbus//core-idls
+    <target-os>windows,<link>shared:<library>/openbus//core-idls #TODO
     <implicit-dependency>hello-idl
     <implicit-dependency>encoding-idl
-    <link>static:<source>/dl//dl
+    <target-os>linux:<link>static:<source>/dl//dl
 ;
 
 exe sharedauth_server
@@ -38,7 +39,7 @@ exe sharedauth_server
     <implicit-dependency>/openbus//core-idls
     <implicit-dependency>hello-idl
     <implicit-dependency>encoding-idl
-    <link>static:<source>/dl//dl
+    <target-os>linux:<link>static:<source>/dl//dl
 ;
 
 exe sharedauth_sharedauth
@@ -54,9 +55,10 @@ exe sharedauth_sharedauth
     /openssl//openssl
   : <threading>multi:<source>/boost//thread
     <implicit-dependency>/openbus//core-idls
+    <target-os>windows,<link>shared:<library>/openbus//core-idls #TODO
     <implicit-dependency>hello-idl
     <implicit-dependency>encoding-idl
-    <link>static:<source>/dl//dl
+    <target-os>linux:<link>static:<source>/dl//dl
 ;
 
 alias sharedauth
