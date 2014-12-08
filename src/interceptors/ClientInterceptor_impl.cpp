@@ -221,13 +221,11 @@ void ClientInterceptor::build_legacy_credential(PI::ClientRequestInfo &r,
     if (conn._legacyDelegate == Connection::ORIGINATOR 
         && caller_chain._originators.length())
     {
-      credential.delegate = 
-        CORBA::string_dup(caller_chain._originators[0].entity);
+      credential.delegate = caller_chain.originators()[0].entity;
     }
     else
     {
-      credential.delegate = 
-        CORBA::string_dup(caller_chain._caller.entity); 
+      credential.delegate = caller_chain.caller().entity; 
     }
   }
   IOP::ServiceContext sctx;

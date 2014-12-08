@@ -272,7 +272,7 @@ lib openssl
   : <name>ssl 
     <variant>debug
     <link>shared
-    <search>$(openssl-debug-shared-lib-path)/lib <include>oi
+    <search>$(openssl-debug-shared-lib-path) <include>oi
   :
   : <include>$(openssl-debug-shared-include-path)
   ;  

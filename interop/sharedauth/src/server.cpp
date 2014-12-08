@@ -100,8 +100,8 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     assert(chain != openbus::CallerChain());
     std::string msg = "Hello " + std::string(chain.caller().entity) + "!";
     std::cout << msg << std::endl;
-    CORBA::String_var r = CORBA::string_dup(msg.c_str());
-    return r._retn();
+    CORBA::String_var ret(msg.c_str());
+    return ret._retn();
   }
 private:
   openbus::OpenBusContext &ctx;
