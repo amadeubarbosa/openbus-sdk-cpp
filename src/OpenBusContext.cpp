@@ -111,7 +111,7 @@ void OpenBusContext::joinChain(CallerChain const &chain)
   CORBA::Any sig_any;
   if (caller_chain != CallerChain())
   {
-    sig_any <<= *(caller_chain.signedCallChain());
+    sig_any <<= caller_chain._signedCallChain;
   }
   _piCurrent->set_slot(_orb_info->slot.joined_call_chain, sig_any);
 }
@@ -123,7 +123,7 @@ void OpenBusContext::exitChain()
   _piCurrent->set_slot(_orb_info->slot.joined_call_chain, any);    
 }
 
-CallerChain OpenBusContext::getJoinedChain() 
+CallerChain OpenBusContext::getJoinedChain() const 
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getJoinedChain");

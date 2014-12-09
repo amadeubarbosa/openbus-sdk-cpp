@@ -161,14 +161,7 @@ private:
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
-  const idl_cr::SignedCallChain *signedCallChain() const 
-  { 
-    return &_signedCallChain; 
-  }
-  void signedCallChain(idl_cr::SignedCallChain p) 
-  { 
-    _signedCallChain = p; 
-  }
+
   friend class OpenBusContext;
   friend struct openbus::interceptors::ClientInterceptor;
   friend inline bool operator==(CallerChain const &lhs, 
@@ -356,7 +349,7 @@ public:
    *
    * @throw CORBA::Exception
    */
-  CallerChain getJoinedChain();
+  CallerChain getJoinedChain() const;
   
   /** 
    * ORB utilizado pela conexão. 

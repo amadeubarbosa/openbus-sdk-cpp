@@ -162,7 +162,7 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
       }
       else
       {
-        credential.chain = *(caller_chain.signedCallChain());
+        credential.chain = caller_chain._signedCallChain;
       }
     }
     else
@@ -182,7 +182,7 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
         if (caller_chain != CallerChain())
         {
           std::memcpy(buf.get() + pos, 
-                      caller_chain.signedCallChain()->signature, 
+                      caller_chain._signedCallChain.signature, 
                       idl::EncryptedBlockSize);
         } 
         else
