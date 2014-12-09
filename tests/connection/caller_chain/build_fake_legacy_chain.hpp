@@ -13,10 +13,10 @@ openbus::CallerChain build_fake_legacy_chain(
   openbus::OpenBusContext *bus_ctx) 
 {
   openbus::idl_cr::SignedCallChain signed_chain;
-  std::memset(signed_chain.signature, 0, openbus::idl::EncryptedBlockSize);
+  std::memset(signed_chain.signature, '\0', openbus::idl::EncryptedBlockSize);
 
   openbus::idl_ac::CallChain call_chain;
-  call_chain.target = "B";
+  call_chain.target = target.c_str();
   call_chain.originators = originators;
   call_chain.caller = caller;
 

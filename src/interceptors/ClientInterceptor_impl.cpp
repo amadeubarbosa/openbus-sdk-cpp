@@ -35,7 +35,7 @@ Connection &ClientInterceptor::get_current_connection(PI::ClientRequestInfo &r)
   log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::get_current_connection");
   Connection *conn(0);
-  CORBA::Any_var any(r.get_slot(_orb_info->slot.requester_conn));
+  CORBA::Any_var any(r.get_slot(_orb_info->slot.current_connection));
   idl::OctetSeq seq(extract<idl::OctetSeq>(any));
   if (seq.length() > 0)
   {
@@ -68,7 +68,7 @@ CallerChain ClientInterceptor::get_joined_chain(Connection &conn,
   any = _codec->decode_value(signed_chain.encoded,
                                        idl_ac::_tc_CallChain);
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-  return CallerChain(conn.busid(), conn.login()->entity.in(), 
+  return CallerChain(conn.busid(), chain.target.in(),
                      chain.originators, chain.caller, signed_chain);
 }
 
@@ -162,7 +162,7 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
       }
       else
       {
-        credential.chain = *(caller_chain.signedCallChain());
+        credential.chain = caller_chain._signedCallChain;
       }
     }
     else
@@ -182,7 +182,7 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
         if (caller_chain != CallerChain())
         {
           std::memcpy(buf.get() + pos, 
-                      caller_chain.signedCallChain()->signature, 
+                      caller_chain._signedCallChain.signature, 
                       idl::EncryptedBlockSize);
         } 
         else
@@ -260,11 +260,17 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
     throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
   }
   l.vlog("login: %s", conn._login()->id.in());
-  build_credential(*r, conn);
-  if (conn._legacyEnabled)
+  CallerChain caller_chain(get_joined_chain(conn, *r));
+  if (caller_chain.is_legacy())
   {
-    build_legacy_credential(*r, conn);
+    if (conn._legacyEnabled)
+    {
+      build_legacy_credential(*r, conn);
+      return;
+    }
+    throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
   }
+  build_credential(*r, conn);
 }
 
 void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
@@ -292,14 +298,13 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
   if (ex.minor() == idl_ac::InvalidCredentialCode) 
   {
     l.level_vlog(debug_level, "creating credential session");
-    IOP::ServiceContext_var sctx;
-    sctx = r->get_reply_service_context(idl_cr::CredentialContextId);
+    IOP::ServiceContext_var sctx(
+      r->get_reply_service_context(idl_cr::CredentialContextId));
     idl_cr::CredentialReset credential_reset;
     try 
     {
       CORBA::Any_var any(
-        _codec->decode_value(sctx->context_data,
-                                       idl_cr::_tc_CredentialReset));
+        _codec->decode_value(sctx->context_data, idl_cr::_tc_CredentialReset));
       credential_reset = extract<idl_cr::CredentialReset>(any);
     }
     catch (const CORBA::Exception &) 
@@ -325,10 +330,6 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
     l.log("Retransmissao da requisicao...");
     throw PI::ForwardRequest(r->target(), false);
   } 
-  else if (ex.minor() == idl_ac::NoCredentialCode) 
-  {
-    throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
-  }
   else if (ex.minor() == idl_ac::InvalidLoginCode) 
   {
     idl_ac::LoginInfo oldLogin;

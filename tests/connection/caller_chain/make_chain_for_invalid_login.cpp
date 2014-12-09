@@ -8,23 +8,22 @@
 int main(int argc, char** argv)
 {
   openbus::configuration cfg(argc, argv);
-  CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-	  CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenBusContext");
-  openbus::OpenBusContext* openbusContext =
-    dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
-  std::auto_ptr<openbus::Connection> conn(openbusContext->createConnection(cfg.host(), cfg.port()));
-  openbusContext->setDefaultConnection(conn.get());
-  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
+  CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
+  CORBA::Object_ptr obj(orb->resolve_initial_references("OpenBusContext"));
+  openbus::OpenBusContext* bus_ctx(
+    dynamic_cast<openbus::OpenBusContext *>(obj));
+  std::auto_ptr<openbus::Connection> conn(
+    bus_ctx->createConnection(cfg.host(), cfg.port()));
+  bus_ctx->setDefaultConnection(conn.get());
+  conn->loginByPassword(cfg.user(), cfg.password());
   try
   {
-    openbusContext->makeChainFor("");
+    bus_ctx->makeChainFor("");
   }
   catch (const CORBA::NO_PERMISSION &e)
   {
-    if (e.minor() == openbus::idl_ac::InvalidTargetCode)
-    {
-	std::exit(EXIT_SUCCESS);
-    }
+    if (openbus::idl_ac::InvalidTargetCode == e.minor()) return 0;
   }
   std::abort();
+  return 0; //MSVC
 }

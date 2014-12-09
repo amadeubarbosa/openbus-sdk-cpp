@@ -173,8 +173,8 @@ public:
               const idl_ac::LoginInfoSeq &originators, 
               const idl_ac::LoginInfo &caller) 
     : _busid(busid), _target(target), _originators(originators), 
-      _caller(caller) 
-  { 
+    _caller(caller) 
+  {
   }
   
   std::string _busid;
@@ -182,16 +182,6 @@ public:
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
-  
-  const idl_cr::SignedCallChain *signedCallChain() const 
-  { 
-    return &_signedCallChain; 
-  }
-
-  void signedCallChain(idl_cr::SignedCallChain p) 
-  { 
-    _signedCallChain = p; 
-  }
   
   bool is_legacy() const;
   
@@ -382,18 +372,21 @@ public:
    *
    * @throw CORBA::Exception
    */
-  CallerChain getJoinedChain();
+  CallerChain getJoinedChain() const;
 
   /**
    * \brief Cria uma cadeia de chamadas para a entidade com o identificador de
-   * login especificado.
-   *
-   * Cria uma nova cadeia de chamadas para a entidade especificada, onde o dono
-   * da cadeia é a conexão corrente. Utiliza a cadeia atual para a continuação
-   * do encadeamento. O identificador de login especificado deve ser um login
-   * atualmente válido para que a operação tenha sucesso. Caso o contexto
-   * corrente não tenha nenhuma cadeia associada, essa operação devolve uma
-   * cadeia 'vazia' 'default-constructed'.
+   *        login especificado.
+   * 
+   * Cria uma nova cadeia de chamadas para a entidade especificada,
+   * onde o dono da cadeia é a conexão corrente
+   * (OpenBusContext::getCurrentConnection()) e utiliza-se a cadeia
+   * atual (OpenBusContext::getJoinedChain()) como a cadeia que se
+   * deseja dar seguimento ao encadeamento. O identificador de login
+   * especificado deve ser um login atualmente válido para que a
+   * operação tenha sucesso.Caso o contexto corrente não tenha nenhuma
+   * cadeia associada, essa operação devolve uma cadeia 'vazia'
+   * 'default-constructed'.
    *
    * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
    *
@@ -403,15 +396,16 @@ public:
    * else
    *   // chain é inválido
    * 
-   * \param  loginId Identificador de login da entidade para a qual deseja-se
-   *         enviar a cadeia ou uma cadeia 'vazia'.
-   * \return A cadeia gerada para ser utilizada pela entidade com o login
+   * \param loginId identificador de login da entidade para a qual deseja-se
+   *        enviar a cadeia.
+   * \return a cadeia gerada para ser utilizada pela entidade com o login
    *         especificado.
    * 
-   * \throw CORBA::NO_PERMISSION {minor = InvalidTargetCode}
-   * \throw CORBA::NO_PERMISSION {minor = UnavailableBusCode}
+   * \exception InvalidLogins Caso o login especificado seja inválido.
+   * \exception ServiceFailure Ocorreu uma falha interna nos serviços do 
+   *            barramento que impediu a criação da cadeia.
    */
-  CallerChain makeChainFor(const std::string loginId);
+  CallerChain makeChainFor(const std::string &loginId) const;
 
   /**
    * \brief Codifica uma cadeia de chamadas (CallerChain) para um stream de
@@ -487,8 +481,6 @@ private:
     const CORBA::OctetSeq &stream,
     idl_data_export::ExportedVersionSeq_out exported_version_seq) const;
 
-  Connection *getDispatchConnection();
-  
   typedef std::map<std::string, Connection *> BusidConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;

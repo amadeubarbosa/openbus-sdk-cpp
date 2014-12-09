@@ -29,7 +29,7 @@ local rule exe-test ( test-name : filename : idl ? )
       $(idl)
       $(test-dependencies)
     : $(test-requirements)
-      <define>OPENBUS_SDK_TEST
+      <define>OPENBUS_SDK_TEST #Dangerous!
     ;
   explicit $(test-name) ;
 }
@@ -75,6 +75,15 @@ exe-test connection_caller_chain_make_chain_for_invalid_login
   ;
 exe-test connection_caller_chain_make_chain_for_valid_login
   : connection/caller_chain/make_chain_for_valid_login.cpp
+  ;
+exe-test connection_caller_chain_make_chain_for_joined_chain
+  : connection/caller_chain/make_chain_for_joined_chain.cpp
+  ;
+exe-test connection_caller_chain_make_chain_for_joined_legacy_chain
+  : connection/caller_chain/make_chain_for_joined_legacy_chain.cpp
+  ;
+exe-test connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate
+  : connection/caller_chain/make_chain_for_joined_legacy_chain_with_delegate.cpp
   ;
 exe-test connection_caller_chain_receive_call_with_default_connection_get_caller_chain
   : connection/caller_chain/receive_call_with_default_connection_get_caller_chain.cpp
@@ -148,6 +157,9 @@ alias tests
     connection_caller_chain_encode_default_caller_chain
     connection_caller_chain_make_chain_for_invalid_login
     connection_caller_chain_make_chain_for_valid_login
+    connection_caller_chain_make_chain_for_joined_chain
+    connection_caller_chain_make_chain_for_joined_legacy_chain
+    connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate
     connection_caller_chain_receive_call_with_default_connection_get_caller_chain
     connection_loginByCertificate_entity_id_and_file_private_key_ok
     connection_loginByPassword_after_logout
@@ -184,6 +196,9 @@ alias run-tests
     [ run connection_caller_chain_decode_incompatible_type_chain ]
     [ run connection_caller_chain_make_chain_for_invalid_login ]
     [ run connection_caller_chain_make_chain_for_valid_login ]
+    [ run connection_caller_chain_make_chain_for_joined_chain ]
+    [ run connection_caller_chain_make_chain_for_joined_legacy_chain : : admin/TestCppHello.key ]
+    [ run connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate : : admin/TestCppHello.key ]
     [ run connection_loginByCertificate_entity_id_and_file_private_key_ok : : admin/TestCppHello.key ]
     [ run connection_loginByPassword_after_logout ]
     [ run connection_loginByPassword_entity_id_and_password_ok ]

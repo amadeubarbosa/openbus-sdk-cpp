@@ -1,5 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 #include "openbus/OpenBusContext.hpp"
+#include "openbus/LoginCache.hpp"
 #include "openbus/log.hpp"
 #include "openbus/any.hpp"
 
@@ -26,8 +27,8 @@ InvalidEncodedStream::~InvalidEncodedStream() throw()
 bool CallerChain::is_legacy() const
 {
   idl::EncryptedBlock null_block;
-  memset(null_block, 0, idl::EncryptedBlockSize);
-  return (std::memcmp(&null_block, _signedCallChain.signature,
+  memset(null_block, '\0', idl::EncryptedBlockSize);
+  return (std::memcmp(null_block, _signedCallChain.signature,
                       idl::EncryptedBlockSize) == 0);
 }
   
@@ -85,7 +86,7 @@ Connection *OpenBusContext::setCurrentConnection(Connection *conn)
   CORBA::Any any;
   any <<= seq;
   Connection *old(getCurrentConnection());
-  _piCurrent->set_slot(_orb_info->slot.requester_conn, any);
+  _piCurrent->set_slot(_orb_info->slot.current_connection, any);
   return old;
 }
 
@@ -94,7 +95,7 @@ Connection *OpenBusContext::getCurrentConnection() const
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCurrentConnection");
   CORBA::Any_var any(
-    _piCurrent->get_slot(_orb_info->slot.requester_conn));
+    _piCurrent->get_slot(_orb_info->slot.current_connection));
   
   Connection *conn(0);
   idl::OctetSeq seq(extract<idl::OctetSeq>(any));  
@@ -111,21 +112,23 @@ CallerChain OpenBusContext::getCallerChain()
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCallerChain");
-  if (Connection *conn = getDispatchConnection())
+  Connection *conn(getCurrentConnection());
+  if (!conn)
   {
-    CORBA::Any_var any(
-      _piCurrent->get_slot(_orb_info->slot.signed_call_chain));
-    
-    idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
-    
-    any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
-    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-    
-    return CallerChain(
-      conn->busid(), conn->login()->entity.in(), chain.originators, 
-      chain.caller, signed_chain);
+    return CallerChain();
   }
-  return CallerChain();
+    
+  CORBA::Any_var any(
+    _piCurrent->get_slot(_orb_info->slot.signed_call_chain));
+    
+  idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+    
+  any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
+  idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+    
+  return CallerChain(
+    conn->busid(), conn->login()->entity.in(), chain.originators, 
+    chain.caller, signed_chain);
 }
 
 void OpenBusContext::joinChain(CallerChain const &chain) 
@@ -135,7 +138,7 @@ void OpenBusContext::joinChain(CallerChain const &chain)
   CORBA::Any sig_any;
   if (caller_chain != CallerChain())
   {
-    sig_any <<= *(caller_chain.signedCallChain());
+    sig_any <<= caller_chain._signedCallChain;
   }
   _piCurrent->set_slot(_orb_info->slot.joined_call_chain, sig_any);
 }
@@ -147,65 +150,84 @@ void OpenBusContext::exitChain()
   _piCurrent->set_slot(_orb_info->slot.joined_call_chain, any);    
 }
 
-CallerChain OpenBusContext::getJoinedChain() 
+CallerChain OpenBusContext::getJoinedChain() const
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getJoinedChain");
-  if (Connection *conn = getDispatchConnection())
+  Connection *conn(getCurrentConnection());
+  if (!conn)
   {
-    CORBA::Any_var any(_piCurrent->get_slot(_orb_info->slot.joined_call_chain));
-
-    idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
-    if (signed_chain.encoded.length() == 0)
-    {
-      return CallerChain();
-    }
-    
-    any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
-    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-
-    return CallerChain(
-      conn->busid(), conn->login()->entity.in(), chain.originators, 
-      chain.caller, signed_chain);
+    return CallerChain();
   }
-  return CallerChain();
+  CORBA::Any_var any(_piCurrent->get_slot(_orb_info->slot.joined_call_chain));
+
+  idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+  if (signed_chain.encoded.length() == 0)
+  {
+    return CallerChain();
+  }
+    
+  any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
+  idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+
+  return CallerChain(
+    conn->busid(), conn->login()->entity.in(), chain.originators, 
+    chain.caller, signed_chain);
 }
 
-CallerChain OpenBusContext::makeChainFor(const std::string loginId)
+CallerChain OpenBusContext::makeChainFor(const std::string &loginId) const
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::makeChainFor");
   Connection *conn(getCurrentConnection());
-  if (conn)
+  if (!conn)
   {
-    idl_cr::SignedCallChain_var sig;
-    try
-    {
-      sig = conn->access_control()->signChainFor(loginId.c_str());
-    }
-    catch (const CORBA::SystemException &)
-    {
-      l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
-             conn->busid().c_str());
-      throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
-                                 CORBA::COMPLETED_NO);
-    }
-    catch (const idl_ac::InvalidLogins &)
-    {
-      l.log("throw CORBA::NO_PERMISSION, minor=InvalidTargetCode");
-      throw CORBA::NO_PERMISSION(idl_ac::InvalidTargetCode,
-                                 CORBA::COMPLETED_NO);
-    }
-    CORBA::Any_var any(_orb_info->codec->decode_value(sig->encoded,
-                                                      idl_ac::_tc_CallChain));
-    const idl_ac::CallChain *chain;
-    if (*any >>= chain)
-    {
-      return CallerChain(conn->busid(), chain->target.in(),
-                         chain->originators, chain->caller, sig);
-    }
+    return CallerChain();
   }
-  return CallerChain();
+  CallerChain joined_chain(getJoinedChain());
+  if (joined_chain.is_legacy())
+  {
+    boost::shared_ptr<Login> target_login(
+      conn->_loginCache->validateLogin(loginId.c_str()));
+    std::string target(target_login->loginInfo->entity.in());
+    idl_ac::LoginInfoSeq originators;
+    originators.length(1);
+    if (joined_chain.originators().length() > 0
+        && conn->_legacyDelegate == Connection::ORIGINATOR)
+    {
+      originators[0u].entity = joined_chain.originators()[0u].entity;
+    }
+    else
+    {
+      originators[0u].entity = joined_chain.caller().entity;
+    }
+    originators[0u].id = "<unknown>";
+    return CallerChain(conn->busid(), target, originators, *(conn->login()),
+                       joined_chain._signedCallChain);
+  }
+  idl_cr::SignedCallChain_var signed_chain;
+  try
+  {
+    signed_chain = conn->access_control()->signChainFor(loginId.c_str());
+  }
+  catch (const CORBA::SystemException &)
+  {
+    l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
+           conn->busid().c_str());
+    throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
+                               CORBA::COMPLETED_NO);
+  }
+  catch (const idl_ac::InvalidLogins &)
+  {
+    l.log("throw CORBA::NO_PERMISSION, minor=InvalidTargetCode");
+    throw CORBA::NO_PERMISSION(idl_ac::InvalidTargetCode,
+                               CORBA::COMPLETED_NO);
+  }
+  CORBA::Any_var any(_codec->decode_value(signed_chain->encoded,
+                                          idl_ac::_tc_CallChain));
+  idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+  return CallerChain(conn->busid(), chain.target.in(),
+                     chain.originators, chain.caller, *signed_chain);
 }
 
 CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
@@ -248,7 +270,7 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
 
     idl_data_export::ExportedCallChain exported_chain;
     exported_chain.bus = chain.busid().c_str();
-    exported_chain.signedChain = *(chain.signedCallChain());
+    exported_chain.signedChain = chain._signedCallChain;
 
     CORBA::Any any;
     any <<= exported_chain;
@@ -267,7 +289,7 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
 }
 
 
-  CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
+CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
 {
   log_scope l(log().general_logger(), info_level,
               "OpenBusContext::decodeChain");
@@ -382,24 +404,6 @@ idl_ac::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
     ret = conn->getLoginRegistry();
   }
   return ret._retn();
-}
-
-Connection *OpenBusContext::getDispatchConnection()
-{
-  log_scope l(log().general_logger(), info_level, 
-              "OpenBusContext::getDispatchConnection");
-  CORBA::Any_var any(_piCurrent->get_slot(_orb_info->slot.receive_conn));
-
-  Connection *conn;
-  idl::OctetSeq seq(extract<idl::OctetSeq>(any));
-  if (seq.length() == 0)
-  {
-    return 0;
-  }
-  assert(seq.length() == sizeof(Connection*));
-  std::memcpy(&conn, seq.get_buffer(), sizeof(Connection*));
-  l.vlog("Connection.busid: %s", conn->busid().c_str());
-  return conn;
 }
 
 CORBA::OctetSeq OpenBusContext::encode_exported_versions(

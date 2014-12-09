@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   openbus::idl_ac::CallChain decoded_signed_chain;
   IOP::Codec_var codec(get_codec(bus_ctx));
   CORBA::Any_var decoded_call_chain_any(
-    codec->decode_value(decoded_chain.signedCallChain()->encoded,
+    codec->decode_value(decoded_chain._signedCallChain.encoded,
                         openbus::idl_ac::_tc_CallChain));
   *decoded_call_chain_any >>= decoded_signed_chain;
 
