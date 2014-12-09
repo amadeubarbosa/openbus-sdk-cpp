@@ -181,6 +181,11 @@ Connection &ServerInterceptor::get_dispatcher_connection(
         warning_level, "Falha na execucao da callback CallDispatch: %s",
         e.what() );
     }
+    catch (...)
+    {
+      l.level_log(
+        warning_level, "Falha desconhecida na execucao da callback CallDispatch.");
+    }
   }
   if (!conn)
   {

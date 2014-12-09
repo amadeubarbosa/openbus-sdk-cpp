@@ -5,6 +5,15 @@
 
 namespace openbus 
 {
+
+bool CallerChain::is_legacy() const
+{
+  idl::EncryptedBlock null_block;
+  memset(null_block, '\0', idl::EncryptedBlockSize);
+  return (std::memcmp(null_block, _signedCallChain.signature,
+                      idl::EncryptedBlockSize) == 0);
+}
+
 OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb, 
                                boost::shared_ptr<interceptors::orb_info> i)
   : _orb(orb), _orb_info(i), _codec(_orb_info->codec), _defaultConnection(0),

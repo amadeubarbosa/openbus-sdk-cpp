@@ -161,7 +161,9 @@ private:
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
-
+   
+  bool is_legacy() const;
+   
   friend class OpenBusContext;
   friend struct openbus::interceptors::ClientInterceptor;
   friend inline bool operator==(CallerChain const &lhs, 
