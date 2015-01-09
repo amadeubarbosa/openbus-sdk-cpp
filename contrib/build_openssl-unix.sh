@@ -12,8 +12,8 @@ COMMON_FLAGS=""
 SHARED_FLAGS="shared"
 STATIC_FLAGS="no-shared"
 # DEBUG_FLAGS="debug-linux-elf"
-DEBUG_FLAGS="linux-elf -g"
-RELEASE_FLAGS="linux-elf"
+DEBUG_FLAGS="-g"
+RELEASE_FLAGS=""
 
 LOG=".build_`date +%Hh%Mh%Ss`_`date +%d%m%Y`_.out"
 
@@ -32,13 +32,24 @@ function execute
 function build
 {
   flags=$1
+  execute "make dist"
   execute "make clean"
-  execute "cp electric-fence-2.2.3/libefence.a ."
-  execute "cp electric-fence-2.2.3/libefence.so.* libefence.so"
-  execute "./Configure $flags"
+  # execute "cp electric-fence-2.2.3/libefence.a ."
+  # execute "cp electric-fence-2.2.3/libefence.so.* libefence.so"
+  execute "./Configure $PLAT $flags"
   execute "make -j$JOBS"
-  execute "make install"
+  execute "make install_sw"
 }
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  PLAT="darwin64-x86_64-cc"
+  COMMON_FLAGS+="no-asm"
+elif [[ "$OSTYPE" == "linux"* ]]; then
+  PLAT="linux-elf"
+else
+  echo "Sorry, this platform does not seem supported."
+  exit 1;
+fi
 
 cd $OPENSSL_ROOT_PATH
 # execute "wget http://ftp.de.debian.org/debian/pool/main/e/electric-fence/electric-fence_2.2.4.tar.gz"
