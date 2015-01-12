@@ -65,7 +65,7 @@ struct BroadcasterImpl :
 
   void post(const char* message)
   {
-    ctx.exitChain();
+    ctx.joinChain();
     boost::unique_lock<boost::mutex> lock(mutex);
     for(std::vector<std::string>::const_iterator
           first = subscribers.begin(), last = subscribers.end()

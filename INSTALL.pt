@@ -184,7 +184,7 @@
              pacote pode ser obtido através dos seguintes links abaixo:
        https://www.openssl.org/source/openssl-1.0.0o.tar.gz
      4.2.2. Extrair o pacote.
-     4.2.3. Editar o script 'build_openssl-linux.sh' ou
+     4.2.3. Editar o script 'build_openssl-unix.sh' ou
             'build_openssl-win.bat' que está disponível no pacote da
             biblioteca OpenBus SDK C++ no diretório 'contrib'.
        a. Definir o caminho absoluto para onde o pacote foi extraído.

@@ -122,7 +122,10 @@ CallerChain OpenBusContext::getCallerChain()
     _piCurrent->get_slot(_orb_info->slot.signed_call_chain));
     
   idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
-    
+  if (signed_chain.encoded.length() == 0)
+  {
+    return CallerChain();
+  }
   any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
     
@@ -134,12 +137,13 @@ CallerChain OpenBusContext::getCallerChain()
 void OpenBusContext::joinChain(CallerChain const &chain) 
 {
   log_scope l(log().general_logger(), info_level, "OpenBusContext::joinChain");
-  CallerChain caller_chain(chain);
-  CORBA::Any sig_any;
-  if (caller_chain != CallerChain())
+  CallerChain caller_chain(chain == CallerChain() ? getCallerChain() : chain);
+  if (caller_chain == CallerChain())
   {
-    sig_any <<= caller_chain._signedCallChain;
+    return;
   }
+  CORBA::Any sig_any;
+  sig_any <<= caller_chain._signedCallChain;
   _piCurrent->set_slot(_orb_info->slot.joined_call_chain, sig_any);
 }
 

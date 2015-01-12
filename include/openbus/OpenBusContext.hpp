@@ -330,12 +330,16 @@ public:
    * todas as chamadas remotas seguintes neste mesmo contexto sejam
    * feitas como parte dessa cadeia de chamadas.
    * 
-   * \param chain Cadeia de chamadas a ser associada ao contexto corrente.
-   * @throw CORBA::NO_PERMISSION {minor = NoLoginCode}
-   * @throw CORBA::NO_PERMISSION {minor = InvalidChainCode}
-   * @throw CORBA::Exception
+   * \param chain Cadeia de chamadas a ser associada ao contexto
+   * corrente. A ausência de valor ou uma cadeia 'vazia' implica na
+   * utilização da cadeia obtida através de getCallerChain.
+   *
+   * @throw
+   * CORBA::NO_PERMISSION {minor = NoLoginCode} @throw
+   * CORBA::NO_PERMISSION {minor = InvalidChainCode} @throw
+   * CORBA::Exception
    */
-  void joinChain(const CallerChain &chain);
+  void joinChain(const CallerChain &chain = CallerChain());
   
   /**
    * \brief Faz com que nenhuma cadeia de chamadas esteja associada ao
