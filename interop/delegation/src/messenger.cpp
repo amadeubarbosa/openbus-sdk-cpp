@@ -66,19 +66,39 @@ struct MessengerImpl :
 
   void post(const char* to, const char* message) 
   {
-    std::cout << "post to " << to << " by " << ctx.getCallerChain().caller().entity
-              << std::endl;
+    openbus::CallerChain chain(ctx.getCallerChain());
+    std::string from;
+    for(CORBA::ULong i(0); i < chain.originators().length(); ++i)
+    {
+      from = from + chain.originators()[i].entity.in() + "->";
+    }
+    from += chain.caller().entity.in();
+    std::cout << "Post to " << to << " by " << from << std::endl;
     std::cout << " Message content: " << message << std::endl;
-    delegation::PostDesc desc = {ctx.getCallerChain().caller().entity, message};
+    delegation::PostDesc desc = {from.c_str(), message};
     inbox.insert(std::make_pair(to, desc));
   }
 
   delegation::PostDescSeq* receivePosts()
   {
-    std::string from (ctx.getCallerChain().caller().entity);
-    std::cout << "Retrieving messages for " << from << std::endl;
-    typedef std::multimap<std::string, delegation::PostDesc>::const_iterator iterator;
-    std::pair<iterator, iterator> range = inbox.equal_range(from);
+    openbus::CallerChain chain(ctx.getCallerChain());
+    std::string owner(chain.caller().entity);
+    if (chain.originators().length() > 0)
+    {
+      owner = chain.originators()[0].entity;
+    } 
+    std::string by;
+    for(CORBA::ULong i(0); i < chain.originators().length(); ++i)
+    {
+      by = by + chain.originators()[i].entity.in() + "->";
+    }
+    by += chain.caller().entity.in();
+    std::cout << "Retrieving messages of " << owner
+              << " by " << by
+              << std::endl;
+    typedef std::multimap<std::string, delegation::PostDesc>::const_iterator
+      iterator;
+    std::pair<iterator, iterator> range = inbox.equal_range(owner);
     delegation::PostDescSeq_var posts (new delegation::PostDescSeq);
     std::cout << "Retrieving " << std::distance(range.first, range.second) 
               << " messages" << std::endl;
@@ -88,6 +108,7 @@ struct MessengerImpl :
     {
       (*posts)[index] = first->second;
     }
+    inbox.erase(range.first, range.second);
     return posts._retn();
   }
 
@@ -147,7 +168,8 @@ int main(int argc, char** argv) {
 
     openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host, bus_port));
+    std::auto_ptr <openbus::Connection> conn(
+      ctx->createConnection(bus_host, bus_port));
     ctx->setDefaultConnection(conn.get());
 
 #ifdef OPENBUS_SDK_MULTITHREAD

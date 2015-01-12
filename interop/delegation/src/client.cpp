@@ -72,7 +72,8 @@ int main(int argc, char** argv) {
     openbus::OpenBusContext *const ctx = 
       dynamic_cast<openbus::OpenBusContext*>
       (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host, bus_port));
+    std::auto_ptr <openbus::Connection> conn(
+      ctx->createConnection(bus_host, bus_port));
     ctx->setDefaultConnection(conn.get());
     
     conn->loginByPassword(entity, entity);
@@ -88,8 +89,9 @@ int main(int argc, char** argv) {
       ctx->getOfferRegistry()->findServices(props);
     if (offers->length() > 0)
     {
-      CORBA::Object_var o = 
-        offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("messenger");
+      CORBA::Object_var o(
+        offers[static_cast<CORBA::ULong> (0)]
+        .service_ref->getFacetByName("messenger"));
       delegation::Messenger_var m = delegation::Messenger::_narrow(o);
       props[1].value = delegation::_tc_Forwarder->id();
       offers = ctx->getOfferRegistry()->findServices(props);
@@ -104,7 +106,8 @@ int main(int argc, char** argv) {
         {
           o = offers[static_cast<CORBA::ULong> (0)]
             .service_ref->getFacetByName("broadcaster");
-          delegation::Broadcaster_var broadcaster = delegation::Broadcaster::_narrow(o);
+          delegation::Broadcaster_var broadcaster(
+            delegation::Broadcaster::_narrow(o));
           conn->logout();
 
           conn->loginByPassword("bill", "bill");
@@ -122,7 +125,7 @@ int main(int argc, char** argv) {
 
           conn->loginByPassword("steve", "steve");
           broadcaster->subscribe();
-          broadcaster->post("Testando a lista!");
+          broadcaster->post("Testing the list!");
           conn->logout();
 
           mysleep();
@@ -133,11 +136,44 @@ int main(int argc, char** argv) {
               ++first)
           {
             conn->loginByPassword(*first, *first);
-            delegation::PostDescSeq_var posts = m->receivePosts();
+            delegation::PostDescSeq_var posts(m->receivePosts());
+            if (std::string(*first) != "bill" && posts->length() != 1)
+            {
+              std::cerr << "Error: Retrieving messages for '"
+                        << *first << "': posts.length() != 1"
+                        << std::endl;
+              std::abort();
+            }
+            else if (std::string(*first) == "bill" && posts->length() != 0)
+            {
+              std::cerr << "Error: Retrieving messages for 'bill' \
+                            : posts.length() != 0"
+                        << std::endl;
+              std::abort();
+              
+            }
             for(std::size_t i = 0; i != posts->length(); ++i)
             {
-              std::cout << "id (" << i << ") (from)" << (*posts)[i].from 
-                        << " (body)" << (*posts)[i].message << std::endl;
+              if (std::string(*first) != "willian"
+                  && (std::string("steve->interop_delegation_cpp_broadcaster")
+                      != posts[i].from.in()))
+              {
+                std::cerr << "Error: steve->interop_delegation_cpp_broadcaster"
+                          << " != " << posts[i].from.in()
+                          << std::endl;
+                std::abort();
+              }
+              else if(std::string(*first) == "willian"
+                  && (std::string("interop_delegation_cpp_forwarder")
+                      != posts[i].from.in()))
+              {
+                std::cerr << "Error: interop_delegation_cpp_forwarder"
+                          << " != " << posts[i].from.in()
+                          << std::endl;
+                std::abort();
+              }                
+              std::cout << "message(" << i << ") (from) " << (*posts)[i].from 
+                        << " (body) " << (*posts)[i].message << std::endl;
             }
             broadcaster->unsubscribe();
             conn->logout();
