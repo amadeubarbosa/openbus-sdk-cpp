@@ -96,7 +96,7 @@ struct MessengerImpl :
     std::cout << "Retrieving messages of " << owner
               << " by " << by
               << std::endl;
-    typedef std::multimap<std::string, delegation::PostDesc>::const_iterator
+    typedef std::multimap<std::string, delegation::PostDesc>::iterator
       iterator;
     std::pair<iterator, iterator> range = inbox.equal_range(owner);
     delegation::PostDescSeq_var posts (new delegation::PostDescSeq);
