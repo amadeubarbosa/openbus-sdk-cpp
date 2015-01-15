@@ -105,6 +105,52 @@ struct OPENBUS_SDK_DECL InvalidPropertyValue : public std::exception
   const std::string value;
 };
 
+class Connection;
+  
+/**
+ * \brief Segredo para compartilhamento de autenticação.
+ *
+ * Objeto que representa uma tentativa de compartilhamento de
+ * autenticação através do compartilhamento de um segredo, que pode
+ * ser utilizado para realizar uma autenticação junto ao barramento em
+ * nome da mesma entidade que gerou e compartilhou o segredo.
+ *
+ * Cada segredo de autenticação compartilhada pertence a um único barramento e
+ * só pode utilizado em uma única autenticação.
+ *
+ */
+class OPENBUS_SDK_DECL SharedAuthSecret
+{
+public:
+   /**
+    * \brief Cancela o segredo caso esse ainda esteja ativo, de forma
+    * que ele não poderá ser mais utilizado.  
+    *
+    */
+   void cancel();
+  
+  /**
+   * \brief Fornece o identificador do barramento em que o segredo
+   * pode ser utilizado.
+   *
+   * \return O identificador.
+   */
+  std::string busid() const {
+    return busid_;
+  }
+private:
+  SharedAuthSecret();
+  SharedAuthSecret(const std::string &bus_id, idl_ac::LoginProcess_var,
+                   const CORBA::OctetSeq &secret,
+                   boost::shared_ptr<interceptors::orb_info>);
+  std::string busid_;
+  idl_ac::LoginProcess_var login_process_;
+  CORBA::OctetSeq secret_;
+  boost::shared_ptr<interceptors::orb_info> orb_info_;
+  friend class OpenBusContext;
+  friend class Connection;
+};
+
 /**
  * \brief Conexão para acesso identificado a um barramento.
  *
@@ -209,16 +255,14 @@ public:
   * administrador do barramento. Caso contrário essas informações se tornam
   * inválidas e não podem mais ser utilizadas para criar um login.
   * 
-  * @return Um par composto de um objeto que representa o processo de login 
-  *         iniciado e de um segredo a ser fornecido na conclusão do processo 
-  *         de login.
+  * @return Segredo a ser fornecido na conclusão do processo de login.
   *
   * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu 
   *        o estabelecimento da conexão.
   * @throw CORBA::Exception
   */
-  std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> startSharedAuth();
+  SharedAuthSecret startSharedAuth();
   
   /**
   * \brief Efetua login de uma entidade usando autenticação compartilhada.
@@ -239,8 +283,7 @@ public:
   *        estabelecimento da conexão.
   * @throw CORBA::Exception
   */
-  void loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess, 
-                         const idl::OctetSeq &secret);
+  void loginBySharedAuth(const SharedAuthSecret &secret);
   
  /**
   * \brief Efetua logout da conexão, tornando o login atual inválido.

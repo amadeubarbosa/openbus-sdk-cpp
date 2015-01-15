@@ -117,6 +117,26 @@ private:
 };
 #endif
 
+SharedAuthSecret::SharedAuthSecret()
+{
+}
+
+SharedAuthSecret::SharedAuthSecret(
+  const std::string &busid,
+  idl_ac::LoginProcess_var login_process,
+  const CORBA::OctetSeq &secret,
+  boost::shared_ptr<interceptors::orb_info> orb_info)
+  : busid_(busid), login_process_(login_process), secret_(secret),
+    orb_info_(orb_info)
+{
+}
+  
+void SharedAuthSecret::cancel()
+{
+  interceptors::ignore_interceptor i (orb_info_);
+  login_process_->cancel();
+}
+
 Connection::Connection(
   const std::string host, const unsigned short port, CORBA::ORB_ptr orb, 
   boost::shared_ptr<interceptors::orb_info> i, OpenBusContext &m, 
@@ -336,33 +356,33 @@ void Connection::loginByCertificate(const std::string &entity,
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
 
-std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> 
+SharedAuthSecret
 Connection::startSharedAuth() 
 {
-
   log_scope l(log().general_logger(), info_level, 
               "Connection::startSharedAuth");
   idl::EncryptedBlock challenge;
   Connection *conn(0);
-  idl_ac::LoginProcess_ptr loginProcess;
+  idl_ac::LoginProcess_ptr login_process;
   try 
   {
     conn = _openbusContext.getCurrentConnection();
     _openbusContext.setCurrentConnection(this);
-    loginProcess = _access_control->startLoginBySharedAuth(challenge);
+    login_process = _access_control->startLoginBySharedAuth(challenge);
     _openbusContext.setCurrentConnection(conn);
   } 
   catch (...) 
   {
+    interceptors::ignore_interceptor i(_orb_info);
+    login_process->cancel();
     _openbusContext.setCurrentConnection(conn);
     throw;
   }
-  CORBA::OctetSeq secretBuf(_key.decrypt(challenge, idl::EncryptedBlockSize));
-  return std::make_pair(loginProcess, secretBuf);
+  CORBA::OctetSeq secret(_key.decrypt(challenge, idl::EncryptedBlockSize));
+  return SharedAuthSecret(busid(), login_process, secret, _orb_info);
 }
   
-void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess, 
-                                   const idl::OctetSeq &secret)
+void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
 {
   log_scope l(log().general_logger(), info_level, 
               "Connection::loginBySharedAuth");
@@ -380,14 +400,15 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   
   interceptors::ignore_interceptor _i(_orb_info);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
-  loginAuthenticationInfo.data = secret;
+  loginAuthenticationInfo.data = secret.secret_;
   
   SHA256(_key.pubKey().get_buffer(), _key.pubKey().length(), 
          loginAuthenticationInfo.hash);
 
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_codec->encode_value(any));
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
+    _orb_info->codec->encode_value(any));
 
   CORBA::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
@@ -400,8 +421,8 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
   idl_ac::LoginInfo *loginInfo(0);
   try 
   {
-    loginInfo = loginProcess->login(_key.pubKey(), encryptedBlock, 
-                                    validityTime);
+    loginInfo = secret.login_process_->login(_key.pubKey(), encryptedBlock, 
+                                             validityTime);
   } 
   catch (const idl_ac::WrongEncoding &)
   {

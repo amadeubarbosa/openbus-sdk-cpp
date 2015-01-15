@@ -453,6 +453,32 @@ public:
    */
   CallerChain decodeChain(const CORBA::OctetSeq &encoded) const;
   
+  /**
+	 * \brief Codifica um segredo de autenticação compartilhada
+   *        SharedAuthSecret para um stream de bytes.
+   * 
+   * Codifica um segredo de autenticação compartilhada em um stream de bytes
+   * para permitir a persistência ou transferência da informação.
+   * 
+   * \param secret Segredo de autenticação compartilhada a ser codificado.
+   * \return Cadeia codificada em um stream de bytes.
+   */
+  CORBA::OctetSeq encodeSharedAuthSecret(const SharedAuthSecret &secret);
+
+  /**
+   * \brief Decodifica um segredo de autenticação compartilhada
+   *				SharedAuthSecret a partir de um stream de bytes.
+   * 
+   * Decodifica um segredo de autenticação compartilhada a partir de um stream
+   * de bytes.
+   * 
+   * \param encoded Stream de bytes contendo a codificação do segredo.
+   * \return Segredo de autenticação compartilhada decodificado.
+   * \exception InvalidEncodedStream Caso a stream de bytes não seja do formato
+   *						 esperado.
+   */
+  SharedAuthSecret decodeSharedAuthSecret(const CORBA::OctetSeq &encoded);
+
   /** 
    * ORB utilizado pela conexão. 
    */

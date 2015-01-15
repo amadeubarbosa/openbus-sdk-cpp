@@ -62,37 +62,17 @@ int main(int argc, char** argv) {
       (ctx->createConnection(bus_host, bus_port));
 
     {
-      CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");
-      IOP::CodecFactory_var codec_factory
-        = IOP::CodecFactory::_narrow(object);
-      assert(!CORBA::is_nil(codec_factory));
-  
-      IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
-      IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
-
-      CORBA::OctetSeq secret;
+      CORBA::OctetSeq secret_seq;
       std::ifstream file(".secret");
       file.seekg(0, std::ios::end);
-      secret.length(file.tellg());
+      secret_seq.length(file.tellg());
       file.seekg(0, std::ios::beg);
       file.rdbuf()->sgetn
-        (static_cast<char*>(static_cast<void*>(secret.get_buffer()))
-         , secret.length());
+        (static_cast<char*>(static_cast<void*>(secret_seq.get_buffer()))
+         , secret_seq.length());
 
-      CORBA::Any_var any = codec->decode_value(secret,
-                                               sharedauth::_tc_EncodedSharedAuth);
-      const sharedauth::EncodedSharedAuth *sharedauth;
-      if(*any >>= sharedauth)
-      {
-        openbus::idl_ac::LoginProcess_var login
-          = openbus::idl_ac::LoginProcess::_narrow(sharedauth->attempt);
-        conn->loginBySharedAuth(login, sharedauth->secret);
-      }
-      else
-      {
-        std::cout << "Falhou unmarshaling os dados no arquivo de log" << std::endl;
-        return 1;
-      }
+      openbus::SharedAuthSecret secret(ctx->decodeSharedAuthSecret(secret_seq));
+      conn->loginBySharedAuth(secret);
       ctx->setDefaultConnection(conn.get());
     }
 

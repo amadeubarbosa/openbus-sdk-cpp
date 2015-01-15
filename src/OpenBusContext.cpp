@@ -311,43 +311,42 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
     for (CORBA::ULong i(0); i < seq->length(); ++i)
     {
       if (idl_data_export::CurrentVersion == seq[i].version)
-      {
-        const idl_data_export::ExportedCallChain *exported_chain;
-        CORBA::Any_var exported_chain_any(
-          _orb_info->codec->decode_value(
+      {        
+        CORBA::Any_var exported_chain_any(_orb_info->codec->decode_value(
             seq[i].encoded, idl_data_export::_tc_ExportedCallChain));
-        *exported_chain_any >>= exported_chain;
-        const idl_ac::CallChain *call_chain;
-        CORBA::Any_var call_chain_any = _orb_info->codec->decode_value(
-          exported_chain->signedChain.encoded, idl_ac::_tc_CallChain);
-        *call_chain_any >>= call_chain;
+        idl_data_export::ExportedCallChain exported_chain(
+          extract<idl_data_export::ExportedCallChain>(exported_chain_any));
+        CORBA::Any_var call_chain_any(
+          _orb_info->codec->decode_value(
+            exported_chain.signedChain.encoded, idl_ac::_tc_CallChain));
+        idl_ac::CallChain call_chain(
+          extract<idl_ac::CallChain>(call_chain_any));
         return CallerChain(
-          exported_chain->bus.in(), call_chain->target.in(),
-          call_chain->originators, call_chain->caller,
-          exported_chain->signedChain);      
+          exported_chain.bus.in(), call_chain.target.in(),
+          call_chain.originators, call_chain.caller,
+          exported_chain.signedChain);      
       }
       if (idl_data_export::LegacyVersion == seq[i].version)
-      {
-        const idl_data_export::LegacyExportedCallChain *exported_chain;
-        CORBA::Any_var any(
-          _orb_info->codec->decode_value(
+      {        
+        CORBA::Any_var any(_orb_info->codec->decode_value(
             seq[i].encoded, idl_data_export::_tc_LegacyExportedCallChain));
-        *any >>= exported_chain;
+        idl_data_export::LegacyExportedCallChain exported_chain(
+          extract<idl_data_export::LegacyExportedCallChain>(any));
         idl_ac::LoginInfoSeq originators;
-        if (!std::string(exported_chain->delegate).empty())
+        if (!std::string(exported_chain.delegate).empty())
         {
           originators.length(1);
           idl_ac::LoginInfo delegate;        
           delegate.id = "<unknown>";
-          delegate.entity = exported_chain->delegate; 
+          delegate.entity = exported_chain.delegate; 
           originators[static_cast<CORBA::ULong>(0)] = delegate;
         }
         idl_cr::SignedCallChain legacy_signed_chain;
         std::memset(legacy_signed_chain.signature, 0, idl::EncryptedBlockSize);
         idl_ac::CallChain legacy_call_chain;
-        legacy_call_chain.target = exported_chain->target;
+        legacy_call_chain.target = exported_chain.target;
         legacy_call_chain.originators = originators;
-        legacy_call_chain.caller = exported_chain->caller;
+        legacy_call_chain.caller = exported_chain.caller;
         CORBA::Any legacy_call_chain_any;
         legacy_call_chain_any <<= legacy_call_chain;
         CORBA::OctetSeq_var legacy_call_chain_cdr(
@@ -355,8 +354,8 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
         legacy_signed_chain.encoded = *(legacy_call_chain_cdr);
 
         return CallerChain(
-          exported_chain->bus.in(), exported_chain->target.in(), originators,
-          exported_chain->caller, legacy_signed_chain);
+          exported_chain.bus.in(), exported_chain.target.in(), originators,
+          exported_chain.caller, legacy_signed_chain);
       }
     }
     throw InvalidEncodedStream("Versão de cadeia incompatível.");
@@ -370,6 +369,71 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
                                % e._repoid() % e.minor()));
   }
   return CallerChain();
+}
+
+CORBA::OctetSeq OpenBusContext::encodeSharedAuthSecret(
+  const SharedAuthSecret &secret)
+{
+  log_scope l(log().general_logger(), info_level,
+              "OpenBusContext::encodeSharedAuth");
+  idl_data_export::ExportedVersionSeq exported_version_seq;
+  exported_version_seq.length(1);
+
+  idl_data_export::ExportedSharedAuth shared_auth;
+  shared_auth.bus = secret.busid().c_str();
+  shared_auth.attempt = secret.login_process_;
+  shared_auth.secret = secret.secret_;
+
+  CORBA::Any any;
+  any <<= shared_auth;
+  CORBA::OctetSeq_var shared_auth_cdr(_orb_info->codec->encode_value(any));  
+  
+  idl_data_export::ExportedVersion exported_curr_version;
+  exported_curr_version.version = idl_data_export::CurrentVersion;
+  exported_curr_version.encoded = *(shared_auth_cdr);
+  
+  exported_version_seq[0u] = exported_curr_version;
+  
+  return encode_exported_versions(exported_version_seq,
+                                  idl_data_export::MagicTag_SharedAuth);
+}
+  
+SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
+  const CORBA::OctetSeq &encoded)
+{
+  log_scope l(log().general_logger(), info_level,
+              "OpenBusContext::decodeSharedAuth");
+  idl_data_export::ExportedVersionSeq_var seq;
+  std::string tag(decode_exported_versions(encoded, seq));
+
+  if (idl_data_export::MagicTag_SharedAuth != tag)
+  {
+    throw InvalidEncodedStream(
+      "Stream de bytes não corresponde ao tipo de dado esperado.");
+  }
+  
+  SharedAuthSecret secret;
+  bool found(false);
+  for (CORBA::ULong i(0); i < seq->length(); ++i)
+  {
+    if (idl_data_export::CurrentVersion == seq[i].version)
+    {
+      CORBA::Any_var any(_orb_info->codec->decode_value(
+        seq[i].encoded, idl_data_export::_tc_ExportedSharedAuth));
+      idl_data_export::ExportedSharedAuth exported_shared_auth(
+        extract<idl_data_export::ExportedSharedAuth>(any));
+      secret.busid_ = exported_shared_auth.bus.in();
+      secret.login_process_ = exported_shared_auth.attempt;
+      secret.secret_ = exported_shared_auth.secret;
+      found = true;
+    }
+  }
+  if (!found)
+  {
+    throw InvalidEncodedStream(
+      "Stream de bytes não corresponde ao tipo de dado esperado.");
+  }
+  return secret;
 }
 
 void OpenBusContext::onCallDispatch(CallDispatchCallback c) 
