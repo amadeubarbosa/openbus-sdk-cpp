@@ -269,29 +269,12 @@ int main(int argc, char** argv)
   }
   while(try_again);
 
-  std::pair< access_control::LoginProcess_ptr, CORBA::OctetSeq> 
-    login = conn->startSharedAuth();
-  
-  CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");
-  IOP::CodecFactory_var codec_factory
-    = IOP::CodecFactory::_narrow(object);
-  assert(!CORBA::is_nil(codec_factory));
-  
-  IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
-  IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
-
-  EncodedSharedAuth sharedauth
-    =
-    {
-      login.first, login.second
-    };
-
-  CORBA::Any any;
-  any <<= sharedauth;
-  CORBA::OctetSeq_var secret_seq = codec->encode_value(any);
+  openbus::SharedAuthSecret secret(conn->startSharedAuth());
+  CORBA::OctetSeq secret_seq(openbusContext->encodeSharedAuthSecret(secret));
 
   std::ofstream file(argv[1]);
-  std::copy(secret_seq->get_buffer()
-            , secret_seq->get_buffer() + secret_seq->length()
+  std::copy(secret_seq.get_buffer()
+            , secret_seq.get_buffer() + secret_seq.length()
             , std::ostream_iterator<char>(file));
+  
 }

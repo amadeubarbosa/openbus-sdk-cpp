@@ -103,8 +103,8 @@ struct sayHello
 
 struct onReloginCallback
 {
-  onReloginCallback(CORBA::OctetSeq secret, access_control::LoginProcess_var attempt)
-    : secret(secret), attempt(attempt) {}
+  onReloginCallback(const openbus::SharedAuthSecret &secret)
+    : secret(secret) {}
 
   typedef void result_type;
   result_type operator()(openbus::Connection& c, access_control::LoginInfo info) const
@@ -113,7 +113,7 @@ struct onReloginCallback
     {
       try
       {
-        c.loginBySharedAuth(attempt, secret);
+        c.loginBySharedAuth(secret);
         break;
       }
       catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
@@ -144,8 +144,7 @@ struct onReloginCallback
     while(true);
   }
 
-  CORBA::OctetSeq secret;
-  access_control::LoginProcess_var attempt;
+  openbus::SharedAuthSecret secret;
 };
 
 int main(int argc, char** argv)
@@ -202,37 +201,17 @@ int main(int argc, char** argv)
     {
       conn = openbusContext->createConnection(bus_host, bus_port);
 
-      CORBA::Object_var object = orb->resolve_initial_references("CodecFactory");
-      IOP::CodecFactory_var codec_factory
-        = IOP::CodecFactory::_narrow(object);
-      assert(!CORBA::is_nil(codec_factory));
-  
-      IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
-      IOP::Codec_var codec = codec_factory->create_codec(cdr_encoding);
-
+      CORBA::OctetSeq secret_seq;
       std::ifstream file(argv[1]);
-      CORBA::OctetSeq secret;
       file.seekg(0, std::ios::end);
-      secret.length(file.tellg());
+      secret_seq.length(file.tellg());
       file.seekg(0, std::ios::beg);
       file.rdbuf()->sgetn
-        (static_cast<char*>(static_cast<void*>(secret.get_buffer()))
-         , secret.length());
+        (static_cast<char*>(static_cast<void*>(secret_seq.get_buffer()))
+         , secret_seq.length());
 
-      CORBA::Any_var any = codec->decode_value(secret, _tc_EncodedSharedAuth);
-      const EncodedSharedAuth *sharedauth;
-      if(*any >>= sharedauth)
-      {
-        access_control::LoginProcess_var login
-          = access_control::LoginProcess::_narrow(sharedauth->attempt);
-        conn->onInvalidLogin( ::onReloginCallback(sharedauth->secret, login));
-        conn->loginBySharedAuth(login, sharedauth->secret);
-      }
-      else
-      {
-        
-      }
-
+      openbus::SharedAuthSecret secret(openbusContext->decodeSharedAuthSecret(secret_seq));
+      conn->loginBySharedAuth(secret);
       openbusContext->setDefaultConnection(conn.get());
       break;
     }
