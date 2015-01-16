@@ -267,20 +267,19 @@ public:
   /**
   * \brief Efetua login de uma entidade usando autenticação compartilhada.
   * 
-  * A autenticação compartilhada é feita a partir de informações obtidas a 
+  * A autenticação compartilhada é feita a partir de um segredo obtido
   * através da operação 'startSharedAuth' de uma conexão autenticada.
   * 
-  * @param[in] loginProcess Objeto que represeta o processo de login iniciado.
   * @param[in] secret Segredo a ser fornecido na conclusão do processo de login.
   * 
-  * @throw InvalidLoginProcess O LoginProcess informado é inválido, por exemplo 
-  *        depois de ser cancelado ou ter expirado.
+  * @throw InvalidLoginProcess A tentativa de login associada ao segredo
+  *        informado é inválido, por exemplo depois do segredo ser
+  *        cancelado, ter expirado, ou já ter sido utilizado.
   * @throw AlreadyLoggedIn A conexão já está autenticada.
-  * @throw idl_ac::AccessDenied 
-  *        O segredo fornecido não corresponde ao esperado pelo barramento.
-  * @throw idl::ServiceFailure 
-  *        Ocorreu uma falha interna nos serviÃ§os do barramento que impediu o 
-  *        estabelecimento da conexão.
+  * @throw AccessDenied O segredo fornecido não corresponde ao esperado
+  *        pelo barramento.
+  * @throw ServiceFailure Ocorreu uma falha interna nos serviços do
+  *        barramento que impediu a autenticação da conexão.
   * @throw CORBA::Exception
   */
   void loginBySharedAuth(const SharedAuthSecret &secret);

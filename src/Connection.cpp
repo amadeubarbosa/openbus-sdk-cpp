@@ -428,6 +428,10 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   {
     throw idl_ac::AccessDenied();
   }
+  catch (const CORBA::OBJECT_NOT_EXIST &)
+  {
+    throw InvalidLoginProcess();
+  }
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }

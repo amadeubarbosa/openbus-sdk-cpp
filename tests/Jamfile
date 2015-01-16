@@ -92,6 +92,12 @@ exe-test connection_caller_chain_receive_call_with_default_connection_get_caller
 exe-test connection_loginBySharedAuth_login
   : connection/loginBySharedAuth/login.cpp
   ;
+exe-test connection_loginBySharedAuth_try_login_after_cancel
+  : connection/loginBySharedAuth/try_login_after_cancel.cpp
+  ;
+exe-test connection_loginBySharedAuth_encode_and_decode_sharedauthsecret
+  : connection/loginBySharedAuth/encode_and_decode_sharedauthsecret.cpp
+  ;
 exe-test connection_loginByCertificate_entity_id_and_file_private_key_ok
   : connection/loginByCertificate/entity_id_and_file_private_key_ok.cpp
   ;
@@ -165,6 +171,8 @@ alias tests
     connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate
     connection_caller_chain_receive_call_with_default_connection_get_caller_chain
     connection_loginBySharedAuth_login
+    connection_loginBySharedAuth_try_login_after_cancel
+    connection_loginBySharedAuth_encode_and_decode_sharedauthsecret
     connection_loginByCertificate_entity_id_and_file_private_key_ok
     connection_loginByPassword_after_logout
     connection_loginByPassword_entity_id_and_password_ok
@@ -204,6 +212,8 @@ alias run-tests
     [ run connection_caller_chain_make_chain_for_joined_legacy_chain : : admin/TestCppHello.key ]
     [ run connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate : : admin/TestCppHello.key ]
     [ run connection_loginBySharedAuth_login : : admin/TestCppHello.key ]
+    [ run connection_loginBySharedAuth_try_login_after_cancel : : admin/TestCppHello.key ]
+    [ run connection_loginBySharedAuth_encode_and_decode_sharedauthsecret : : admin/TestCppHello.key ]
     [ run connection_loginByCertificate_entity_id_and_file_private_key_ok : : admin/TestCppHello.key ]
     [ run connection_loginByPassword_after_logout ]
     [ run connection_loginByPassword_entity_id_and_password_ok ]
