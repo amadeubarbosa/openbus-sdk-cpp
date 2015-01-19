@@ -284,21 +284,19 @@ public:
   */
   void loginBySharedAuth(const SharedAuthSecret &secret);
   
- /**
-  * \brief Efetua logout da conexão, tornando o login atual inválido.
-  * 
-  * Após a chamada a essa operação a conexão fica desautenticada, implicando que
-  * qualquer chamada realizada pelo ORB usando essa conexão resultará numa
-  * exceção de sistema 'CORBA::NO_PERMISSION{NoLogin}' e chamadas recebidas por
-  * esse ORB serão respondidas com a exceção 'CORBA::NO_PERMISSION{UnknownBus}'
-  * indicando que não foi possível validar a chamada pois a conexão está
-  * temporariamente desautenticada.
-  * 
-  * @return Verdadeiro se o processo de logout for concluído com êxito e falso
-  *         se a conexão já estiver desautenticada (login inválido) ou se houver 
-  *         uma falha durante o processo remoto do logout.
-  *
-  */
+  /**
+	 * \brief Efetua logout da conexão, tornando o login atual inválido.
+	 * 
+	 * Após a chamada a essa operação a conexão fica desautenticada, implicando que
+	 * qualquer chamada realizada pelo ORB usando essa conexão resultará numa
+	 * exceção de sistema 'CORBA::NO_PERMISSION{NoLogin}' e chamadas recebidas
+	 * por esse ORB serão respondidas com a exceção
+	 * 'CORBA::NO_PERMISSION{UnknownBus}' indicando que não foi possível
+	 * validar a chamada pois a conexão está temporariamente desautenticada.
+	 * 
+	 * @return Verdadeiro se o processo de logout for concluído com êxito e 
+	 *         falso se não for possível invalidar o login atual.
+	 */
   bool logout();
   	
   /**
