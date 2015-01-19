@@ -413,6 +413,7 @@ void Connection::loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
 
 bool Connection::_logout(bool local) 
 {
+  log_scope l(log().general_logger(), info_level, "Connection::_logout");
   bool success(false);
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
@@ -461,8 +462,22 @@ bool Connection::_logout(bool local)
         _access_control->logout();
         success = true;
       }
-      catch (const CORBA::SystemException &)
-      { 
+      catch (const CORBA::NO_PERMISSION &e)
+      {
+        if (idl_ac::InvalidLoginCode == e.minor())
+        {
+          success = true;
+        }
+        else
+        {
+          l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::NO_PERMISSION with rep_id '%s' and minor '%s'", e._repoid(), e.minor());
+          success = false;
+        }
+      }
+      catch (const CORBA::SystemException &e)
+      {
+        //Mico does not implement CORBA::Exception_rep_id()
+        l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::SystemException with rep_id '%s' and minor '%s'", e._repoid(), e.minor());
         success = false;
       }
     }
