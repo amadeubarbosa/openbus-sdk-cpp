@@ -123,7 +123,8 @@ public:
   }
 
   result_type operator()(openbus::OpenBusContext &context, 
-                         const std::string busId, const std::string loginId, 
+                         const std::string busId,
+                         const std::string loginId,
                          const std::string operation)
   {
     for (std::vector<openbus::Connection *>::const_iterator it = 
