@@ -174,6 +174,10 @@ Connection &ServerInterceptor::get_dispatcher_connection(
     try 
     {
       conn = ctx->onCallDispatch()(*ctx, busid, login, r.operation());
+      if (conn && conn->busid() != busid)
+      {
+        throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+      }
     }
     catch (const std::exception &e) 
     {
@@ -183,8 +187,8 @@ Connection &ServerInterceptor::get_dispatcher_connection(
     }
     catch (...)
     {
-      l.level_log(
-        warning_level, "Falha desconhecida na execucao da callback CallDispatch.");
+      l.level_log(warning_level,
+                  "Falha desconhecida na execucao da callback CallDispatch.");
     }
   }
   if (!conn)

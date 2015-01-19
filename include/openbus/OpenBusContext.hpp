@@ -203,13 +203,60 @@ inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs)
 class OPENBUS_SDK_DECL OpenBusContext : public CORBA::LocalObject 
 {
 public:
-  typedef boost::function<Connection* (
-    OpenBusContext &context, const std::string busId, 
-    const std::string loginId, const std::string operation)> 
-  CallDispatchCallback;
+  /**
+	 * \brief Callback de despacho de chamadas.
+	 * 
+	 * Método a ser implementado pelo objeto de callback a ser chamado quando
+	 * uma chamada proveniente de um barramento é recebida. Esse método é chamado
+	 * para determinar a conexão a ser utilizada na validação de cada chamada
+	 * recebida. Se a conexão informada não estiver conectada ao mesmo barramento
+	 * indicado pelo parâmetro 'busid', a chamada provavelmente será recusada com
+	 * um CORBA::NO_PERMISSION{InvalidLogin} pelo fato do login provavelmente não
+	 * ser válido no barramento da conexão. Como resultado disso o cliente da
+	 * chamada poderá indicar que o servidor não está implementado corretamente e
+	 * lançar a exceção CORBA::NO_PERMISSION{InvalidRemote}. Caso alguma exceção
+	 * ocorra durante a execução do método e não seja tratada, o erro será
+	 * capturado pelo interceptador e registrado no log.
+	 * 
+	 * @param[in] context Gerenciador de contexto do ORB que recebeu a chamada.
+	 * @param[in] busid Identificação do barramento através do qual a chamada foi
+	 *                  feita.
+	 * @param[in] loginId Informações do login do cliente da chamada.
+	 * @param[in] operation Nome da operação sendo chamada.
+	 *
+	 * @return Conexão a ser utilizada para receber a chamada.
+	 */
+  typedef boost::function<
+    Connection* (OpenBusContext &context,
+                 const std::string busId, 
+                 const std::string loginId,
+                 const std::string operation)>
+    CallDispatchCallback;
 
+  /**
+	 * \brief Define a callback a ser chamada para determinar a conexão
+	 *        a ser utilizada para receber cada chamada.
+	 *
+	 * Esse atributo é utilizado para definir um objeto que implementa uma
+	 * interface de callback a ser chamada sempre que a conexão receber uma do
+	 * barramento. Essa callback deve devolver a conexão a ser utilizada para
+	 * receber a chamada. A conexão utilizada para receber a chamada será
+	 * a única conexão através da qual novas chamadas aninhadas à chamada
+	 * recebida poderão ser feitas (veja a operação 'joinChain').
+	 *
+	 * Se o objeto de callback for definido como 'null' ou devolver 'null', a
+	 * conexão padrão é utilizada para receber a chamada, caso esta esteja
+	 * definida.
+	 *
+	 * Caso esse atributo seja 'null', nenhum objeto de callback é chamado na
+	 * ocorrência desse evento e 
+	 */
   void onCallDispatch(CallDispatchCallback c);
 
+  /**
+   * \brief Retorna a callback a ser chamada para determinar a conexão
+   *        a ser utilizada para receber cada chamada
+   */
   CallDispatchCallback onCallDispatch() const;
 
   /**
