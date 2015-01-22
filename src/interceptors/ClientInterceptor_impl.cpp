@@ -80,6 +80,14 @@ bool ClientInterceptor::ignore_request(PI::ClientRequestInfo &r)
   return !!ignore;
 }
 
+bool ClientInterceptor::ignore_invalid_login(PI::ClientRequestInfo &r)
+{
+  CORBA::Any_var any(r.get_slot(_orb_info->slot.ignore_invalid_login));
+  CORBA::Boolean ignore(false);
+  any >>= CORBA::Any::to_boolean(ignore);
+  return !!ignore;
+}
+
 idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
   Connection &conn, hash_value &hash, const std::string &remote_id)
 {
@@ -332,6 +340,10 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
   } 
   else if (ex.minor() == idl_ac::InvalidLoginCode) 
   {
+    if (ignore_invalid_login(*r))
+    {
+      throw;
+    }
     idl_ac::LoginInfo oldLogin;
     {
 #ifdef OPENBUS_SDK_MULTITHREAD

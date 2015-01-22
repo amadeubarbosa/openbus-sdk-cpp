@@ -41,6 +41,8 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   void destroy();
   Connection &get_current_connection(PI::ClientRequestInfo &);
   bool ignore_request(PI::ClientRequestInfo &);
+  bool ignore_invalid_login(PI::ClientRequestInfo &);
+  
   idl_cr::SignedCallChain get_signed_chain(Connection &, hash_value &hash, 
                                            const std::string &remote_id);
   void build_credential(PI::ClientRequestInfo &, Connection &conn);

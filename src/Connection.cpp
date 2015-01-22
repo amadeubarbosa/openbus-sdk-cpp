@@ -484,6 +484,7 @@ bool Connection::_logout(bool local)
       static_cast<void>(save_state_); // avoid warnings
       try
       {
+        interceptors::ignore_invalid_login i(_orb_info);        
         _access_control->logout();
         success = true;
       }

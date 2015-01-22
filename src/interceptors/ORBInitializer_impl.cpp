@@ -56,6 +56,27 @@ ignore_interceptor::~ignore_interceptor()
   }
 }
 
+ignore_invalid_login::ignore_invalid_login(boost::shared_ptr<orb_info> p)
+  : _orb_info(p)
+{
+  CORBA::Any any;
+  any <<= CORBA::Any::from_boolean(true);
+  _orb_info->pi_current->set_slot(_orb_info->slot.ignore_invalid_login, any); 
+}
+
+ignore_invalid_login::~ignore_invalid_login()
+{
+  try
+  {
+    CORBA::Any any;
+    any <<= CORBA::Any::from_boolean(false);
+    _orb_info->pi_current->set_slot(_orb_info->slot.ignore_invalid_login, any); 
+  } 
+  catch (...)
+  {
+  }
+}
+
 orb_info::orb_info(PI::ORBInitInfo_ptr i)
   : info(i), slot(info)
 {
