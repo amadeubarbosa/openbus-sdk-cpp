@@ -116,6 +116,16 @@ idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
     }
     catch (const idl_ac::InvalidLogins &)
     {
+      Connection::profile2login_LRUCache::Key_List entries(
+        conn._profile2login.get_all_keys());
+      for (Connection::profile2login_LRUCache::Key_List::iterator it(
+             entries.begin()); it != entries.end(); ++it)
+      {        
+        if (remote_id == conn._profile2login.fetch(*it))
+        {
+          conn._profile2login.remove(*it);
+        }
+      }
       l.log("throw CORBA::NO_PERMISSION, minor=InvalidTaretCode");
       throw CORBA::NO_PERMISSION(idl_ac::InvalidTargetCode,CORBA::COMPLETED_NO);
     }
@@ -130,19 +140,28 @@ idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
   return chain;
 }
 
-void ClientInterceptor::build_credential(PI::ClientRequestInfo &r, 
-                                         Connection &conn)
+void ClientInterceptor::build_credential(
+  PI::ClientRequestInfo &r, Connection &conn, const idl_ac::LoginInfo &curr_login)
 {
   idl_cr::CredentialData credential;
   credential.bus = conn._busid.c_str();
-  credential.login = conn._login()->id;
+  credential.login = curr_login.id;
 
-  Connection::SecretSession session;
+  std::string remote_id;
   {
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
-    conn._profile2session.fetch(session_key(r), session);
+    conn._profile2login.fetch(session_key(r), remote_id);
+  }
+
+  Connection::SecretSession session;
+  if (!remote_id.empty())
+  {
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::lock_guard<boost::mutex> lock(_mutex);
+#endif
+    conn._login2session.fetch(remote_id, session);
   }
 
   if (session == Connection::SecretSession()) 
@@ -162,7 +181,7 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
     std::copy(hash.cbegin(), hash.cend(), credential.hash);
         
     CallerChain caller_chain(get_joined_chain(conn, r));
-    if (session.remote_id == std::string(idl::BusLogin)) 
+    if (remote_id == std::string(idl::BusLogin)) 
     {
       if (caller_chain == CallerChain())
       {
@@ -175,18 +194,18 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
     }
     else
     {
-      std::string login(conn._login()->id.in());
+      std::string login(curr_login.id.in());
       hash_value hash;
       {
-        std::size_t size(login.size() + session.remote_id.size() 
+        std::size_t size(login.size() + remote_id.size() 
                          + idl::EncryptedBlockSize);
         boost::scoped_array<unsigned char> buf (new unsigned char[size]());
         std::size_t pos(0);
         std::memcpy(buf.get(), login.c_str(), login.size());
         pos += login.size();
-        std::memcpy(buf.get() + pos, session.remote_id.c_str(), 
-                    session.remote_id.size());
-        pos += session.remote_id.size();
+        std::memcpy(buf.get() + pos, remote_id.c_str(), 
+                    remote_id.size());
+        pos += remote_id.size();
         if (caller_chain != CallerChain())
         {
           std::memcpy(buf.get() + pos, 
@@ -199,7 +218,7 @@ void ClientInterceptor::build_credential(PI::ClientRequestInfo &r,
         }
         SHA256(buf.get(), size, hash.c_array());
       }
-      credential.chain = get_signed_chain(conn, hash, session.remote_id);
+      credential.chain = get_signed_chain(conn, hash, remote_id);
     } 
   }
       
@@ -262,12 +281,13 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
     return;
   }
   Connection &conn(get_current_connection(*r));
-  if (!conn._login()) 
+  idl_ac::LoginInfo curr_login(conn.get_login());
+  if (std::string(curr_login.id.in()).empty())
   {
     l.log("throw NoLoginCode");
     throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
   }
-  l.vlog("login: %s", conn._login()->id.in());
+  l.vlog("login: %s", curr_login.id.in());
   CallerChain caller_chain(get_joined_chain(conn, *r));
   if (caller_chain.is_legacy())
   {
@@ -278,7 +298,7 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
     }
     throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
   }
-  build_credential(*r, conn);
+  build_credential(*r, conn, curr_login);
 }
 
 void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
@@ -333,7 +353,8 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
 #ifdef OPENBUS_SDK_MULTITHREAD
       boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
-      conn._profile2session.insert(session_key(*r), session);
+      conn._profile2login.insert(session_key(*r), session.remote_id);
+      conn._login2session.insert(session.remote_id, session);
     }
     l.log("Retransmissao da requisicao...");
     throw PI::ForwardRequest(r->target(), false);
@@ -388,6 +409,17 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
         throw PI::ForwardRequest(r->target(), false);
       }
     }
+  }
+  else if (idl_ac::NoLoginCode == ex.minor() ||
+           idl_ac::UnavailableBusCode == ex.minor() ||
+           idl_ac::InvalidTargetCode == ex.minor() ||
+           idl_ac::InvalidRemoteCode == ex.minor())
+  {
+    throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode, CORBA::COMPLETED_NO);
+  }
+  else
+  {
+    throw CORBA::NO_PERMISSION(ex.minor(), CORBA::COMPLETED_NO);
   }
 }
 

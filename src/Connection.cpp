@@ -142,8 +142,9 @@ Connection::Connection(
   boost::shared_ptr<interceptors::orb_info> i, OpenBusContext &m, 
   const ConnectionProperties &props) 
   : _host(host), _port(port), _orb(orb), _orb_info(i), _codec(_orb_info->codec),
-    _loginInfo(0), _onInvalidLogin(0), _state(UNLOGGED), _openbusContext(m),
-    _legacyDelegate(CALLER), _legacyEnabled(true), _profile2session(LRUSize)
+    _loginInfo(0), _invalid_login(0), _onInvalidLogin(0), _state(UNLOGGED),
+    _openbusContext(m), _legacyDelegate(CALLER), _legacyEnabled(true),
+    _profile2login(LRUSize), _login2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
   CORBA::Object_var init_ref(_orb->resolve_initial_references("PICurrent"));
@@ -230,6 +231,7 @@ void Connection::login(idl_ac::LoginInfo &loginInfo,
     throw AlreadyLoggedIn();
   }
   _loginInfo.reset(&loginInfo);
+  _invalid_login.reset();
   _state = LOGGED;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -512,9 +514,10 @@ bool Connection::_logout(bool local)
   lock.lock();
 #endif
   _loginInfo.reset();
+  _invalid_login.reset();
   _state = UNLOGGED;
 #ifdef OPENBUS_SDK_MULTITHREAD
-  lock.unlock();
+  lock.unlock();  
 #endif
   return success;    
 }
@@ -556,4 +559,60 @@ const std::string Connection::busid() const
 #endif
   return ((_state == INVALID) ? std::string() : _busid);
 }
+
+idl_ac::LoginInfo Connection::get_login()
+{
+  log_scope l(log().general_logger(), info_level, "Connection::get_login");
+  idl_ac::LoginInfo login, invalid_login;
+  {
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
+    login = _loginInfo.get() ? *(_loginInfo.get()) : idl_ac::LoginInfo();
+    invalid_login = _invalid_login.get() ?
+      *(_invalid_login.get()) : idl_ac::LoginInfo();
+  }
+  if (!std::string(login.id.in()).empty())
+  {
+    return login;
+  }
+  while (!std::string(invalid_login.id.in()).empty())
+  {
+    if (!onInvalidLogin()) 
+    {
+#ifdef OPENBUS_SDK_MULTITHREAD
+      boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
+      _invalid_login.reset();
+      break;
+    }
+    try
+    {
+      onInvalidLogin()(*this, invalid_login);
+    }
+    catch (...)
+    {
+      l.level_log(warning_level, 
+                  "Falha na execucao da callback OnInvalidLogin.");
+    }
+#ifdef OPENBUS_SDK_MULTITHREAD
+    boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
+    idl_ac::LoginInfo curr(*(_invalid_login.get()));
+    if (curr == invalid_login)
+    {
+      _invalid_login.reset();
+      invalid_login = idl_ac::LoginInfo();
+    }
+    else
+    {
+      invalid_login = curr;
+    }
+  }
+#ifdef OPENBUS_SDK_MULTITHREAD
+  boost::lock_guard<boost::mutex> lock(_mutex);;
+#endif
+  return *(_loginInfo.get());
+}
+
 }

@@ -393,6 +393,8 @@ private:
     return _login_registry;
   }
 
+  idl_ac::LoginInfo get_login();
+
   const std::string _host;
   const unsigned short _port;
   CORBA::ORB_ptr _orb;
@@ -404,7 +406,7 @@ private:
 #else
   boost::scoped_ptr<RenewLogin> _renewLogin;
 #endif
-  boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo;
+  boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo, _invalid_login;
   InvalidLoginCallback_t _onInvalidLogin;
   
   enum LegacyDelegate 
@@ -449,7 +451,9 @@ private:
     friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);
     friend bool operator!=(const SecretSession &lhs, const SecretSession &rhs);
   };
-  LRUCache<hash_value, SecretSession> _profile2session;
+  typedef LRUCache<hash_value, std::string> profile2login_LRUCache;
+  profile2login_LRUCache _profile2login;
+  LRUCache<std::string, SecretSession> _login2session;
 
   friend struct openbus::interceptors::ServerInterceptor;
   friend struct openbus::interceptors::ClientInterceptor;

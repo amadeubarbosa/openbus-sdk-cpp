@@ -9,6 +9,7 @@
 #include "openbus/LRUCache_impl.hpp"
 #endif
 #include "stubs/credential.h"
+#include "stubs/access_control.h"
 
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -45,7 +46,8 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   
   idl_cr::SignedCallChain get_signed_chain(Connection &, hash_value &hash, 
                                            const std::string &remote_id);
-  void build_credential(PI::ClientRequestInfo &, Connection &conn);
+  void build_credential(PI::ClientRequestInfo &, Connection &conn,
+                        const tecgraf::openbus::core::v2_0::services::access_control::LoginInfo &);
   void build_legacy_credential(PI::ClientRequestInfo &, Connection &conn);
   openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
   boost::shared_ptr<orb_info> _orb_info;
