@@ -232,12 +232,14 @@ void ClientInterceptor::build_credential(
   r.add_request_service_context(sctx, true);
 }
 
-void ClientInterceptor::build_legacy_credential(PI::ClientRequestInfo &r, 
-                                                Connection &conn)
+void ClientInterceptor::build_legacy_credential(
+  PI::ClientRequestInfo &r, 
+  Connection &conn,
+  const idl_ac::LoginInfo &curr_login)
 {
   legacy::v1_5::Credential credential;
-  credential.identifier = conn._login()->id;
-  credential.owner = conn._login()->entity;
+  credential.identifier = curr_login.id;
+  credential.owner = curr_login.entity;
   CallerChain caller_chain(get_joined_chain(conn, r));
   if (caller_chain == CallerChain())
   {
@@ -293,7 +295,7 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
   {
     if (conn._legacyEnabled)
     {
-      build_legacy_credential(*r, conn);
+      build_legacy_credential(*r, conn, curr_login);
       return;
     }
     throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
@@ -363,51 +365,79 @@ void ClientInterceptor::receive_exception(PI::ClientRequestInfo_ptr r)
   {
     if (ignore_invalid_login(*r))
     {
-      throw;
+      l.log("Ignorando excecao InvalidLogin.");
+      throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
     }
-    idl_ac::LoginInfo oldLogin;
+    std::size_t validity(0);
+    idl_ac::LoginInfo invalid_login;
     {
 #ifdef OPENBUS_SDK_MULTITHREAD
       boost::lock_guard<boost::mutex> conn_lock(conn._mutex);
 #endif
-      oldLogin = *conn._loginInfo;
-      conn._state = Connection::INVALID;
+      invalid_login = *conn._loginInfo;
     }
-
-    try 
-    {
-      if (conn.onInvalidLogin()) 
+    try
+    { 
+      interceptors::ignore_invalid_login i(_orb_info);
+      if (_openbus_ctx->getLoginRegistry())
       {
-        conn.onInvalidLogin()(conn, oldLogin);
-      }
-    } 
-    catch (...) 
-    {
-      l.level_log(warning_level, 
-                  "Falha na execucao da callback OnInvalidLogin.");
-    }
-
-    if (conn._state == Connection::LOGGED)
-    {
-      throw PI::ForwardRequest(r->target(), false); 
-    }
-    else if (conn._state == Connection::UNLOGGED) 
-    {
-      l.log("Connection::UNLOGGED: throw NoLoginCode");
-      throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
-    } 
-    else if (conn._state == Connection::INVALID) 
-    {
-      if (!std::strcmp(conn._login()->id, oldLogin.id)) 
-      {
-        conn._logout();
-        l.log("Connection::INVALID: throw NoLoginCode");
-        throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
+        validity = _openbus_ctx->getLoginRegistry()->getLoginValidity(
+          invalid_login.id);
       }
       else
       {
+        l.log("Nao foi possivel obter uma referencia remota para LoginRegistry. Retrasmissao da requisicao.");
         throw PI::ForwardRequest(r->target(), false);
       }
+    }
+    catch (const CORBA::NO_PERMISSION &e)
+    {
+      if (idl_ac::InvalidLoginCode == e.minor())
+      {
+        idl_ac::LoginInfo curr_login;
+        {
+#ifdef OPENBUS_SDK_MULTITHREAD
+          boost::lock_guard<boost::mutex> conn_lock(conn._mutex);
+#endif
+          curr_login = *conn._loginInfo;
+        }
+        if (std::string(curr_login.id.in())
+            == std::string(invalid_login.id.in()))
+        {
+          conn._logout(true);
+          idl_ac::LoginInfo *obj(new idl_ac::LoginInfo);
+          obj->id = invalid_login.id;
+          obj->entity = invalid_login.entity;
+          {
+#ifdef OPENBUS_SDK_MULTITHREAD
+            boost::lock_guard<boost::mutex> conn_lock(conn._mutex);
+#endif            
+          conn._invalid_login.reset(obj);
+          }
+        }
+        l.log("Excecao InvalidLogin ao chamar getLoginValidity(). Retransmissa da requisicao.");
+        throw PI::ForwardRequest(r->target(), false);
+      }
+      else
+      {
+        throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
+                                     CORBA::COMPLETED_NO);
+      }
+    }
+    catch (const CORBA::Exception &)
+    {
+      throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
+                                 CORBA::COMPLETED_NO);
+    }
+    if (validity > 0)
+    {
+      throw CORBA::NO_PERMISSION(idl_ac::InvalidRemoteCode,
+                                 CORBA::COMPLETED_NO);
+    }
+    else
+    {
+      l.log("getLoginValidity < 0. Retransmissa da requisicao.");
+      throw PI::ForwardRequest(r->target(), false);
     }
   }
   else if (idl_ac::NoLoginCode == ex.minor() ||

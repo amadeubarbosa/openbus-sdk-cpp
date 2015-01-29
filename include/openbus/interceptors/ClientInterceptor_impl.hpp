@@ -48,7 +48,8 @@ ClientInterceptor : public PI::ClientRequestInterceptor
                                            const std::string &remote_id);
   void build_credential(PI::ClientRequestInfo &, Connection &conn,
                         const tecgraf::openbus::core::v2_0::services::access_control::LoginInfo &);
-  void build_legacy_credential(PI::ClientRequestInfo &, Connection &conn);
+  void build_legacy_credential(PI::ClientRequestInfo &, Connection &conn,
+                               const tecgraf::openbus::core::v2_0::services::access_control::LoginInfo &);
   openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
   boost::shared_ptr<orb_info> _orb_info;
   ::IOP::Codec_var _codec;

@@ -598,8 +598,12 @@ idl_ac::LoginInfo Connection::get_login()
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);;
 #endif
-    idl_ac::LoginInfo curr(*(_invalid_login.get()));
-    if (curr == invalid_login)
+    idl_ac::LoginInfo curr;
+    if (_invalid_login.get())
+    {
+      curr = *_invalid_login.get();
+    }
+    if (!std::string(curr.id.in()).empty() && curr == invalid_login)
     {
       _invalid_login.reset();
       invalid_login = idl_ac::LoginInfo();
