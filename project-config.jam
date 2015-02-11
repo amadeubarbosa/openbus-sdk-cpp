@@ -4,70 +4,16 @@ import os ;
 
 path-constant here : . ;
 
-mico-debug-shared-include-path = [ os.environ MICO_DEBUG_SHARED_INCLUDE_PATH ] ;
-if ! $(mico-debug-shared-include-path)
+local ace-root-path = [ os.environ ACE_ROOT_PATH ] ;
+if ! $(ace-root-path)
 {
-  mico-debug-shared-include-path = $(here)/../../install/mico-mt-d/include ;
+  ace-root-path = "$(here)/../../build/ACE_wrappers" ;
 }
 
-mico-debug-shared-lib-path = [ os.environ MICO_DEBUG_SHARED_LIB_PATH ] ;
-if ! $(mico-debug-shared-lib-path)
+local tao-root-path = [ os.environ TAO_ROOT_PATH ] ;
+if ! $(tao-root-path)
 {
-  mico-debug-shared-lib-path = $(here)/../../install/mico-mt-d/lib ;
-}
-
-mico-debug-static-include-path = [ os.environ MICO_DEBUG_STATIC_INCLUDE_PATH ] ;
-if ! $(mico-debug-static-include-path)
-{
-  mico-debug-static-include-path = $(here)/../../install/mico-mt-s-d/include ;
-}
-
-mico-debug-static-lib-path = [ os.environ MICO_DEBUG_STATIC_LIB_PATH ] ;
-if ! $(mico-debug-static-lib-path)
-{
-  mico-debug-static-lib-path = $(here)/../../install/mico-mt-s-d/lib ;
-}
-
-mico-release-shared-include-path = [ os.environ MICO_RELEASE_SHARED_INCLUDE_PATH ] ;
-if ! $(mico-release-shared-include-path)
-{
-  mico-release-shared-include-path = $(here)/../../install/mico-mt/include ;
-}
-
-mico-release-shared-lib-path = [ os.environ MICO_RELEASE_SHARED_LIB_PATH ] ;
-if ! $(mico-release-shared-lib-path)
-{
-  mico-release-shared-lib-path = $(here)/../../install/mico-mt/lib ;
-}
-
-mico-release-static-include-path = [ os.environ MICO_RELEASE_STATIC_INCLUDE_PATH ] ;
-if ! $(mico-release-static-include-path)
-{
-  mico-release-static-include-path = $(here)/../../install/mico-mt-s/include ;
-}
-
-mico-release-static-lib-path = [ os.environ MICO_RELEASE_STATIC_LIB_PATH ] ;
-if ! $(mico-release-static-lib-path)
-{
-  mico-release-static-lib-path = $(here)/../../install/mico-mt-s/lib ;
-}
-
-mico-include-path = [ os.environ MICO_INCLUDE_PATH ] ;
-if $(mico-include-path)
-{
-  mico-debug-shared-include-path = $(mico-include-path) ;
-  mico-debug-static-include-path = $(mico-include-path) ;
-  mico-release-shared-include-path = $(mico-include-path) ;
-  mico-release-static-include-path = $(mico-include-path) ;
-}
-
-mico-lib-path = [ os.environ MICO_LIB_PATH ] ;
-if $(mico-lib-path)
-{
-  mico-debug-shared-lib-path = $(mico-lib-path) ;
-  mico-debug-static-lib-path = $(mico-lib-path) ;
-  mico-release-shared-lib-path = $(mico-lib-path) ;
-  mico-release-static-lib-path = $(mico-lib-path) ;
+  tao-root-path = $(ace-root-path)/TAO ;
 }
 
 openssl-debug-shared-include-path = [ os.environ OPENSSL_DEBUG_SHARED_INCLUDE_PATH ] ;
@@ -375,217 +321,125 @@ lib openssl
   : <include>$(openssl-release-static-include-path)p
   ;  
 
-project mico
-  : requirements <threading>multi
+project ACE
+  : requirements <include>$(ace-root-path)
+    <target-os>windows:<define>WIN32
   ;
 
-lib pthreads
+lib ACE
   : 
+  : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libACE.a
+  ;
+
+lib ACE
+  :
   : <target-os>windows
     <variant>debug
-    <link>shared
-    <search>$(mico-debug-shared-lib-path)
+    <search>$(ace-root-path)/lib
+    <name>ACEd
+  ;    
+
+project TAO
+  : requirements <include>$(tao-root-path)
+  ;
+  
+lib TAO_AnyTypeCode
   : 
-  : <define>HAVE_THREADS
-    <define>HAVE_PTHREADS
-    <define>HAVE_PTHREADS_VC
-    <link>static:<define>PTW32_STATIC_LIB
-    <include>$(mico-debug-shared-include-path)/pthreads
+  : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.a
   ;
 
-lib pthreads
+lib TAO_AnyTypeCode
   : 
-  : <target-os>windows
-    <variant>debug
-    <link>static
-    <search>$(mico-debug-static-lib-path)
-  : 
-  : <define>HAVE_THREADS
-    <define>HAVE_PTHREADS
-    <define>HAVE_PTHREADS_VC
-    <link>static:<define>PTW32_STATIC_LIB
-    <include>$(mico-debug-static-include-path)/pthreads
-  ;
-
-lib pthreads
-  : 
-  : <target-os>windows
-    <variant>release
-    <link>shared
-    <search>$(mico-release-shared-lib-path)
-  : 
-  : <define>HAVE_THREADS
-    <define>HAVE_PTHREADS
-    <define>HAVE_PTHREADS_VC
-    <link>static:<define>PTW32_STATIC_LIB
-    <include>$(mico-release-shared-include-path)/pthreads
-  ;
-
-lib pthreads
-  : 
-  : <target-os>windows
-    <variant>release
-    <link>static
-    <search>$(mico-release-static-lib-path)
-  : 
-  : <define>HAVE_THREADS
-    <define>HAVE_PTHREADS
-    <define>HAVE_PTHREADS_VC
-    <link>static:<define>PTW32_STATIC_LIB
-    <include>$(mico-release-static-include-path)/pthreads
-  ;
-
-lib mico
-  :
-  : <name>mico2.3.13
-    <variant>debug
-    <link>shared
-    <search>$(mico-debug-shared-lib-path)
-  :
-  : <include>$(mico-debug-shared-include-path)
-    <toolset>msvc:<source>pthreads
-    <toolset>msvc:<define>__MICO_ORB__
-    <toolset>msvc:<define>USE_MESSAGING
-    <toolset>msvc:<define>NEED_THREADID_OPERATORS
-    <toolset>msvc:<define>THREADING_POLICIES
-    <toolset>msvc:<linkflags>ws2_32.lib
-    <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-debug-shared-include-path)/windows
-  ;
-
-lib mico
-  :
-  : <name>mico2.3.13
-    <variant>debug
-    <link>static
-    <search>$(mico-debug-static-lib-path)
-  :
-  : <include>$(mico-debug-static-include-path)
-    <toolset>msvc:<source>pthreads
-    <toolset>msvc:<define>__MICO_ORB__
-    <toolset>msvc:<define>USE_MESSAGING
-    <toolset>msvc:<define>NEED_THREADID_OPERATORS
-    <toolset>msvc:<define>THREADING_POLICIES
-    <toolset>msvc:<linkflags>ws2_32.lib
-    <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-debug-static-include-path)/windows
-  ;
-
-
-lib mico
-  :
-  : <name>mico2.3.13
-    <variant>release
-    <link>shared
-    <search>$(mico-release-shared-lib-path)
-  :
-  : <include>$(mico-release-shared-include-path)
-    <toolset>msvc:<source>pthreads
-    <toolset>msvc:<define>__MICO_ORB__
-    <toolset>msvc:<define>USE_MESSAGING
-    <toolset>msvc:<define>NEED_THREADID_OPERATORS
-    <toolset>msvc:<define>THREADING_POLICIES
-    <toolset>msvc:<linkflags>ws2_32.lib
-    <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-release-shared-include-path)/windows
-  ;
-
-lib mico
-  :
-  : <name>mico2.3.13
-    <variant>release
-    <link>static
-    <search>$(mico-release-static-lib-path)
-  :
-  : <include>$(mico-release-static-include-path)
-    <toolset>msvc:<source>pthreads
-    <toolset>msvc:<define>__MICO_ORB__
-    <toolset>msvc:<define>USE_MESSAGING
-    <toolset>msvc:<define>NEED_THREADID_OPERATORS
-    <toolset>msvc:<define>THREADING_POLICIES
-    <toolset>msvc:<linkflags>ws2_32.lib
-    <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-release-static-include-path)/windows
-  ;
-
-# MacOSX
-lib mico
-  :
-  : <name>libmico2.3.13
-    <variant>debug
-    <link>static
-    <target-os>darwin
-    <file>$(mico-debug-static-lib-path)/libmico2.3.13.a
-  :
-  : <include>$(mico-debug-static-include-path)
-    <toolset>msvc:<source>pthreads
-    <toolset>msvc:<define>__MICO_ORB__
-    <toolset>msvc:<define>USE_MESSAGING
-    <toolset>msvc:<define>NEED_THREADID_OPERATORS
-    <toolset>msvc:<define>THREADING_POLICIES
-    <toolset>msvc:<linkflags>ws2_32.lib
-    <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-debug-static-include-path)/windows
-  ;
-
-lib mico
-  :
-  : <name>libmico2.3.13
-    <variant>release
-    <link>static
-    <target-os>darwin
-    <file>$(mico-release-static-lib-path)/libmico2.3.13.a
-  :
-  : <include>$(mico-release-static-include-path)
-    <toolset>msvc:<source>pthreads
-    <toolset>msvc:<define>__MICO_ORB__
-    <toolset>msvc:<define>USE_MESSAGING
-    <toolset>msvc:<define>NEED_THREADID_OPERATORS
-    <toolset>msvc:<define>THREADING_POLICIES
-    <toolset>msvc:<linkflags>ws2_32.lib
-    <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-release-static-include-path)/windows
-  ;
-
-# Windows
-lib mico
-  :
-  : <name>libmico2.3.13
-    <variant>debug
-    <link>static
+  : <search>$(ace-root-path)/lib
     <target-os>windows
-    <search>$(mico-debug-static-lib-path)
-  :
-  : <include>$(mico-debug-static-include-path)
-    <toolset>msvc:<source>pthreads
-    <toolset>msvc:<define>__MICO_ORB__
-    <toolset>msvc:<define>USE_MESSAGING
-    <toolset>msvc:<define>NEED_THREADID_OPERATORS
-    <toolset>msvc:<define>THREADING_POLICIES
-    <toolset>msvc:<linkflags>ws2_32.lib
-    <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-debug-static-include-path)/windows
+    <variant>debug
+    <name>TAO_AnyTypeCoded
   ;
 
-lib mico
-  :
-  : <name>libmico2.3.13
-    <variant>release
-    <link>static
+lib TAO_PortableServer
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PortableServer.a
+  ;
+
+lib TAO_PortableServer
+  : 
+  : <search>$(ace-root-path)/lib
     <target-os>windows
-    <search>$(mico-release-static-lib-path)
-  :
-  : <include>$(mico-release-static-include-path)
-    <toolset>msvc:<source>pthreads
-    <toolset>msvc:<define>__MICO_ORB__
-    <toolset>msvc:<define>USE_MESSAGING
-    <toolset>msvc:<define>NEED_THREADID_OPERATORS
-    <toolset>msvc:<define>THREADING_POLICIES
-    <toolset>msvc:<linkflags>ws2_32.lib
-    <toolset>msvc,<link>shared:<define>MICO_SHARED
-    <toolset>msvc:<include>$(mico-release-static-include-path)/windows
+    <variant>debug
+    <name>TAO_PortableServerd
   ;
 
+lib TAO_PI
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PI.a
+  ;
+
+lib TAO_PI
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <name>TAO_PId
+  ;
+
+lib TAO_PI_Server
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PI_Server.a
+  ;
+
+lib TAO_PI_Server
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <name>TAO_PI_Serverd
+  ;
+
+lib TAO_CodecFactory
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_CodecFactory.a
+  ;
+
+lib TAO_CodecFactory
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <name>TAO_CodecFactoryd
+  ;
+
+lib TAO
+  : /ACE//ACE
+    TAO_AnyTypeCode
+    TAO_PortableServer
+    TAO_PI
+    TAO_PI_Server
+    TAO_AnyTypeCode
+    TAO_CodecFactory
+  : <search>$(ace-root-path)/lib
+    <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO.a
+  ;
+
+lib TAO
+  : /ACE//ACE
+    TAO_AnyTypeCode
+    TAO_PortableServer
+    TAO_PI
+    TAO_PI_Server
+    TAO_AnyTypeCode
+    TAO_CodecFactory
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <name>TAOd
+  ;
+  
 project dl ;
 
 lib dl

@@ -81,4 +81,5 @@ int main(int argc, char** argv)
               << std::endl;
     std::abort();
   }
+  return 0; //MSVC
 }

@@ -1,11 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/hello.h"
+#include "helloC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 
+#include <tao/PortableServer/PortableServer.h>
 #include <iostream>
 #include <map>
 #include <log/output/file_output.h>

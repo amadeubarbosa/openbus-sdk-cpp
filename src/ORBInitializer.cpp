@@ -6,6 +6,7 @@
 #include "openbus/interceptors/ServerInterceptor_impl.hpp"
 #include "openbus/interceptors/ClientInterceptor_impl.hpp"
 
+#include <tao/ORBInitializer_Registry.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
   #include <boost/thread/once.hpp>
@@ -54,7 +55,7 @@ PortableInterceptor::ORBInitializer_var orb_initializer;
 boost::mutex _mutex;
 #endif
 
-CORBA::ORB *ORBInitializer(int &argc, char **argv) 
+CORBA::ORB_ptr ORBInitializer(int &argc, char **argv) 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -69,13 +70,14 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
    * *CORBA garante que cada chamada a CORBA::ORB_init(argc, argv, "")
    * retorna o mesmo ORB.
   */
-  CORBA::ORB_ptr orb(CORBA::ORB_init(argc, argv));
+  CORBA::ORB_var orb(CORBA::ORB_init(argc, argv));
   try 
   {
-    orb->resolve_initial_references("OpenBusContext");
+    ACE_Time_Value t(0);
+    orb->resolve_initial_references("OpenBusContext", &t);
     l.log("Este ORB ja foi criado.");
   } 
-  catch (const CORBA::ORB_InvalidName &) 
+  catch (const CORBA::ORB::InvalidName &) 
   {
     interceptors::ORBInitializer *_orb_initializer
       (dynamic_cast<interceptors::ORBInitializer *>(orb_initializer.in()));
@@ -88,6 +90,6 @@ CORBA::ORB *ORBInitializer(int &argc, char **argv)
     _orb_initializer->serverInterceptor->_openbus_ctx = openbusContext;
   }
   l.log("Retornando ORB");
-  return orb;
+  return orb._retn();
 }
 }

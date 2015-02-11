@@ -10,12 +10,13 @@
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/decl.hpp"
 #include "openbus/Connection.hpp"
-#include "stubs/credential.h"
-#include "stubs/access_control.h"
-#include "stubs/offer_registry.h"
-#include "stubs/data_export.h"
+#include "credentialC.h"
+#include "access_controlC.h"
+#include "offer_registryC.h"
+#include "data_exportC.h"
 
-#include <CORBA.h>
+#include <tao/LocalObject.h>
+
 #include <boost/function.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -57,6 +58,27 @@ inline bool operator==(const LoginInfo &lhs, const LoginInfo &rhs)
 }
 
 inline bool operator!=(const LoginInfo &lhs, const LoginInfo &rhs)
+{
+  return !(lhs == rhs);
+}
+
+inline bool operator==(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
+{
+  if (lhs.length() != rhs.length())
+  {
+    return false;
+  }
+  for (std::size_t i = 0; i < rhs.length(); ++i)
+  {
+    if (lhs[i] != rhs[i])
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+inline bool operator!=(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
 {
   return !(lhs == rhs);
 }

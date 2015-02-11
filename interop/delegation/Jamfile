@@ -2,58 +2,104 @@ project openbus/interop/delegation ;
 
 path-constant here : . ;
 
-alias hello-idl : $(here)/idl/messages.idl ;
+obj messages-stub
+  : $(here)/idl/messages.idl
+  ;
+explicit messages-stub ;
+
+obj messages-skeleton
+  : $(here)/idl/messages.idl
+  : <generate>skeleton
+  ;
+explicit messages-skeleton ;
 
 exe delegation_client
- : src/client.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /boost//program_options
-   /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread
-   <target-os>linux,<link>static:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
-
-exe delegation_broadcaster
- : src/broadcaster.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /boost//program_options
-   /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread
-   <target-os>linux,<link>static:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
+  : src/client.cpp
+    /openbus//openbus
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    messages-stub
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>messages-stub
+    <implicit-dependency>messages-stub
+    <link>static,<target-os>linux:<source>/dl//dl  
+  ;
+explicit delegation_client ;
 
 exe delegation_forwarder
- : src/forwarder.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /boost//program_options
-   /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread
-   <target-os>linux,<link>static:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
+  : src/forwarder.cpp
+    /openbus//openbus
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    messages-stub
+    messages-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>messages-stub
+    <implicit-dependency>messages-stub
+    <dependency>messages-skeleton
+    <implicit-dependency>messages-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
+explicit delegation_forwarder ;
+
+exe delegation_broadcaster
+  : src/broadcaster.cpp
+    /openbus//openbus
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    messages-stub
+    messages-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>messages-stub
+    <implicit-dependency>messages-stub
+    <dependency>messages-skeleton
+    <implicit-dependency>messages-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
+explicit delegation_broadcaster ;
 
 exe delegation_messenger
- : src/messenger.cpp /openbus//openbus
-   /mico//mico /scs//scs /boost//headers /boost//program_options
-   /logger//logger
-   /openssl//openssl hello-idl
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread
-   <target-os>linux,<link>static:<source>/dl//dl
-   <implicit-dependency>hello-idl
- ;
+  : src/messenger.cpp
+    /openbus//openbus
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    messages-stub
+    messages-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>messages-stub
+    <implicit-dependency>messages-stub
+    <dependency>messages-skeleton
+    <implicit-dependency>messages-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
+explicit delegation_messenger ;
 
-alias delegation :  
-  delegation_client 
-  delegation_broadcaster 
-  delegation_forwarder
-  delegation_messenger 
-  admin/interop_delegation_cpp_messenger.key
-  admin/interop_delegation_cpp_broadcaster.key
-  admin/interop_delegation_cpp_forwarder.key
-;
+alias delegation
+  : delegation_client
+    delegation_forwarder
+    delegation_broadcaster
+    delegation_messenger
+    admin/interop_delegation_cpp_messenger.key
+    admin/interop_delegation_cpp_broadcaster.key
+    admin/interop_delegation_cpp_forwarder.key
+  ;

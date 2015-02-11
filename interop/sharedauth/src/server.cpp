@@ -1,13 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/hello.h"
+#include "helloS.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 #include <openbus/log.hpp>
-#include <scs/ComponentContext.hpp>
+#include <scs/ComponentContext.h>
 
-#include <CORBA.h>
 #include <iostream>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -164,7 +163,7 @@ int main(int argc, char **argv)
   try 
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
+    openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     

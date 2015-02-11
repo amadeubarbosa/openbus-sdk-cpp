@@ -27,4 +27,5 @@ int main(int argc, char* argv[])
   }
   else
     std::abort();
+  return 0; //MSVC
 }

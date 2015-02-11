@@ -11,4 +11,5 @@ int main(int argc, char** argv)
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
   std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(cfg.host(), cfg.port()));
   conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
+  return 0; //MSVC
 }

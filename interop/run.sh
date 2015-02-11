@@ -3,6 +3,7 @@
 ROOT="$( dirname "${BASH_SOURCE[0]}" )"
 
 OPENBUS_ROOT_PATH="$ROOT/../"
+BUILD_PATH="$ROOT/../../../build"
 INSTALL_PATH="$ROOT/../../../install"
 STAGE_DEPS="$OPENBUS_ROOT_PATH/install/deps"
 
@@ -25,7 +26,7 @@ function run-interop
   flavors="mt-s-d mt-d mt-s mt"
   for flavor in $flavors
   do
-    SHARED_LIBS="$STAGE_DEPS:$INSTALL_PATH/openssl-$flavor/lib:$INSTALL_PATH/mico-$flavor/lib"
+    SHARED_LIBS="$STAGE_DEPS:$INSTALL_PATH/openssl-$flavor/lib:$BUILD_PATH/ACE_wrappers/lib"
 
     pids=''
     for service in $services

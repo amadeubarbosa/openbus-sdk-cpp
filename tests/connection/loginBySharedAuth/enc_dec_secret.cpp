@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 #include <openbus/OpenBusContext.hpp>
-#include <openbus/log.hpp>
+#include <openbus/ORBInitializer.hpp>
 #include <configuration.h>
 
 #include <fstream>
@@ -10,7 +10,6 @@
 // Last argument is assumed to be the path for the private key file argv[argc-1]
 int main(int argc, char** argv)
 {
-  openbus::log().set_level(openbus::debug_level);
   openbus::configuration cfg(argc, argv);
   assert(argc >= 2); // Check that there's at least one argument passed
   CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
@@ -23,20 +22,21 @@ int main(int argc, char** argv)
   conn->loginByCertificate(cfg.certificate_user(), 
                            openbus::PrivateKey(argv[argc-1]));
 
-  openbus::SharedAuthSecret shared_auth(conn->startSharedAuth());
-  shared_auth.cancel();
+  CORBA::OctetSeq shared_auth_seq(
+    bus_ctx->encodeSharedAuthSecret(conn->startSharedAuth()));
+
+  openbus::SharedAuthSecret shared_auth(
+    bus_ctx->decodeSharedAuthSecret(shared_auth_seq));
+  
   {
     std::auto_ptr<openbus::Connection> conn(
       bus_ctx->createConnection(cfg.host(), cfg.port()));
-    try
+    conn->loginBySharedAuth(shared_auth);
+    if (conn->login() == 0)
     {
-      conn->loginBySharedAuth(shared_auth);
+      std::cerr << "conn->login() == 0" << std::endl;
+      std::abort();
     }
-    catch (const openbus::InvalidLoginProcess &)
-    {
-      return 0;
-    }
-    std::abort();
   }
   return 0; //MSVC
 }

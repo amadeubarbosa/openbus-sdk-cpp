@@ -2,42 +2,55 @@ project openbus/interop/simple ;
 
 path-constant here : . ;
 
-obj hello-idl
+obj hello-stub
   : $(here)/idl/hello.idl
-    /mico//mico
   ;
+explicit hello-stub ;
+
+obj hello-skeleton
+  : $(here)/idl/hello.idl
+  : <generate>skeleton
+  ;
+explicit hello-skeleton ;
 
 exe simple_client
   : src/client.cpp
-    hello-idl
     /openbus//openbus
     /scs//scs
     /logger//logger
-    /mico//mico
     /boost//headers
     /boost//program_options
     /openssl//openssl
+    hello-stub
   : <threading>multi:<source>/boost//thread
-    <implicit-dependency>/openbus//core-idls
-    <implicit-dependency>hello-idl
-    <target-os>linux,<link>static:<source>/dl//dl
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <link>static,<target-os>linux:<source>/dl//dl
   ;
+explicit simple_client ;
 
 exe simple_server
   : src/server.cpp
-    hello-idl
     /openbus//openbus
     /scs//scs
     /logger//logger
-    /mico//mico
     /boost//headers
     /boost//program_options
     /openssl//openssl
+    hello-stub
+    hello-skeleton
   : <threading>multi:<source>/boost//thread
-    <implicit-dependency>/openbus//core-idls
-    <implicit-dependency>hello-idl
-    <target-os>linux,<link>static:<source>/dl//dl
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>hello-skeleton
+    <implicit-dependency>hello-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
   ;
+explicit simple_server ;
 
 alias simple
   : simple_client

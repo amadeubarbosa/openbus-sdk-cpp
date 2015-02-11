@@ -2,57 +2,92 @@ project openbus/interop ;
 
 path-constant here : . ;
 
-obj hello-idl : $(here)/idl/hello/hello.idl /mico//mico ;
-obj proxy-idl : $(here)/idl/proxy/proxy.idl /mico//mico ;
+obj hello-stub
+  : $(here)/idl/hello/hello.idl
+  ;
+explicit hello-stub ;
+
+obj hello-skeleton
+  : $(here)/idl/hello/hello.idl
+  : <generate>skeleton
+  ;
+explicit hello-skeleton ;
+
+obj proxy-stub
+  : $(here)/idl/proxy/proxy.idl
+  ;
+explicit proxy-stub ;
+
+obj proxy-skeleton
+  : $(here)/idl/proxy/proxy.idl
+  : <generate>skeleton
+  ;
+explicit proxy-skeleton ;
 
 exe chaining_client
- : proxy-idl
-   src/client.cpp
-   /boost//headers
-   /boost//program_options
-   /openssl//openssl
-   /mico//mico
-   /scs//scs
-   /openbus//openbus
-   /logger//logger
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread
-   <implicit-dependency>proxy-idl
-   <link>static:<source>/dl//dl
+  : src/client.cpp
+    /openbus//openbus
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /scs//scs
+    /logger//logger
+    proxy-stub
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>proxy-stub
+    <implicit-dependency>proxy-stub
+    <link>static,<target-os>linux:<source>/dl//dl   
   ;
 
 exe chaining_proxy
- : hello-idl
-   proxy-idl
-   src/proxy.cpp
-   /boost//headers
-   /boost//program_options
-   /openssl//openssl
-   /mico//mico
-   /scs//scs
-   /openbus//openbus
-   /logger//logger
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread
-   <implicit-dependency>hello-idl
-   <implicit-dependency>proxy-idl
-   <link>static:<source>/dl//dl
+  : src/proxy.cpp
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /scs//scs
+    /openbus//openbus
+    /logger//logger
+    hello-stub
+    proxy-stub
+    proxy-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>proxy-stub
+    <implicit-dependency>proxy-stub
+    <dependency>proxy-skeleton
+    <implicit-dependency>proxy-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
   ;
 
 exe chaining_server
- : hello-idl
-   src/server.cpp
-   /boost//headers
-   /boost//program_options
-   /openssl//openssl
-   /mico//mico
-   /scs//scs
-   /openbus//openbus
-   /logger//logger
- : <implicit-dependency>/openbus//core-idls
-   <threading>multi:<source>/boost//thread
-   <implicit-dependency>hello-idl
-   <link>static:<source>/dl//dl
+  : src/server.cpp
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /scs//scs
+    /openbus//openbus
+    /logger//logger
+    proxy-stub
+    proxy-skeleton
+    hello-stub
+    hello-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>proxy-stub
+    <implicit-dependency>proxy-stub
+    <dependency>proxy-skeleton
+    <implicit-dependency>proxy-skeleton
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>hello-skeleton
+    <implicit-dependency>hello-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
   ;
 
 alias chaining :

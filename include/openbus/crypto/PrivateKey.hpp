@@ -4,6 +4,7 @@
 
 #include "openbus/decl.hpp"
 #include "openbus/crypto/OpenSSL.hpp"
+#include "coreC.h"
 
 #include <string>
 #include <exception>
@@ -15,6 +16,7 @@
 
 namespace openbus
 {
+namespace idl = tecgraf::openbus::core::v2_0;
 struct InvalidPrivateKey : public std::exception
 { 
   const char *what() const throw() 
@@ -27,21 +29,22 @@ class PrivateKey
 {
 public:
   OPENBUS_SDK_DECL PrivateKey();
-  OPENBUS_SDK_DECL PrivateKey(const CORBA::OctetSeq &key);
+  OPENBUS_SDK_DECL PrivateKey(const idl::OctetSeq &key);
   OPENBUS_SDK_DECL PrivateKey(const char *key, std::size_t size);
   OPENBUS_SDK_DECL explicit PrivateKey(const std::string &filename);
   OPENBUS_SDK_DECL PrivateKey(const PrivateKey &);
   OPENBUS_SDK_DECL PrivateKey& operator=(const PrivateKey &);
-  OPENBUS_SDK_DECL CORBA::OctetSeq decrypt(const unsigned char *data, std::size_t len) const;
-  OPENBUS_SDK_DECL CORBA::OctetSeq pubKey();
-  const CORBA::OctetSeq &octetSeq() const
+  OPENBUS_SDK_DECL idl::OctetSeq decrypt(const unsigned char *data,
+                                         std::size_t len) const;
+  OPENBUS_SDK_DECL idl::OctetSeq pubKey();
+  const idl::OctetSeq &octetSeq() const
   {
     return _keySeq;
   }
 private:
-  void set_pkey(const CORBA::OctetSeq &key);
+  void set_pkey(const idl::OctetSeq &key);
   openssl::pkey _key;
-  CORBA::OctetSeq _keySeq;
+  idl::OctetSeq _keySeq;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif

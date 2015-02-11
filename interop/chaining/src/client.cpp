@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/proxy.h"
+#include "proxyS.h"
+#include "helloC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
@@ -87,19 +88,23 @@ int main(int argc, char **argv)
       tecgraf::openbus::interop::chaining::HelloProxy *helloProxy = 
         tecgraf::openbus::interop::chaining::HelloProxy::_narrow(o);
       openbus::idl_or::ServicePropertySeq properties = offers[idx].properties;
-      char *loginId = 0;
+      const char *loginId(0);
       for (CORBA::ULong idx = 0; idx != properties.length(); ++idx)
       {
         if (std::string(properties[idx].name) == "openbus.offer.login")
         {
-          loginId = properties[idx].value;
+          loginId = properties[idx].value.in();
           break;
         }
       }
       assert(loginId != 0);
       openbus::CallerChain chain = ctx->makeChainFor(loginId);
       CORBA::OctetSeq encodedChain = ctx->encodeChain(chain);
-      const char *msg = helloProxy->fetchHello(encodedChain);
+      const char *msg = helloProxy->fetchHello(
+        tecgraf::openbus::interop::chaining::OctetSeq(
+          encodedChain.maximum(),
+          encodedChain.length(),
+          const_cast<unsigned char *> (encodedChain.get_buffer())));
       std::string s = "Hello " + entity + "!";
       if (!(msg == s))
       {

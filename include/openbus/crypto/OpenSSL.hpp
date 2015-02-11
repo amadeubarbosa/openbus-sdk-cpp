@@ -3,7 +3,7 @@
 #define TECGRAF_SDK_OPENBUS_OPENSSL_H_
 
 #include "openbus/decl.hpp"
-#include <CORBA.h>
+#include <tao/ORB.h>
 #include <openssl/pem.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>

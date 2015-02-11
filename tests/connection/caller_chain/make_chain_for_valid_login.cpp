@@ -50,4 +50,5 @@ int main(int argc, char** argv)
     std::cerr << "chain.originators().length() > 0" << std::endl;
     std::abort();
   }
+  return 0; //MSVC
 }

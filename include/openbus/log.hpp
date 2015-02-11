@@ -8,7 +8,7 @@
 #define TECGRAF_SDK_OPENBUS_LOG_H_
 
 #include "openbus/decl.hpp"
-#include <CORBA.h>
+#include <tao/ORB.h>
 #include <log/output/streambuf_output.h>
 #include <log/logger.h>
 #ifdef OPENBUS_SDK_MULTITHREAD

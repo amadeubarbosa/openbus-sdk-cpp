@@ -1,11 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/hello.h"
-#include "stubs/encoding.h"
+#include "helloC.h"
+#include "encodingC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 
+#include <tao/PortableServer/PortableServer.h>
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
@@ -48,6 +49,7 @@ int main(int argc, char** argv) {
   try 
   {
     load_options(argc, argv);
+    openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");

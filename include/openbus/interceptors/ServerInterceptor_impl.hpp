@@ -4,8 +4,8 @@
 
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/decl.hpp"
-#include "stubs/credential.h"
-#include "stubs/credential_v1_5.h"
+#include "credentialC.h"
+#include "credential_v1_5C.h"
 
 extern "C" 
 {
@@ -16,12 +16,12 @@ extern "C"
   #include "openbus/LRUCache_impl.hpp"
 #endif
 
+#include <tao/PI_Server/PI_Server.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
 #include <boost/shared_ptr.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <CORBA.h>
 #include <cstddef>
 #include <string>
 
@@ -76,7 +76,6 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   boost::mutex _mutex;
 #endif
   boost::shared_ptr<orb_info> _orb_info;
-  ::IOP::Codec_var _codec;
   LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
 
   void save_dispatcher_connection(

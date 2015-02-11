@@ -1,13 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/messages.h"
+#include "messagesS.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
-#include <scs/ComponentContext.hpp>
+#include <scs/ComponentContext.h>
 #include <log/output/file_output.h>
 
-#include <CORBA.h>
 #include <iostream>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -229,6 +228,7 @@ int main(int argc, char** argv) {
   try 
   {
     load_options(argc, argv);
+    openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");

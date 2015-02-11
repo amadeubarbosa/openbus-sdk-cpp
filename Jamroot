@@ -5,104 +5,22 @@ import os ;
 import feature ;
 import property-set ;
 import "class" : new ;
-import mico-idl ;
+import tao-idl ;
 import version ;
 import path ;
 
 path-constant here : . ;
 
-mico-debug-shared-bin-path = [ os.environ MICO_DEBUG_SHARED_BIN_PATH ] ;
-if ! $(mico-debug-shared-bin-path)
+ace-root-path = [ os.environ ACE_ROOT_PATH ] ;
+if ! $(ace-root-path)
 {
-  mico-debug-shared-bin-path = $(here)/../../install/mico-mt-d/bin ;
+  ace-root-path = $(here)/../../build/ACE_wrappers ;
 }
 
-mico-debug-shared-lib-path = [ os.environ MICO_DEBUG_SHARED_LIB_PATH ] ;
-if ! $(mico-debug-shared-lib-path)
-{
-  mico-debug-shared-lib-path = $(here)/../../install/mico-mt-d/lib ;
-}
-
-mico-debug-static-bin-path = [ os.environ MICO_DEBUG_STATIC_BIN_PATH ] ;
-if ! $(mico-debug-static-bin-path)
-{
-  mico-debug-static-bin-path = $(here)/../../install/mico-mt-s-d/bin ;
-}
-
-mico-debug-static-lib-path = [ os.environ MICO_DEBUG_STATIC_LIB_PATH ] ;
-if ! $(mico-debug-static-lib-path)
-{
-  mico-debug-static-lib-path = $(here)/../../install/mico-mt-s-d/lib ;
-}
-
-mico-release-shared-bin-path = [ os.environ MICO_RELEASE_SHARED_BIN_PATH ] ;
-if ! $(mico-release-shared-bin-path)
-{
-  mico-release-shared-bin-path = $(here)/../../install/mico-mt/bin ;
-}
-
-mico-release-shared-lib-path = [ os.environ MICO_RELEASE_SHARED_LIB_PATH ] ;
-if ! $(mico-release-shared-lib-path)
-{
-  mico-release-shared-lib-path = $(here)/../../install/mico-mt/lib ;
-}
-
-mico-release-static-bin-path = [ os.environ MICO_RELEASE_STATIC_BIN_PATH ] ;
-if ! $(mico-release-static-bin-path)
-{
-  mico-release-static-bin-path = $(here)/../../install/mico-mt-s/bin ;
-}
-
-mico-release-static-lib-path = [ os.environ MICO_RELEASE_STATIC_LIB_PATH ] ;
-if ! $(mico-release-static-lib-path)
-{
-  mico-release-static-lib-path = $(here)/../../install/mico-mt-s/lib ;
-}
-
-if [ path.exists $(mico-debug-shared-bin-path) ] 
-{
-  mico-idl-bin-path = $(mico-debug-shared-bin-path) ;
-  mico-idl-lib-path = $(mico-debug-shared-lib-path) ;
-}
-else if [ path.exists $(mico-debug-static-bin-path) ]
-{
-  mico-idl-bin-path = $(mico-debug-static-bin-path) ;
-  mico-idl-lib-path = $(mico-debug-static-lib-path) ;
-}
-else if [ path.exists $(mico-release-static-bin-path) ]
-{
-  mico-idl-bin-path = $(mico-release-static-bin-path) ;
-  mico-idl-lib-path = $(mico-release-static-lib-path) ;
-}
-else
-{
-  mico-idl-bin-path = $(mico-release-shared-bin-path) ;
-  mico-idl-lib-path = $(mico-release-shared-lib-path) ;
-}
-
-mico-bin-path = [ os.environ MICO_BIN_PATH ] ;
-if $(mico-bin-path)
-{
-  mico-idl-bin-path = $(mico-bin-path) ;
-}
-
-mico-lib-path = [ os.environ MICO_LIB_PATH ] ;
-if $(mico-lib-path)
-{
-  mico-idl-lib-path = $(mico-lib-path) ;
-}
-
-using mico-idl
-  : $(mico-idl-bin-path)
-  : $(mico-idl-lib-path)
-  : stubs
-;
-
-scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
-if ! $(scs-idl-path)
-{
-  scs-idl-path = $(here)/../scs/idl/src ;
-}
+using tao-idl
+  : $(ace-root-path)/bin
+  : $(ace-root-path)/lib
+  ;
 
 openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
 if ! $(openbus-idl-path)
@@ -192,11 +110,13 @@ project openbus
     <target-os>windows,<link>static:<runtime-link>static
     <target-os>windows:<debug-store>database
     <target-os>windows:<define>_SCL_SECURE_NO_WARNINGS
+    <target-os>windows:<cxxflags>/FS
     <debug-symbols>on
     <define>BOOST_ALL_NO_LIB=1
     <link>shared:<define>OPENBUS_SDK_SHARED
     <define>OPENBUS_SDK_SOURCE
     <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
+    <library>/TAO//TAO
   : usage-requirements
     <link>shared:<define>OPENBUS_SDK_SHARED
   : default-build
@@ -205,64 +125,68 @@ project openbus
     <link>static
   ;
 
-local rule core-idl-obj ( name : deps * )
-{
-  obj $(name).obj
-    : $(openbus-idl-path)/$(name).idl
-      /scs//scs-idl
-      /mico//mico
-    : <include>$(openbus-idl-path)
-      <include>$(scs-idl-path)
-      <implicit-dependency>/scs//scs-idl
-      <dependency>/scs//scs-idl
-      <dependency>$(deps)
-    ;
-  explicit $(name).obj ;
-}
+obj access_control-stub
+  : $(openbus-idl-path)/access_control.idl
+  ;
+explicit access_control-stub ;
 
-core-idl-obj core ;
-core-idl-obj credential : core.obj ;
-core-idl-obj access_control : core.obj credential.obj ;
-core-idl-obj offer_registry : core.obj ;
-core-idl-obj data_export : access_control.obj ;
+obj core-stub
+  : $(openbus-idl-path)/core.idl
+  ;
+explicit core-stub ;
 
-obj credential_v1_5.obj
+obj credential-stub
+  : $(openbus-idl-path)/credential.idl
+  ;
+explicit credential-stub ;
+
+obj credential_v1_5-stub
   : $(here)/legacy/idl/credential_v1_5.idl
-    /scs//scs-idl
-    /mico//mico
-  : <include>$(openbus-idl-path)
-    <implicit-dependency>/scs//scs-idl
-  :
   ;
-explicit credential_v1_5.obj ;
+explicit credential_v1_5-stub ;
 
-alias core-idls
-  : access_control.obj
-    core.obj
-    credential.obj
-    offer_registry.obj
-    data_export.obj
-    credential_v1_5.obj
+obj offer_registry-stub
+  : $(openbus-idl-path)/offer_registry.idl
+    /scs//idls
+  : <implicit-dependency>/scs//idls
+  :
+  : <implicit-dependency>/scs//idls
   ;
-explicit core-idls ;
+explicit offer_registry-stub ;
+
+obj data_export-stub
+  : $(openbus-idl-path)/data_export.idl
+  ;
+explicit data_export-stub ;
+
+alias idls
+  : access_control-stub
+    core-stub
+    credential-stub
+    credential_v1_5-stub
+    offer_registry-stub
+    data_export-stub
+  ;
+explicit idls ;
 
 lib openbus
   : [ glob-tree *.cpp *.c : bin demo tests install assistant interop ]
-    core-idls
-    /mico//mico
     /scs//scs
     /boost//headers
     /logger//logger
     /openssl//openssl
+    idls
   : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
     <include>include
     <threading>multi:<source>/boost//thread
-    <dependency>core-idls
-    <implicit-dependency>core-idls    
-    <toolset>msvc:<source>/scs//scs-idl
+    <dependency>idls
+    <implicit-dependency>idls
+    <toolset>msvc:<source>/scs//idls
   :
   : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
     <include>include
+    <dependency>idls
+    <implicit-dependency>idls
   ;
 explicit openbus ;
 
@@ -271,35 +195,19 @@ install stage
   : <location>install
   ;
 
-feature.feature core-idl-diff
-  : off on
-  : composite link-incompatible
-  ;
+# feature.feature core-idl-diff
+#   : off on
+#   : composite link-incompatible
+#   ;
   
-mico-idl.cpp-h cpp-h-stub
-  : [ alias cpp-h-stub-idl
-      : $(openbus-idl-path)/access_control.idl
-        $(openbus-idl-path)/core.idl
-        $(openbus-idl-path)/credential.idl
-        $(openbus-idl-path)/offer_registry.idl
-        $(openbus-idl-path)/data_export.idl
-        $(here)/legacy/idl/credential_v1_5.idl
-        $(scs-idl-path)/scs.idl
-      :
-      :
-      : <include>$(scs-idl-path) ]
-  : <core-idl-diff>on
-  ;
-explicit cpp-h-stub ;
-
-install stage-stubs
-  : cpp-h-stub
-  : <location>install/stubs
-    <install-dependencies>on
-    <install-type>CPP
-    <install-type>H
-  ;
-explicit stage-stubs ;
+# install stage-stubs
+#   : cpp-h-stub
+#   : <location>install/stubs
+#     <install-dependencies>on
+#     <install-type>CPP
+#     <install-type>H
+#   ;
+# explicit stage-stubs ;
 
 install stage-tests : tests//tests : <location>stage-tests ;
 explicit stage-tests ;

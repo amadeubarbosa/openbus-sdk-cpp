@@ -25,7 +25,10 @@ openbus::CallerChain build_fake_legacy_chain(
   CORBA::Any any;
   any <<= call_chain;
   CORBA::OctetSeq_var seq(codec->encode_value(any));
-  signed_chain.encoded = *(seq);
+  signed_chain.encoded = openbus::idl::OctetSeq(
+    seq->maximum(),
+    seq->length(),
+    const_cast<unsigned char *>(seq->get_buffer()));
   
   return openbus::CallerChain(busid, target, originators, caller, signed_chain);
 }

@@ -7,239 +7,282 @@ path-constant here : . ;
 
 project openbus/tests ;
 
-local rule exe-test ( test-name : filename : idl ? )
-{
-  local test-dependencies =
-    /openbus//openbus
-    /mico//mico
-    /scs//scs
-    /boost//headers
-    /logger//logger
-    /openssl//openssl
-    ;
-  local test-requirements =
-    <implicit-dependency>/openbus//core-idls
-    <threading>multi:<source>/boost//thread
-    <include>.
-    <implicit-dependency>$(idl)
-    <target-os>linux,<link>static:<source>/dl//dl
-    ;
-  exe $(test-name)
-    : $(filename)
-      $(idl)
-      $(test-dependencies)
-    : $(test-requirements)
-      <define>OPENBUS_SDK_TEST #Dangerous!
-    ;
-  explicit $(test-name) ;
-}
-
-alias test-hello-idl : $(here)/idl/hello.idl ;
-explicit test-hello-idl ;
-
-exe-test connect_host_port_connect_to_right_host_and_port
-  : connect/host_port/connect_to_right_host_and_port.cpp
+local test-deps =
+  /openbus//openbus
+  /scs//scs
+  /boost//headers
+  /logger//logger
+  /openssl//openssl
+  /TAO//TAO
   ;
-exe-test connect_host_port_connect_to_wrong_host_and_port
-  : connect/host_port/connect_to_wrong_host_and_port.cpp
-  ;
-#exe-test connect_host_port_connect_with_empty_host
-#  : connect/host_port/connect_with_empty_host.cpp
-#  ;
-#exe-test connect_orb_connect_getting_orb_with_ORB_init
-#  : connect/orb/connect_getting_orb_with_ORB_init.cpp
-#  ;
-exe-test connect_orb_connect_getting_orb_with_createORB
-  : connect/orb/connect_getting_orb_with_createORB.cpp
-  ;
-exe-test connection_caller_chain_encode_and_decode_chain_A_B
-  : connection/caller_chain/encode_and_decode_chain_A_B.cpp
-  ;
-exe-test connection_caller_chain_encode_and_decode_chain_A_B_C
-  : connection/caller_chain/encode_and_decode_chain_A_B_C.cpp
-  ;
-exe-test connection_caller_chain_encode_and_decode_legacy_chain_A_B
-  : connection/caller_chain/encode_and_decode_legacy_chain_A_B.cpp
-  ;
-exe-test connection_caller_chain_encode_and_decode_legacy_chain_A_B_C
-  : connection/caller_chain/encode_and_decode_legacy_chain_A_B_C.cpp
-  ;
-exe-test connection_caller_chain_decode_incompatible_version_chain
-  : connection/caller_chain/decode_incompatible_version_chain.cpp
-  ;
-exe-test connection_caller_chain_decode_incompatible_type_chain
-  : connection/caller_chain/decode_incompatible_type_chain.cpp
-  ;
-exe-test connection_caller_chain_make_chain_for_invalid_login
-  : connection/caller_chain/make_chain_for_invalid_login.cpp
-  ;
-exe-test connection_caller_chain_make_chain_for_valid_login
-  : connection/caller_chain/make_chain_for_valid_login.cpp
-  ;
-exe-test connection_caller_chain_make_chain_for_joined_chain
-  : connection/caller_chain/make_chain_for_joined_chain.cpp
-  ;
-exe-test connection_caller_chain_make_chain_for_joined_legacy_chain
-  : connection/caller_chain/make_chain_for_joined_legacy_chain.cpp
-  ;
-exe-test connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate
-  : connection/caller_chain/make_chain_for_joined_legacy_chain_with_delegate.cpp
-  ;
-exe-test connection_caller_chain_receive_call_with_default_connection_get_caller_chain
-  : connection/caller_chain/receive_call_with_default_connection_get_caller_chain.cpp
-  : test-hello-idl
-  ;
-exe-test connection_loginBySharedAuth_login
-  : connection/loginBySharedAuth/login.cpp
-  ;
-exe-test connection_loginBySharedAuth_try_login_after_cancel
-  : connection/loginBySharedAuth/try_login_after_cancel.cpp
-  ;
-exe-test connection_loginBySharedAuth_encode_and_decode_sharedauthsecret
-  : connection/loginBySharedAuth/encode_and_decode_sharedauthsecret.cpp
-  ;
-exe-test connection_loginByCertificate_entity_id_and_file_private_key_ok
-  : connection/loginByCertificate/entity_id_and_file_private_key_ok.cpp
-  ;
-exe-test connection_loginByPassword_after_logout
-  : connection/loginByPassword/after_logout.cpp
-  ;
-exe-test connection_loginByPassword_entity_id_and_password_ok
-  : connection/loginByPassword/entity_id_and_password_ok.cpp
-  ;
-exe-test connection_loginByPassword_login_when_already_logged
-  : connection/loginByPassword/login_when_already_logged.cpp
-  ;
-exe-test connection_loginByPassword_wrong_password
-  : connection/loginByPassword/wrong_password.cpp
-  ;
-exe-test connection_loginByPassword_on_invalid_login
-  : connection/loginByPassword/on_invalid_login.cpp
-  ;
-exe-test connection_loginByPassword_logout_on_invalid_login
-  : connection/loginByPassword/logout_on_invalid_login.cpp
-  ;
-exe-test connection_login_login_info_after_login
-  : connection/login/login_info_after_login.cpp
-  ;
-exe-test connection_manager_calls_with_default_connection
-  : connection_manager/calls_with_default_connection.cpp
-  : test-hello-idl
-  ;
-exe-test connection_manager_calls_with_dispatcher
-  : connection_manager/calls_with_dispatcher.cpp
-  : test-hello-idl
-  ;
-exe-test connection_manager_calls_with_thread_requester
-  : connection_manager/calls_with_thread_requester.cpp
-  : test-hello-idl
-  ;
-exe-test connection_manager_create_connection_to_accessible_bus
-  : connection_manager/create_connection_to_accessible_bus.cpp
-  ;
-exe-test connection_manager_create_connection_to_inaccessible_bus
-  : connection_manager/create_connection_to_inaccessible_bus.cpp
-  ;
-exe-test connection_manager_create_connection_to_invalid_host
-  : connection_manager/create_connection_to_invalid_host.cpp
-  ;
-exe-test connection_manager_get_manager
-  : connection_manager/get_manager.cpp
-  ;
-exe-test connection_manager_receive_call_with_default_connection
-  : connection_manager/receive_call_with_default_connection.cpp
-  : test-hello-idl
-  ;
-exe-test fail_user_created_orb
-  : fail_user_created_orb.cpp
-  ;
-exe-test get_offer
-  : get_offer.cpp
-  : test-hello-idl
-  ;
-exe-test register_service
-  : register_service.cpp
-  : test-hello-idl
+local test-requirements =
+  <threading>multi:<source>/boost//thread 
+  <target-os>windows:<library>/openbus//idls
+  <target-os>windows:<library>/scs//scs-stub
+  <target-os>linux,<link>static:<source>/dl//dl
+  <include>.
+  <define>OPENBUS_SDK_TEST #Dangerous!
+  <library>/openbus//openbus
+  <library>/scs//scs
+  <library>/boost//headers
+  <library>/logger//logger
+  <library>/openssl//openssl
+  <library>/TAO//TAO
   ;
 
-alias tests
-  : connect_host_port_connect_to_right_host_and_port
-    connect_host_port_connect_to_wrong_host_and_port
-    connect_orb_connect_getting_orb_with_createORB
-    connection_caller_chain_decode_chain_wrong_context_id
-    connection_caller_chain_decode_default_octet_sequence
-    connection_caller_chain_encode_and_decode_chain
-    connection_caller_chain_encode_default_caller_chain
-    connection_caller_chain_make_chain_for_invalid_login
-    connection_caller_chain_make_chain_for_valid_login
-    connection_caller_chain_make_chain_for_joined_chain
-    connection_caller_chain_make_chain_for_joined_legacy_chain
-    connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate
-    connection_caller_chain_receive_call_with_default_connection_get_caller_chain
-    connection_loginBySharedAuth_login
-    connection_loginBySharedAuth_try_login_after_cancel
-    connection_loginBySharedAuth_encode_and_decode_sharedauthsecret
-    connection_loginByCertificate_entity_id_and_file_private_key_ok
-    connection_loginByPassword_after_logout
-    connection_loginByPassword_entity_id_and_password_ok
-    connection_loginByPassword_login_when_already_logged
-    connection_loginByPassword_wrong_password
-    connection_loginByPassword_on_invalid_login
-    connection_loginByPassword_logout_on_invalid_login
-    connection_login_login_info_after_login
-    connection_manager_calls_with_default_connection
-    connection_manager_calls_with_dispatcher
-    connection_manager_calls_with_thread_requester
-    connection_manager_create_connection_to_accessible_bus
-    connection_manager_create_connection_to_inaccessible_bus
-    connection_manager_create_connection_to_invalid_host
-    connection_manager_get_manager
-    connection_manager_receive_call_with_default_connection
-    fail_user_created_orb
-    get_offer
-    register_service
+# local rule exe-test ( test-name : filename : deps * : requirements * )
+# {
+#   exe $(test-name)
+#     : $(filename)
+#       $(deps)
+#     : <threading>multi:<source>/boost//thread 
+#       <target-os>windows:<library>/openbus//idls
+#       <target-os>windows:<library>/scs//scs-stub
+#       <target-os>linux,<link>static:<source>/dl//dl
+#       <include>.
+#       # <define>OPENBUS_SDK_TEST #Dangerous!
+#       $(requirements)
+#     ;
+#   explicit $(test-name) ;
+# }
+
+obj test-hello-stub
+  : $(here)/idl/hello.idl
   ;
-explicit tests ;
+explicit test-hello-stub ;
+
+obj test-hello-skeleton
+  : $(here)/idl/hello.idl
+  : <generate>skeleton
+  ;
+explicit test-hello-skeleton ;
+
+# exe-test connect_host_port_connect_to_right_host_and_port
+#   : connect/host_port/connect_to_right_host_and_port.cpp
+#   ;
+# exe-test connect_host_port_connect_to_wrong_host_and_port
+#   : connect/host_port/connect_to_wrong_host_and_port.cpp
+#   ;
+# #exe-test connect_host_port_connect_with_empty_host
+# #  : connect/host_port/connect_with_empty_host.cpp
+# #  ;
+# #exe-test connect_orb_connect_getting_orb_with_ORB_init
+# #  : connect/orb/connect_getting_orb_with_ORB_init.cpp
+# #  ;
+# exe-test connect_orb_connect_getting_orb_with_createORB
+#   : connect/orb/connect_getting_orb_with_createORB.cpp
+#   ;
+# exe-test connection_caller_chain_encode_and_decode_chain_A_B
+#   : connection/caller_chain/encode_and_decode_chain_A_B.cpp
+#   ;
+# exe-test connection_caller_chain_encode_and_decode_chain_A_B_C
+#   : connection/caller_chain/encode_and_decode_chain_A_B_C.cpp
+#   ;
+# exe-test connection_caller_chain_encode_and_decode_legacy_chain_A_B
+#   : connection/caller_chain/encode_and_decode_legacy_chain_A_B.cpp
+#   ;
+# exe-test connection_caller_chain_encode_and_decode_legacy_chain_A_B_C
+#   : connection/caller_chain/encode_and_decode_legacy_chain_A_B_C.cpp
+#   ;
+# exe-test connection_caller_chain_decode_incompatible_version_chain
+#   : connection/caller_chain/decode_incompatible_version_chain.cpp
+#   ;
+# exe-test connection_caller_chain_decode_incompatible_type_chain
+#   : connection/caller_chain/decode_incompatible_type_chain.cpp
+#   ;
+# exe-test connection_caller_chain_make_chain_for_invalid_login
+#   : connection/caller_chain/make_chain_for_invalid_login.cpp
+#   ;
+# exe-test connection_caller_chain_make_chain_for_valid_login
+#   : connection/caller_chain/make_chain_for_valid_login.cpp
+#   ;
+# exe-test connection_caller_chain_make_chain_for_joined_chain
+#   : connection/caller_chain/make_chain_for_joined_chain.cpp
+#   ;
+# exe-test connection_caller_chain_make_chain_for_joined_legacy_chain
+#   : connection/caller_chain/make_chain_for_joined_legacy_chain.cpp
+#   ;
+# exe-test connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate
+#   : connection/caller_chain/make_chain_for_joined_legacy_chain_with_delegate.cpp
+#   ;
+# exe-test connection_caller_chain_receive_call_with_default_connection_get_caller_chain
+#   : connection/caller_chain/receive_call_with_default_connection_get_caller_chain.cpp
+#   : test-hello-stub
+#     test-hello-skeleton
+#   : <dependency>test-hello-stub
+#     <implicit-dependency>test-hello-stub
+#     <dependency>test-hello-skeleton
+#     <implicit-dependency>test-hello-skeleton
+#   ;
+# exe-test connection_loginBySharedAuth_login
+#   : connection/loginBySharedAuth/login.cpp
+#   ;
+# exe-test connection_loginBySharedAuth_try_login_after_cancel
+#   : connection/loginBySharedAuth/try_login_after_cancel.cpp
+#   ;
+# exe-test connection_loginBySharedAuth_encode_and_decode_sharedauthsecret
+#   : connection/loginBySharedAuth/encode_and_decode_sharedauthsecret.cpp
+#   ;
+# exe-test connection_loginByCertificate_entity_id_and_file_private_key_ok
+#   : connection/loginByCertificate/entity_id_and_file_private_key_ok.cpp
+#   ;
+# exe-test connection_loginByPassword_after_logout
+#   : connection/loginByPassword/after_logout.cpp
+#   ;
+# exe-test connection_loginByPassword_entity_id_and_password_ok
+#   : connection/loginByPassword/entity_id_and_password_ok.cpp
+#   ;
+# exe-test connection_loginByPassword_login_when_already_logged
+#   : connection/loginByPassword/login_when_already_logged.cpp
+#   ;
+# exe-test connection_loginByPassword_wrong_password
+#   : connection/loginByPassword/wrong_password.cpp
+#   ;
+# exe-test connection_loginByPassword_on_invalid_login
+#   : connection/loginByPassword/on_invalid_login.cpp
+#   ;
+# exe-test connection_loginByPassword_logout_on_invalid_login
+#   : connection/loginByPassword/logout_on_invalid_login.cpp
+#   ;
+# exe-test connection_login_login_info_after_login
+#   : connection/login/login_info_after_login.cpp
+#   ;
+# exe-test connection_manager_calls_with_default_connection
+#   : connection_manager/calls_with_default_connection.cpp
+#   : test-hello-stub
+#   : <dependency>test-hello-stub
+#     <implicit-dependency>test-hello-stub
+#   ;
+# exe-test connection_manager_calls_with_dispatcher
+#   : connection_manager/calls_with_dispatcher.cpp
+#   : test-hello-stub
+#   : <dependency>test-hello-stub
+#     <implicit-dependency>test-hello-stub
+#   ;
+# exe-test connection_manager_calls_with_thread_requester
+#   : connection_manager/calls_with_thread_requester.cpp
+#   : test-hello-stub
+#   : <dependency>test-hello-stub
+#     <implicit-dependency>test-hello-stub
+#   ;
+# exe-test connection_manager_create_connection_to_accessible_bus
+#   : connection_manager/create_connection_to_accessible_bus.cpp
+#   ;
+# exe-test connection_manager_create_connection_to_inaccessible_bus
+#   : connection_manager/create_connection_to_inaccessible_bus.cpp
+#   ;
+# exe-test connection_manager_create_connection_to_invalid_host
+#   : connection_manager/create_connection_to_invalid_host.cpp
+#   ;
+# exe-test connection_manager_get_manager
+#   : connection_manager/get_manager.cpp
+#   ;
+# exe-test connection_manager_receive_call_with_default_connection
+#   : connection_manager/receive_call_with_default_connection.cpp
+#   : test-hello-stub
+#     test-hello-skeleton
+#   : <dependency>test-hello-stub
+#     <implicit-dependency>test-hello-stub
+#     <dependency>test-hello-skeleton
+#     <implicit-dependency>test-hello-skeleton
+#   ;
+# exe-test fail_user_created_orb
+#   : fail_user_created_orb.cpp
+#   ;
+# exe-test get_offer
+#   : get_offer.cpp
+#   : test-hello-stub
+#     test-hello-skeleton
+#   : <dependency>test-hello-stub
+#     <implicit-dependency>test-hello-stub
+#     <dependency>test-hello-skeleton
+#     <implicit-dependency>test-hello-skeleton
+#   ;
+# exe-test register_service
+#   : register_service.cpp
+#   : test-hello-stub
+#   : <dependency>test-hello-stub
+#     <implicit-dependency>test-hello-stub
+#   ;
+
+# alias tests
+#   : connect_host_port_connect_to_right_host_and_port
+#     connect_host_port_connect_to_wrong_host_and_port
+#     connect_orb_connect_getting_orb_with_createORB
+#     connection_caller_chain_decode_chain_wrong_context_id
+#     connection_caller_chain_decode_default_octet_sequence
+#     connection_caller_chain_encode_and_decode_chain
+#     connection_caller_chain_encode_default_caller_chain
+#     connection_caller_chain_make_chain_for_invalid_login
+#     connection_caller_chain_make_chain_for_valid_login
+#     connection_caller_chain_make_chain_for_joined_chain
+#     connection_caller_chain_make_chain_for_joined_legacy_chain
+#     connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate
+#     connection_caller_chain_receive_call_with_default_connection_get_caller_chain
+#     connection_loginBySharedAuth_login
+#     connection_loginBySharedAuth_try_login_after_cancel
+#     connection_loginBySharedAuth_encode_and_decode_sharedauthsecret
+#     connection_loginByCertificate_entity_id_and_file_private_key_ok
+#     connection_loginByPassword_after_logout
+#     connection_loginByPassword_entity_id_and_password_ok
+#     connection_loginByPassword_login_when_already_logged
+#     connection_loginByPassword_wrong_password
+#     connection_loginByPassword_on_invalid_login
+#     connection_loginByPassword_logout_on_invalid_login
+#     connection_login_login_info_after_login
+#     connection_manager_calls_with_default_connection
+#     connection_manager_calls_with_dispatcher
+#     connection_manager_calls_with_thread_requester
+#     connection_manager_create_connection_to_accessible_bus
+#     connection_manager_create_connection_to_inaccessible_bus
+#     connection_manager_create_connection_to_invalid_host
+#     connection_manager_get_manager
+#     connection_manager_receive_call_with_default_connection
+#     fail_user_created_orb
+#     get_offer
+#     register_service
+#   ;
+# explicit tests ;
 
 alias run-tests
-  : [ run connect_host_port_connect_to_right_host_and_port ]
-    [ run connect_host_port_connect_to_wrong_host_and_port
-      : -wrong-port [ ob-tests.openbus-wrong-port ] ]
- #   connection_caller_chain_receive_call_with_default_connection_get_caller_chain-run
-    [ run connect_orb_connect_getting_orb_with_createORB ]
- #   [ run connection_caller_chain_receive_call_with_default_connection_get_caller_chain ]
-    [ run connection_caller_chain_encode_and_decode_chain_A_B ]
-    [ run connection_caller_chain_encode_and_decode_chain_A_B_C ]
-    [ run connection_caller_chain_encode_and_decode_legacy_chain_A_B ]
-    [ run connection_caller_chain_encode_and_decode_legacy_chain_A_B_C ]
-    [ run connection_caller_chain_decode_incompatible_version_chain ]
-    [ run connection_caller_chain_decode_incompatible_type_chain ]
-    [ run connection_caller_chain_make_chain_for_invalid_login ]
-    [ run connection_caller_chain_make_chain_for_valid_login ]
-    [ run connection_caller_chain_make_chain_for_joined_chain ]
-    [ run connection_caller_chain_make_chain_for_joined_legacy_chain : : admin/TestCppHello.key ]
-    [ run connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate : : admin/TestCppHello.key ]
-    [ run connection_loginBySharedAuth_login : : admin/TestCppHello.key ]
-    [ run connection_loginBySharedAuth_try_login_after_cancel : : admin/TestCppHello.key ]
-    [ run connection_loginBySharedAuth_encode_and_decode_sharedauthsecret : : admin/TestCppHello.key ]
-    [ run connection_loginByCertificate_entity_id_and_file_private_key_ok : : admin/TestCppHello.key ]
-    [ run connection_loginByPassword_after_logout ]
-    [ run connection_loginByPassword_entity_id_and_password_ok ]
-    [ run connection_loginByPassword_login_when_already_logged ]
-    [ run connection_loginByPassword_wrong_password ]
-    [ run connection_loginByPassword_on_invalid_login ]
-    [ run connection_loginByPassword_logout_on_invalid_login ]
-    [ run connection_login_login_info_after_login ]
- #   [ run connection_manager_calls_with_default_connection ]
- #   [ run connection_manager_calls_with_dispatcher ]
- #   [ run connection_manager_calls_with_thread_requester ]
-    [ run connection_manager_create_connection_to_accessible_bus ]
-    [ run connection_manager_create_connection_to_inaccessible_bus ]
-    [ run connection_manager_create_connection_to_invalid_host ]
-    [ run connection_manager_get_manager ]
-    [ run connection_manager_receive_call_with_default_connection ]
-    [ run fail_user_created_orb ]
-    [ run get_offer ]
- #   [ run register_service ]
+  : [ run connect/host_port/connect_to_right_host_and_port.cpp : : : $(test-requirements) ]
+    [ run connect/orb/connect_getting_orb_with_createORB.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/enc_and_dec_chain_AB.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/enc_and_dec_chain_ABC.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/enc_and_dec_legacy_chain_AB.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/enc_and_dec_legacy_chain_ABC.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/dec_incompat_version_chain.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/dec_incompat_type_chain.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/make_chain_for_invalid_login.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/make_chain_for_valid_login.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/make_chain_for_joined_chain.cpp : : : $(test-requirements) ]
+    [ run connection/loginBySharedAuth/login.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connection/loginBySharedAuth/try_login_after_cancel.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connection/loginBySharedAuth/enc_dec_secret.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connection/loginByCertificate/entity_pkey_ok.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connection/loginByPassword/after_logout.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/entity_id_and_password_ok.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/login_when_already_logged.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/wrong_password.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/on_invalid_login.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/logout_on_invalid_login.cpp : : : $(test-requirements) ]
+    [ run connection/login/login_info_after_login.cpp : : : $(test-requirements) ]
+    [ run connection_manager/create_connection_to_accessible_bus.cpp : : : $(test-requirements) ]
+    [ run connection_manager/conn_inaccessible_bus.cpp : : : $(test-requirements) ]
+    [ run connection_manager/create_connection_to_invalid_host.cpp : : : $(test-requirements) ]
+    [ run connection_manager/get_manager.cpp : : : $(test-requirements) ]
+    [ run fail_user_created_orb.cpp : : : $(test-requirements) ]
+    [ run connection_manager/rcv_call_def_conn.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
+    [ run get_offer.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
   ;
 explicit run-tests ;

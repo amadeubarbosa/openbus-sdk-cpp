@@ -10,4 +10,5 @@ int main(int argc, char* argv[])
   std::auto_ptr<openbus::Connection> conn(openbus::connect(cfg.host().c_str(), cfg.port(), 
                                                            orb.in()));
   assert(conn->orb() == orb.in());
+  return 0; //MSVC
 }

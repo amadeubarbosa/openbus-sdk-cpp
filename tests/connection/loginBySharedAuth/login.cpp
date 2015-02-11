@@ -33,4 +33,5 @@ int main(int argc, char** argv)
       std::abort();
     }
   }
+  return 0; //MSVC
 }

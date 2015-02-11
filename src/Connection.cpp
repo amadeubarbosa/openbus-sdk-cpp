@@ -6,7 +6,6 @@
 #include "openbus/LoginCache.hpp"
 #include "openbus/crypto/PublicKey.hpp"
 
-#include <CORBA.h>
 #include <boost/bind.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -124,7 +123,7 @@ SharedAuthSecret::SharedAuthSecret()
 SharedAuthSecret::SharedAuthSecret(
   const std::string &busid,
   idl_ac::LoginProcess_var login_process,
-  const CORBA::OctetSeq &secret,
+  const idl::OctetSeq &secret,
   boost::shared_ptr<interceptors::orb_info> orb_info)
   : busid_(busid), login_process_(login_process), secret_(secret),
     orb_info_(orb_info)
@@ -171,7 +170,7 @@ Connection::Connection(
   {
     interceptors::ignore_interceptor _i(_orb_info);
     _busid = _access_control->busid();
-    CORBA::OctetSeq_var o(_access_control->buskey());
+    idl::OctetSeq_var o(_access_control->buskey());
     _buskey.reset(new PublicKey(o));
   }
   
@@ -277,7 +276,7 @@ void Connection::loginByPassword(const std::string &entity,
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_codec->encode_value(any));
 
-  CORBA::OctetSeq encrypted(
+  idl::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length()));
 
@@ -335,7 +334,7 @@ void Connection::loginByCertificate(const std::string &entity,
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_codec->encode_value(any));
   
-  CORBA::OctetSeq encrypted(_buskey->encrypt(
+  idl::OctetSeq encrypted(_buskey->encrypt(
     encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length()));
 
@@ -380,7 +379,7 @@ Connection::startSharedAuth()
     _openbusContext.setCurrentConnection(conn);
     throw;
   }
-  CORBA::OctetSeq secret(_key.decrypt(challenge, idl::EncryptedBlockSize));
+  idl::OctetSeq secret(_key.decrypt(challenge, idl::EncryptedBlockSize));
   return SharedAuthSecret(busid(), login_process, secret, _orb_info);
 }
   
@@ -412,7 +411,7 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
     _orb_info->codec->encode_value(any));
 
-  CORBA::OctetSeq encrypted(
+  idl::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length()));
 
@@ -498,14 +497,14 @@ bool Connection::_logout(bool local)
         }
         else
         {
-          l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::NO_PERMISSION with rep_id '%s' and minor '%s'", e._repoid(), e.minor());
+          l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::NO_PERMISSION with rep_id '%s' and minor '%s'", e._rep_id(), e.minor());
           success = false;
         }
       }
       catch (const CORBA::SystemException &e)
       {
         //Mico does not implement CORBA::Exception_rep_id()
-        l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::SystemException with rep_id '%s' and minor '%s'", e._repoid(), e.minor());
+        l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::SystemException with rep_id '%s' and minor '%s'", e._rep_id(), e.minor());
         success = false;
       }
     }

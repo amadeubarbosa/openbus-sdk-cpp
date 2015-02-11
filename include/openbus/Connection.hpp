@@ -10,10 +10,10 @@
 #define TECGRAF_SDK_OPENBUS_CONNECTION_H_
 
 #include "openbus/decl.hpp"
-#include "stubs/scs.h"
-#include "stubs/core.h"
-#include "stubs/access_control.h"
-#include "stubs/offer_registry.h"
+#include "scsC.h"
+#include "coreC.h"
+#include "access_controlC.h"
+#include "offer_registryC.h"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
@@ -21,7 +21,6 @@
 #include "openbus/LRUCache_impl.hpp"
 #endif
 
-#include <CORBA.h>
 #include <boost/array.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -141,11 +140,11 @@ public:
 private:
   SharedAuthSecret();
   SharedAuthSecret(const std::string &bus_id, idl_ac::LoginProcess_var,
-                   const CORBA::OctetSeq &secret,
+                   const idl::OctetSeq &secret,
                    boost::shared_ptr<interceptors::orb_info>);
   std::string busid_;
   idl_ac::LoginProcess_var login_process_;
-  CORBA::OctetSeq secret_;
+  idl::OctetSeq secret_;
   boost::shared_ptr<interceptors::orb_info> orb_info_;
   friend class OpenBusContext;
   friend class Connection;

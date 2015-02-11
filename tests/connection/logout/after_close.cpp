@@ -17,4 +17,5 @@ int main(int argc, char* argv[])
   conn->close();
   if(conn->logout())
     std::abort();
+  return 0; //MSVC
 }

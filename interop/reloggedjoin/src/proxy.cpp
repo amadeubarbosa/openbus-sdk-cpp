@@ -1,13 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "stubs/hello.h"
+#include "helloS.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 #include <openbus/log.hpp>
-#include <scs/ComponentContext.hpp>
+#include <scs/ComponentContext.h>
 
-#include <CORBA.h>
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
@@ -144,8 +143,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     }
     catch (const CORBA::SystemException &e)
     {
-      //Mico does not implement CORBA::Exception::_rep_id()
-      std::cerr << "repid: " << e._repoid() << "minor code: " << e.minor()
+      std::cerr << "repid: " << e._rep_id() << "minor code: " << e.minor()
                 << std::endl;
       std::abort();
     }

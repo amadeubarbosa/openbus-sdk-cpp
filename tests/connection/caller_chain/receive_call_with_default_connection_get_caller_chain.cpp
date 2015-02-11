@@ -71,4 +71,5 @@ int main(int argc, char** argv)
   conn.reset();
 
   orb->run();
+  return 0; //MSVC
 }

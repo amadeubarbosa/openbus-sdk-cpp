@@ -3,9 +3,11 @@
 #define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 
 #include "openbus/decl.hpp"
-#include "stubs/core.h"
+#include "coreC.h"
 
-#include <CORBA.h>
+#include <tao/ORB.h>
+#include <tao/PI/PI.h>
+#include <tao/LocalObject.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/array.hpp>
 #include <memory>
@@ -20,27 +22,27 @@ hash_value hash(std::string, CORBA::ULong ticket,
 
 namespace interceptors 
 {
-namespace PI = PortableInterceptor;
 struct ClientInterceptor;
 struct ServerInterceptor;
 
 struct OPENBUS_SDK_DECL Slot
 {
-  Slot(PI::ORBInitInfo_ptr info)
+  Slot(PortableInterceptor::ORBInitInfo_ptr info)
     : current_connection(info->allocate_slot_id()),
     joined_call_chain(info->allocate_slot_id()),
     signed_call_chain(info->allocate_slot_id()),
     ignore_interceptor(info->allocate_slot_id()),
-    ignore_invalid_login(info->allocate_slot_id())
+    ignore_invalid_login(info->allocate_slot_id()),
+    request_id(info->allocate_slot_id())
   {}
-  const PI::SlotId current_connection, joined_call_chain, signed_call_chain,
-    ignore_interceptor, ignore_invalid_login;
+  const PortableInterceptor::SlotId current_connection, joined_call_chain,
+    signed_call_chain, ignore_interceptor, ignore_invalid_login, request_id;
 };
 
 struct orb_info
 {
-  orb_info(PI::ORBInitInfo_ptr);
-  PI::ORBInitInfo_ptr info;
+  orb_info(PortableInterceptor::ORBInitInfo_ptr);
+  PortableInterceptor::ORBInitInfo_ptr info;
   Slot slot;
   IOP::Codec_var codec;
   PortableInterceptor::Current_var pi_current;

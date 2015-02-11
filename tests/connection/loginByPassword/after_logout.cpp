@@ -13,4 +13,5 @@ int main(int argc, char** argv)
   conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
   conn->logout();
   conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
+  return 0; //MSVC
 }

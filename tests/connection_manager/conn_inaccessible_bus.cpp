@@ -1,24 +1,24 @@
 // -*- coding: iso-8859-1-unix -*-
+
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
-
 #include <configuration.h>
 
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
   openbus::configuration cfg(argc, argv);
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
   CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenBusContext");
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
-  std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(cfg.host(), cfg.port()));
-  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
+  assert(openbusContext != 0);
   try
   {
-    conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
-    std::abort();
+    std::auto_ptr<openbus::Connection> conn(openbusContext->createConnection(cfg.host(), 2090));
   }
-  catch(openbus::AlreadyLoggedIn const&)
+  catch(...)
   {
+    return 0;
   }
+  std::abort();
   return 0; //MSVC
 }

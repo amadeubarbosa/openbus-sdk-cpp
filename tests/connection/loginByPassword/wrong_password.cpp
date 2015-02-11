@@ -18,4 +18,5 @@ int main(int argc, char** argv)
   catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
   {
   }
+  return 0; //MSVC
 }
