@@ -6,6 +6,7 @@
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <configuration.h>
+#include <check.hpp>
 #include <cstdlib>
 #include <iostream>
 
@@ -41,31 +42,52 @@ int main(int argc, char **argv)
   CORBA::OctetSeq encoded(bus_ctx->encodeChain(fake_legacy_chain));
   openbus::CallerChain decoded_chain(bus_ctx->decodeChain(encoded));
 
-  if (fake_legacy_chain.busid() != decoded_chain.busid()) std::abort();
-  if (fake_legacy_chain.target() != decoded_chain.target()) std::abort();
-  if (fake_legacy_chain.target() != "C") std::abort();
-  if (std::string(fake_legacy_chain.caller().id.in())
-      != std::string(decoded_chain.caller().id.in())) std::abort();
-  if (std::string(fake_legacy_chain.caller().entity.in())
-      != std::string(decoded_chain.caller().entity.in())) std::abort();
-  if (std::string(decoded_chain.caller().entity.in()) != "B")  std::abort();
-  if (fake_legacy_chain.originators().length()
-      != decoded_chain.originators().length()) std::abort();
-  if (decoded_chain.originators().length() != 1) std::abort();
-  if (std::string(
-        fake_legacy_chain.originators()
-        [static_cast<CORBA::ULong>(0)].id.in())
-      !=
-      std::string(
-        decoded_chain.originators()
-        [static_cast<CORBA::ULong>(0)].id.in())) std::abort();
-  if (std::string(
-        fake_legacy_chain.originators()
-        [static_cast<CORBA::ULong>(0)].entity.in())
-      !=
-      std::string(
-        decoded_chain.originators()
-        [static_cast<CORBA::ULong>(0)].entity.in())) std::abort();
+  openbus::tests::is_equal<std::string>(
+    fake_legacy_chain.busid(), decoded_chain.busid(),
+    "fake_legacy_chain.busid()", "decoded_chain.busid()");
+  
+  openbus::tests::is_equal<std::string>(
+    fake_legacy_chain.target(), decoded_chain.target(),
+    "fake_legacy_chain.target()", "decoded_chain.target()");
+
+  openbus::tests::is_equal<std::string>(
+    fake_legacy_chain.target(), "C", "fake_legacy_chain.target()", "C");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(fake_legacy_chain.caller().id.in()),
+    std::string(decoded_chain.caller().id.in()),
+    "fake_legacy_chain.caller().id", "decoded_chain.caller().id");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(fake_legacy_chain.caller().entity.in()),
+    std::string(decoded_chain.caller().entity.in()),
+    "fake_legacy_chain.caller().entity", "decoded_chain.caller().entity");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(decoded_chain.caller().entity.in()), "B",
+    "decoded_chain.caller().entity", "B");
+
+  openbus::tests::is_equal<std::size_t>(
+    fake_legacy_chain.originators().length(),
+    decoded_chain.originators().length(),
+    "fake_legacy_chain.originators().length()",
+    "decoded_chain.originators().length()");
+
+  openbus::tests::is_equal<std::size_t>(
+    fake_legacy_chain.originators().length(), 1,
+    "fake_legacy_chain.originators().length()", "1");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(fake_legacy_chain.originators()[0u].id.in()),
+    std::string(decoded_chain.originators()[0u].id.in()),
+    "fake_legacy_chain.originators()[0u].id",
+    "decoded_chain.originators()[0u].id");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(fake_legacy_chain.originators()[0u].entity.in()),
+    std::string(decoded_chain.originators()[0u].entity.in()),
+    "fake_legacy_chain.originators()[0u].entity",
+    "decoded_chain.originators()[0u].entity");;
 
   const openbus::idl_ac::CallChain *decoded_signed_chain;
   IOP::Codec_var codec(get_codec(bus_ctx));
@@ -78,29 +100,49 @@ int main(int argc, char **argv)
       openbus::idl_ac::_tc_CallChain));
   *decoded_call_chain_any >>= decoded_signed_chain;
 
-  if (std::string(decoded_signed_chain->target) != decoded_chain.target()) std::abort();
-  if (std::string(decoded_signed_chain->target) != "C") std::abort();
-  if (std::string(decoded_signed_chain->caller.id.in())
-      != std::string(decoded_chain.caller().id.in())) std::abort();
-  if (std::string(decoded_signed_chain->caller.entity.in())
-      != std::string(decoded_chain.caller().entity.in())) std::abort();
-  if (std::string(decoded_signed_chain->caller.entity.in()) != "B")  std::abort();
-  if (decoded_signed_chain->originators.length()
-      != decoded_chain.originators().length()) std::abort();
-  if (decoded_signed_chain->originators.length() != 1) std::abort();
-  if (std::string(
-        decoded_signed_chain->originators
-        [static_cast<CORBA::ULong>(0)].id.in())
-      !=
-      std::string(
-        decoded_chain.originators()
-        [static_cast<CORBA::ULong>(0)].id.in())) std::abort();
-  if (std::string(
-        decoded_signed_chain->originators
-        [static_cast<CORBA::ULong>(0)].entity.in())
-      !=
-      std::string(
-        decoded_chain.originators()
-        [static_cast<CORBA::ULong>(0)].entity.in())) std::abort();
+  openbus::tests::is_equal<std::string>(
+    decoded_signed_chain->target.in(), decoded_chain.target(),
+    "decoded_signed_chain->target", "decoded_chain.target()");
+
+  openbus::tests::is_equal<std::string>(
+    decoded_signed_chain->target.in(), "C",
+    "decoded_signed_chain->target()", "C");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(decoded_signed_chain->caller.id.in()),
+    std::string(decoded_chain.caller().id.in()),
+    "decoded_signed_chain->caller.id", "decoded_chain.caller().id");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(decoded_signed_chain->caller.entity.in()),
+    std::string(decoded_chain.caller().entity.in()),
+    "decoded_signed_chain->caller.entity", "decoded_chain.caller().entity");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(decoded_chain.caller().entity.in()), "B",
+    "decoded_chain.caller().entity", "B");
+
+  openbus::tests::is_equal<std::size_t>(
+    decoded_signed_chain->originators.length(),
+    decoded_chain.originators().length(),
+    "decoded_signed_chain->originators.length()",
+    "decoded_chain.originators().length()");
+
+  openbus::tests::is_equal<std::size_t>(
+    decoded_signed_chain->originators.length(), 1,
+    "decoded_signed_chain->originators.length()", "1");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(decoded_signed_chain->originators[0u].id.in()),
+    std::string(decoded_chain.originators()[0u].id.in()),
+    "decoded_signed_chain->originators[0u].id",
+    "decoded_chain.originators()[0u].id");
+
+  openbus::tests::is_equal<std::string>(
+    std::string(decoded_signed_chain->originators[0u].entity.in()),
+    std::string(decoded_chain.originators()[0u].entity.in()),
+    "decoded_signed_chain->originators[0u].entity",
+    "decoded_chain.originators()[0u].entity");;
+
   return 0; //MSVC
 }

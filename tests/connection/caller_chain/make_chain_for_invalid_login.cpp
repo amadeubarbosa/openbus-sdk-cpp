@@ -1,12 +1,13 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
+#include <openbus/log.hpp>
 #include <configuration.h>
 #include <cstdlib>
 
 int main(int argc, char** argv)
 {
+  openbus::log().set_level(openbus::debug_level);
   openbus::configuration cfg(argc, argv);
   CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
   CORBA::Object_ptr obj(orb->resolve_initial_references("OpenBusContext"));
@@ -20,9 +21,12 @@ int main(int argc, char** argv)
   {
     bus_ctx->makeChainFor("");
   }
-  catch (const CORBA::NO_PERMISSION &e)
+  catch (const openbus::idl_ac::InvalidLogins &e)
   {
-    if (openbus::idl_ac::InvalidTargetCode == e.minor()) return 0;
+    if (std::string(e.loginIds[0]) == "")
+    {
+      return 0;
+    }
   }
   std::abort();
   return 0; //MSVC

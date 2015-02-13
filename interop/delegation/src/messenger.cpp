@@ -157,7 +157,7 @@ void load_options(int argc, char **argv)
 int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    // openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");

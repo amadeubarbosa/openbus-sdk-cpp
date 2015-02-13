@@ -163,7 +163,7 @@ void OpenBusContext::exitChain()
 
 CallerChain OpenBusContext::getJoinedChain() const
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::getJoinedChain");
   Connection *conn(getCurrentConnection());
   if (!conn)
@@ -185,7 +185,6 @@ CallerChain OpenBusContext::getJoinedChain() const
                       const_cast<unsigned char *>
                       (signed_chain.encoded.get_buffer())),
       idl_ac::_tc_CallChain);
-  // any = _codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
 
   return CallerChain(
@@ -205,8 +204,17 @@ CallerChain OpenBusContext::makeChainFor(const std::string &loginId) const
   CallerChain joined_chain(getJoinedChain());
   if (joined_chain.is_legacy())
   {
+    l.log("Construindo cadeia legada.");
     boost::shared_ptr<Login> target_login(
       conn->_loginCache->validateLogin(loginId.c_str()));
+    if (!target_login)
+    {
+      l.vlog("Login '%s' invalido.", loginId.c_str());
+      idl_ac::InvalidLogins invalid_logins;
+      invalid_logins.loginIds.length(1);
+      invalid_logins.loginIds[0] = loginId.c_str();
+      throw invalid_logins;
+    }
     std::string target(target_login->loginInfo->entity.in());
     idl_ac::LoginInfoSeq originators;
     originators.length(1);
@@ -223,31 +231,13 @@ CallerChain OpenBusContext::makeChainFor(const std::string &loginId) const
     return CallerChain(conn->busid(), target, originators, *(conn->login()),
                        joined_chain._signedCallChain);
   }
-  idl_cr::SignedCallChain_var signed_chain;
-  try
-  {
-    signed_chain = conn->access_control()->signChainFor(loginId.c_str());
-  }
-  catch (const idl_ac::InvalidLogins &)
-  {
-    l.log("throw CORBA::NO_PERMISSION, minor=InvalidTargetCode");
-    throw CORBA::NO_PERMISSION(idl_ac::InvalidTargetCode,
-                               CORBA::COMPLETED_NO);
-  }
-  catch (const CORBA::SystemException &)
-  {
-    l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
-           conn->busid().c_str());
-    throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
-                               CORBA::COMPLETED_NO);
-  }
+  idl_cr::SignedCallChain_var signed_chain(
+    conn->access_control()->signChainFor(loginId.c_str()));
   CORBA::Any_var any(_codec->decode_value(
                        CORBA::OctetSeq(signed_chain->encoded.maximum(),
                                        signed_chain->encoded.length(),
                                        signed_chain->encoded.get_buffer()),
                        idl_ac::_tc_CallChain));
-  // CORBA::Any_var any(_codec->decode_value(signed_chain->encoded,
-  //                                         idl_ac::_tc_CallChain));
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
   return CallerChain(conn->busid(), chain.target.in(),
                      chain.originators, chain.caller, *signed_chain);
@@ -322,7 +312,7 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
 
 CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
 {
-  log_scope l(log().general_logger(), info_level,
+  log_scope l(log().general_logger(), debug_level,
               "OpenBusContext::decodeChain");
   try
   {
@@ -331,6 +321,7 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
 
     if (idl_data_export::MagicTag_CallChain != tag)
     {
+      l.log("InvalidEncodedStream: Stream de bytes não corresponde ao tipo de dado esperado.");
       throw InvalidEncodedStream(
         "Stream de bytes não corresponde ao tipo de dado esperado.");
     }
@@ -338,13 +329,15 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
     for (CORBA::ULong i(0); i < seq->length(); ++i)
     {
       if (idl_data_export::CurrentVersion == seq[i].version)
-      {        
-        CORBA::Any_var exported_chain_any(_orb_info->codec->decode_value(
-                                            CORBA::OctetSeq(seq[i].encoded.maximum(),
-                                                            seq[i].encoded.length(),
-                                                            const_cast<unsigned char*>
-                                                            (seq[i].encoded.get_buffer())),
-                                            idl_data_export::_tc_ExportedCallChain));
+      {
+        l.log("Decodificando 'CurrentVersion'.");
+        CORBA::Any_var exported_chain_any(
+          _orb_info->codec->decode_value(
+            CORBA::OctetSeq(seq[i].encoded.maximum(),
+                            seq[i].encoded.length(),
+                            const_cast<unsigned char*>
+                            (seq[i].encoded.get_buffer())),
+            idl_data_export::_tc_ExportedCallChain));
         idl_data_export::ExportedCallChain exported_chain(
           extract<idl_data_export::ExportedCallChain>(exported_chain_any));
         CORBA::Any_var call_chain_any(
@@ -354,9 +347,6 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
                             const_cast<unsigned char *>
                             (exported_chain.signedChain.encoded.get_buffer())),
             idl_ac::_tc_CallChain));
-        // CORBA::Any_var call_chain_any(
-        //   _orb_info->codec->decode_value(
-        //     exported_chain.signedChain.encoded, idl_ac::_tc_CallChain));
         idl_ac::CallChain call_chain(
           extract<idl_ac::CallChain>(call_chain_any));
         return CallerChain(
@@ -366,6 +356,7 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
       }
       if (idl_data_export::LegacyVersion == seq[i].version)
       {        
+        l.log("Decodificando 'LegacyVersion'.");
         CORBA::Any_var any(_orb_info->codec->decode_value(
                              CORBA::OctetSeq(seq[i].encoded.maximum(),
                                              seq[i].encoded.length(),
@@ -384,7 +375,8 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
           originators[static_cast<CORBA::ULong>(0)] = delegate;
         }
         idl_cr::SignedCallChain legacy_signed_chain;
-        std::memset(legacy_signed_chain.signature, 0, idl::EncryptedBlockSize);
+        std::memset(legacy_signed_chain.signature, '\0',
+                    idl::EncryptedBlockSize);
         idl_ac::CallChain legacy_call_chain;
         legacy_call_chain.target = exported_chain.target;
         legacy_call_chain.originators = originators;

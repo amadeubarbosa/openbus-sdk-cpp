@@ -173,6 +173,7 @@ struct OPENBUS_SDK_DECL CallerChain
    */
   CallerChain() 
   {
+    std::memset(_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
   }
 //private:
 #ifndef OPENBUS_SDK_TEST
@@ -197,6 +198,7 @@ public:
     : _busid(busid), _target(target), _originators(originators), 
     _caller(caller) 
   {
+    std::memset(_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
   }
   
   std::string _busid;
