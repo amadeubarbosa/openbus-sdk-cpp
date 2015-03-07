@@ -337,7 +337,26 @@ lib ACE
   : <target-os>windows
     <variant>debug
     <search>$(ace-root-path)/lib
+    <link>shared
     <name>ACEd
+  ;    
+
+lib ACE
+  :
+  : <target-os>windows
+    <variant>release
+    <search>$(ace-root-path)/lib
+    <link>shared
+    <name>ACE
+  ;    
+
+lib ACE
+  :
+  : <target-os>windows
+    <variant>release
+    <search>$(ace-root-path)/lib
+    <link>static
+    <name>ACE-s
   ;    
 
 project TAO
@@ -355,7 +374,26 @@ lib TAO_AnyTypeCode
   : <search>$(ace-root-path)/lib
     <target-os>windows
     <variant>debug
+    <link>shared
     <name>TAO_AnyTypeCoded
+  ;
+
+lib TAO_AnyTypeCode
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>shared
+    <name>TAO_AnyTypeCode
+  ;
+
+lib TAO_AnyTypeCode
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>static
+    <name>TAO_AnyTypeCode-s
   ;
 
 lib TAO_PortableServer
@@ -369,7 +407,26 @@ lib TAO_PortableServer
   : <search>$(ace-root-path)/lib
     <target-os>windows
     <variant>debug
+    <link>shared
     <name>TAO_PortableServerd
+  ;
+
+lib TAO_PortableServer
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>shared
+    <name>TAO_PortableServer
+  ;
+
+lib TAO_PortableServer
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>static
+    <name>TAO_PortableServer-s
   ;
 
 lib TAO_PI
@@ -383,7 +440,26 @@ lib TAO_PI
   : <search>$(ace-root-path)/lib
     <target-os>windows
     <variant>debug
+    <link>shared
     <name>TAO_PId
+  ;
+
+lib TAO_PI
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>shared
+    <name>TAO_PI
+  ;
+
+lib TAO_PI
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>static
+    <name>TAO_PI-s
   ;
 
 lib TAO_PI_Server
@@ -397,7 +473,26 @@ lib TAO_PI_Server
   : <search>$(ace-root-path)/lib
     <target-os>windows
     <variant>debug
+    <link>shared
     <name>TAO_PI_Serverd
+  ;
+
+lib TAO_PI_Server
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>shared
+    <name>TAO_PI_Server
+  ;
+
+lib TAO_PI_Server
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>static
+    <name>TAO_PI_Server-s
   ;
 
 lib TAO_CodecFactory
@@ -411,7 +506,26 @@ lib TAO_CodecFactory
   : <search>$(ace-root-path)/lib
     <target-os>windows
     <variant>debug
+    <link>shared
     <name>TAO_CodecFactoryd
+  ;
+
+lib TAO_CodecFactory
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>shared
+    <name>TAO_CodecFactory
+  ;
+
+lib TAO_CodecFactory
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>static
+    <name>TAO_CodecFactory-s
   ;
 
 lib TAO
@@ -437,12 +551,44 @@ lib TAO
   : <search>$(ace-root-path)/lib
     <target-os>windows
     <variant>debug
+    <link>shared
     <name>TAOd
   ;
   
+lib TAO
+  : /ACE//ACE
+    TAO_AnyTypeCode
+    TAO_PortableServer
+    TAO_PI
+    TAO_PI_Server
+    TAO_AnyTypeCode
+    TAO_CodecFactory
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>shared
+    <name>TAO
+  ;
+
+lib TAO
+  : /ACE//ACE
+    TAO_AnyTypeCode
+    TAO_PortableServer
+    TAO_PI
+    TAO_PI_Server
+    TAO_AnyTypeCode
+    TAO_CodecFactory
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>release
+    <link>static
+    <name>TAO-s
+  ;
+
 project dl ;
 
 lib dl
   :
   : <link>shared
   ;
+

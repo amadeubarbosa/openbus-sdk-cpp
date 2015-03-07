@@ -8,6 +8,7 @@
 
 int main(int argc, char** argv)
 {
+  openbus::log().set_level(openbus::debug_level);
   openbus::configuration cfg(argc, argv);
   CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
   CORBA::Object_ptr obj(orb->resolve_initial_references("OpenBusContext"));

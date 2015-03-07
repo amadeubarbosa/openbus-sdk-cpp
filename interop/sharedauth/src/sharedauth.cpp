@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "helloC.h"
+#include <util.hpp>
 #include "encodingC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
@@ -18,38 +19,6 @@ const std::string entity("interop_sharedauth_cpp_sharedauth");
 std::string private_key;
 std::string bus_host;
 unsigned short bus_port;
-boost::asio::io_service io_service;
-
-struct handler
-{
-  handler(
-    CORBA::ORB_var orb,
-    openbus::Connection *conn)
-    : orb(orb), conn(conn)
-  {
-  }
-
-  handler(const handler& o)
-  {
-    orb = o.orb;
-    conn = o.conn;
-  }
-
-  void operator()(
-    const boost::system::error_code& error,
-    int signal_number)
-  {
-    if (!error)
-    {
-      conn->logout();
-      orb->shutdown(true);        
-      io_service.stop();
-    }
-  }
-
-  CORBA::ORB_var orb;
-  openbus::Connection *conn;
-};
 
 void load_options(int argc, char **argv)
 {
@@ -89,21 +58,12 @@ int main(int argc, char** argv) {
   try 
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
+    openbus::log().set_level(openbus::debug_level);
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(argc, argv));
     std::auto_ptr <openbus::Connection> conn
-      (ctx->createConnection(bus_host, bus_port));
+      (bus_ctx->createConnection(bus_host, bus_port));
 
-    ctx->setDefaultConnection(conn.get());
+    bus_ctx->setDefaultConnection(conn.get());
     try 
     {
       conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
@@ -115,7 +75,7 @@ int main(int argc, char** argv) {
 
     {
       openbus::SharedAuthSecret secret(conn->startSharedAuth());
-      CORBA::OctetSeq secret_seq(ctx->encodeSharedAuthSecret(secret));
+      CORBA::OctetSeq secret_seq(bus_ctx->encodeSharedAuthSecret(secret));
 
       std::ofstream file(".secret");
       std::copy(secret_seq.get_buffer()
@@ -132,8 +92,8 @@ int main(int argc, char** argv) {
     props[static_cast<CORBA::ULong>(1)].name  = "offer.domain";
     props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers(
+      find_offers(bus_ctx, props));
     if (offers->length())
     {
       CORBA::Object_var o = offers[static_cast<CORBA::ULong>(0)]
@@ -154,15 +114,7 @@ int main(int argc, char** argv) {
       std::cout << "nenhuma oferta encontrada." << std::endl;
     }
 
-    boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-    handler io_handler(orb, conn.get());
-    signals.async_wait(io_handler);
-#ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread io_service_run(
-      boost::bind(&boost::asio::io_service::run, &io_service));
-#endif
-
-    ctx->orb()->run();
+    bus_ctx->orb()->run();
   } 
   catch(const std::exception &e) 
   {
@@ -179,4 +131,5 @@ int main(int argc, char** argv) {
     std::cout << "[error *unknow exception*]" << std::endl;
     return -1;    
   }
+  return 0; //MSVC
 }

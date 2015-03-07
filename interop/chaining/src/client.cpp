@@ -117,4 +117,5 @@ int main(int argc, char **argv)
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

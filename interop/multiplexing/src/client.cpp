@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "helloC.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -65,23 +66,13 @@ int main(int argc, char **argv)
   try 
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
-    
+    openbus::log().set_level(openbus::debug_level);
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(argc, argv));
     for (std::size_t busIdx = 0; busIdx != 2; ++busIdx)
     {
       std::auto_ptr<openbus::Connection> 
-        conn(ctx->createConnection(buses[busIdx].host, buses[busIdx].port));
-      ctx->setDefaultConnection(conn.get());
+        conn(bus_ctx->createConnection(buses[busIdx].host, buses[busIdx].port));
+      bus_ctx->setDefaultConnection(conn.get());
       conn->loginByPassword(entity, entity);
 
       openbus::idl_or::ServicePropertySeq props;
@@ -93,7 +84,7 @@ int main(int argc, char **argv)
       props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
 
       openbus::idl_or::ServiceOfferDescSeq_var offers = 
-        ctx->getOfferRegistry()->findServices(props);
+        find_offers(bus_ctx, props);
       for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
       {
         CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
@@ -115,4 +106,5 @@ int main(int argc, char **argv)
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

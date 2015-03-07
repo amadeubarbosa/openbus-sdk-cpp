@@ -164,8 +164,8 @@ int main(int argc, char **argv)
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
-    props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
+    props[0u].name = "offer.domain";
+    props[0u].value = "Interoperability Tests";
 
     conn->onInvalidLogin(on_invalid_login(*ctx, comp, props, *conn));
 
@@ -184,4 +184,5 @@ int main(int argc, char **argv)
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

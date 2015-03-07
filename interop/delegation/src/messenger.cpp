@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "messagesS.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -16,39 +17,6 @@
 #include <boost/asio.hpp>
 
 namespace delegation = tecgraf::openbus::interop::delegation;
-
-boost::asio::io_service io_service;
-
-struct handler
-{
-  handler(
-    CORBA::ORB_var orb,
-    openbus::Connection *conn)
-    : orb(orb), conn(conn)
-  {
-  }
-
-  handler(const handler& o)
-  {
-    orb = o.orb;
-    conn = o.conn;
-  }
-
-  void operator()(
-    const boost::system::error_code& error,
-    int signal_number)
-  {
-    if (!error)
-    {
-      conn->logout();
-      orb->shutdown(true);        
-      io_service.stop();
-    }
-  }
-
-  CORBA::ORB_var orb;
-  openbus::Connection *conn;
-};
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 void ORBRun(CORBA::ORB_var orb)
@@ -101,8 +69,9 @@ struct MessengerImpl :
     delegation::PostDescSeq_var posts (new delegation::PostDescSeq);
     std::cout << "Retrieving " << std::distance(range.first, range.second) 
               << " messages" << std::endl;
-    posts->length(std::distance(range.first, range.second));
-    std::size_t index = 0;
+    posts->length(static_cast<CORBA::ULong>(
+                    std::distance(range.first, range.second)));
+    CORBA::ULong index(0);
     for(iterator first = range.first; first != range.second; ++first, ++index)
     {
       (*posts)[index] = first->second;
@@ -157,23 +126,14 @@ void load_options(int argc, char **argv)
 int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
+    openbus::log().set_level(openbus::debug_level);
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(argc, argv));
     std::auto_ptr <openbus::Connection> conn(
-      ctx->createConnection(bus_host, bus_port));
-    ctx->setDefaultConnection(conn.get());
+      bus_ctx->createConnection(bus_host, bus_port));
+    bus_ctx->setDefaultConnection(conn.get());
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orb_run(ORBRun, ctx->orb());
+    boost::thread orb_run(ORBRun, bus_ctx->orb());
 #endif
 
     scs::core::ComponentId componentId;
@@ -182,8 +142,8 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "C++";
-    scs::core::ComponentContext messenger_component(ctx->orb(), componentId);
-    MessengerImpl messenger_servant(*ctx);
+    scs::core::ComponentContext messenger_component(bus_ctx->orb(), componentId);
+    MessengerImpl messenger_servant(*bus_ctx);
     messenger_component.addFacet(
       "messenger", delegation::_tc_Messenger->id(), &messenger_servant);
 
@@ -195,17 +155,9 @@ int main(int argc, char** argv) {
 
     conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
 
-    ctx->getOfferRegistry()->registerService(
+    bus_ctx->getOfferRegistry()->registerService(
       messenger_component.getIComponent(), props);
     std::cout << "Messenger no ar" << std::endl;
-    boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-
-    handler io_handler(orb, conn.get());
-    signals.async_wait(io_handler);
-#ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread io_service_run(
-      boost::bind(&boost::asio::io_service::run, &io_service));
-#endif
 
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
@@ -226,4 +178,5 @@ int main(int argc, char** argv) {
     std::cout << "[error *unknow exception*]" << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

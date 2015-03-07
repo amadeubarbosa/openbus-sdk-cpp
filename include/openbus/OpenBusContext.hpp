@@ -68,7 +68,7 @@ inline bool operator==(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
   {
     return false;
   }
-  for (std::size_t i = 0; i < rhs.length(); ++i)
+  for (CORBA::ULong i(0); i < rhs.length(); ++i)
   {
     if (lhs[i] != rhs[i])
     {

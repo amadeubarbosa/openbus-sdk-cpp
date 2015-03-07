@@ -1,0 +1,32 @@
+import os ;
+
+boost-process-root-path = [ os.environ BOOST_PROCESS_ROOT_PATH ] ;
+if ! $(boost-process-root-path)
+{
+  boost-process-root-path = "../../boost-process" ;
+}
+
+project openbus/interop/run
+  : requirements
+    <toolset>msvc:<define>_CRT_SECURE_NO_WARNINGS
+    <toolset>clang:<cxxflags>-std=c++11
+    <toolset>gcc:<cxxflags>-std=c++11
+  ;
+
+exe run
+  : run.cpp
+    /boost//filesystem
+    /boost//system
+    /boost//iostreams
+  : <include>$(boost-process-root-path)
+  ;
+explicit run ;
+
+install stage
+  : run
+  : <location>install
+    <install-dependencies>on
+    <install-type>LIB
+    <install-type>EXE
+  ;
+

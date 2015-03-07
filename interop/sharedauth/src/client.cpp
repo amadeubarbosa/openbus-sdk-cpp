@@ -1,12 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "helloC.h"
+#include <util.hpp>
 #include "encodingC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 
-#include <tao/PortableServer/PortableServer.h>
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
@@ -49,19 +49,10 @@ int main(int argc, char** argv) {
   try 
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
+    openbus::log().set_level(openbus::debug_level);
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(argc, argv));
     std::auto_ptr <openbus::Connection> conn
-      (ctx->createConnection(bus_host, bus_port));
+      (bus_ctx->createConnection(bus_host, bus_port));
 
     {
       CORBA::OctetSeq secret_seq;
@@ -73,19 +64,20 @@ int main(int argc, char** argv) {
         (static_cast<char*>(static_cast<void*>(secret_seq.get_buffer()))
          , secret_seq.length());
 
-      openbus::SharedAuthSecret secret(ctx->decodeSharedAuthSecret(secret_seq));
+      openbus::SharedAuthSecret secret(
+        bus_ctx->decodeSharedAuthSecret(secret_seq));
       conn->loginBySharedAuth(secret);
-      ctx->setDefaultConnection(conn.get());
+      bus_ctx->setDefaultConnection(conn.get());
     }
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
-    props[static_cast<CORBA::ULong>(0)].name  = "openbus.component.facet";
-    props[static_cast<CORBA::ULong>(0)].value = "Hello";
-    props[static_cast<CORBA::ULong>(1)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+    props[0].name  = "openbus.component.facet";
+    props[0].value = "Hello";
+    props[1].name  = "offer.domain";
+    props[1].value = "Interoperability Tests";
+    openbus::idl_or::ServiceOfferDescSeq_var offers(
+      find_offers(bus_ctx, props));
     
     if (offers->length())
     {
@@ -122,4 +114,5 @@ int main(int argc, char** argv) {
     std::cout << "[error *unknow exception*]" << std::endl;
     return -1;    
   }
+  return 0; //MSVC
 }

@@ -40,10 +40,13 @@ int main(int argc, char** argv)
   boost::thread orb_thread(boost::bind(&call_orb, orb));
 #endif
 
-  CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenBusContext");
-  openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
-  std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(cfg.host(), cfg.port()));
-  openbusContext->setDefaultConnection(conn.get());
+  CORBA::Object_ptr obj_bus_ctx(
+    orb->resolve_initial_references("OpenBusContext"));
+  openbus::OpenBusContext *bus_ctx(
+    dynamic_cast<openbus::OpenBusContext*>(obj_bus_ctx));
+  std::auto_ptr <openbus::Connection> conn(
+    bus_ctx->createConnection(cfg.host(), cfg.port()));
+  bus_ctx->setDefaultConnection(conn.get());
   conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
 
   scs::core::ComponentId componentId;
@@ -52,44 +55,43 @@ int main(int argc, char** argv)
   componentId.minor_version = '0';
   componentId.patch_version = '0';
   componentId.platform_spec = "";    
-  {
-    CORBA::Object_var poa_obj = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(poa_obj);
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
+  CORBA::Object_var poa_obj = orb->resolve_initial_references("RootPOA");
+  PortableServer::POA_var poa = PortableServer::POA::_narrow(poa_obj);
+  PortableServer::POAManager_var poa_manager = poa->the_POAManager();
+  poa_manager->activate();
 
-    scs::core::ComponentContext ctx(openbusContext->orb(), componentId);
+  scs::core::ComponentContext ctx(bus_ctx->orb(), componentId);
   
-    hello_impl hello_servant (*conn);
+  hello_impl hello_servant (*conn);
 
-    ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
+  ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
 
-    openbus::idl_or::ServicePropertySeq props;
-    props.length(1);
-    openbus::idl_or::ServiceProperty property;
-    property.name = "offer.domain";
-    property.value = "OpenBus Demos";
-    props[0] = property;
-    openbusContext->getOfferRegistry()->registerService(ctx.getIComponent(), props);
+  openbus::idl_or::ServicePropertySeq props;
+  props.length(1);
+  openbus::idl_or::ServiceProperty property;
+  property.name = "offer.domain";
+  property.value = "OpenBus Demos";
+  props[0] = property;
+  bus_ctx->getOfferRegistry()->registerService(ctx.getIComponent(), props);
 
-    props.length(3);
-    props[0].name  = "openbus.offer.entity";
-    props[0].value = "test";
-    props[1].name  = "openbus.component.facet";
-    props[1].value = "hello";
-    props[2].name  = "offer.domain";
-    props[2].value = "OpenBus Demos";
-    openbus::idl_or::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
-    std::cout << offers->length() << std::endl;
-    if (offers->length() != 1)
-    {
-      std::cerr << "offers->length() != 1" << std::endl;
-      std::abort();
-    }
-    CORBA::Object_var o = (*offers)[0u].service_ref->getFacetByName("hello");
-    Hello* hello = Hello::_narrow(o);
-    hello->sayHello();
+  props.length(3);
+  props[0].name  = "openbus.offer.entity";
+  props[0].value = "test";
+  props[1].name  = "openbus.component.facet";
+  props[1].value = "hello";
+  props[2].name  = "offer.domain";
+  props[2].value = "OpenBus Demos";
+  openbus::idl_or::ServiceOfferDescSeq_var offers(
+    bus_ctx->getOfferRegistry()->findServices(props));
+  std::cout << offers->length() << std::endl;
+  if (offers->length() != 1)
+  {
+    std::cerr << "offers->length() != 1" << std::endl;
+    std::abort();
   }
+  CORBA::Object_var o((*offers)[0u].service_ref->getFacetByName("hello"));
+  Hello *hello(Hello::_narrow(o));
+  hello->sayHello();
 
   conn->logout();
   conn.reset();

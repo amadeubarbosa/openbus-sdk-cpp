@@ -401,6 +401,11 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   l.level_vlog(debug_level, "operation: %s", r->operation()); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
 
+  if (ignore_request(*r))
+  {
+    throw;
+  }
+
   CORBA::Any_var any = r->received_exception();
 
   TAO::Any_Dual_Impl_T<CORBA::Exception> *any_impl =

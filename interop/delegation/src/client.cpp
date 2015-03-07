@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "messagesC.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -62,21 +63,11 @@ void load_options(int argc, char **argv)
 int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = 
-      dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
+    openbus::log().set_level(openbus::debug_level);
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(argc, argv));
     std::auto_ptr <openbus::Connection> conn(
-      ctx->createConnection(bus_host, bus_port));
-    ctx->setDefaultConnection(conn.get());
+      bus_ctx->createConnection(bus_host, bus_port));
+    bus_ctx->setDefaultConnection(conn.get());
     
     conn->loginByPassword(entity, entity);
 
@@ -88,7 +79,7 @@ int main(int argc, char** argv) {
     props[static_cast<CORBA::ULong>(1)].value = delegation::_tc_Messenger->id();
 
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+      find_offers(bus_ctx, props);
     if (offers->length() > 0)
     {
       CORBA::Object_var o(
@@ -96,14 +87,14 @@ int main(int argc, char** argv) {
         .service_ref->getFacetByName("messenger"));
       delegation::Messenger_var m = delegation::Messenger::_narrow(o);
       props[1].value = delegation::_tc_Forwarder->id();
-      offers = ctx->getOfferRegistry()->findServices(props);
+      offers = find_offers(bus_ctx, props);
       if(offers->length() > 0)
       {
         o = offers[static_cast<CORBA::ULong> (0)]
           .service_ref->getFacetByName("forwarder");
         delegation::Forwarder_var forwarder = delegation::Forwarder::_narrow(o);
         props[1].value = delegation::_tc_Broadcaster->id();
-        offers = ctx->getOfferRegistry()->findServices(props);
+        offers = find_offers(bus_ctx, props);
         if(offers->length() > 0)
         {
           o = offers[static_cast<CORBA::ULong> (0)]
@@ -154,7 +145,7 @@ int main(int argc, char** argv) {
               std::abort();
               
             }
-            for(std::size_t i = 0; i != posts->length(); ++i)
+            for(CORBA::ULong i(0); i != posts->length(); ++i)
             {
               if (std::string(*first) != "willian"
                   && (std::string("steve->interop_delegation_cpp_broadcaster")
@@ -207,4 +198,5 @@ int main(int argc, char** argv) {
     std::cout << "[error *unknow exception*]" << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

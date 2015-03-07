@@ -110,6 +110,7 @@ project openbus
     <target-os>windows,<link>static:<runtime-link>static
     <target-os>windows:<debug-store>database
     <target-os>windows:<define>_SCL_SECURE_NO_WARNINGS
+    <target-os>windows:<define>_CRT_SECURE_NO_WARNINGS
     <target-os>windows:<cxxflags>/FS
     <debug-symbols>on
     <define>BOOST_ALL_NO_LIB=1
