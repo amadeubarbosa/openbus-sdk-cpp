@@ -13,7 +13,7 @@ namespace openssl
 {
 
 pkey byteSeq2PubKey(const unsigned char *buf, size_t len) {
-  pkey key (d2i_PUBKEY(0, &buf, len));
+  pkey key (d2i_PUBKEY(0, &buf, static_cast<long>(len)));
   if(!key)
   {
     throw InvalidPublicKey();
@@ -25,7 +25,8 @@ template <class E>
 CORBA::OctetSeq key2byteSeq(pkey key)
 {
   size_t buf_size(i2d_PUBKEY(key.get(), 0));
-  openssl_buffer buf(CORBA::OctetSeq::allocbuf(buf_size));
+  openssl_buffer buf(CORBA::OctetSeq::allocbuf(
+                       static_cast<CORBA::ULong>(buf_size)));
   buf.deleter(CORBA::OctetSeq::freebuf);
   unsigned char *p(buf.get());
   size_t len = i2d_PUBKEY(key.get(), &p);
@@ -33,7 +34,10 @@ CORBA::OctetSeq key2byteSeq(pkey key)
   {
     throw E();
   }
-  return CORBA::OctetSeq(len, len, buf.release(), true);  
+  return CORBA::OctetSeq(
+    static_cast<CORBA::ULong>(len),
+    static_cast<CORBA::ULong>(len),
+    buf.release(), true);  
 }
 
 CORBA::OctetSeq PubKey2byteSeq(pkey key) 
@@ -43,7 +47,7 @@ CORBA::OctetSeq PubKey2byteSeq(pkey key)
 
 pkey byteSeq2PrvKey(const unsigned char *buf, size_t len) 
 {
-  pkey key ( d2i_AutoPrivateKey(0, &buf, len) );
+  pkey key ( d2i_AutoPrivateKey(0, &buf, static_cast<long>(len)) );
   if(!key)
   {
     throw InvalidPrivateKey();
@@ -77,7 +81,8 @@ CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len)
     throw InvalidPrivateKey();
   }
 
-  openssl_buffer encrypted(CORBA::OctetSeq::allocbuf(encryptedLen));
+  openssl_buffer encrypted(CORBA::OctetSeq::allocbuf(
+                             static_cast<CORBA::ULong>(encryptedLen)));
   encrypted.deleter(CORBA::OctetSeq::freebuf);
   if(!encrypted)
   {
@@ -90,7 +95,10 @@ CORBA::OctetSeq encrypt(pkey key, const unsigned char *buf, size_t len)
     throw InvalidPrivateKey();
   }
 
-  return CORBA::OctetSeq(encryptedLen, encryptedLen, encrypted.release(), true);
+  return CORBA::OctetSeq(
+    static_cast<CORBA::ULong>(encryptedLen),
+    static_cast<CORBA::ULong>(encryptedLen),
+    encrypted.release(), true);
 }
 
 CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len) 
@@ -109,7 +117,8 @@ CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len)
       throw InvalidPrivateKey();
     }
 
-    openssl_buffer secret(CORBA::OctetSeq::allocbuf(secretLen));
+    openssl_buffer secret(CORBA::OctetSeq::allocbuf(
+                            static_cast<CORBA::ULong>(secretLen)));
     secret.deleter(CORBA::OctetSeq::freebuf);
     if(!secret)
     {
@@ -120,7 +129,10 @@ CORBA::OctetSeq decrypt(pkey key, const unsigned char *buf, size_t len)
     {
       throw InvalidPrivateKey();
     }
-    CORBA::OctetSeq seq (secretLen, secretLen, secret.release(), true);
+    CORBA::OctetSeq seq(
+      static_cast<CORBA::ULong>(secretLen),
+      static_cast<CORBA::ULong>(secretLen),
+      secret.release(), true);
     return seq;
   }
   return 0;

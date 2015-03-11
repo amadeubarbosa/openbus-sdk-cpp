@@ -25,7 +25,7 @@ struct configuration
           {
             port_ = boost::lexical_cast<unsigned short>(argv[i]);
           }
-          catch(std::exception const& e)
+          catch(std::exception const&)
           {
             std::cout << "Invalid argument for -port: " << argv[i] << std::endl;
           }
@@ -41,7 +41,7 @@ struct configuration
           {
             wrong_port_ = boost::lexical_cast<unsigned short>(argv[i]);
           }
-          catch(std::exception const& e)
+          catch(std::exception const&)
           {
             std::cout << "Invalid argument for -wrong-port: " << argv[i] << std::endl;
           }

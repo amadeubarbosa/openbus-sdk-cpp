@@ -47,7 +47,8 @@ idl::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
   assert(r == 1);
   r = EVP_PKEY_encrypt(ctx.get(), 0, &encryptedLen, buf, size);
   assert(r == 1);
-  openssl::openssl_buffer encrypted(idl::OctetSeq::allocbuf(encryptedLen));
+  openssl::openssl_buffer encrypted(idl::OctetSeq::allocbuf(
+                                      static_cast<CORBA::ULong>(encryptedLen)));
   encrypted.deleter(idl::OctetSeq::freebuf);
   if(encrypted.get() == 0)
   if(!encrypted)
@@ -56,7 +57,11 @@ idl::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
   }
   r = EVP_PKEY_encrypt(ctx.get(), encrypted.get(), &encryptedLen, buf, size);
   assert(r == 1);
-  return idl::OctetSeq(encryptedLen, encryptedLen, encrypted.release(), true);
+  return idl::OctetSeq(
+    static_cast<CORBA::ULong>(encryptedLen),
+    static_cast<CORBA::ULong>(encryptedLen),
+    encrypted.release(),
+    true);
 }
 
 bool PublicKey::verify(const unsigned char *sig, std::size_t siglen, 

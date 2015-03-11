@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
       CORBA::OctetSeq secret_seq;
       std::ifstream file(".secret");
       file.seekg(0, std::ios::end);
-      secret_seq.length(file.tellg());
+      secret_seq.length(static_cast<CORBA::ULong>(file.tellg()));
       file.seekg(0, std::ios::beg);
       file.rdbuf()->sgetn
         (static_cast<char*>(static_cast<void*>(secret_seq.get_buffer()))

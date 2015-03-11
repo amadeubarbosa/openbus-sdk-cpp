@@ -28,11 +28,15 @@ PrivateKey::PrivateKey()
   assert((r == 1) && key);
   _key = openssl::pkey(key);
   std::size_t buf_size(i2d_PrivateKey(_key.get(), 0));
-  openssl::openssl_buffer buf(idl::OctetSeq::allocbuf(buf_size));
+  openssl::openssl_buffer buf(idl::OctetSeq::allocbuf(
+                                static_cast<CORBA::ULong>(buf_size)));
   buf.deleter(idl::OctetSeq::freebuf);
   unsigned char *p(buf.get());
   size_t len(i2d_PrivateKey(_key.get(), &p));
-  _keySeq = idl::OctetSeq(len, len, buf.release(), true);
+  _keySeq = idl::OctetSeq(
+    static_cast<CORBA::ULong>(len),
+    static_cast<CORBA::ULong>(len),
+    buf.release(), true);
 }
 
 PrivateKey::PrivateKey(const idl::OctetSeq &key) : _keySeq(key)
@@ -42,7 +46,7 @@ PrivateKey::PrivateKey(const idl::OctetSeq &key) : _keySeq(key)
 
 PrivateKey::PrivateKey(const char *key, std::size_t size)
 {
-  _keySeq.length(size);
+  _keySeq.length(static_cast<CORBA::ULong>(size));
   std::memcpy(_keySeq.get_buffer(), key, size);
   set_pkey(_keySeq);
 }
@@ -57,11 +61,12 @@ PrivateKey::PrivateKey(const std::string &filename)
   key.seekg(0, std::ios::end);
   const std::size_t size(key.tellg());
   key.seekg(0, std::ios::beg);
-  _keySeq.length(size);
+  _keySeq.length(static_cast<CORBA::ULong>(size));
   key.rdbuf()->sgetn(static_cast<char *> (static_cast<void *> 
                                           (_keySeq.get_buffer())), size);
   const unsigned char *buf(_keySeq.get_buffer());
-  _key = openssl::pkey(d2i_AutoPrivateKey(0, &buf, size));
+  _key = openssl::pkey(d2i_AutoPrivateKey(
+                         0, &buf, static_cast<long>(size)));
   assert(_key.get());
 }
 
@@ -96,11 +101,16 @@ idl::OctetSeq PrivateKey::pubKey()
   boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
   size_t buf_size(i2d_PUBKEY(_key.get(), 0));
-  openssl::openssl_buffer buf(idl::OctetSeq::allocbuf(buf_size));
+  openssl::openssl_buffer buf(idl::OctetSeq::allocbuf(
+                                static_cast<CORBA::ULong>(buf_size)));
   buf.deleter(idl::OctetSeq::freebuf);
   unsigned char *p(buf.get());
   size_t len(i2d_PUBKEY(_key.get(), &p));
-  return idl::OctetSeq(len, len, buf.release(), true);
+  return idl::OctetSeq(
+    static_cast<CORBA::ULong>(len),
+    static_cast<CORBA::ULong>(len),
+    buf.release(),
+    true);
 }
 
 idl::OctetSeq PrivateKey::decrypt(const unsigned char *data,
@@ -122,7 +132,8 @@ idl::OctetSeq PrivateKey::decrypt(const unsigned char *data,
     throw InvalidPrivateKey();
   }
   
-  openssl::openssl_buffer secret(idl::OctetSeq::allocbuf(secretLen));
+  openssl::openssl_buffer secret(idl::OctetSeq::allocbuf(
+                                   static_cast<CORBA::ULong>(secretLen)));
   secret.deleter(idl::OctetSeq::freebuf);
   if(!secret.get())
   {
@@ -133,7 +144,11 @@ idl::OctetSeq PrivateKey::decrypt(const unsigned char *data,
   {
     throw InvalidPrivateKey();
   }
-  return idl::OctetSeq(secretLen, secretLen, secret.release(), true);
+  return idl::OctetSeq(
+    static_cast<CORBA::ULong>(secretLen),
+    static_cast<CORBA::ULong>(secretLen),
+    secret.release(),
+    true);
 }
 
 }

@@ -28,6 +28,12 @@ if ! $(openssl-debug-shared-lib-path)
   openssl-debug-shared-lib-path = $(here)/../../install/openssl-mt-d/lib ;
 }
 
+openssl-debug-shared-bin-path = [ os.environ OPENSSL_DEBUG_SHARED_BIN_PATH ] ;
+if ! $(openssl-debug-shared-bin-path)
+{
+  openssl-debug-shared-bin-path = $(here)/../../install/openssl-mt-d/bin ;
+}
+
 openssl-debug-static-include-path = [ os.environ OPENSSL_DEBUG_STATIC_INCLUDE_PATH ] ;
 if ! $(openssl-debug-static-include-path)
 {
@@ -50,6 +56,12 @@ openssl-release-shared-lib-path = [ os.environ OPENSSL_RELEASE_SHARED_LIB_PATH ]
 if ! $(openssl-release-shared-lib-path)
 {
   openssl-release-shared-lib-path = $(here)/../../install/openssl-mt/lib ;
+}
+
+openssl-release-shared-bin-path = [ os.environ OPENSSL_RELEASE_SHARED_BIN_PATH ] ;
+if ! $(openssl-release-shared-bin-path)
+{
+  openssl-release-shared-bin-path = $(here)/../../install/openssl-mt/bin ;
 }
 
 openssl-release-static-include-path = [ os.environ OPENSSL_RELEASE_STATIC_INCLUDE_PATH ] ;
@@ -80,6 +92,13 @@ if $(openssl-lib-path)
   openssl-debug-static-lib-path = $(openssl-lib-path) ;
   openssl-release-shared-lib-path = $(openssl-lib-path) ;
   openssl-release-static-lib-path = $(openssl-lib-path) ;
+}
+
+openssl-bin-path = [ os.environ OPENSSL_BIN_PATH ] ;
+if $(openssl-bin-path)
+{
+  openssl-debug-shared-bin-path = $(openssl-bin-path) ;
+  openssl-release-shared-bin-path = $(openssl-bin-path) ;
 }
 
 scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
@@ -171,6 +190,7 @@ lib crypto
     <link>shared
     <target-os>windows
     <search>$(openssl-debug-shared-lib-path)
+    <search>$(openssl-debug-shared-bin-path)
   :
   : <linkflags>"gdi32.lib user32.lib advapi32.lib"
     <include>$(openssl-debug-shared-include-path)
@@ -195,6 +215,7 @@ lib crypto
     <link>shared
     <target-os>windows
     <search>$(openssl-release-shared-lib-path)
+    <search>$(openssl-release-shared-bin-path)
   :
   : <linkflags>"gdi32.lib user32.lib advapi32.lib"
     <include>$(openssl-release-shared-include-path)

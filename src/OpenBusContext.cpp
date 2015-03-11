@@ -531,7 +531,7 @@ CORBA::OctetSeq OpenBusContext::encode_exported_versions(
   CORBA::OctetSeq ret;
   std::size_t exported_version_seq_size(exported_version_seq_cdr->length());
   std::size_t size(exported_version_seq_size + tag.size());
-  ret.length(size);
+  ret.length(static_cast<CORBA::ULong>(size));
 
   std::memcpy(ret.get_buffer(), tag.c_str(), tag.size());
   std::memcpy(ret.get_buffer() + tag.size(),

@@ -258,7 +258,7 @@ alias run-tests
     [ run connection/caller_chain/make_chain_for_joined_chain.cpp : : : $(test-requirements) ]
     [ run connection/loginBySharedAuth/login.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginBySharedAuth/try_login_after_cancel.cpp : : admin/TestCppHello.key : $(test-requirements) ]
-    [ run connection/loginBySharedAuth/enc_dec_secret.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connection/loginBySharedAuth/enc_and_dec_secret.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByCertificate/entity_pkey_ok.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByPassword/after_logout.cpp : : : $(test-requirements) ]
     [ run connection/loginByPassword/entity_id_and_password_ok.cpp : : : $(test-requirements) ]

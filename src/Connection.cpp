@@ -265,7 +265,7 @@ void Connection::loginByPassword(const std::string &entity,
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
   std::size_t password_size(password.size());
-  loginAuthenticationInfo.data.length(password_size);
+  loginAuthenticationInfo.data.length(static_cast<CORBA::ULong>(password_size));
   std::memcpy(loginAuthenticationInfo.data.get_buffer(),
               password.c_str(),
               password_size);

@@ -23,7 +23,8 @@ Session::Session(const std::string &login)
 {
   tickets_init(&tickets);
   secret = boost::uuids::random_generator()();
-  id = boost::uuids::hash_value(boost::uuids::random_generator()());
+  id = static_cast<CORBA::ULong>(
+    boost::uuids::hash_value(boost::uuids::random_generator()()));
 }
 
 ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p)

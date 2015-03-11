@@ -17,10 +17,37 @@ if ! $(ace-root-path)
   ace-root-path = $(here)/../../build/ACE_wrappers ;
 }
 
-using tao-idl
-  : $(ace-root-path)/bin
-  : $(ace-root-path)/lib
-  ;
+rule tao-idl-init ( properties * )
+{
+  if <toolset>msvc in $(properties)
+  {
+    local msvc-bin-path ;
+    if <toolset-msvc:version>12.0 in $(properties)
+    {
+      if <address-model>64 in $(properties)
+      {
+        msvc-bin-path = "C:/Program Files (x86)/Microsoft Visual Studio 12.0/VC/bin" ;
+      }
+      else
+      {
+        msvc-bin-path = "C:/Program Files/Microsoft Visual Studio 12.0/VC/bin" ;
+      }
+    }
+    using tao-idl
+      : $(ace-root-path)/bin
+      : $(ace-root-path)/lib
+      : $(msvc-bin-path)
+      ;
+  }
+  else
+  {
+    using tao-idl
+      : $(ace-root-path)/bin
+      : $(ace-root-path)/lib
+      ;
+  }
+    
+}
 
 openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
 if ! $(openbus-idl-path)
@@ -112,11 +139,13 @@ project openbus
     <target-os>windows:<define>_SCL_SECURE_NO_WARNINGS
     <target-os>windows:<define>_CRT_SECURE_NO_WARNINGS
     <target-os>windows:<cxxflags>/FS
+    <target-os>windows:<cflags>/FS
     <debug-symbols>on
     <define>BOOST_ALL_NO_LIB=1
     <link>shared:<define>OPENBUS_SDK_SHARED
     <define>OPENBUS_SDK_SOURCE
     <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
+    <conditional>@tao-idl-init
     <library>/TAO//TAO
   : usage-requirements
     <link>shared:<define>OPENBUS_SDK_SHARED

@@ -16,6 +16,7 @@
 #include "offer_registryC.h"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
+#include "openbus/crypto/PublicKey.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
@@ -44,7 +45,6 @@ namespace openbus
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 
   class OpenBusContext;
-  class PublicKey;
   class LoginCache;
 #ifndef OPENBUS_SDK_MULTITHREAD
   class RenewLogin;
