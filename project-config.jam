@@ -182,6 +182,26 @@ lib crypto
   : <include>$(openssl-release-static-include-path)
   ;  
 
+lib crypto
+  : 
+  : <variant>release
+    <link>shared    
+    <target-os>darwin
+    <file>$(openssl-release-shared-lib-path)/libcrypto.dylib
+  :
+  : <include>$(openssl-release-shared-include-path)
+  ;  
+
+lib crypto
+  : 
+  : <variant>debug
+    <link>shared    
+    <target-os>darwin
+    <file>$(openssl-debug-shared-lib-path)/libcrypto.dylib
+  :
+  : <include>$(openssl-debug-shared-include-path)
+  ;  
+
 #Windows
 lib crypto
   : 
@@ -297,6 +317,28 @@ lib openssl
   : <include>$(openssl-release-static-include-path)
   ;  
 
+lib openssl
+  : crypto
+  : <name>ssl 
+    <variant>release
+    <link>shared
+    <target-os>darwin
+    <file>$(openssl-release-shared-lib-path)/libssl.dylib
+  :
+  : <include>$(openssl-release-shared-include-path)
+  ;  
+
+lib openssl
+  : crypto
+  : <name>ssl 
+    <variant>debug
+    <link>shared
+    <target-os>darwin
+    <file>$(openssl-debug-shared-lib-path)/libssl.dylib
+  :
+  : <include>$(openssl-debug-shared-include-path)
+  ;  
+
 #Windows
 lib openssl
   : crypto
@@ -351,6 +393,7 @@ lib ACE
   : 
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libACE.a
+    <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libACE.dylib
   ;
 
 lib ACE
@@ -388,6 +431,7 @@ lib TAO_AnyTypeCode
   : 
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.a
+    <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.dylib
   ;
 
 lib TAO_AnyTypeCode
@@ -421,6 +465,7 @@ lib TAO_PortableServer
   : 
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PortableServer.a
+    <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_PortableServer.dylib
   ;
 
 lib TAO_PortableServer
@@ -454,6 +499,7 @@ lib TAO_PI
   : 
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PI.a
+    <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_PI.dylib
   ;
 
 lib TAO_PI
@@ -487,6 +533,7 @@ lib TAO_PI_Server
   : 
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PI_Server.a
+    <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_PI_Server.dylib
   ;
 
 lib TAO_PI_Server
@@ -520,6 +567,7 @@ lib TAO_CodecFactory
   : 
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_CodecFactory.a
+    <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_CodecFactory.dylib
   ;
 
 lib TAO_CodecFactory
@@ -559,6 +607,7 @@ lib TAO
     TAO_CodecFactory
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO.a
+    <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO.dylib
   ;
 
 lib TAO

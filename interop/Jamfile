@@ -1,9 +1,11 @@
 import os ;
 
+path-constant here : . ;
+
 boost-process-root-path = [ os.environ BOOST_PROCESS_ROOT_PATH ] ;
 if ! $(boost-process-root-path)
 {
-  boost-process-root-path = "../../boost-process" ;
+  boost-process-root-path = "$(here)/../../boost-process" ;
 }
 
 project openbus/interop/run
