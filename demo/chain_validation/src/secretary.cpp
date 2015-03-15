@@ -1,11 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
+
+#include "chain_validationS.h"
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
-#include <scs/ComponentContext.hpp>
-#include <iostream>
-
-#include <stubs/chain_validation.h>
-#include <CORBA.h>
+#include <scs/ComponentContext.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
@@ -14,6 +12,7 @@
 
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
+#include <iostream>
 #include <fstream>
 
 namespace offer_registry
@@ -23,15 +22,15 @@ namespace services = tecgraf::openbus::core::v2_0::services;
 struct MessageImpl : POA_Message
 {
   MessageImpl(Message_var executive_message
-              , openbus::OpenBusContext& openbusContext)
-    : executive_message(executive_message), openbusContext(openbusContext) {}
+              , openbus::OpenBusContext& bus_ctx)
+    : executive_message(executive_message), bus_ctx(bus_ctx) {}
 
   void sendMessage(const char* message)
   {
     std::cout << "Relaying message " << message << std::endl;
     try
     {
-      openbusContext.joinChain(openbusContext.getCallerChain());
+      bus_ctx.joinChain(bus_ctx.getCallerChain());
       executive_message->sendMessage(message);
       std::cout << "Execution succesful" << std::endl;
     }
@@ -43,7 +42,7 @@ struct MessageImpl : POA_Message
   }
 
   Message_var executive_message;
-  openbus::OpenBusContext& openbusContext;
+  openbus::OpenBusContext& bus_ctx;
 };
 
 struct MeetingImpl : POA_Meeting
@@ -59,7 +58,7 @@ struct MeetingImpl : POA_Meeting
 {
   if (offers->length() == 0)
   {
-    std::cout << "O servico Hello nao se encontra no barramento." << std::endl;
+    std::cout << "O servico Message nao se encontra no barramento." << std::endl;
     return ::Message::_nil();
   }
   else if(offers->length() == 1)
@@ -72,7 +71,7 @@ struct MeetingImpl : POA_Meeting
   {
     std::cout << "Existe mais de um servico Hello no barramento. Tentaremos encontrar uma funcional." << std::endl;
 
-    for(CORBA::ULong i = 0; i != offers->length(); ++i)
+    for(CORBA::ULong i(0); i != offers->length(); ++i)
     {
       try
       {
@@ -98,13 +97,11 @@ int main(int argc, char** argv)
 {
   try
   {
-    // Inicializando CORBA e ativando o RootPOA
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
+    CORBA::Object_var o(orb->resolve_initial_references("RootPOA"));
+    PortableServer::POA_var poa(PortableServer::POA::_narrow(o));
+    PortableServer::POAManager_var poa_mgr(poa->the_POAManager());
+    poa_mgr->activate();
 
     boost::optional<openbus::PrivateKey> private_key;
     unsigned short bus_port = 2089;
@@ -115,8 +112,10 @@ int main(int argc, char** argv)
       desc.add_options()
         ("help", "This help message")
         ("private-key", po::value<std::string>(), "Path to private key")
-        ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
-        ("bus-port", po::value<unsigned int>(), "Host to Openbus (default: 2089)")
+        ("bus-host", po::value<std::string>(),
+         "Host to Openbus (default: localhost)")
+        ("bus-port", po::value<unsigned int>(),
+         "Host to Openbus (default: 2089)")
         ;
       po::variables_map vm;
       po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -140,11 +139,12 @@ int main(int argc, char** argv)
   boost::thread orb_thread(boost::bind(&run_orb, orb));
 #endif
 
-    // Construindo e logando conexao
-    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
-    assert(openbusContext != 0);
-    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection(bus_host, bus_port));
+  openbus::OpenBusContext *bus_ctx(
+    dynamic_cast<openbus::OpenBusContext*>(
+      orb->resolve_initial_references("OpenBusContext")));
+    assert(bus_ctx != 0);
+    std::auto_ptr <openbus::Connection> conn(
+      bus_ctx->createConnection(bus_host, bus_port));
     try
     {
       conn->loginByCertificate("secretary", *private_key);
@@ -155,17 +155,16 @@ int main(int argc, char** argv)
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;
     }
-    openbusContext->setDefaultConnection(conn.get());
+    bus_ctx->setDefaultConnection(conn.get());
 
-    // Recebendo ofertas
     openbus::idl_or::ServicePropertySeq props;
-    props.length(3);
+    props.length(2);
     props[0].name  = "openbus.offer.entity";
     props[0].value = "executive";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
-    // Pegando uma oferta valida
+    offer_registry::ServiceOfferDescSeq_var offers(
+      bus_ctx->getOfferRegistry()->findServices(props));
     ::Message_var message_executive = ::get_message(offers);
     if(CORBA::is_nil(message_executive))
     {
@@ -173,10 +172,11 @@ int main(int argc, char** argv)
       return 1;
     }
 
-    scs::core::ComponentId message_componentId = { "Message", '1', '0', '0', "" };
+    scs::core::ComponentId message_componentId = {
+      "Message", '1', '0', '0', "" };
     scs::core::ComponentContext message_component
-      (openbusContext->orb(), message_componentId);
-    MessageImpl message_servant(message_executive, *openbusContext);
+      (bus_ctx->orb(), message_componentId);
+    MessageImpl message_servant(message_executive, *bus_ctx);
     message_component.addFacet
       ("message", ::_tc_Message->id(), &message_servant);
     
@@ -184,16 +184,19 @@ int main(int argc, char** argv)
     properties.length(2);
     properties[0].name = "offer.domain";
     properties[0].value = "Demos";
-    openbusContext->getOfferRegistry()->registerService(message_component.getIComponent(), properties);
+    bus_ctx->getOfferRegistry()->registerService(
+      message_component.getIComponent(), properties);
 
-    scs::core::ComponentId meeting_componentId = { "Meeting", '1', '0', '0', "" };
+    scs::core::ComponentId meeting_componentId = {
+      "Meeting", '1', '0', '0', "" };
     scs::core::ComponentContext meeting_component
-      (openbusContext->orb(), meeting_componentId);
+      (bus_ctx->orb(), meeting_componentId);
     MeetingImpl meeting_servant;
     meeting_component.addFacet
       ("meeting", ::_tc_Meeting->id(), &meeting_servant);
     
-    openbusContext->getOfferRegistry()->registerService(meeting_component.getIComponent(), properties);
+    bus_ctx->getOfferRegistry()->registerService(
+      meeting_component.getIComponent(), properties);
 
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();

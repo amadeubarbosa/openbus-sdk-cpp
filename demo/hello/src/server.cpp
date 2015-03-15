@@ -1,12 +1,11 @@
 // -*- coding: iso-8859-1-unix -*-
+
+#include "helloS.h"
+
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
-#include <openbus/log.hpp>
-#include <scs/ComponentContext.hpp>
+#include <scs/ComponentContext.h>
 #include <iostream>
-
-#include <stubs/hello.h>
-#include <CORBA.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
@@ -93,9 +92,6 @@ struct onReloginCallback
 
 int main(int argc, char** argv)
 {
-  openbus::log().set_level(openbus::debug_level);
-
-  // Inicializando CORBA e ativando o RootPOA
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
   CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
   PortableServer::POA_var poa = PortableServer::POA::_narrow(o);

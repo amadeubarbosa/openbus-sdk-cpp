@@ -1,10 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
+
+#include "independent_clockC.h"
+
 #include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
 #include <iostream>
 #include <boost/program_options.hpp>
-
-#include <stubs/independent_clock.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -39,7 +39,7 @@ bool call_with_found_clock(offer_registry::ServiceOfferDescSeq_var offers, F f)
   {
     CORBA::ULong i = 0;
     demo::Clock_var hello = demo::Clock::_narrow
-      (offers[i].service_ref->getFacetByName("hello"));
+      (offers[i].service_ref->getFacetByName("clock"));
     if(!CORBA::is_nil(hello))
       f(hello);
   }
@@ -136,11 +136,6 @@ int main(int argc, char** argv)
 {
   // Inicializando CORBA e ativando o RootPOA
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-  CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-  PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-  assert(!CORBA::is_nil(poa));
-  PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-  poa_manager->activate();
 
   unsigned short bus_port = 2089;
   std::string bus_host = "localhost";

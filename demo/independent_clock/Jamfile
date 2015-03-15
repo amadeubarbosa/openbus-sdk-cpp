@@ -2,11 +2,16 @@ project openbus/demos/independent_clock ;
 
 path-constant here : . ;
 
-obj independent_clock-idl
+obj independent_clock-stub
   : $(here)/idl/independent_clock.idl
-    /mico//mico
   ;
-explicit independent_clock-idl ;
+explicit independent_clock-stub ;
+
+obj independent_clock-skeleton
+  : $(here)/idl/independent_clock.idl
+  : <generate>skeleton
+  ;
+explicit independent_clock-skeleton ;
 
 local rule demo-exe ( name : src : deps * )
 {
@@ -15,23 +20,33 @@ local rule demo-exe ( name : src : deps * )
       /openbus//openbus
       /scs//scs
       /logger//logger
-      /mico//mico
       /openssl//openssl
       /boost//headers
       /boost//program_options
       $(deps)
-    : <implicit-dependency>/openbus//core-idls
-      <threading>multi:<source>/boost//thread
-      <link>static,<target-os>linux:<source>/dl//dl
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
       <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
     ;
   explicit $(name) ;
 }
 
-demo-exe independent_clock_client : client : independent_clock-idl ;
-demo-exe independent_clock_server : server : independent_clock-idl ;
+demo-exe independent_clock_client
+  : client
+  : independent_clock-stub
+  ;
+  
+demo-exe independent_clock_server
+  : server
+  : independent_clock-stub
+    independent_clock-skeleton
+  ;
 
 alias independent_clock
   : independent_clock_client
     independent_clock_server
+    admin/DemoCppIndependentClock.key
   ;

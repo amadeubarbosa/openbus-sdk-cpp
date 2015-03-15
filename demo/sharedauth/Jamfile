@@ -2,17 +2,16 @@ project openbus/demos/sharedauth ;
 
 path-constant here : . ;
 
-obj hello-idl
+obj hello-stub
   : $(here)/idl/hello.idl
-    /mico//mico
   ;
-explicit hello-idl ;
+explicit hello-stub ;
 
-obj sharedauth-idl
-  : $(here)/idl/sharedauth.idl
-    /mico//mico
+obj hello-skeleton
+  : $(here)/idl/hello.idl
+  : <generate>skeleton
   ;
-explicit sharedauth-idl ;
+explicit hello-skeleton ;
 
 local rule demo-exe ( name : src : deps * )
 {
@@ -21,27 +20,39 @@ local rule demo-exe ( name : src : deps * )
       /openbus//openbus
       /scs//scs
       /logger//logger
-      /mico//mico
       /openssl//openssl
       /boost//headers
       /boost//program_options
-      /openbus//core-idls
-      /scs//scs-idl
       $(deps)
-    : <implicit-dependency>/openbus//core-idls
-      <threading>multi:<source>/boost//thread
-      <link>static,<target-os>linux:<source>/dl//dl
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
       <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
     ;
   explicit $(name) ;
 }
 
-demo-exe sharedauth_client : client : hello-idl sharedauth-idl ;
-demo-exe sharedauth_client_sharedauth : client_sharedauth : hello-idl sharedauth-idl ;
-demo-exe sharedauth_server : server : hello-idl sharedauth-idl ;
+demo-exe sharedauth_client
+  : client
+  : hello-stub
+  ;
+  
+demo-exe sharedauth_sharedauth
+  : sharedauth
+  : hello-stub
+  ;
+  
+demo-exe sharedauth_server
+  : server
+  : hello-stub
+    hello-skeleton
+    ;
 
 alias sharedauth
   : sharedauth_client
-    sharedauth_client_sharedauth
+    sharedauth_sharedauth
     sharedauth_server
+    admin/DemoCppHello.key
   ;

@@ -1,11 +1,11 @@
 // -*- coding: iso-8859-1-unix -*-
+
+#include "independent_clockS.h"
+
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
-#include <scs/ComponentContext.hpp>
+#include <scs/ComponentContext.h>
 #include <iostream>
-
-#include <stubs/independent_clock.h>
-#include <CORBA.h>
 #include <time.h>
 
 #ifndef OPENBUS_SDK_MULTITHREAD

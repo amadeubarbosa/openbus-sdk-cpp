@@ -2,11 +2,16 @@ project openbus/demos/greetings ;
 
 path-constant here : . ;
 
-obj greetings-idl
+obj greetings-stub
   : $(here)/idl/greetings.idl
-    /mico//mico
   ;
-explicit greetings-idl ;
+explicit greetings-stub ;
+
+obj greetings-skeleton
+  : $(here)/idl/greetings.idl
+  : <generate>skeleton
+  ;
+explicit greetings-skeleton ;
 
 local rule demo-exe ( name : src : deps * )
 {
@@ -15,23 +20,33 @@ local rule demo-exe ( name : src : deps * )
       /openbus//openbus
       /scs//scs
       /logger//logger
-      /mico//mico
       /openssl//openssl
       /boost//headers
       /boost//program_options
       $(deps)
-    : <implicit-dependency>/openbus//core-idls
-      <threading>multi:<source>/boost//thread
-      <link>static,<target-os>linux:<source>/dl//dl
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
       <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
     ;
   explicit $(name) ;
 }
 
-demo-exe greetings_client : client : greetings-idl ;
-demo-exe greetings_server : server : greetings-idl ;
+demo-exe greetings_client
+  : client
+  : greetings-stub
+  ;
+  
+demo-exe greetings_server
+  : server
+  : greetings-stub
+    greetings-skeleton
+  ;
 
 alias greetings
   : greetings_client
     greetings_server
+    admin/DemoCppGreetings.key
   ;

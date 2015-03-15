@@ -1,14 +1,13 @@
 // -*- coding: iso-8859-1-unix -*-
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <iostream>
-#include <boost/program_options.hpp>
 
-#include <stubs/hello.h>
-#include <stubs/sharedauth.h>
+#include "helloC.h"
+
+#include <openbus/OpenBusContext.hpp>
+#include <boost/program_options.hpp>
 
 #include <fstream>
 #include <iterator>
+#include <iostream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -178,11 +177,6 @@ int main(int argc, char** argv)
 
   // Inicializando CORBA e ativando o RootPOA
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-  CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-  PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-  assert(!CORBA::is_nil(poa));
-  PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-  poa_manager->activate();
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>

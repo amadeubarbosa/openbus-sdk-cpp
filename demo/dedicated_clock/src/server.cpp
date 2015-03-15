@@ -1,11 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <scs/ComponentContext.hpp>
-#include <iostream>
+#include "dedicated_clockS.h"
 
-#include <stubs/dedicated_clock.h>
-#include <CORBA.h>
+#include <openbus/OpenBusContext.hpp>
+#include <scs/ComponentContext.h>
+#include <fstream>
+#include <iostream>
 #include <ctime>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -17,8 +16,6 @@
 #include <boost/program_options.hpp>
 #include <boost/bind.hpp>
 
-#include <fstream>
-
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -27,7 +24,8 @@ namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
 namespace demo = tecgraf::openbus::demo;
 namespace services = tecgraf::openbus::core::v2_0::services;
-namespace access_control = tecgraf::openbus::core::v2_0::services::access_control;
+namespace access_control =
+  tecgraf::openbus::core::v2_0::services::access_control;
 
 struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
 {
@@ -109,8 +107,10 @@ int main(int argc, char** argv)
     desc.add_options()
       ("help", "This help message")
       ("private-key", po::value<std::string>(), "Path to private key")
-      ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
-      ("bus-port", po::value<unsigned int>(), "Host to Openbus (default: 2089)")
+      ("bus-host", po::value<std::string>(),
+       "Host to Openbus (default: localhost)")
+      ("bus-port", po::value<unsigned int>(),
+       "Host to Openbus (default: 2089)")
       ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -134,19 +134,18 @@ int main(int argc, char** argv)
   boost::thread orb_thread(boost::bind(&run_orb, orb));
 #endif
 
-  // Construindo e logando conexao
-  openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
+  openbus::OpenBusContext* bus_ctx = dynamic_cast<openbus::OpenBusContext*>
     (orb->resolve_initial_references("OpenBusContext"));
-  assert(openbusContext != 0);
+  assert(bus_ctx != 0);
   std::auto_ptr <openbus::Connection> conn;
   do
   {
     try
     {
-      conn = openbusContext->createConnection(bus_host, bus_port);
+      conn = bus_ctx->createConnection(bus_host, bus_port);
       conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, *private_key) );
       conn->loginByCertificate("demo", *private_key);
-      openbusContext->setDefaultConnection(conn.get());
+      bus_ctx->setDefaultConnection(conn.get());
       break;
     }
     catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
@@ -184,7 +183,7 @@ int main(int argc, char** argv)
   scs::core::ComponentId componentId
     = { "DedicatedClock", '1', '0', '0', ""};
   scs::core::ComponentContext clock_component
-    (openbusContext->orb(), componentId);
+    (bus_ctx->orb(), componentId);
   ClockImpl clock_servant;
   clock_component.addFacet
     ("clock", demo::_tc_Clock->id(), &clock_servant);
@@ -199,7 +198,7 @@ int main(int argc, char** argv)
     {
       try
       {
-        openbusContext->getOfferRegistry()->registerService(clock_component.getIComponent(), properties);
+        bus_ctx->getOfferRegistry()->registerService(clock_component.getIComponent(), properties);
         break;
       }
       catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)

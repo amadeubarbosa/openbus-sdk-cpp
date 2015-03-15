@@ -1,10 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
+#include "greetingsC.h"
+
 #include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
 #include <iostream>
 #include <boost/program_options.hpp>
-
-#include <stubs/greetings.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -134,13 +133,7 @@ struct onReloginCallback
 
 int main(int argc, char** argv)
 {
-  // Inicializando CORBA e ativando o RootPOA
   CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-  CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-  PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-  assert(!CORBA::is_nil(poa));
-  PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-  poa_manager->activate();
 
   unsigned short bus_port = 2089;
   std::string bus_host = "localhost";

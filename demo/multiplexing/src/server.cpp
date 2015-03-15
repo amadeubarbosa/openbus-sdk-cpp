@@ -1,11 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
+
+#include "greetingsS.h"
+
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
-#include <scs/ComponentContext.hpp>
-#include <iostream>
-
-#include <stubs/greetings.h>
-#include <CORBA.h>
+#include <scs/ComponentContext.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
@@ -16,6 +15,7 @@
 #include <boost/program_options.hpp>
 #include <boost/bind.hpp>
 #include <fstream>
+#include <iostream>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
