@@ -8,7 +8,7 @@ OPENSSL_ROOT_PATH=$ROOT/build/openssl
 INSTALL=$ROOT/install
 ##
 
-COMMON_FLAGS=""
+COMMON_FLAGS="no-asm"
 SHARED_FLAGS="shared"
 STATIC_FLAGS="no-shared"
 # DEBUG_FLAGS="debug-linux-elf"
@@ -36,16 +36,21 @@ function build
   execute "make clean"
   # execute "cp electric-fence-2.2.3/libefence.a ."
   # execute "cp electric-fence-2.2.3/libefence.so.* libefence.so"
-  execute "./Configure $PLAT $flags"
+  execute "$CONFIGURE $PLAT $flags"
   execute "make -j$JOBS"
   execute "make install_sw"
 }
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
+  # For OS X, we must use "./Configure", as specified in OpenSSL wiki
+  # <https://wiki.openssl.org/index.php/Compilation_and_Installation#Configure_.26_Config>
+  CONFIGURE="./Configure"
   PLAT="darwin64-x86_64-cc"
-  COMMON_FLAGS+="no-asm"
 elif [[ "$OSTYPE" == "linux"* ]]; then
-  PLAT="linux-elf"
+  CONFIGURE="./config"
+  # './config' tries to guess the triplet host/arch/compiler; it works well for
+  # Linux for multiple archs, so $PLAT is not needed
+  unset PLAT
 else
   echo "Sorry, this platform does not seem supported."
   exit 1;
