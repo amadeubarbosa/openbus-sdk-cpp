@@ -32,6 +32,7 @@ exe chaining_client
     /openssl//openssl
     /scs//scs
     /logger//logger
+    /TAO//TAO
     proxy-stub
   : <threading>multi:<source>/boost//thread
     <target-os>windows:<library>/openbus//idls
@@ -49,6 +50,7 @@ exe chaining_proxy
     /scs//scs
     /openbus//openbus
     /logger//logger
+    /TAO//TAO
     hello-stub
     proxy-stub
     proxy-skeleton
@@ -72,6 +74,7 @@ exe chaining_server
     /scs//scs
     /openbus//openbus
     /logger//logger
+    /TAO//TAO
     proxy-stub
     proxy-skeleton
     hello-stub

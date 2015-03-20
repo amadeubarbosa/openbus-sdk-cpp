@@ -24,6 +24,7 @@ local rule demo-exe ( name : src : deps * )
       /openssl//openssl
       /boost//headers
       /boost//program_options
+      /TAO//TAO
       $(deps)
     : <threading>multi:<source>/boost//thread
       <target-os>windows:<library>/openbus//idls

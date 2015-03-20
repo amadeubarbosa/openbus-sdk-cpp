@@ -25,6 +25,7 @@ exe reloggedjoin_client
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     hello-stub
   : <threading>multi:<source>/boost//thread
     <target-os>windows:<library>/openbus//idls
@@ -43,6 +44,7 @@ exe reloggedjoin_server
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     hello-stub
     hello-skeleton
   : <threading>multi:<source>/boost//thread
@@ -64,6 +66,7 @@ exe reloggedjoin_proxy
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     hello-stub
     hello-skeleton
   : <threading>multi:<source>/boost//thread

@@ -110,7 +110,7 @@ if ! $(scs-root-path)
 boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
 if ! $(boost-root-path)
 {
-  boost-root-path = "../boost" ;
+  boost-root-path = "../boost_1_51_0" ;
 }
 
 logger-root-path = [ os.environ LOGGER_ROOT_PATH ] ;
@@ -394,6 +394,9 @@ lib ACE
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libACE.a
     <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libACE.dylib
+    <target-os>linux,<link>static:<file>$(ace-root-path)/lib/libACE.a
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libACE.so.6.3.0
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libACE.so
   ;
 
 lib ACE
@@ -432,6 +435,9 @@ lib TAO_AnyTypeCode
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.a
     <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.dylib
+    <target-os>linux,<link>static:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.a
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.so.2.3.0
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_AnyTypeCode.so
   ;
 
 lib TAO_AnyTypeCode
@@ -466,6 +472,9 @@ lib TAO_PortableServer
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PortableServer.a
     <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_PortableServer.dylib
+    <target-os>linux,<link>static:<file>$(ace-root-path)/lib/libTAO_PortableServer.a
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_PortableServer.so.2.3.0
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_PortableServer.so
   ;
 
 lib TAO_PortableServer
@@ -500,6 +509,9 @@ lib TAO_PI
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PI.a
     <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_PI.dylib
+    <target-os>linux,<link>static:<file>$(ace-root-path)/lib/libTAO_PI.a
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_PI.so.2.3.0
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_PI.so
   ;
 
 lib TAO_PI
@@ -534,6 +546,9 @@ lib TAO_PI_Server
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_PI_Server.a
     <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_PI_Server.dylib
+    <target-os>linux,<link>static:<file>$(ace-root-path)/lib/libTAO_PI_Server.a
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_PI_Server.so.2.3.0
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_PI_Server.so
   ;
 
 lib TAO_PI_Server
@@ -568,6 +583,9 @@ lib TAO_CodecFactory
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO_CodecFactory.a
     <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO_CodecFactory.dylib
+    <target-os>linux,<link>static:<file>$(ace-root-path)/lib/libTAO_CodecFactory.a
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_CodecFactory.so.2.3.0
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO_CodecFactory.so
   ;
 
 lib TAO_CodecFactory
@@ -608,6 +626,9 @@ lib TAO
   : <search>$(ace-root-path)/lib
     <target-os>darwin,<link>static:<file>$(ace-root-path)/lib/libTAO.a
     <target-os>darwin,<link>shared:<file>$(ace-root-path)/lib/libTAO.dylib
+    <target-os>linux,<link>static:<file>$(ace-root-path)/lib/libTAO.a
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO.so.2.3.0
+    <target-os>linux,<link>shared:<file>$(ace-root-path)/lib/libTAO.so
   ;
 
 lib TAO
@@ -661,4 +682,3 @@ lib dl
   :
   : <link>shared
   ;
-

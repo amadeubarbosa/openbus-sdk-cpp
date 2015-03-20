@@ -24,6 +24,7 @@ exe delegation_client
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     messages-stub
   : <threading>multi:<source>/boost//thread
     <target-os>windows:<library>/openbus//idls
@@ -42,6 +43,7 @@ exe delegation_forwarder
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     messages-stub
     messages-skeleton
   : <threading>multi:<source>/boost//thread
@@ -63,6 +65,7 @@ exe delegation_broadcaster
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     messages-stub
     messages-skeleton
   : <threading>multi:<source>/boost//thread
@@ -84,6 +87,7 @@ exe delegation_messenger
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     messages-stub
     messages-skeleton
   : <threading>multi:<source>/boost//thread

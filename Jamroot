@@ -146,7 +146,6 @@ project openbus
     <define>OPENBUS_SDK_SOURCE
     <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
     <conditional>@tao-idl-init
-    <library>/TAO//TAO
   : usage-requirements
     <link>shared:<define>OPENBUS_SDK_SHARED
   : default-build
@@ -205,6 +204,7 @@ lib openbus
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     idls
   : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
     <include>include

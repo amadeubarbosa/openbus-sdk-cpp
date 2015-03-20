@@ -13,6 +13,9 @@ project openbus/interop/run
     <toolset>msvc:<define>_CRT_SECURE_NO_WARNINGS
     <toolset>clang:<cxxflags>-std=c++11
     <toolset>gcc:<cxxflags>-std=c++11
+  : default-build
+    <link>shared
+    <variant>release
   ;
 
 exe run

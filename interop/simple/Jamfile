@@ -23,6 +23,7 @@ exe simple_client
     /boost//headers
     /boost//program_options
     /openssl//openssl
+    /TAO//TAO
     hello-stub
   : <threading>multi:<source>/boost//thread
     <target-os>windows:<library>/openbus//idls
@@ -41,6 +42,7 @@ exe simple_server
     /boost//headers
     /boost//program_options
     /openssl//openssl
+    /TAO//TAO
     hello-stub
     hello-skeleton
   : <threading>multi:<source>/boost//thread

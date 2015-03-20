@@ -28,6 +28,7 @@ exe sharedauth_client
     /boost//headers 
     /boost//program_options 
     /openssl//openssl    
+    /TAO//TAO
     hello-stub
     encoding-stub
   : <threading>multi:<source>/boost//thread
@@ -49,6 +50,7 @@ exe sharedauth_server
     /boost//headers 
     /boost//program_options 
     /openssl//openssl
+    /TAO//TAO
     hello-stub
     hello-skeleton
     encoding-stub
@@ -73,6 +75,7 @@ exe sharedauth_sharedauth
     /boost//headers 
     /boost//program_options 
     /openssl//openssl
+    /TAO//TAO
     hello-stub
     hello-skeleton
   : <threading>multi:<source>/boost//thread
