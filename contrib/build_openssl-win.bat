@@ -1,7 +1,7 @@
 set INSTALL=%HOME%\install
 set BUILD=%HOME%\build
-
 set OPENSSL_ROOT_PATH=%BUILD%\openssl-1.0.0o
+set CL=/wd4996
 
 cd %OPENSSL_ROOT_PATH%
 perl Configure debug-VC-WIN32 no-asm --prefix=%INSTALL%\openssl-mt-d
