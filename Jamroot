@@ -5,7 +5,6 @@ import os ;
 import feature ;
 import property-set ;
 import "class" : new ;
-import tao-idl ;
 import version ;
 import path ;
 
@@ -16,6 +15,14 @@ if ! $(ace-root-path)
 {
   ace-root-path = $(here)/../../build/ACE_wrappers ;
 }
+
+taoidl-root-path = [ os.environ TAOIDL_ROOT_PATH ] ;
+if ! $(taoidl-root-path)
+{
+  taoidl-root-path = $(here)/../../build/tao-bb ;
+}
+modules.load tao-idl : : $(taoidl-root-path) ;
+import tao-idl ;
 
 rule tao-idl-init ( properties * )
 {
