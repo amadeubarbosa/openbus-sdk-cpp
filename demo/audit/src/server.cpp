@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
     CORBA::Object_var o(orb->resolve_initial_references("RootPOA"));
     PortableServer::POA_var poa(PortableServer::POA::_narrow(o));
-    POA_Manager_var poa_mgr(poa->the_POAManager());
+    PortableServer::POAManager_var poa_mgr(poa->the_POAManager());
     poa_mgr->activate();
 
     boost::optional<openbus::PrivateKey> private_key;
