@@ -387,6 +387,9 @@ lib openssl
 project ACE
   : requirements <include>$(ace-root-path)
     <target-os>windows:<define>WIN32
+    <target-os>windows:<define>ACE_AS_STATIC_LIBS
+  : usage-requirements
+    <target-os>windows:<define>ACE_AS_STATIC_LIBS
   ;
 
 lib ACE
@@ -423,11 +426,23 @@ lib ACE
     <variant>release
     <search>$(ace-root-path)/lib
     <link>static
-    <name>ACE-s
+    <name>ACEs
+  ;    
+
+lib ACE
+  :
+  : <target-os>windows
+    <variant>debug
+    <search>$(ace-root-path)/lib
+    <link>static
+    <name>ACEsd
   ;    
 
 project TAO
   : requirements <include>$(tao-root-path)
+    <target-os>windows:<define>TAO_AS_STATIC_LIBS
+  : usage-requirements
+    <target-os>windows:<define>TAO_AS_STATIC_LIBS
   ;
   
 lib TAO_AnyTypeCode
@@ -464,7 +479,16 @@ lib TAO_AnyTypeCode
     <target-os>windows
     <variant>release
     <link>static
-    <name>TAO_AnyTypeCode-s
+    <name>TAO_AnyTypeCodes
+  ;
+
+lib TAO_AnyTypeCode
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <link>static
+    <name>TAO_AnyTypeCodesd
   ;
 
 lib TAO_PortableServer
@@ -501,7 +525,16 @@ lib TAO_PortableServer
     <target-os>windows
     <variant>release
     <link>static
-    <name>TAO_PortableServer-s
+    <name>TAO_PortableServers
+  ;
+
+lib TAO_PortableServer
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <link>static
+    <name>TAO_PortableServersd
   ;
 
 lib TAO_PI
@@ -538,7 +571,16 @@ lib TAO_PI
     <target-os>windows
     <variant>release
     <link>static
-    <name>TAO_PI-s
+    <name>TAO_PIs
+  ;
+
+lib TAO_PI
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <link>static
+    <name>TAO_PIsd
   ;
 
 lib TAO_PI_Server
@@ -575,7 +617,16 @@ lib TAO_PI_Server
     <target-os>windows
     <variant>release
     <link>static
-    <name>TAO_PI_Server-s
+    <name>TAO_PI_Servers
+  ;
+
+lib TAO_PI_Server
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <link>static
+    <name>TAO_PI_Serversd
   ;
 
 lib TAO_CodecFactory
@@ -612,7 +663,16 @@ lib TAO_CodecFactory
     <target-os>windows
     <variant>release
     <link>static
-    <name>TAO_CodecFactory-s
+    <name>TAO_CodecFactorys
+  ;
+
+lib TAO_CodecFactory
+  : 
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <link>static
+    <name>TAO_CodecFactorysd
   ;
 
 lib TAO
@@ -673,7 +733,22 @@ lib TAO
     <target-os>windows
     <variant>release
     <link>static
-    <name>TAO-s
+    <name>TAOs
+  ;
+
+lib TAO
+  : /ACE//ACE
+    TAO_AnyTypeCode
+    TAO_PortableServer
+    TAO_PI
+    TAO_PI_Server
+    TAO_AnyTypeCode
+    TAO_CodecFactory
+  : <search>$(ace-root-path)/lib
+    <target-os>windows
+    <variant>debug
+    <link>static
+    <name>TAOsd
   ;
 
 project dl ;
