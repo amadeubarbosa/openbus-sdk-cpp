@@ -174,7 +174,7 @@ Connection &ServerInterceptor::get_dispatcher_connection(
     try 
     {
       conn = ctx->onCallDispatch()(*ctx, busid, login, r.operation());
-      if (conn && conn->busid() != busid)
+      if (busid != "" && conn && conn->busid() != busid)
       {
         throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
       }
@@ -198,7 +198,7 @@ Connection &ServerInterceptor::get_dispatcher_connection(
       throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
     }
   }
-  if ( (!conn->login() || (conn->busid() != busid)) )
+  if (!conn->login() || (busid != "" && conn->busid() != busid))
   {
     throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
   } 
@@ -215,7 +215,7 @@ void ServerInterceptor::receive_request_service_contexts(
   l.level_vlog(debug_level, "operation: %s", r->operation());
   
   credential credential_(get_credential(*r));
-  
+
   Connection &conn(
     get_dispatcher_connection(_openbus_ctx, std::string(credential_.data.bus),
                               std::string(credential_.data.login), *r));
