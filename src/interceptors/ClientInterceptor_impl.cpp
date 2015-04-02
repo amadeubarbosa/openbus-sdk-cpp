@@ -291,14 +291,20 @@ void ClientInterceptor::send_request(PI::ClientRequestInfo_ptr r)
   }
   l.vlog("login: %s", curr_login.id.in());
   CallerChain caller_chain(get_joined_chain(conn, *r));
-  if (caller_chain.is_legacy())
+  if (conn._legacyEnabled)
   {
-    if (conn._legacyEnabled)
+    build_legacy_credential(*r, conn, curr_login);
+    if (caller_chain.is_legacy())
     {
-      build_legacy_credential(*r, conn, curr_login);
       return;
     }
-    throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
+  }
+  else
+  {
+    if (caller_chain.is_legacy())
+    {
+      throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
+    }
   }
   build_credential(*r, conn, curr_login);
 }
