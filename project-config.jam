@@ -387,9 +387,9 @@ lib openssl
 project ACE
   : requirements <include>$(ace-root-path)
     <target-os>windows:<define>WIN32
-    <target-os>windows:<define>ACE_AS_STATIC_LIBS
+    <target-os>windows,<link>static:<define>ACE_AS_STATIC_LIBS
   : usage-requirements
-    <target-os>windows:<define>ACE_AS_STATIC_LIBS
+    <target-os>windows,<link>static:<define>ACE_AS_STATIC_LIBS
   ;
 
 lib ACE
@@ -440,9 +440,9 @@ lib ACE
 
 project TAO
   : requirements <include>$(tao-root-path)
-    <target-os>windows:<define>TAO_AS_STATIC_LIBS
+    <target-os>windows,<link>static:<define>TAO_AS_STATIC_LIBS
   : usage-requirements
-    <target-os>windows:<define>TAO_AS_STATIC_LIBS
+    <target-os>windows,<link>static:<define>TAO_AS_STATIC_LIBS
   ;
   
 lib TAO_AnyTypeCode
