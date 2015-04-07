@@ -19,15 +19,10 @@ typedef std::string flavor_tag;
 
 const std::map<flavor, flavor_tag> flavors = 
 {
-#ifdef _WIN32
-  {"multithread, debug and shared", "mt-d"},
-  {"multithread, release and shared", "mt"},
-#else
   {"multithread, debug and shared", "mt-d"},
   {"multithread, release and shared", "mt"},
   {"multithread, debug and static", "mt-s-d"},
   {"multithread, release and static", "mt-s"},
-#endif
 };
 
 void exec(
