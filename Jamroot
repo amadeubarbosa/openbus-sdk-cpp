@@ -40,6 +40,17 @@ rule tao-idl-init ( properties * )
         msvc-bin-path = "C:/Program Files/Microsoft Visual Studio 12.0/VC/bin" ;
       }
     }
+    if <toolset-msvc:version>9.0 in $(properties)
+    {
+      if <address-model>64 in $(properties)
+      {
+        msvc-bin-path = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin" ;
+      }
+      else
+      {
+        msvc-bin-path = "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin" ;
+      }
+    }
     using tao-idl
       : $(ace-root-path)/bin
       : $(ace-root-path)/lib
