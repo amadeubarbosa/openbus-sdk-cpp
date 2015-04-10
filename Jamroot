@@ -44,7 +44,7 @@ rule tao-idl-init ( properties * )
     {
       if <address-model>64 in $(properties)
       {
-        msvc-bin-path = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin" ;
+        msvc-bin-path = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin/amd64" ;
       }
       else
       {
@@ -156,8 +156,8 @@ project openbus
     <target-os>windows:<debug-store>database
     <target-os>windows:<define>_SCL_SECURE_NO_WARNINGS
     <target-os>windows:<define>_CRT_SECURE_NO_WARNINGS
-    <target-os>windows:<cxxflags>/FS
-    <target-os>windows:<cflags>/FS
+    <toolset>msvc-12.0:<cxxflags>/FS
+    <toolset>msvc-12.0:<cflags>/FS
     <debug-symbols>on
     <define>BOOST_ALL_NO_LIB=1
     <link>shared:<define>OPENBUS_SDK_SHARED
