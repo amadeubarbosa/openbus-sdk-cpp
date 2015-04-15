@@ -13,6 +13,7 @@ project openbus/interop/run
     <toolset>msvc:<define>_CRT_SECURE_NO_WARNINGS
     <toolset>clang:<cxxflags>-std=c++11
     <toolset>gcc:<cxxflags>-std=c++11
+    <threading>multi
   : default-build
     <link>shared
     <variant>release
@@ -35,3 +36,20 @@ install stage
     <install-type>EXE
   ;
 
+exe run-cpp11
+  : run-cpp11.cpp
+    /boost//filesystem
+    /boost//system
+    /boost//iostreams
+  : <include>$(boost-process-root-path)
+  ;
+explicit run-cpp11 ;
+
+install stage-cpp11
+  : run-cpp11
+  : <location>install
+    <install-dependencies>on
+    <install-type>LIB
+    <install-type>EXE
+  ;
+explicit stage-cpp11 ;

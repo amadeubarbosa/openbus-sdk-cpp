@@ -44,9 +44,9 @@ void exec(
                                    + ".exe"
 #endif
     );
-  path exe_path(current_path());
+  auto exe_path(current_path());
   exe_path += rel_path;
-  path start_path(current_path());
+  auto start_path(current_path());
   start_path += path(stage_interop + interop);
   std::cout << "-->Running " << type << " '" << process << "'." << std::endl;
 #ifndef _WIN32
@@ -58,7 +58,7 @@ void exec(
 #endif
   try
   {
-    child c(
+    auto child(
       execute(
         run_exe(exe_path),
         throw_on_error(),
@@ -69,7 +69,7 @@ void exec(
 #else
     ,set_env(env)));
 #endif
-    childs.push_back(std::move(c));
+    childs.push_back(std::move(child));
   }
   catch (const boost::system::system_error &e)
   {
@@ -105,26 +105,10 @@ void run_interop(
 
 int main()
 {
-  {
-    std::vector<std::string> simple_services = { "server" };
-    run_interop("simple", simple_services);
-  }
-  {
-    std::vector<std::string> simple_services = { "server", "sharedauth" };
-    run_interop("sharedauth", simple_services);
-  }
-  {
-    std::vector<std::string> simple_services = { "broadcaster", "forwarder",
-                                                 "messenger" };
-    run_interop("delegation", simple_services);
-  }
-  {
-    std::vector<std::string> simple_services = { "server" };
-    run_interop("multiplexing", simple_services);
-  }
-  {
-    std::vector<std::string> reloggedjoin_services = { "server", "proxy" };
-    run_interop("reloggedjoin", reloggedjoin_services);
-  }
+  run_interop("simple", {"server"});
+  run_interop("sharedauth", { "server", "sharedauth" });
+  run_interop("delegation", { "broadcaster", "forwarder", "messenger" });
+  run_interop("multiplexing", { "server" });
+  run_interop("reloggedjoin", { "server", "proxy" });
   return 0; //MSVC
 }
