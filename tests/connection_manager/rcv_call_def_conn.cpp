@@ -8,6 +8,9 @@
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #endif
 
 struct hello_impl : public POA_Hello
@@ -66,21 +69,27 @@ int main(int argc, char** argv)
 
   ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
 
+  boost::uuids::uuid uuid = boost::uuids::random_generator()();
   openbus::idl_or::ServicePropertySeq props;
-  props.length(1);
+  props.length(2);
   openbus::idl_or::ServiceProperty property;
   property.name = "offer.domain";
   property.value = "OpenBus Demos";
   props[0] = property;
+  props[1].name = "uuid";
+  props[1].value = boost::uuids::to_string(uuid).c_str();
   bus_ctx->getOfferRegistry()->registerService(ctx.getIComponent(), props);
 
-  props.length(3);
+  props.length(4);
   props[0].name  = "openbus.offer.entity";
   props[0].value = "test";
   props[1].name  = "openbus.component.facet";
   props[1].value = "hello";
   props[2].name  = "offer.domain";
   props[2].value = "OpenBus Demos";
+  props[3].name  = "uuid";
+  props[3].value = boost::uuids::to_string(uuid).c_str();
+  
   openbus::idl_or::ServiceOfferDescSeq_var offers(
     bus_ctx->getOfferRegistry()->findServices(props));
   std::cout << offers->length() << std::endl;

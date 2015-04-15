@@ -4,7 +4,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
-#include <boost/container/vector.hpp>
 #include <iostream>
 #include <map>
 #include <vector>
@@ -17,19 +16,21 @@ using namespace boost::filesystem;
 const std::string stage_interop("/stage-interop/");
 typedef std::string flavor;
 typedef std::string flavor_tag;
-typedef std::map<flavor, flavor_tag> flavors_t;
-typedef std::map<flavor, flavor_tag>::iterator it_flavors_t;
-flavors_t flavors;
 
-typedef boost::container::vector<child> childs_t;
-typedef boost::container::vector<child>::iterator it_childs_t;
+const std::map<flavor, flavor_tag> flavors = 
+{
+  {"multithread, debug and shared", "mt-d"},
+  {"multithread, release and shared", "mt"},
+  {"multithread, debug and static", "mt-s-d"},
+  {"multithread, release and static", "mt-s"},
+};
 
 void exec(
   const std::string &interop,
   const flavor_tag &flavor_tag,
   const std::string &type,
   const std::string &process,
-  childs_t &childs)
+  std::vector<child> &childs)
 {
   boost::system::error_code ec;
   boost::iostreams::file_descriptor_sink out_sink(
@@ -68,7 +69,7 @@ void exec(
 #else
     ,set_env(env)));
 #endif
-    childs.push_back(boost::move(c));
+    childs.push_back(std::move(c));
   }
   catch (const boost::system::system_error &e)
   {
@@ -80,65 +81,50 @@ void run_interop(
   const std::string &interop,
   const std::vector<std::string> &services)
 {
-  for (it_flavors_t flavor(flavors.begin());flavor != flavors.end(); ++flavor)
+  for (auto flavor : flavors)
   {    
     std::cout << "->Running interop '" << interop << "' "
-              << "with flavor " << (*flavor).first << "." << std::endl;
-    childs_t service_childs;
-    for (std::vector<std::string>::const_iterator service(services.begin());
-	 service != services.end(); ++service)
+              << "with flavor " << flavor.first << "." << std::endl;
+    std::vector<child> service_childs;
+    for (auto service : services)
     {
-      exec(interop, (*flavor).second, "service", (*service), service_childs);
+      exec(interop, flavor.second, "service", service, service_childs);
     }
-    childs_t client_childs;
-    exec(interop, (*flavor).second, "client", "client", client_childs);
-    for (it_childs_t child(client_childs.begin());
-	 child != client_childs.end(); ++child)
+    std::vector<child> client_childs;
+    exec(interop, flavor.second, "client", "client", client_childs);
+    for (auto &child : client_childs)
     {
-      wait_for_exit(*child);
+      wait_for_exit(child);
     }
-    for (it_childs_t child(service_childs.begin());
-	 child != service_childs.end(); ++child)
+    for (auto &child : service_childs)
     {
-      terminate(*child);
+      terminate(child);
     }
   }
 }
 
 int main()
 {
-  flavors["multithread, debug and shared"] = "mt-d";
-  flavors["multithread, release and shared"] = "mt";
-  flavors["multithread, debug and static"] = "mt-s-d";
-  flavors["multithread, release and static"] = "mt-s";
   {
-    std::vector<std::string> services;
-    services.push_back("server");
-    run_interop("simple", services);
+    std::vector<std::string> simple_services = { "server" };
+    run_interop("simple", simple_services);
   }
   {
-    std::vector<std::string> services;
-    services.push_back("server");
-    services.push_back("sharedauth");
-    run_interop("sharedauth", services);
+    std::vector<std::string> simple_services = { "server", "sharedauth" };
+    run_interop("sharedauth", simple_services);
   }
   {
-    std::vector<std::string> services;
-    services.push_back("broadcaster");
-    services.push_back("forwarder");
-    services.push_back("messenger");
-    run_interop("delegation", services);
+    std::vector<std::string> simple_services = { "broadcaster", "forwarder",
+                                                 "messenger" };
+    run_interop("delegation", simple_services);
   }
   {
-    std::vector<std::string> services;
-    services.push_back("server");
-    run_interop("multiplexing", services);
+    std::vector<std::string> simple_services = { "server" };
+    run_interop("multiplexing", simple_services);
   }
   {
-    std::vector<std::string> services;
-    services.push_back("server");
-    services.push_back("proxy");
-    run_interop("reloggedjoin", services);
+    std::vector<std::string> reloggedjoin_services = { "server", "proxy" };
+    run_interop("reloggedjoin", reloggedjoin_services);
   }
   return 0; //MSVC
 }
