@@ -1,0 +1,311 @@
+
+--------------------------------------------------------------------------------
+                       OpenBus C++ SDK Installation Guide
+                          Ricardo Cosme, Tadeu Martins
+                      {rcosme,tmartins}@tecgraf.puc-rio.br
+                          http://www.tecgraf.puc-rio.br
+--------------------------------------------------------------------------------
+
+1. Requirements
+  1.1. A C++98 compiler;
+  1.2. MICO 2.3.13 compiled in multithreaded mode [http://www.mico.org];
+  1.3. Boost.Build 2014-10 [http://www.boost.org/build];
+    1.3.1. Boost.Build support module for stubs generation with MICO
+           [mico.idl.jam];
+  1.4. SCS C++ 1.2.0;
+  1.5. Logger C++ v2;
+  1.6. OpenSSL 1.0.0o [http://www.openssl.org];
+  1.7. Boost 1.51.0 [http://www.bosst.org].
+
+2. Usage and definitions
+  2.1. Library naming conventions
+    2.1.1. Multithreaded libraries are identified by the suffix 'mt'.
+    2.1.2. Debug versions are identified by the suffix 'd', whilst
+           release versions have no corresponding suffix.
+    2.1.3. Statically-linked libraries are identified by the suffix 's',
+           whilst dinamically-linked libraries have no corresponding
+           suffix.
+
+    Examples:
+      libopenbus-mt-d:   Multithreaded / dinamically-linked / debug
+      libopenbus-mt-s-d: Multithreaded / statically-linked  / debug
+      libopenbus-mt:     Multithreaded / dinamically-linked / release
+      libopenbus-mt-s:   Multithreaded / statically-linked  / release
+
+  2.2. Dependency location
+   2.2.1. Dependencies **with** Boost.Build support
+     Let 'dep' be the dependency name. The build is configured to search
+     for such dependency at '../dep' by default. This path must indicate
+     where the dependency sources have been extracted. An alternative
+     path can be informed with Boost.Build variable 'DEP_ROOT_PATH'. For
+     example, if the dependency was extracted at '/opt/libs/dep':
+
+       $ b2 (...) -sDEP_ROOT_PATH=/opt/libs/dep
+
+  2.2.2. Dependencies **without** Boost.Build support
+    Let 'dep' be the dependency name. The build dependency path will be
+    determined according to the following rules, in this evaluation
+    order:
+
+    (A) The build will check the variables 'DEP_BIN_PATH',
+	'DEP_LIB_PATH' and 'DEP_INCLUDE_PATH' values; they specify where
+	any of the compilation flavours can be found. These variables
+	can be defined with Boost.Build '-s' option. For example, if you
+	want to define the path for a MICO installation under
+	'/opt/install/mico':
+
+          $ b2 (...) -sMICO_BIN_PATH=/opt/install/mico/bin \
+            -sMICO_LIB_PATH=/opt/install/mico/lib \
+            -sMICO_INCLUDE_PATH=/opt/install/mico/include
+
+    (B) There are also specific variables that can be set for each build
+	flavour, and they can all be specified in a single compilation
+	command. This provides greater flexibility in cases of
+	multi-flavour builds with more complex directory structures. The
+	variable names are composed of the dependency name and some
+	suffixes determining the flavour in hand, such as:
+
+          DEP_DEBUG_SHARED_BIN_PATH
+          DEP_DEBUG_SHARED_LIB_PATH
+          DEP_DEBUG_SHARED_INCLUDE_PATH
+
+          DEP_DEBUG_STATIC_BIN_PATH
+          DEP_DEBUG_STATIC_LIB_PATH
+          DEP_DEBUG_STATIC_INCLUDE_PATH
+
+          DEP_RELEASE_SHARED_BIN_PATH
+          DEP_RELEASE_SHARED_LIB_PATH
+          DEP_RELEASE_SHARED_INCLUDE_PATH
+
+          DEP_RELEASE_STATIC_BIN_PATH
+          DEP_RELEASE_STATIC_LIB_PATH
+          DEP_RELEASE_STATIC_INCLUDE_PATH
+
+        E.g.: Generating statically and dinamically-linked MICO versions
+              in 'release' mode:
+
+          $ b2 (...) link=static link=shared variant=release \
+              -sMICO_RELEASE_STATIC_BIN_PATH=/opt/install/mico-mt-s/bin \
+              -sMICO_RELEASE_STATIC_LIB_PATH=/opt/install/mico-mt-s/lib \
+              -sMICO_RELEASE_STATIC_INCLUDE_PATH=/opt/install/mico-mt-s/include \
+              -sMICO_RELEASE_SHARED_BIN_PATH=/opt/install/mico-mt/bin \
+              -sMICO_RELEASE_SHARED_LIB_PATH=/opt/install/mico-mt/lib \
+              -sMICO_RELEASE_SHARED_INCLUDE_PATH=/opt/install/mico-mt/include
+
+    (C) Finally, the dependency is searched at the fallback installation
+	directory path, '../install/dep-<flavour>', where 'flavour' can
+	have of the following values:
+
+          mt-d:   multithreaded / dinamically-linked / debug
+          mt-s-d: multithreaded / statically-linked  / debug
+          mt:     multithreaded / dinamically-linked / release
+          mt-s:   multithreaded / statically-linked  / release
+
+        E.g.: The release, statically-linked version of MICO libraries
+              will be searched at:
+
+          ../install/mico-mt-s
+
+  2.3. Flavours
+    You can compile the OpenBus C++ SDK in the following modes: release,
+    debug, statically-linked and dinamically-linked. It is done by
+    informing the following combinations to Boost.Build when running the
+    build command:
+
+    link=shared variant=release (dinamically-linked, release)
+    link=static variant=release (statically-linked, release)
+    link=shared variant=debug (dinamically-linked, debug)
+    link=static variant=debug (statically-linked, debug)
+
+  2.4. Verbose mode
+    Boost.Build verbosity can be augmented by using the '-d+2' command
+    line option.
+
+3. Building with Boost.Build (fast mode)
+  3.0. (Optional) We recommend extracting all packages to '$ROOT/build',
+       as well as installing dependencies at '$ROOT/install'. Such
+       directory layout eases the build process by making the definition
+       of multiple dependency paths unnecessary.
+  3.1. Extract Logger C++ v2.
+    http://www.tecgraf.puc-rio.br/ftp_pub/openbus/logger-2.1.tgz
+  3.2. Extract SCS C++ 1.2.0.
+    http://www.tecgraf.puc-rio.br/ftp_pub/openbus/scs-cpp-1.2.0.2.tgz
+  3.3. Extract Boost at '$ROOT/build/boost'.
+    http://sourceforge.net/projects/boost/files/boost/1.51.0/boost_1_51_0.tar.gz
+  3.4. Build the OpenBus C++ SDK.
+    (A) If the instructions given on section 3.0 were followed:
+
+      $ b2 link=[shared|static] variant=[release|debug]
+
+    ---------------------------- OR ----------------------------
+
+    (B) $ b2 link=[shared|static] variant=[release|debug] \
+            -sMICO_BIN_PATH=$MICO_BIN_PATH \
+            -sMICO_LIB_PATH=$MICO_LIB_PATH \
+            -sMICO_INCLUDE_PATH=$MICO_INCLUDE_PATH \
+            -sOPENSSL_LIB_PATH=$OPENSSL_LIB_PATH \
+            -sOPENSSL_INCLUDE_PATH=$OPENSSL_INCLUDE_PATH \
+            -sLOGGER_ROOT_PATH=$LOGGER_PACKAGE \
+            -sSCS_ROOT_PATH=$SCS_PACKAGE \
+            -sBOOST_ROOT_PATH=$BOOST_PACKAGE
+
+4. Step-by-step build process
+  4.0. (Optional) We recommend extracting all packages to '$ROOT/build',
+       as well as installing dependencies at '$ROOT/install'. Such
+       directory layout eases the build process by making the definition
+       of multiple dependency paths unnecessary.
+  4.1. Boost.Build --- go to section 4.2 if it is already available.
+    4.1.1. Download the package at
+       http://www.tecgraf.puc-rio.br/ftp_pub/openbus/repository/boost-build-2014-10_tecgraf_28112014snapshot.tgz
+    4.1.2. Install Boost.Build 
+      ** Reading Boost.Build documentation is recommended for an proper
+         installation [boost-build/index.html] **
+      Let 'INSTALL' be an environment variable indicating the root
+      installation path.
+
+    In Unix:
+      $ ./bootstrap.sh
+      $ ./b2 install --prefix=$INSTALL/boost-build
+
+    In Windows:
+      ** You should either open a console through Visual Studio or load
+         the batch file 'vcvarsall.bat'. **
+      > .\bootstrap.bat
+      > .\b2 install --prefix=%INSTALL%\boost-build
+
+  4.2 MICO --- go to section 4.3 if it is already available.
+    4.2.1. The wanted build flavours (release/debug/dynamically-linked/
+           statically-linked) must be generated. A MICO package can be
+           obtained in the following addresses:
+
+       For Unix: 
+         http://www.tecgraf.puc-rio.br/ftp_pub/openbus/repository/mico-2.3.13-tecgraf_28112014snapshot.tgz
+
+       For Windows:
+         http://www.tecgraf.puc-rio.br/ftp_pub/openbus/repository/mico-2.3.13-windows_tecgraf_28112014snapshot.tgz
+
+    4.2.2. Extract the downloaded package.
+    4.2.3. Edit either the script 'build_mico-unix.sh' or
+           'build_mico-win.bat', according to your current operating
+           system. They are located under the 'contrib' directory inside
+           the OpenBus C++ SDK distribution.
+      a. Change the compilation process number of build jobs.
+      b. Inform the path to the MICO distribution in the variable
+         'MICO_ROOT_PATH'.
+      c. MICO versions will be installed by default at '$HOME/install'.
+      This path will be changed if the variable 'ROOT' is set in
+      runtime.
+      The build will generate four different build flavours and will
+      install them at the following paths:
+
+        $ROOT/install/mico-mt-d
+        $ROOT/install/mico-mt-s-d
+        $ROOT/install/mico-mt
+        $ROOT/install/mico-mt-s
+
+   4.2.4 Run either 'build_mico-unix.sh' or 'build_mico-win.bat',
+           according to your current operating system.
+  4.3. OpenSSL --- go to section 4.4 if it is already available.
+    4.3.1. The wanted build flavours (release/debug/dinamically-linked/
+           statically-linked) must be generated. An OpenSSL package can
+           be obtained in the following address:
+
+       https://www.openssl.org/source/openssl-1.0.0o.tar.gz
+
+    4.3.2. Extract the downloaded package.
+    4.3.3. Edit either the script 'build_openssl-unix.sh' or
+           'build_openssl-win.bat', according to your current operating
+           system. They are located under the 'contrib' directory inside
+           the OpenBus C++ SDK distribution.
+      a. Define the absolute path where the package was extracted.
+      b. Inform the path to the OpenSSL distribution in the variable
+         'OPENSSL_ROOT_PATH'.
+      c. OpenSSL versions will be installed by default at
+	 '$HOME/install'. This path will be changed if the variable
+	 'ROOT' is set at runtime.
+	 The build will generate four different build flavours and will
+	 install them at the following paths:
+
+           $ROOT/install/openssl-mt-d
+           $ROOT/install/openssl-mt-s-d
+           $ROOT/install/openssl-mt
+           $ROOT/install/openssl-mt-s
+
+    4.3.4. Run either 'build_openssl-unix.sh' or
+           'build_openssl-win.bat', according to your current operating
+           system.
+  4.4. Extract Logger C++ v2.
+    http://www.tecgraf.puc-rio.br/ftp_pub/openbus/logger-2.1.tgz
+  4.5. Extract SCS C++ 1.2.0.
+    http://www.tecgraf.puc-rio.br/ftp_pub/openbus/scs-cpp-1.2.0.2.tgz
+  4.6. Extract Boost 1.5.1. You must rename it to 'boost' if you want to
+       follow the instructions given at section 4.0.
+    http://sourceforge.net/projects/boost/files/boost/1.51.0/boost_1_51_0.tar.gz
+  4.7. Build the OpenBus C++ SDK.
+
+    Let 'INSTALL' be an environment variable indicating the root
+    installation path.
+
+    (A) If the instructions given on section 4.0 were followed:
+	For building all the four flavours (debug/shared, debug/static,
+	release/shared, release/static) with a MICO installation made
+	by either the script 'build_mico-unix.sh' or
+	'build_mico-win.bat':
+
+          $ $INSTALL/boost-build/bin/b2 \
+	    link=shared link=static variant=debug variant=release
+
+    ---------------------------- OR ----------------------------
+
+    (B) Build one of the flavours with a specific MICO installation:
+
+        $ $INSTALL/boost-build/bin/b2 link=[shared|static] variant=[release|debug] \
+            -sMICO_BIN_PATH=$INSTALL/mico/bin \
+            -sMICO_LIB_PATH=$INSTALL/mico/lib \
+            -sMICO_INCLUDE_PATH=$INSTALL/mico/include \
+            -sOPENSSL_LIB_PATH=$OPENSSL_LIB_PATH \
+            -sOPENSSL_INCLUDE_PATH=$OPENSSL_INCLUDE_PATH \
+            -sLOGGER_ROOT_PATH=$SCS_PACKAGE \
+            -sSCS_ROOT_PATH=$SCS_PACKAGE \
+            -sBOOST_ROOT_PATH=$BOOST_PACKAGE
+
+      E.g.: statically-linked debug mode
+        $ $INSTALL/boost-build/bin/b2 link=static variant=debug \
+            -sMICO_BIN_PATH=/opt/mico/bin \
+            -sMICO_LIB_PATH=/opt/mico/lib \
+            -sMICO_INCLUDE_PATH=/opt/mico/include \
+            -sOPENSSL_LIB_PATH=/opt/openssl/lib \
+            -sOPENSSL_INCLUDE_PATH=/opt/openssl/include \
+            -sLOGGER_ROOT_PATH=/home/user/build/logger \
+            -sSCS_ROOT_PATH=/home/user/build/scs \
+            -sBOOST_ROOT_PATH=/home/user/build/boost
+
+  4.8. Build products will be available at the 'install' directory.
+  4.9. Provision of the generated stubs at the 'install/stubs'
+       directory.
+
+    Let 'INSTALL' be an environment variable indicating the root
+    installation path.
+
+    (A) If the instructions given on section 4.0 were followed:
+        $ $INSTALL/boost-build/bin/b2 stage-stubs
+
+    ---------------------------- OR ----------------------------
+
+    (B) $ $INSTALL/boost-build/bin/b2 \
+            -sMICO_BIN_PATH=$MICO_BIN_PATH \
+            -sMICO_LIB_PATH=$MICO_LIB_PATH \
+            stage-stubs
+
+  4.10. (Optional) Provision of Boost, Logger and SCS dependencies.
+  
+    Let 'INSTALL' be an environment variable indicating the root
+    installation path. These dependencies can be made available at
+    'install/deps' with the command
+
+      $ $INSTALL/boost-build/bin/b2 \
+        link=[shared|static] variant=[release|debug] stage-deps
+
+    Warning: In this step, do not specify more than one flavour in a
+    single command execution. Run the command different times for each
+    one of the flavours you wish to generate.
