@@ -166,6 +166,7 @@ project openbus
     <conditional>@tao-idl-init
   : usage-requirements
     <link>shared:<define>OPENBUS_SDK_SHARED
+    <toolset>msvc-12.0:<cxxflags>/FS
   : default-build
     <threading>multi
     <variant>debug
