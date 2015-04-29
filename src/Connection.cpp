@@ -38,14 +38,14 @@ void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs,
       t = acs->renew();
       l.level_log(info_level, "Credencial renovada.");
     } 
-    catch (...)
-    {
-      l.level_log(warning_level, "Falha na renovacao da credencial.");
-    }
     catch (const boost::thread_interrupted &)
     {
       l.level_log(info_level, "Thread Connection::renewLogin encerrada.");
       break;
+    }
+    catch (...)
+    {
+      l.level_log(warning_level, "Falha na renovacao da credencial.");
     }
   }
 }
