@@ -145,7 +145,7 @@ if ! $(scs-root-path)
 boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
 if ! $(boost-root-path)
 {
-  boost-root-path = "../boost" ;
+  boost-root-path = "../boost_1_51_0" ;
 }
 
 logger-root-path = [ os.environ LOGGER_ROOT_PATH ] ;
