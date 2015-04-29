@@ -156,7 +156,7 @@ void OpenBusContext::exitChain()
 
 CallerChain OpenBusContext::getJoinedChain() const
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getJoinedChain");
   Connection *conn(getCurrentConnection());
   if (!conn)
@@ -191,17 +191,8 @@ CallerChain OpenBusContext::makeChainFor(const std::string &loginId) const
   CallerChain joined_chain(getJoinedChain());
   if (joined_chain.is_legacy())
   {
-    l.log("Construindo cadeia legada.");
     boost::shared_ptr<Login> target_login(
       conn->_loginCache->validateLogin(loginId.c_str()));
-    if (!target_login)
-    {
-      l.vlog("Login '%s' invalido.", loginId.c_str());
-      idl_ac::InvalidLogins invalid_logins;
-      invalid_logins.loginIds.length(1);
-      invalid_logins.loginIds[0] = loginId.c_str();
-      throw invalid_logins;
-    }
     std::string target(target_login->loginInfo->entity.in());
     idl_ac::LoginInfoSeq originators;
     originators.length(1);

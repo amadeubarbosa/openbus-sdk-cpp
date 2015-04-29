@@ -38,14 +38,14 @@ void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs,
       t = acs->renew();
       l.level_log(info_level, "Credencial renovada.");
     } 
+    catch (...)
+    {
+      l.level_log(warning_level, "Falha na renovacao da credencial.");
+    }
     catch (const boost::thread_interrupted &)
     {
       l.level_log(info_level, "Thread Connection::renewLogin encerrada.");
       break;
-    }
-    catch (...)
-    {
-      l.level_log(warning_level, "Falha na renovacao da credencial.");
     }
   }
 }
@@ -101,7 +101,7 @@ public:
       validityTime = _access_control->renew();
       _openbusContext.setCurrentConnection(conn);
     } 
-    catch (..) 
+    catch (const CORBA::Exception &) 
     {
       l.level_vlog(warning_level, "Falha na renovacao da credencial.");
       _openbusContext.setCurrentConnection(conn);

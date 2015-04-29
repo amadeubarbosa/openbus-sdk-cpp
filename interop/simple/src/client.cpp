@@ -50,7 +50,7 @@ int main(int argc, char **argv)
   try
   {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    // openbus::log().set_level(openbus::debug_level);
 
     CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
     CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
@@ -78,8 +78,7 @@ int main(int argc, char **argv)
       ctx->getOfferRegistry()->findServices(props);
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
-      // CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
-      CORBA::Object_var o = offers[idx].service_ref->getFacet("IDL:tecgraf/openbus/interop/simple/Hello:1.0");
+      CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       CORBA::String_var ret(hello->sayHello());
