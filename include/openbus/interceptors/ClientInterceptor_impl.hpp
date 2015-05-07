@@ -33,7 +33,7 @@ namespace PI = PortableInterceptor;
 struct OPENBUS_SDK_DECL 
 ClientInterceptor : public PI::ClientRequestInterceptor 
 {
-  ClientInterceptor(boost::shared_ptr<orb_info>);
+  ClientInterceptor(boost::shared_ptr<orb_info>, PortableInterceptor::Current_ptr);
 
   void send_request(PI::ClientRequestInfo_ptr);
   void receive_exception(PI::ClientRequestInfo_ptr);
@@ -58,6 +58,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   LRUCache<hash_value, idl_cr::SignedCallChain> _callChainLRUCache;
   CORBA::Object_var _bus_ctx_obj;
   OpenBusContext *_bus_ctx;
+  PortableInterceptor::Current_var _pi_current;
   std::map<boost::uuids::uuid, Connection *> _request_id2conn;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;

@@ -347,11 +347,13 @@ boost::uuids::uuid ClientInterceptor::get_request_id(
   }
 }
 
-ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p)
+ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p,
+  PortableInterceptor::Current_ptr pi_current)
   : _orb_info(p),
     _callChainLRUCache(LRUSize),
     _bus_ctx_obj(CORBA::Object::_nil()),
-    _bus_ctx(0)
+    _bus_ctx(0),
+    _pi_current(pi_current)
 { 
   log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
@@ -400,7 +402,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
 #endif
     _request_id2conn[request_id] = &conn;
   }
-  _orb_info->pi_current->set_slot(_orb_info->slot.request_id, any);  
+  _pi_current->set_slot(_orb_info->slot.request_id, any);  
 }
 
 void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo_ptr r)

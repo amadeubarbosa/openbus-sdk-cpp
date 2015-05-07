@@ -107,7 +107,7 @@ void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr info)
   _orb_info->pi_current = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_orb_info->pi_current));
 
-  cln_interceptor = new ClientInterceptor(_orb_info);
+  cln_interceptor = new ClientInterceptor(_orb_info, _orb_info->pi_current.in());
   info->add_client_request_interceptor(cln_interceptor);
   srv_interceptor = new ServerInterceptor(_orb_info);
   info->add_server_request_interceptor(srv_interceptor);
