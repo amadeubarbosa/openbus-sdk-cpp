@@ -1,4 +1,7 @@
-project openbus/interop ;
+project openbus/interop/chaining 
+ : requirements
+   <include>../
+ ;
 
 path-constant here : . ;
 

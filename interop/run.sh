@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 ROOT="$( dirname "${BASH_SOURCE[0]}" )"
 

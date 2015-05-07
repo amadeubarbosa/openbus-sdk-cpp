@@ -2,6 +2,7 @@
 
 #include "stubs/hello.h"
 #include "stubs/encoding.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -18,37 +19,6 @@ std::string private_key;
 std::string bus_host;
 unsigned short bus_port;
 boost::asio::io_service io_service;
-
-struct handler
-{
-  handler(
-    CORBA::ORB_var orb,
-    openbus::Connection *conn)
-    : orb(orb), conn(conn)
-  {
-  }
-
-  handler(const handler& o)
-  {
-    orb = o.orb;
-    conn = o.conn;
-  }
-
-  void operator()(
-    const boost::system::error_code& error,
-    int signal_number)
-  {
-    if (!error)
-    {
-      conn->logout();
-      orb->shutdown(true);        
-      io_service.stop();
-    }
-  }
-
-  CORBA::ORB_var orb;
-  openbus::Connection *conn;
-};
 
 void load_options(int argc, char **argv)
 {
@@ -89,18 +59,13 @@ int main(int argc, char** argv) {
   {
     load_options(argc, argv);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
+#if 0
+    openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
 
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn
-      (ctx->createConnection(bus_host, bus_port));
-
+    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host,
+                                                                  bus_port));
     ctx->setDefaultConnection(conn.get());
     try 
     {
@@ -125,17 +90,15 @@ int main(int argc, char** argv) {
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
-    props[static_cast<CORBA::ULong>(0)].name  = "openbus.component.facet";
-    props[static_cast<CORBA::ULong>(0)].value = "Hello";
-    props[static_cast<CORBA::ULong>(1)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
+    props[0u].name  = "openbus.component.facet";
+    props[0u].value = "Hello";
+    props[1u].name  = "offer.domain";
+    props[1u].value = "Interoperability Tests";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers(find_offers(ctx, props));
     if (offers->length())
     {
-      CORBA::Object_var o = offers[static_cast<CORBA::ULong>(0)]
-        .service_ref->getFacetByName("Hello");
+      CORBA::Object_var o = offers[0u].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       CORBA::String_var ret(hello->sayHello());
@@ -153,7 +116,7 @@ int main(int argc, char** argv) {
     }
 
     boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-    handler io_handler(orb, conn.get());
+    handler io_handler(ctx->orb(), conn.get(), &io_service);
     signals.async_wait(io_handler);
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread io_service_run(

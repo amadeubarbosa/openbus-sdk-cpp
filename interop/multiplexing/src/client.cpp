@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "stubs/hello.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -64,18 +65,12 @@ int main(int argc, char **argv)
   try 
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
     
+#if 0
+    openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
+
     for (std::size_t busIdx = 0; busIdx != 2; ++busIdx)
     {
       std::auto_ptr<openbus::Connection> 
@@ -85,14 +80,12 @@ int main(int argc, char **argv)
 
       openbus::idl_or::ServicePropertySeq props;
       props.length(2);
-      props[static_cast<CORBA::ULong>(0)].name  = "openbus.component.interface";
-      props[static_cast<CORBA::ULong>(0)].value = 
-        "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
-      props[static_cast<CORBA::ULong>(1)].name  = "offer.domain";
-      props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
+      props[0u].name  = "openbus.component.interface";
+      props[0u].value = "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
+      props[1u].name  = "offer.domain";
+      props[1u].value = "Interoperability Tests";
 
-      openbus::idl_or::ServiceOfferDescSeq_var offers = 
-        ctx->getOfferRegistry()->findServices(props);
+      openbus::idl_or::ServiceOfferDescSeq_var offers(find_offers(ctx, props));
       for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
       {
         CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");

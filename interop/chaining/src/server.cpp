@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "stubs/hello.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
@@ -124,31 +125,19 @@ private:
   openbus::Connection &conn;
 };
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-void ORBRun(CORBA::ORB_ptr orb)
-{
-  orb->run();
-}
-#endif
-
 int main(int argc, char **argv)
 {
   try
   {
     load_options(argc, argv);
+
+#if 0
     openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host,
-                                                                    bus_port);
+    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host,
+                                                                  bus_port));
     ctx->setDefaultConnection(conn.get());
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -157,16 +146,16 @@ int main(int argc, char **argv)
 
     scs::core::ComponentId componentId;
     componentId.name = "RestrictedHello";
-    componentId.major_version = '1';
-    componentId.minor_version = '0';
-    componentId.patch_version = '0';
+    componentId.major_version = 1;
+    componentId.minor_version = 0;
+    componentId.patch_version = 0;
     componentId.platform_spec = "c++";
     scs::core::ComponentContext comp(ctx->orb(), componentId);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
-    props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
+    props[0u].name = "offer.domain";
+    props[0u].value = "Interoperability Tests";
 
     conn->onInvalidLogin(on_invalid_login(*ctx, comp, props, *conn));
 

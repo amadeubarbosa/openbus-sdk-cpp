@@ -1,4 +1,7 @@
-project openbus/interop/sharedauth ;
+project openbus/interop/sharedauth
+ : requirements
+   <include>../
+ ;
 
 path-constant here : . ;
 

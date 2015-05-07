@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "stubs/hello.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -28,42 +29,6 @@ struct bus
 };
 std::map<std::size_t, bus> buses;
 boost::asio::io_service io_service;
-
-struct handler
-{
-  handler(
-    CORBA::ORB_var orb,
-    const std::vector<openbus::Connection *> &connections)
-    : orb(orb), connections(connections)
-  {
-  }
-
-  handler(const handler& o)
-  {
-    orb = o.orb;
-    connections = o.connections;
-  }
-
-  void operator()(
-    const boost::system::error_code& error,
-    int signal_number)
-  {
-    if (!error)
-    {
-      for(std::vector<openbus::Connection *>::iterator it(connections.begin());
-          it != connections.end();
-          ++it)
-      {
-        (*it)->logout();
-      }
-      orb->shutdown(true);        
-      io_service.stop();
-    }
-  }
-
-  CORBA::ORB_var orb;
-  std::vector<openbus::Connection *> connections;
-};
 
 void load_options(int argc, char **argv)
 {
@@ -144,13 +109,13 @@ private:
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello 
 {
-  HelloImpl(openbus::OpenBusContext &c) : _ctx(c) 
+  HelloImpl(openbus::OpenBusContext *c) : ctx(c) 
   { 
   }
 
   char *sayHello() 
   {
-    openbus::CallerChain chain(_ctx.getCallerChain());
+    openbus::CallerChain chain(ctx->getCallerChain());
     if (chain == openbus::CallerChain())
     {
       std::cerr << "chain == openbus::CallerChain()"
@@ -164,15 +129,8 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     return ret._retn();
   }
 private:
-  openbus::OpenBusContext &_ctx;
+  openbus::OpenBusContext *ctx;
 };
-
-#ifdef OPENBUS_SDK_MULTITHREAD
-void ORBRun(CORBA::ORB_ptr orb)
-{
-  orb->run();
-}
-#endif
 
 void registerOffer(openbus::OpenBusContext &ctx, openbus::Connection &conn, 
                    scs::core::ComponentContext &componentCtx)
@@ -199,24 +157,20 @@ int main(int argc, char **argv) {
   try 
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
 
-    CORBA::ORB_ptr orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-    openbus::OpenBusContext *busCtx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
+#if 0
+    openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
+
     std::auto_ptr <openbus::Connection> connBusB
-      (busCtx->createConnection(buses[0].host, buses[0].port));
+      (ctx->createConnection(buses[0].host, buses[0].port));
     std::auto_ptr <openbus::Connection> conn1BusA
-      (busCtx->createConnection(buses[1].host, buses[1].port));
+      (ctx->createConnection(buses[1].host, buses[1].port));
     std::auto_ptr <openbus::Connection> conn2BusA
-      (busCtx->createConnection(buses[1].host, buses[1].port));
+      (ctx->createConnection(buses[1].host, buses[1].port));
     std::auto_ptr <openbus::Connection> conn3BusA
-      (busCtx->createConnection(buses[1].host, buses[1].port));
+      (ctx->createConnection(buses[1].host, buses[1].port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());
@@ -224,19 +178,20 @@ int main(int argc, char **argv) {
     connVec.push_back(connBusB.get());
     
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orbRun(ORBRun, busCtx->orb());
+    boost::thread orbRun(ORBRun, ctx->orb());
 #endif
     
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
-    componentId.major_version = '1';
-    componentId.minor_version = '0';
-    componentId.patch_version = '0';
+    componentId.major_version = 1;
+    componentId.minor_version = 0;
+    componentId.patch_version = 0;
     componentId.platform_spec = "";
-    scs::core::ComponentContext ctx(busCtx->orb(), componentId);
+    scs::core::ComponentContext comp(ctx->orb(), componentId);
     
-    HelloImpl srv(*busCtx);
-    ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", &srv);
+    HelloImpl srv(ctx);
+    comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
+                  &srv);
     
     try 
     {
@@ -250,14 +205,14 @@ int main(int argc, char **argv) {
       std::cout << e.what() << std::endl;
     }
     
-    busCtx->onCallDispatch(CallDispatchCallback(*conn1BusA, *connBusB));
+    ctx->onCallDispatch(CallDispatchCallback(*conn1BusA, *connBusB));
 
     std::vector<openbus::Connection *> connections;
     connections.push_back(conn1BusA.get());
     connections.push_back(conn2BusA.get());
     connections.push_back(conn3BusA.get());
     connections.push_back(connBusB.get());
-    handler io_handler(orb, connections);
+    handler io_handler(ctx->orb(), connections, &io_service);
     boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
     signals.async_wait(io_handler);
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -266,25 +221,25 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread register1(boost::bind(registerOffer, boost::ref(*busCtx), 
+    boost::thread register1(boost::bind(registerOffer, boost::ref(*ctx), 
                                         boost::ref(*conn1BusA), 
-                                        boost::ref(ctx)));
-    boost::thread register2(boost::bind(registerOffer, boost::ref(*busCtx), 
+                                        boost::ref(comp)));
+    boost::thread register2(boost::bind(registerOffer, boost::ref(*ctx), 
                                         boost::ref(*conn2BusA), 
-                                        boost::ref(ctx)));
-    boost::thread register3(boost::bind(registerOffer, boost::ref(*busCtx), 
+                                        boost::ref(comp)));
+    boost::thread register3(boost::bind(registerOffer, boost::ref(*ctx), 
                                         boost::ref(*conn3BusA), 
-                                        boost::ref(ctx)));
-    boost::thread register4(boost::bind(registerOffer, boost::ref(*busCtx), 
+                                        boost::ref(comp)));
+    boost::thread register4(boost::bind(registerOffer, boost::ref(*ctx), 
                                         boost::ref(*connBusB), 
-                                        boost::ref(ctx)));
+                                        boost::ref(comp)));
     orbRun.join();
 #else
-    registerOffer(*busCtx, *conn1BusA, ctx);
-    registerOffer(*busCtx, *conn2BusA, ctx);
-    registerOffer(*busCtx, *conn3BusA, ctx);
-    registerOffer(*busCtx, *connBusB, ctx);
-    busCtx->orb()->run();
+    registerOffer(*ctx, *conn1BusA, comp);
+    registerOffer(*ctx, *conn2BusA, comp);
+    registerOffer(*ctx, *conn3BusA, comp);
+    registerOffer(*ctx, *connBusB, comp);
+    ctx->orb()->run();
 #endif
   } 
   catch (const std::exception &e) 

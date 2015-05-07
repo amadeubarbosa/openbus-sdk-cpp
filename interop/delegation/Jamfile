@@ -1,4 +1,7 @@
-project openbus/interop/delegation ;
+project openbus/interop/delegation
+ : requirements
+   <include>../
+ ;
 
 path-constant here : . ;
 

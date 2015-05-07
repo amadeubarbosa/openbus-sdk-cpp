@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "stubs/messages.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -18,44 +19,6 @@
 namespace delegation = tecgraf::openbus::interop::delegation;
 
 boost::asio::io_service io_service;
-
-struct handler
-{
-  handler(
-    CORBA::ORB_var orb,
-    openbus::Connection *conn)
-    : orb(orb), conn(conn)
-  {
-  }
-
-  handler(const handler& o)
-  {
-    orb = o.orb;
-    conn = o.conn;
-  }
-
-  void operator()(
-    const boost::system::error_code& error,
-    int signal_number)
-  {
-    if (!error)
-    {
-      conn->logout();
-      orb->shutdown(true);        
-      io_service.stop();
-    }
-  }
-
-  CORBA::ORB_var orb;
-  openbus::Connection *conn;
-};
-
-#ifdef OPENBUS_SDK_MULTITHREAD
-void ORBRun(CORBA::ORB_var orb)
-{
- orb->run();
-}
-#endif
 
 struct BroadcasterImpl : 
   virtual public POA_tecgraf::openbus::interop::delegation::Broadcaster
@@ -144,16 +107,13 @@ int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
+#if 0
+    openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
 
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host, bus_port));
+    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host,
+                                                                   bus_port));
     ctx->setDefaultConnection(conn.get());
     
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -162,26 +122,25 @@ int main(int argc, char** argv) {
 
     conn->loginByCertificate(entity, openbus::PrivateKey(private_key));    
 
-    openbus::idl_or::ServicePropertySeq properties;
-    properties.length(2);
-    properties[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
-    properties[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    properties[static_cast<CORBA::ULong>(1)].name  = "openbus.component.interface";
-    properties[static_cast<CORBA::ULong>(1)].value = delegation::_tc_Messenger->id();
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(properties);
+    openbus::idl_or::ServicePropertySeq props;
+    props.length(2);
+    props[0u].name  = "offer.domain";
+    props[0u].value = "Interoperability Tests";
+    props[1u].name  = "openbus.component.interface";
+    props[1u].value = delegation::_tc_Messenger->id();
+    openbus::idl_or::ServiceOfferDescSeq_var offers(find_offers(ctx, props));
     
     if (offers->length() > 0)
     {
-      CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)]
-        .service_ref->getFacetByName("messenger");
+      CORBA::Object_var o = offers[0u] .service_ref->getFacetByName(
+        "messenger");
       delegation::Messenger_var m = delegation::Messenger::_narrow(o);
 
       scs::core::ComponentId componentId;
       componentId.name = "Broadcaster";
-      componentId.major_version = '1';
-      componentId.minor_version = '0';
-      componentId.patch_version = '0';
+      componentId.major_version = 1;
+      componentId.minor_version = 0;
+      componentId.patch_version = 0;
       componentId.platform_spec = "C++";
       scs::core::ComponentContext broadcaster_component(ctx->orb(), componentId);
     
@@ -192,15 +151,15 @@ int main(int argc, char** argv) {
       openbus::idl_or::ServicePropertySeq props;
       props.length(1);
       openbus::idl_or::ServiceProperty property;
-      props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
-      props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
+      props[0u].name = "offer.domain";
+      props[0u].value = "Interoperability Tests";
 
       ctx->getOfferRegistry()->registerService(
       broadcaster_component.getIComponent(), props);
       std::cout << "Broadcaster no ar" << std::endl;
 
       boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-      handler io_handler(orb, conn.get());
+      handler io_handler(ctx->orb(), conn.get(), &io_service);
       signals.async_wait(io_handler);
 #ifdef OPENBUS_SDK_MULTITHREAD
       boost::thread io_service_run(

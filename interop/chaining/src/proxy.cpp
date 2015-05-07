@@ -2,6 +2,7 @@
 
 #include "stubs/proxy.h"
 #include "stubs/hello.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
@@ -58,28 +59,25 @@ void load_options(int argc, char **argv)
 
 struct HelloProxyImpl : virtual public POA_tecgraf::openbus::interop::chaining::HelloProxy
 {
-  HelloProxyImpl(openbus::OpenBusContext &c) : ctx(c)
+  HelloProxyImpl(openbus::OpenBusContext *c) : ctx(c)
   {
   }
 
   char *fetchHello(const ::tecgraf::openbus::interop::chaining::OctetSeq &encodedChain)
   {
-    openbus::CallerChain chain = ctx.decodeChain(encodedChain);
+    openbus::CallerChain chain(ctx->decodeChain(encodedChain));
     assert(chain != openbus::CallerChain());
-    ctx.joinChain(chain);
+    ctx->joinChain(chain);
     
     openbus::idl_or::ServicePropertySeq props;
     props.length(3);
-    props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    props[static_cast<CORBA::ULong>(1)].name = "openbus.component.name";
-    props[static_cast<CORBA::ULong>(1)].value = "RestrictedHello";
-    props[static_cast<CORBA::ULong>(2)].name  = "openbus.component.interface";
-    props[static_cast<CORBA::ULong>(2)].value = 
-      "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
-
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx.getOfferRegistry()->findServices(props);
+    props[0u].name  = "offer.domain";
+    props[0u].value = "Interoperability Tests";
+    props[1u].name  = "openbus.component.name";
+    props[1u].value = "RestrictedHello";
+    props[2u].name  = "openbus.component.interface";
+    props[2u].value = "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
+    openbus::idl_or::ServiceOfferDescSeq_var offers(find_offers(ctx, props));
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
       if (offers[idx].service_ref->_non_existent())
@@ -96,7 +94,7 @@ struct HelloProxyImpl : virtual public POA_tecgraf::openbus::interop::chaining::
     return 0;
   }
 private:
-  openbus::OpenBusContext &ctx;
+  openbus::OpenBusContext *ctx;
 };
 
 void login_register(
@@ -144,31 +142,19 @@ private:
   openbus::Connection &conn;
 };
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-void ORBRun(CORBA::ORB_ptr orb)
-{
-  orb->run();
-}
-#endif
-
 int main(int argc, char **argv)
 {
   try
   {
     load_options(argc, argv);
+
+#if 0
     openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host,
-                                                                    bus_port);
+    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host,
+                                                                  bus_port));
     ctx->setDefaultConnection(conn.get());
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -185,12 +171,12 @@ int main(int argc, char **argv)
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
-    props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
+    props[0u].name = "offer.domain";
+    props[0u].value = "Interoperability Tests";
 
     conn->onInvalidLogin(on_invalid_login(*ctx, comp, props, *conn));
 
-    HelloProxyImpl proxy(*ctx);
+    HelloProxyImpl proxy(ctx);
     comp.addFacet("HelloProxy", "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0",
                   &proxy);
     login_register(*ctx, comp, props, *conn);

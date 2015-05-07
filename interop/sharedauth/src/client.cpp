@@ -2,6 +2,7 @@
 
 #include "stubs/hello.h"
 #include "stubs/encoding.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -49,17 +50,13 @@ int main(int argc, char** argv) {
   {
     load_options(argc, argv);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
+#if 0
+    openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
 
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn
-      (ctx->createConnection(bus_host, bus_port));
+    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host,
+                                                                  bus_port));
 
     {
       CORBA::OctetSeq secret_seq;
@@ -78,17 +75,15 @@ int main(int argc, char** argv) {
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
-    props[static_cast<CORBA::ULong>(0)].name  = "openbus.component.facet";
-    props[static_cast<CORBA::ULong>(0)].value = "Hello";
-    props[static_cast<CORBA::ULong>(1)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+    props[0u].name  = "openbus.component.facet";
+    props[0u].value = "Hello";
+    props[1u].name  = "offer.domain";
+    props[1u].value = "Interoperability Tests";
+    openbus::idl_or::ServiceOfferDescSeq_var offers(find_offers(ctx, props));
     
     if (offers->length())
     {
-      CORBA::Object_var o = offers[static_cast<CORBA::ULong>(0)]
-        .service_ref->getFacetByName("Hello");
+      CORBA::Object_var o = offers[0u].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello_var hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
       CORBA::String_var ret(hello->sayHello());

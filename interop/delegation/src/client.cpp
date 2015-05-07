@@ -1,11 +1,11 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "stubs/messages.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
-#include <scs/ComponentContext.hpp>
 #include <log/output/file_output.h>
 
 #ifdef _WIN32
@@ -62,31 +62,24 @@ int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
+#if 0
+    openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
 
-    openbus::OpenBusContext *const ctx = 
-      dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn(
-      ctx->createConnection(bus_host, bus_port));
+    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host,
+                                                                   bus_port));
     ctx->setDefaultConnection(conn.get());
     
     conn->loginByPassword(entity, entity);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
-    props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    props[static_cast<CORBA::ULong>(1)].name  = "openbus.component.interface";
-    props[static_cast<CORBA::ULong>(1)].value = delegation::_tc_Messenger->id();
-
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+    props[0u].name  = "offer.domain";
+    props[0u].value = "Interoperability Tests";
+    props[1u].name  = "openbus.component.interface";
+    props[1u].value = delegation::_tc_Messenger->id();
+    openbus::idl_or::ServiceOfferDescSeq_var offers(find_offers(ctx, props));
     if (offers->length() > 0)
     {
       CORBA::Object_var o(

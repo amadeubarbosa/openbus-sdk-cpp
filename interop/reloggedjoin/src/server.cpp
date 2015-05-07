@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "stubs/hello.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
@@ -21,37 +22,6 @@ std::string private_key;
 std::string bus_host;
 unsigned short bus_port;
 boost::asio::io_service io_service;
-
-struct handler
-{
-  handler(
-    CORBA::ORB_var orb,
-    openbus::Connection *conn)
-    : orb(orb), conn(conn)
-  {
-  }
-
-  handler(const handler& o)
-  {
-    orb = o.orb;
-    conn = o.conn;
-  }
-
-  void operator()(
-    const boost::system::error_code& error,
-    int signal_number)
-  {
-    if (!error)
-    {
-      conn->logout();
-      orb->shutdown(true);        
-      io_service.stop();
-    }
-  }
-
-  CORBA::ORB_var orb;
-  openbus::Connection *conn;
-};
 
 void load_options(int argc, char **argv)
 {
@@ -123,31 +93,19 @@ void login_register(
   ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
 }
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-void ORBRun(CORBA::ORB_var orb)
-{
-  orb->run();
-}
-#endif
-
 int main(int argc, char **argv) 
 {
   try 
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-    
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host, 
-                                                                    bus_port);
+#if 0
+    openbus::log().set_level(openbus::debug_level);
+#endif
+    openbus::OpenBusContext *const ctx(get_bus_ctx(argc, argv));
+
+    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host, 
+                                                                  bus_port));
     ctx->setDefaultConnection(conn.get());    
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread orb_run(boost::bind(ORBRun, ctx->orb()));
@@ -155,25 +113,25 @@ int main(int argc, char **argv)
 
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
-    componentId.major_version = '1';
-    componentId.minor_version = '0';
-    componentId.patch_version = '0';
+    componentId.major_version = 1;
+    componentId.minor_version = 0;
+    componentId.patch_version = 0;
     componentId.platform_spec = "c++";
     scs::core::ComponentContext comp(ctx->orb(), componentId);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
-    props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    props[static_cast<CORBA::ULong>(1)].name = "reloggedjoin.role";
-    props[static_cast<CORBA::ULong>(1)].value = "server";
+    props[0u].name  = "offer.domain";
+    props[0u].value = "Interoperability Tests";
+    props[1u].name = "reloggedjoin.role";
+    props[1u].value = "server";
 
     HelloImpl srv(*ctx);
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
     login_register(*ctx, comp, props, *conn);
 
     boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
-    handler io_handler(orb, conn.get());
+    handler io_handler(ctx->orb(), conn.get(), &io_service);
     signals.async_wait(io_handler);
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread io_service_run(

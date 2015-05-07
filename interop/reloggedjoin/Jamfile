@@ -1,4 +1,7 @@
-project openbus/interop/reloggedjoin ;
+project openbus/interop/reloggedjoin
+ : requirements
+   <include>../
+ ;
 
 path-constant here : . ;
 
