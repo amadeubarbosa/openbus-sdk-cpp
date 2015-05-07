@@ -71,23 +71,24 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   char *name();
   void destroy();
 
-  boost::shared_ptr<OpenBusContext> _openbus_ctx;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
 #endif
   boost::shared_ptr<orb_info> _orb_info;
   LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
+  CORBA::Object_var _bus_ctx_obj;
+  OpenBusContext *_bus_ctx;
 
   void save_dispatcher_connection(
-    Connection &conn,
-    PI::ServerRequestInfo &r,
-    boost::shared_ptr<OpenBusContext> ctx);
+    Connection &,
+    PI::ServerRequestInfo &,
+    OpenBusContext *);
 
   Connection &get_dispatcher_connection(
-    boost::shared_ptr<OpenBusContext>, 
+    OpenBusContext *, 
     const std::string &busid,
     const std::string &login,
-    PI::ServerRequestInfo &r);
+    PI::ServerRequestInfo &);
 
   credential get_credential(PI::ServerRequestInfo &) const;
 

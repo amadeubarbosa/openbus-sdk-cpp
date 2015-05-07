@@ -102,10 +102,10 @@ Connection &ClientInterceptor::get_current_connection(PortableInterceptor::Clien
     assert(seq.length() == sizeof(conn));
     std::memcpy(&conn, seq.get_buffer(), sizeof(conn));
   }
-  assert(_openbus_ctx);
+  assert(_bus_ctx);
   if(!conn) 
   {
-    if (!(conn = _openbus_ctx->getDefaultConnection())) 
+    if (!(conn = _bus_ctx->getDefaultConnection())) 
     {
       l.log("throw NoLoginCode");
       throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
@@ -348,7 +348,10 @@ boost::uuids::uuid ClientInterceptor::get_request_id(
 }
 
 ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p)
-  : _orb_info(p), _callChainLRUCache(LRUSize)
+  : _orb_info(p),
+    _callChainLRUCache(LRUSize),
+    _bus_ctx_obj(CORBA::Object::_nil()),
+    _bus_ctx(0)
 { 
   log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
@@ -496,9 +499,9 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     try
     { 
       interceptors::ignore_invalid_login i(_orb_info);
-      if (_openbus_ctx->getLoginRegistry())
+      if (_bus_ctx->getLoginRegistry())
       {
-        validity = _openbus_ctx->getLoginRegistry()->getLoginValidity(
+        validity = _bus_ctx->getLoginRegistry()->getLoginValidity(
           invalid_login.id);
       }
       else

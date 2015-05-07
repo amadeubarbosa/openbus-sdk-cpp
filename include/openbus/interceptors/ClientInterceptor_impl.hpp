@@ -55,8 +55,9 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
   boost::uuids::uuid get_request_id(PI::ClientRequestInfo_ptr);
   boost::shared_ptr<orb_info> _orb_info;
-  boost::shared_ptr<OpenBusContext> _openbus_ctx;
   LRUCache<hash_value, idl_cr::SignedCallChain> _callChainLRUCache;
+  CORBA::Object_var _bus_ctx_obj;
+  OpenBusContext *_bus_ctx;
   std::map<boost::uuids::uuid, Connection *> _request_id2conn;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;

@@ -28,7 +28,10 @@ Session::Session(const std::string &login)
 }
 
 ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p)
-  : _orb_info(p), _sessionLRUCache(LRUSize)
+  : _orb_info(p),
+    _sessionLRUCache(LRUSize),
+    _bus_ctx_obj(CORBA::Object::_nil()),
+    _bus_ctx(0)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");
@@ -150,7 +153,7 @@ void ServerInterceptor::build_legacy_chain(
 void ServerInterceptor::save_dispatcher_connection(
   Connection &conn,
   PI::ServerRequestInfo &r,
-  boost::shared_ptr<OpenBusContext> ctx)
+  OpenBusContext *ctx)
 {
   size_t const bufSize(sizeof(Connection *));
   unsigned char buf[bufSize];
@@ -164,7 +167,7 @@ void ServerInterceptor::save_dispatcher_connection(
 }
 
 Connection &ServerInterceptor::get_dispatcher_connection(
-  boost::shared_ptr<OpenBusContext> ctx,
+  OpenBusContext *ctx,
   const std::string &busid, 
   const std::string &login,
   PI::ServerRequestInfo &r)
@@ -220,7 +223,7 @@ void ServerInterceptor::receive_request_service_contexts(
   credential credential_(get_credential(*r));
   
   Connection &conn(
-    get_dispatcher_connection(_openbus_ctx, std::string(credential_.data.bus),
+    get_dispatcher_connection(_bus_ctx, std::string(credential_.data.bus),
                               std::string(credential_.data.login), *r));
 
   if (credential_.is_legacy()) 
