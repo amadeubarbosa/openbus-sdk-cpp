@@ -71,8 +71,8 @@ struct OPENBUS_SDK_DECL ORBInitializer :
   void pre_init(PortableInterceptor::ORBInitInfo_ptr);
   void post_init(PortableInterceptor::ORBInitInfo_ptr);
 
-  boost::shared_ptr<ClientInterceptor> clientInterceptor; 
-  boost::shared_ptr<ServerInterceptor> serverInterceptor;
+  PortableInterceptor::ClientRequestInterceptor_var cln_interceptor; 
+  PortableInterceptor::ServerRequestInterceptor_var srv_interceptor;
   boost::shared_ptr<orb_info> _orb_info;
 };
 

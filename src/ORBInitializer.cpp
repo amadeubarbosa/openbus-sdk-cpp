@@ -82,18 +82,25 @@ CORBA::ORB_ptr ORBInitializer(int &argc, char **argv)
     interceptors::ORBInitializer *_orb_initializer
       (dynamic_cast<interceptors::ORBInitializer *>(orb_initializer.in()));
     assert(_orb_initializer != 0);
+    
     CORBA::Object_var bus_ctx_obj(
       new OpenBusContext(orb, _orb_initializer->_orb_info));
     l.level_log(debug_level, "Registrando OpenBusContext");
     orb->register_initial_reference("OpenBusContext", bus_ctx_obj);
-    _orb_initializer->clientInterceptor->_bus_ctx_obj = bus_ctx_obj;
-    _orb_initializer->clientInterceptor->_bus_ctx =
-      dynamic_cast<OpenBusContext *>(bus_ctx_obj.in());
-    assert(_orb_initializer->clientInterceptor->_bus_ctx != 0);
-    _orb_initializer->serverInterceptor->_bus_ctx_obj = bus_ctx_obj;
-    _orb_initializer->serverInterceptor->_bus_ctx =
-      dynamic_cast<OpenBusContext *>(bus_ctx_obj.in());
-    assert(_orb_initializer->serverInterceptor->_bus_ctx != 0);
+
+    interceptors::ClientInterceptor *cln_int(
+      dynamic_cast<interceptors::ClientInterceptor *>(
+        _orb_initializer->cln_interceptor.in()));
+    cln_int->_bus_ctx_obj = bus_ctx_obj;
+    cln_int->_bus_ctx = dynamic_cast<OpenBusContext *>(bus_ctx_obj.in());
+    assert(cln_int->_bus_ctx != 0);
+    
+    interceptors::ServerInterceptor *srv_int(
+      dynamic_cast<interceptors::ServerInterceptor *>(
+        _orb_initializer->srv_interceptor.in()));
+    srv_int->_bus_ctx_obj = bus_ctx_obj;
+    srv_int->_bus_ctx = dynamic_cast<OpenBusContext *>(bus_ctx_obj.in());
+    assert(srv_int->_bus_ctx != 0);
   }
   l.log("Retornando ORB");
   return orb._retn();

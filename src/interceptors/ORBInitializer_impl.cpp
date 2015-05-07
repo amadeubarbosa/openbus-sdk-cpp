@@ -94,23 +94,23 @@ ORBInitializer::~ORBInitializer()
 
 void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo_ptr info) 
 {
-  _orb_info = boost::shared_ptr<orb_info>(new orb_info(info));
-  clientInterceptor = boost::shared_ptr<ClientInterceptor>
-    (new ClientInterceptor(_orb_info));
-  info->add_client_request_interceptor(clientInterceptor.get());
-  serverInterceptor = boost::shared_ptr<ServerInterceptor>
-    (new ServerInterceptor(_orb_info));
-  info->add_server_request_interceptor(serverInterceptor.get());
 }
 
 void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr info)
 {
+  _orb_info = boost::shared_ptr<orb_info>(new orb_info(info));
+
   IOP::CodecFactory_var codec_factory(info->codec_factory());
   IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
   _orb_info->codec = codec_factory->create_codec(cdr_encoding);
   CORBA::Object_var init_ref(info->resolve_initial_references("PICurrent"));
   _orb_info->pi_current = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_orb_info->pi_current));
+
+  cln_interceptor = new ClientInterceptor(_orb_info);
+  info->add_client_request_interceptor(cln_interceptor);
+  srv_interceptor = new ServerInterceptor(_orb_info);
+  info->add_server_request_interceptor(srv_interceptor);
 }
 
 }}
