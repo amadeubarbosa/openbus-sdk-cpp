@@ -125,13 +125,13 @@ CallerChain ClientInterceptor::get_joined_chain(Connection &conn,
   {
     return CallerChain();
   }
-  any = _orb_info->codec->decode_value(
+  any = _codec->decode_value(
     CORBA::OctetSeq(signed_chain.encoded.maximum(),
                     signed_chain.encoded.length(),
                     const_cast<unsigned char *>
                     (signed_chain.encoded.get_buffer())),
     idl_ac::_tc_CallChain);
-  // any = _orb_info->codec->decode_value(signed_chain.encoded,
+  // any = _codec->decode_value(signed_chain.encoded,
   //                                      idl_ac::_tc_CallChain);
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
   return CallerChain(conn.busid(), chain.target.in(),
@@ -292,7 +292,7 @@ void ClientInterceptor::build_credential(
   sctx.context_id = idl_cr::CredentialContextId;
   CORBA::Any any;
   any <<= credential;
-  CORBA::OctetSeq_var o(_orb_info->codec->encode_value(any));
+  CORBA::OctetSeq_var o(_codec->encode_value(any));
   sctx.context_data = o;
 
   r.add_request_service_context(sctx, true);
@@ -327,7 +327,7 @@ void ClientInterceptor::build_legacy_credential(
   sctx.context_id = 1234;
   CORBA::Any any;
   any <<= credential;
-  CORBA::OctetSeq_var o(_orb_info->codec->encode_value(any));
+  CORBA::OctetSeq_var o(_codec->encode_value(any));
   sctx.context_data = o;
   r.add_request_service_context(sctx, true);
 }

@@ -398,7 +398,6 @@ private:
   const unsigned short _port;
   CORBA::ORB_ptr _orb;
   boost::shared_ptr<interceptors::orb_info> _orb_info;
-  ::IOP::Codec_var _codec;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;
@@ -424,6 +423,7 @@ private:
   /* Variaveis que sao modificadas somente no construtor. */
   OpenBusContext &_openbusContext;
   PrivateKey _key;
+  IOP::Codec_var _codec;
   PortableInterceptor::Current_var _piCurrent;
   scs::core::IComponent_var _iComponent;
   idl_ac::AccessControl_var _access_control;

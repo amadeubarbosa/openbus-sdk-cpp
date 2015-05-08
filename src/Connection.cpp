@@ -140,12 +140,18 @@ Connection::Connection(
   const std::string host, const unsigned short port, CORBA::ORB_ptr orb, 
   boost::shared_ptr<interceptors::orb_info> i, OpenBusContext &m, 
   const ConnectionProperties &props) 
-  : _host(host), _port(port), _orb(orb), _orb_info(i), _codec(_orb_info->codec),
+  : _host(host), _port(port), _orb(orb), _orb_info(i), 
     _loginInfo(0), _invalid_login(0), _onInvalidLogin(0), _state(UNLOGGED),
     _openbusContext(m), _legacyDelegate(CALLER), _legacyEnabled(true),
     _profile2login(LRUSize), _login2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
+
+  CORBA::Object_var obj_codec(_orb->resolve_initial_references("CodecFactory"));
+  IOP::CodecFactory_var codec_factory(IOP::CodecFactory::_narrow(obj_codec.in()));
+  IOP::Encoding encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
+  _codec = codec_factory->create_codec(encoding);
+
   CORBA::Object_var init_ref(_orb->resolve_initial_references("PICurrent"));
   _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
   assert(!CORBA::is_nil(_piCurrent.in()));
@@ -409,7 +415,7 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
-    _orb_info->codec->encode_value(any));
+    _codec->encode_value(any));
 
   idl::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
