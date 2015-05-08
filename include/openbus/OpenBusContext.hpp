@@ -586,7 +586,6 @@ private:
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif
-  PortableInterceptor::ORBInitializer_var _orb_initializer_obj;
   interceptors::ORBInitializer * _orb_init;
   CORBA::ORB_ptr _orb;
   Connection *_defaultConnection;

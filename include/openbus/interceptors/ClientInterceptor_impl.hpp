@@ -57,8 +57,6 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   ORBInitializer *_orb_init;
   LRUCache<hash_value, idl_cr::SignedCallChain> _callChainLRUCache;
   OpenBusContext *_bus_ctx;
-  // PortableInterceptor::Current_var _pi_current;
-  // IOP::Codec_var _codec;
   std::map<boost::uuids::uuid, Connection *> _request_id2conn;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
