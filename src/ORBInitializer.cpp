@@ -84,7 +84,7 @@ CORBA::ORB_ptr ORBInitializer(int &argc, char **argv)
     assert(_orb_initializer != 0);
     
     CORBA::Object_var bus_ctx_obj(
-      new OpenBusContext(orb, _orb_initializer->_orb_info));
+      new OpenBusContext(orb, _orb_initializer));
     l.level_log(debug_level, "Registrando OpenBusContext");
     orb->register_initial_reference("OpenBusContext", bus_ctx_obj);
 

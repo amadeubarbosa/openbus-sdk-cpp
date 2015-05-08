@@ -33,12 +33,13 @@ bool CallerChain::is_legacy() const
 }
   
 OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb, 
-                               boost::shared_ptr<interceptors::orb_info> i)
-  : _orb(orb), _orb_info(i), _defaultConnection(0),
+                               interceptors::ORBInitializer *orb_init)
+  : _orb_init(orb_init), _orb(orb), _defaultConnection(0),
     _callDispatchCallback(0)
 {
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::OpenBusContext");
+
   CORBA::Object_var obj(_orb->resolve_initial_references("CodecFactory"));
   IOP::CodecFactory_var codec_factory(IOP::CodecFactory::_narrow(obj.in()));
   IOP::Encoding encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
@@ -57,7 +58,7 @@ std::auto_ptr<Connection> OpenBusContext::createConnection(
               "OpenBusContext::createConnection");
   l.vlog("createConnection para host %s:%hi", host.c_str(), port);
   std::auto_ptr<Connection> conn(
-    new Connection(host, port, _orb, _orb_info, *this, props));
+    new Connection(host, port, _orb, _orb_init, *this, props));
   l.vlog("connection: %p", conn.get());
   return conn;
 }
@@ -91,7 +92,7 @@ Connection *OpenBusContext::setCurrentConnection(Connection *conn)
   CORBA::Any any;
   any <<= seq;
   Connection *old(getCurrentConnection());
-  _pi_current->set_slot(_orb_info->slot.current_connection, any);
+  _pi_current->set_slot(_orb_init->current_connection, any);
   return old;
 }
 
@@ -100,7 +101,7 @@ Connection *OpenBusContext::getCurrentConnection() const
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCurrentConnection");
   CORBA::Any_var any(
-    _pi_current->get_slot(_orb_info->slot.current_connection));
+    _pi_current->get_slot(_orb_init->current_connection));
   
   Connection *conn(0);
   idl::OctetSeq seq(extract<idl::OctetSeq>(any));  
@@ -124,7 +125,7 @@ CallerChain OpenBusContext::getCallerChain()
   }
     
   CORBA::Any_var any(
-    _pi_current->get_slot(_orb_info->slot.signed_call_chain));
+    _pi_current->get_slot(_orb_init->signed_call_chain));
     
   idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
   if (signed_chain.encoded.length() == 0)
@@ -156,14 +157,14 @@ void OpenBusContext::joinChain(CallerChain const &chain)
   }
   CORBA::Any sig_any;
   sig_any <<= caller_chain._signedCallChain;
-  _pi_current->set_slot(_orb_info->slot.joined_call_chain, sig_any);
+  _pi_current->set_slot(_orb_init->joined_call_chain, sig_any);
 }
 
 void OpenBusContext::exitChain() 
 {
   log_scope l(log().general_logger(), info_level, "OpenBusContext::exitChain");
   CORBA::Any any;
-  _pi_current->set_slot(_orb_info->slot.joined_call_chain, any);    
+  _pi_current->set_slot(_orb_init->joined_call_chain, any);    
 }
 
 CallerChain OpenBusContext::getJoinedChain() const
@@ -175,7 +176,7 @@ CallerChain OpenBusContext::getJoinedChain() const
   {
     return CallerChain();
   }
-  CORBA::Any_var any(_pi_current->get_slot(_orb_info->slot.joined_call_chain));
+  CORBA::Any_var any(_pi_current->get_slot(_orb_init->joined_call_chain));
 
   idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
   if (signed_chain.encoded.length() == 0)

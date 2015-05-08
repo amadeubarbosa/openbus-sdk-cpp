@@ -24,41 +24,20 @@ namespace interceptors
 {
 struct ClientInterceptor;
 struct ServerInterceptor;
-
-struct OPENBUS_SDK_DECL Slot
-{
-  Slot(PortableInterceptor::ORBInitInfo_ptr info)
-    : current_connection(info->allocate_slot_id()),
-    joined_call_chain(info->allocate_slot_id()),
-    signed_call_chain(info->allocate_slot_id()),
-    ignore_interceptor(info->allocate_slot_id()),
-    ignore_invalid_login(info->allocate_slot_id()),
-    request_id(info->allocate_slot_id())
-  {}
-  const PortableInterceptor::SlotId current_connection, joined_call_chain,
-    signed_call_chain, ignore_interceptor, ignore_invalid_login, request_id;
-};
-
-struct orb_info
-{
-  orb_info(PortableInterceptor::ORBInitInfo_ptr);
-  PortableInterceptor::ORBInitInfo_ptr info;
-  Slot slot;
-  PortableInterceptor::Current_var pi_current;
-};
-
+struct ORBInitializer;
+  
 struct OPENBUS_SDK_DECL ignore_interceptor
 {
-  ignore_interceptor(boost::shared_ptr<orb_info>);
+  ignore_interceptor(ORBInitializer *);
   ~ignore_interceptor();
-  boost::shared_ptr<orb_info> _orb_info;
+  ORBInitializer *orb_init;
 };
 
 struct OPENBUS_SDK_DECL ignore_invalid_login
 {
-  ignore_invalid_login(boost::shared_ptr<orb_info>);
+  ignore_invalid_login(ORBInitializer *);
   ~ignore_invalid_login();
-  boost::shared_ptr<orb_info> _orb_info;
+  ORBInitializer *orb_init;
 };
 
 struct OPENBUS_SDK_DECL ORBInitializer : 
@@ -72,8 +51,10 @@ struct OPENBUS_SDK_DECL ORBInitializer :
 
   PortableInterceptor::ClientRequestInterceptor_var cln_interceptor; 
   PortableInterceptor::ServerRequestInterceptor_var srv_interceptor;
-  boost::shared_ptr<orb_info> _orb_info;
   IOP::Codec_var codec;
+  PortableInterceptor::Current_var pi_current;
+  PortableInterceptor::SlotId current_connection, joined_call_chain,
+    signed_call_chain, ignore_interceptor, ignore_invalid_login, request_id;
 };
 
 }}

@@ -62,8 +62,7 @@ struct credential
 
 struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
 {
-  ServerInterceptor(boost::shared_ptr<orb_info>,
-                    IOP::Codec_ptr);
+  ServerInterceptor(ORBInitializer *);
   void receive_request_service_contexts(PI::ServerRequestInfo_ptr);
   void receive_request(PI::ServerRequestInfo_ptr);
   void send_reply(PI::ServerRequestInfo_ptr);
@@ -75,11 +74,10 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
 #endif
-  boost::shared_ptr<orb_info> _orb_info;
+  ORBInitializer *_orb_init;
   LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
   CORBA::Object_var _bus_ctx_obj;
   OpenBusContext *_bus_ctx;
-  IOP::Codec_var _codec;
   void save_dispatcher_connection(
     Connection &,
     PI::ServerRequestInfo &,

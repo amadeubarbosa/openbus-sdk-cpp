@@ -95,7 +95,7 @@ Connection &ClientInterceptor::get_current_connection(PortableInterceptor::Clien
   log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::get_current_connection");
   Connection *conn(0);
-  CORBA::Any_var any(r.get_slot(_orb_info->slot.current_connection));
+  CORBA::Any_var any(r.get_slot(_orb_init->current_connection));
   idl::OctetSeq seq(extract<idl::OctetSeq>(any));
   if (seq.length() > 0)
   {
@@ -119,19 +119,19 @@ Connection &ClientInterceptor::get_current_connection(PortableInterceptor::Clien
 CallerChain ClientInterceptor::get_joined_chain(Connection &conn, 
                                                 PortableInterceptor::ClientRequestInfo &r)
 {
-  CORBA::Any_var any(r.get_slot(_orb_info->slot.joined_call_chain));
+  CORBA::Any_var any(r.get_slot(_orb_init->joined_call_chain));
   idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
   if (signed_chain.encoded.length() == 0)
   {
     return CallerChain();
   }
-  any = _codec->decode_value(
+  any = _orb_init->codec->decode_value(
     CORBA::OctetSeq(signed_chain.encoded.maximum(),
                     signed_chain.encoded.length(),
                     const_cast<unsigned char *>
                     (signed_chain.encoded.get_buffer())),
     idl_ac::_tc_CallChain);
-  // any = _codec->decode_value(signed_chain.encoded,
+  // any = _orb_init->codec->decode_value(signed_chain.encoded,
   //                                      idl_ac::_tc_CallChain);
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
   return CallerChain(conn.busid(), chain.target.in(),
@@ -140,7 +140,7 @@ CallerChain ClientInterceptor::get_joined_chain(Connection &conn,
 
 bool ClientInterceptor::ignore_request(PortableInterceptor::ClientRequestInfo &r)
 {
-  CORBA::Any_var any(r.get_slot(_orb_info->slot.ignore_interceptor));
+  CORBA::Any_var any(r.get_slot(_orb_init->ignore_interceptor));
   CORBA::Boolean ignore(false);
   any >>= CORBA::Any::to_boolean(ignore);
   return !!ignore;
@@ -148,7 +148,7 @@ bool ClientInterceptor::ignore_request(PortableInterceptor::ClientRequestInfo &r
 
 bool ClientInterceptor::ignore_invalid_login(PortableInterceptor::ClientRequestInfo &r)
 {
-  CORBA::Any_var any(r.get_slot(_orb_info->slot.ignore_invalid_login));
+  CORBA::Any_var any(r.get_slot(_orb_init->ignore_invalid_login));
   CORBA::Boolean ignore(false);
   any >>= CORBA::Any::to_boolean(ignore);
   return !!ignore;
@@ -292,7 +292,7 @@ void ClientInterceptor::build_credential(
   sctx.context_id = idl_cr::CredentialContextId;
   CORBA::Any any;
   any <<= credential;
-  CORBA::OctetSeq_var o(_codec->encode_value(any));
+  CORBA::OctetSeq_var o(_orb_init->codec->encode_value(any));
   sctx.context_data = o;
 
   r.add_request_service_context(sctx, true);
@@ -327,7 +327,7 @@ void ClientInterceptor::build_legacy_credential(
   sctx.context_id = 1234;
   CORBA::Any any;
   any <<= credential;
-  CORBA::OctetSeq_var o(_codec->encode_value(any));
+  CORBA::OctetSeq_var o(_orb_init->codec->encode_value(any));
   sctx.context_data = o;
   r.add_request_service_context(sctx, true);
 }
@@ -335,7 +335,7 @@ void ClientInterceptor::build_legacy_credential(
 boost::uuids::uuid ClientInterceptor::get_request_id(
   PortableInterceptor::ClientRequestInfo_ptr r)
 {
-  CORBA::Any_var any(r->get_slot(_orb_info->slot.request_id));
+  CORBA::Any_var any(r->get_slot(_orb_init->request_id));
   const char *tmp;
   if (*any >>= tmp)
   {
@@ -347,15 +347,13 @@ boost::uuids::uuid ClientInterceptor::get_request_id(
   }
 }
 
-ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p,
-                                     PortableInterceptor::Current_ptr pi_current,
-                                     IOP::Codec_ptr codec)
-  : _orb_info(p),
+ClientInterceptor::ClientInterceptor(ORBInitializer *orb_init)
+  : _orb_init(orb_init),
     _callChainLRUCache(LRUSize),
     _bus_ctx_obj(CORBA::Object::_nil()),
-    _bus_ctx(0),
-    _pi_current(pi_current),
-    _codec(codec)
+    _bus_ctx(0)
+    // _pi_current(pi_current),
+    // _codec(codec)
 { 
   log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
@@ -404,7 +402,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
 #endif
     _request_id2conn[request_id] = &conn;
   }
-  _pi_current->set_slot(_orb_info->slot.request_id, any);  
+  _orb_init->pi_current->set_slot(_orb_init->request_id, any);  
 }
 
 void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo_ptr r)
@@ -458,7 +456,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     try 
     {
       CORBA::Any_var any(
-        _codec->decode_value(sctx->context_data, idl_cr::_tc_CredentialReset));
+        _orb_init->codec->decode_value(sctx->context_data, idl_cr::_tc_CredentialReset));
       credential_reset = extract<idl_cr::CredentialReset>(any);
     }
     catch (const CORBA::Exception &) 
@@ -502,7 +500,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     }
     try
     { 
-      interceptors::ignore_invalid_login i(_orb_info);
+      interceptors::ignore_invalid_login i(_orb_init);
       if (_bus_ctx->getLoginRegistry())
       {
         validity = _bus_ctx->getLoginRegistry()->getLoginValidity(

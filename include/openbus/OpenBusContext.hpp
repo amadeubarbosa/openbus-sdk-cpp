@@ -565,7 +565,7 @@ private:
    * OpenBusContext deve ser adquirido atraves de:
    *   orb->resolve_initial_references("OpenBusContext")
    */
-  OpenBusContext(CORBA::ORB_ptr, boost::shared_ptr<interceptors::orb_info>);
+  OpenBusContext(CORBA::ORB_ptr, interceptors::ORBInitializer *);
   
   OpenBusContext(const OpenBusContext&);
   OpenBusContext &operator=(const OpenBusContext &);
@@ -586,8 +586,9 @@ private:
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif
+  PortableInterceptor::ORBInitializer_var _orb_initializer_obj;
+  interceptors::ORBInitializer * _orb_init;
   CORBA::ORB_ptr _orb;
-  boost::shared_ptr<interceptors::orb_info> _orb_info;
   ::IOP::Codec_var _codec;
   PortableInterceptor::Current_var _pi_current;
   Connection *_defaultConnection;

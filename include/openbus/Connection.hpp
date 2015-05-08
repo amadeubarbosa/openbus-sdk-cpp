@@ -141,11 +141,11 @@ private:
   SharedAuthSecret();
   SharedAuthSecret(const std::string &bus_id, idl_ac::LoginProcess_var,
                    const idl::OctetSeq &secret,
-                   boost::shared_ptr<interceptors::orb_info>);
+                   interceptors::ORBInitializer *);
   std::string busid_;
   idl_ac::LoginProcess_var login_process_;
   idl::OctetSeq secret_;
-  boost::shared_ptr<interceptors::orb_info> orb_info_;
+  interceptors::ORBInitializer *orb_initializer_;
   friend class OpenBusContext;
   friend class Connection;
 };
@@ -344,7 +344,7 @@ private:
   * Connection deve ser adquirido atraves de: OpenBusContext::createConnection()
   */
   Connection(const std::string host, const unsigned short port, CORBA::ORB_ptr, 
-             boost::shared_ptr<interceptors::orb_info>, OpenBusContext &, 
+             interceptors::ORBInitializer *, OpenBusContext &, 
              const ConnectionProperties &props);
 
   Connection(const Connection &);
@@ -396,8 +396,8 @@ private:
 
   const std::string _host;
   const unsigned short _port;
+  interceptors::ORBInitializer * _orb_init;
   CORBA::ORB_ptr _orb;
-  boost::shared_ptr<interceptors::orb_info> _orb_info;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;

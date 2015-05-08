@@ -33,12 +33,12 @@ hash_value hash(std::string operation, CORBA::ULong ticket,
 
 namespace interceptors 
 {
-ignore_interceptor::ignore_interceptor(boost::shared_ptr<orb_info> p)
-  : _orb_info(p)
+ignore_interceptor::ignore_interceptor(ORBInitializer * p)
+  : orb_init(p)
 {
   CORBA::Any ignoreInterceptorAny;
   ignoreInterceptorAny <<= CORBA::Any::from_boolean(true);
-  _orb_info->pi_current->set_slot(_orb_info->slot.ignore_interceptor, 
+  orb_init->pi_current->set_slot(orb_init->ignore_interceptor, 
                                  ignoreInterceptorAny);
 }
 
@@ -48,7 +48,7 @@ ignore_interceptor::~ignore_interceptor()
   {
     CORBA::Any ignoreInterceptorAny;
     ignoreInterceptorAny <<= CORBA::Any::from_boolean(false);
-    _orb_info->pi_current->set_slot(_orb_info->slot.ignore_interceptor, 
+    orb_init->pi_current->set_slot(orb_init->ignore_interceptor, 
                                    ignoreInterceptorAny); 
   } 
   catch (...)
@@ -56,12 +56,12 @@ ignore_interceptor::~ignore_interceptor()
   }
 }
 
-ignore_invalid_login::ignore_invalid_login(boost::shared_ptr<orb_info> p)
-  : _orb_info(p)
+ignore_invalid_login::ignore_invalid_login(ORBInitializer * p)
+  : orb_init(p)
 {
   CORBA::Any any;
   any <<= CORBA::Any::from_boolean(true);
-  _orb_info->pi_current->set_slot(_orb_info->slot.ignore_invalid_login, any); 
+  orb_init->pi_current->set_slot(orb_init->ignore_invalid_login, any); 
 }
 
 ignore_invalid_login::~ignore_invalid_login()
@@ -70,16 +70,11 @@ ignore_invalid_login::~ignore_invalid_login()
   {
     CORBA::Any any;
     any <<= CORBA::Any::from_boolean(false);
-    _orb_info->pi_current->set_slot(_orb_info->slot.ignore_invalid_login, any); 
+    orb_init->pi_current->set_slot(orb_init->ignore_invalid_login, any); 
   } 
   catch (...)
   {
   }
-}
-
-orb_info::orb_info(PI::ORBInitInfo_ptr i)
-  : info(i), slot(info)
-{
 }
 
 ORBInitializer::ORBInitializer() 
@@ -98,22 +93,25 @@ void ORBInitializer::pre_init(PortableInterceptor::ORBInitInfo_ptr info)
 
 void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr info)
 {
-  _orb_info = boost::shared_ptr<orb_info>(new orb_info(info));
-
   IOP::CodecFactory_var codec_factory(info->codec_factory());
   IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
   codec = codec_factory->create_codec(cdr_encoding);
 
   CORBA::Object_var init_ref(info->resolve_initial_references("PICurrent"));
-  _orb_info->pi_current = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(_orb_info->pi_current));
+  pi_current = PortableInterceptor::Current::_narrow(init_ref);
+  assert(!CORBA::is_nil(pi_current));
 
-  cln_interceptor = new ClientInterceptor(_orb_info,
-                                          _orb_info->pi_current.in(),
-                                          codec);
+  cln_interceptor = new ClientInterceptor(this);
   info->add_client_request_interceptor(cln_interceptor);
-  srv_interceptor = new ServerInterceptor(_orb_info, codec);
+  srv_interceptor = new ServerInterceptor(this);
   info->add_server_request_interceptor(srv_interceptor);
+
+  current_connection = info->allocate_slot_id();
+  joined_call_chain = info->allocate_slot_id();
+  signed_call_chain = info->allocate_slot_id();
+  ignore_interceptor = info->allocate_slot_id();
+  ignore_invalid_login = info->allocate_slot_id();
+  request_id = info->allocate_slot_id();
 }
 
 }}

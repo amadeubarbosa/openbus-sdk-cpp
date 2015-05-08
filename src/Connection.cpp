@@ -124,23 +124,23 @@ SharedAuthSecret::SharedAuthSecret(
   const std::string &busid,
   idl_ac::LoginProcess_var login_process,
   const idl::OctetSeq &secret,
-  boost::shared_ptr<interceptors::orb_info> orb_info)
+  interceptors::ORBInitializer *init)
   : busid_(busid), login_process_(login_process), secret_(secret),
-    orb_info_(orb_info)
+    orb_initializer_(init)
 {
 }
   
 void SharedAuthSecret::cancel()
 {
-  interceptors::ignore_interceptor i (orb_info_);
+  interceptors::ignore_interceptor i (orb_initializer_);
   login_process_->cancel();
 }
 
 Connection::Connection(
   const std::string host, const unsigned short port, CORBA::ORB_ptr orb, 
-  boost::shared_ptr<interceptors::orb_info> i, OpenBusContext &m, 
+  interceptors::ORBInitializer *orb_init, OpenBusContext &m, 
   const ConnectionProperties &props) 
-  : _host(host), _port(port), _orb(orb), _orb_info(i), 
+  : _host(host), _port(port), _orb_init(orb_init), _orb(orb),
     _loginInfo(0), _invalid_login(0), _onInvalidLogin(0), _state(UNLOGGED),
     _openbusContext(m), _legacyDelegate(CALLER), _legacyEnabled(true),
     _profile2login(LRUSize), _login2session(LRUSize)
@@ -159,7 +159,7 @@ Connection::Connection(
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
   CORBA::Object_var obj(_orb->string_to_object(corbaloc.str().c_str()));
   {
-    interceptors::ignore_interceptor _i(_orb_info);
+    interceptors::ignore_interceptor _i(_orb_init);
     _iComponent = scs::core::IComponent::_narrow(obj);
     obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
     _access_control = idl_ac::AccessControl::_narrow(obj);
@@ -174,7 +174,7 @@ Connection::Connection(
 	
   _loginCache.reset(new LoginCache(_login_registry));
   {
-    interceptors::ignore_interceptor _i(_orb_info);
+    interceptors::ignore_interceptor _i(_orb_init);
     _busid = _access_control->busid();
     idl::OctetSeq_var o(_access_control->buskey());
     _buskey.reset(new PublicKey(o));
@@ -267,7 +267,7 @@ void Connection::loginByPassword(const std::string &entity,
     throw AlreadyLoggedIn();
   }
   
-  interceptors::ignore_interceptor _i(_orb_info);
+  interceptors::ignore_interceptor _i(_orb_init);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   
   std::size_t password_size(password.size());
@@ -324,7 +324,7 @@ void Connection::loginByCertificate(const std::string &entity,
   idl::EncryptedBlock challenge;
   idl_ac::LoginProcess_var loginProcess;
   {
-    interceptors::ignore_interceptor _i(_orb_info);
+    interceptors::ignore_interceptor _i(_orb_init);
     loginProcess = _access_control->startLoginByCertificate(entity.c_str(),
                                                             challenge);
   }
@@ -347,7 +347,7 @@ void Connection::loginByCertificate(const std::string &entity,
   idl::EncryptedBlock encryptedBlock;
   std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
   
-  interceptors::ignore_interceptor _i(_orb_info);
+  interceptors::ignore_interceptor _i(_orb_init);
   idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo(0);
   try 
@@ -380,13 +380,13 @@ Connection::startSharedAuth()
   } 
   catch (...) 
   {
-    interceptors::ignore_interceptor i(_orb_info);
+    interceptors::ignore_interceptor i(_orb_init);
     login_process->cancel();
     _openbusContext.setCurrentConnection(conn);
     throw;
   }
   idl::OctetSeq secret(_key.decrypt(challenge, idl::EncryptedBlockSize));
-  return SharedAuthSecret(busid(), login_process, secret, _orb_info);
+  return SharedAuthSecret(busid(), login_process, secret, _orb_init);
 }
   
 void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
@@ -405,7 +405,7 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
     throw AlreadyLoggedIn();
   }
   
-  interceptors::ignore_interceptor _i(_orb_info);
+  interceptors::ignore_interceptor _i(_orb_init);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret.secret_;
   
@@ -491,7 +491,7 @@ bool Connection::_logout(bool local)
       static_cast<void>(save_state_); // avoid warnings
       try
       {
-        interceptors::ignore_invalid_login i(_orb_info);        
+        interceptors::ignore_invalid_login i(_orb_init);        
         _access_control->logout();
         success = true;
       }
