@@ -197,7 +197,8 @@ int main(int argc, char** argv) {
   {
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(argc, argv));
+    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
     std::auto_ptr <openbus::Connection> conn(bus_ctx->createConnection(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
     

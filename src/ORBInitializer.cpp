@@ -55,7 +55,23 @@ PortableInterceptor::ORBInitializer_var orb_initializer;
 boost::mutex _mutex;
 #endif
 
-CORBA::ORB_ptr ORBInitializer(int &argc, char **argv) 
+orb_ctx::orb_ctx(CORBA::ORB_var orb)
+  : orb_(orb)
+{
+}
+
+orb_ctx::~orb_ctx()
+{
+  try
+  {
+    orb_->destroy();
+  }
+  catch (...)
+  {
+  }  
+}
+
+orb_ctx ORBInitializer(int &argc, char **argv) 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -101,6 +117,6 @@ CORBA::ORB_ptr ORBInitializer(int &argc, char **argv)
     assert(srv_int->_bus_ctx != 0);
   }
   l.log("Retornando ORB");
-  return orb._retn();
+  return orb_ctx(orb);
 }
 }

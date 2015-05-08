@@ -7,17 +7,15 @@
 #include <tao/PortableServer/PortableServer.h>
 #include <boost/thread.hpp>
 
-openbus::OpenBusContext * get_bus_ctx(int argc, char **argv)
+openbus::OpenBusContext * get_bus_ctx(const openbus::orb_ctx &orb_ctx)
 {
-  CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));    
-  CORBA::Object_var o(orb->resolve_initial_references("RootPOA"));
+  CORBA::Object_var o(orb_ctx.orb()->resolve_initial_references("RootPOA"));
   PortableServer::POA_var poa(PortableServer::POA::_narrow(o));
   assert(!CORBA::is_nil(poa));
   PortableServer::POAManager_var poa_manager(poa->the_POAManager());
   poa_manager->activate();    
-  openbus::OpenBusContext *const bus_ctx(
-    dynamic_cast<openbus::OpenBusContext *>
-    (orb->resolve_initial_references("OpenBusContext")));
+  CORBA::Object_var obj(orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
+  openbus::OpenBusContext *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   return bus_ctx;
 }
 

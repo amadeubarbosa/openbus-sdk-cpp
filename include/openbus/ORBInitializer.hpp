@@ -16,6 +16,46 @@
 */
 namespace openbus 
 {
+
+/**
+ * \brief Representa um ORB através de um invólucro.
+ *
+ * Representa um ORB através de um invólucro que compartilha a 
+ * propriedade(ownership) sobre a instância do ORB. O destrutor 
+ * do invólucro chama orb::destroy(). A instância do ORB pode 
+ * ser obtida através do método orb().
+ *
+ */
+class orb_ctx
+{
+public:
+  /**
+   * \brief Construtor que recebe um CORBA::ORB_var.
+   */
+  orb_ctx(CORBA::ORB_var orb);
+
+  /**
+   * \brief Destrutor que chama orb::destroy().
+   */
+  ~orb_ctx();
+
+  /**
+   * \brief Compartilha a instância do ORB.
+   *
+   * Retorna um smart pointer de CORBA referente a instância do ORB que é 
+   * armazenada internamente.
+   * 
+   * @return CORBA::ORB_var
+   */
+  CORBA::ORB_var orb() const
+  {
+    return orb_;
+  }
+private:
+  orb_ctx &operator=(const orb_ctx &);
+  CORBA::ORB_var orb_;
+};
+
 /**
  * \brief Inicializa um ORB utilizado exclusivamente para chamadas
  *        através de barramentos OpenBus.
@@ -74,9 +114,9 @@ namespace openbus
  * 
  * @throw CORBA::Exception
  *
- * @return O ORB inicializado.
+ * @return Um invólucro que contêm o ORB inicializado.
  */
-  OPENBUS_SDK_DECL CORBA::ORB_ptr ORBInitializer(int &argc, char **argv);
+  OPENBUS_SDK_DECL orb_ctx ORBInitializer(int &argc, char **argv);
 }
 
 #endif

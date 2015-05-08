@@ -1,4 +1,6 @@
-project openbus/interop ;
+project openbus/interop
+  : requirements <include>../
+  ;
 
 path-constant here : . ;
 

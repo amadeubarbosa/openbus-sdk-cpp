@@ -12,13 +12,12 @@ int main(int argc, char** argv)
 {
   openbus::configuration cfg(argc, argv);
   assert(argc >= 2); // Check that there's at least one argument passed
-  CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-  CORBA::Object_ptr obj_connection_manager = 
-    orb->resolve_initial_references("OpenBusContext");
-  openbus::OpenBusContext* openbusContext = 
-    dynamic_cast<openbus::OpenBusContext *> (obj_connection_manager);
+  openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+  CORBA::Object_var obj(orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
+  openbus::OpenBusContext *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+
   std::auto_ptr <openbus::Connection> 
-    conn (openbusContext->createConnection(cfg.host(), cfg.port()));
+    conn (bus_ctx->createConnection(cfg.host(), cfg.port()));
   conn->loginByCertificate(cfg.certificate_user(), 
                            openbus::PrivateKey(argv[argc-1]));
   return 0; //MSVC

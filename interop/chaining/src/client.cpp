@@ -54,18 +54,19 @@ int main(int argc, char **argv)
     load_options(argc, argv);
     // openbus::log().set_level(openbus::debug_level);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+    CORBA::Object_var o = orb_ctx.orb()->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host, 
+    CORBA::Object_var obj(orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
+    openbus::OpenBusContext *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+
+    std::auto_ptr<openbus::Connection> conn(bus_ctx->createConnection(bus_host, 
                                                                   bus_port));
-    ctx->setDefaultConnection(conn.get());
+    bus_ctx->setDefaultConnection(conn.get());
     conn->loginByPassword(entity, entity);
 
     openbus::idl_or::ServicePropertySeq props;
@@ -77,7 +78,7 @@ int main(int argc, char **argv)
       "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0";
 
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+      bus_ctx->getOfferRegistry()->findServices(props);
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
       if (offers[idx].service_ref->_non_existent())
@@ -98,8 +99,8 @@ int main(int argc, char **argv)
         }
       }
       assert(loginId != 0);
-      openbus::CallerChain chain = ctx->makeChainFor(loginId);
-      CORBA::OctetSeq encodedChain = ctx->encodeChain(chain);
+      openbus::CallerChain chain = bus_ctx->makeChainFor(loginId);
+      CORBA::OctetSeq encodedChain = bus_ctx->encodeChain(chain);
       const char *msg = helloProxy->fetchHello(
         tecgraf::openbus::interop::chaining::OctetSeq(
           encodedChain.maximum(),

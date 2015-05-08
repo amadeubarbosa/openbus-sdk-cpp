@@ -7,9 +7,9 @@
 int main(int argc, char* argv[])
 {
   openbus::configuration cfg(argc, argv);
-  CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-  CORBA::Object_ptr obj_connection_manager = orb->resolve_initial_references("OpenBusContext");
-  openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>(obj_connection_manager);
-  assert(openbusContext != 0);
+  openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+  CORBA::Object_var obj(orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
+  openbus::OpenBusContext *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+  assert(bus_ctx != 0);
   return 0; //MSVC
 }
