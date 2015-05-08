@@ -44,7 +44,6 @@ struct orb_info
   orb_info(PortableInterceptor::ORBInitInfo_ptr);
   PortableInterceptor::ORBInitInfo_ptr info;
   Slot slot;
-  IOP::Codec_var codec;
   PortableInterceptor::Current_var pi_current;
 };
 
@@ -74,6 +73,7 @@ struct OPENBUS_SDK_DECL ORBInitializer :
   PortableInterceptor::ClientRequestInterceptor_var cln_interceptor; 
   PortableInterceptor::ServerRequestInterceptor_var srv_interceptor;
   boost::shared_ptr<orb_info> _orb_info;
+  IOP::Codec_var codec;
 };
 
 }}

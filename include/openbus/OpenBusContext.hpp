@@ -589,7 +589,7 @@ private:
   CORBA::ORB_ptr _orb;
   boost::shared_ptr<interceptors::orb_info> _orb_info;
   ::IOP::Codec_var _codec;
-  PortableInterceptor::Current_var _piCurrent;
+  PortableInterceptor::Current_var _pi_current;
   Connection *_defaultConnection;
   BusidConnection _busidConnection;
   CallDispatchCallback _callDispatchCallback;

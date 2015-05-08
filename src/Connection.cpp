@@ -153,8 +153,8 @@ Connection::Connection(
   _codec = codec_factory->create_codec(encoding);
 
   CORBA::Object_var init_ref(_orb->resolve_initial_references("PICurrent"));
-  _piCurrent = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(_piCurrent.in()));
+  _pi_current = PortableInterceptor::Current::_narrow(init_ref);
+  assert(!CORBA::is_nil(_pi_current.in()));
   std::stringstream corbaloc;
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
   CORBA::Object_var obj(_orb->string_to_object(corbaloc.str().c_str()));

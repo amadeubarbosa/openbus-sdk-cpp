@@ -102,7 +102,7 @@ void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr info)
 
   IOP::CodecFactory_var codec_factory(info->codec_factory());
   IOP::Encoding cdr_encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
-  _orb_info->codec = codec_factory->create_codec(cdr_encoding);
+  codec = codec_factory->create_codec(cdr_encoding);
 
   CORBA::Object_var init_ref(info->resolve_initial_references("PICurrent"));
   _orb_info->pi_current = PortableInterceptor::Current::_narrow(init_ref);
@@ -110,9 +110,9 @@ void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr info)
 
   cln_interceptor = new ClientInterceptor(_orb_info,
                                           _orb_info->pi_current.in(),
-                                          _orb_info->codec);
+                                          codec);
   info->add_client_request_interceptor(cln_interceptor);
-  srv_interceptor = new ServerInterceptor(_orb_info, _orb_info->codec);
+  srv_interceptor = new ServerInterceptor(_orb_info, codec);
   info->add_server_request_interceptor(srv_interceptor);
 }
 

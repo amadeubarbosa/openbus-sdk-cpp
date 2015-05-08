@@ -424,7 +424,7 @@ private:
   OpenBusContext &_openbusContext;
   PrivateKey _key;
   IOP::Codec_var _codec;
-  PortableInterceptor::Current_var _piCurrent;
+  PortableInterceptor::Current_var _pi_current;
   scs::core::IComponent_var _iComponent;
   idl_ac::AccessControl_var _access_control;
   idl_ac::LoginRegistry_var _login_registry;
