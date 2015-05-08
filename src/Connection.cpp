@@ -147,14 +147,6 @@ Connection::Connection(
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
 
-  CORBA::Object_var obj_codec(_orb->resolve_initial_references("CodecFactory"));
-  IOP::CodecFactory_var codec_factory(IOP::CodecFactory::_narrow(obj_codec.in()));
-  IOP::Encoding encoding = {IOP::ENCODING_CDR_ENCAPS, 1, 2};
-  _codec = codec_factory->create_codec(encoding);
-
-  CORBA::Object_var init_ref(_orb->resolve_initial_references("PICurrent"));
-  _pi_current = PortableInterceptor::Current::_narrow(init_ref);
-  assert(!CORBA::is_nil(_pi_current.in()));
   std::stringstream corbaloc;
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
   CORBA::Object_var obj(_orb->string_to_object(corbaloc.str().c_str()));
@@ -280,7 +272,7 @@ void Connection::loginByPassword(const std::string &entity,
          loginAuthenticationInfo.hash);
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_codec->encode_value(any));
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_orb_init->codec->encode_value(any));
 
   idl::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
@@ -338,7 +330,7 @@ void Connection::loginByCertificate(const std::string &entity,
   
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
-  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_codec->encode_value(any));
+  CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_orb_init->codec->encode_value(any));
   
   idl::OctetSeq encrypted(_buskey->encrypt(
     encodedLoginAuthenticationInfo->get_buffer(), 
@@ -415,7 +407,7 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   CORBA::Any any;
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
-    _codec->encode_value(any));
+    _orb_init->codec->encode_value(any));
 
   idl::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 

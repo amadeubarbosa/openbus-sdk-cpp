@@ -56,7 +56,6 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   boost::uuids::uuid get_request_id(PI::ClientRequestInfo_ptr);
   ORBInitializer *_orb_init;
   LRUCache<hash_value, idl_cr::SignedCallChain> _callChainLRUCache;
-  CORBA::Object_var _bus_ctx_obj;
   OpenBusContext *_bus_ctx;
   // PortableInterceptor::Current_var _pi_current;
   // IOP::Codec_var _codec;

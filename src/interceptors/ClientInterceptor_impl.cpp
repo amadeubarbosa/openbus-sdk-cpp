@@ -350,10 +350,7 @@ boost::uuids::uuid ClientInterceptor::get_request_id(
 ClientInterceptor::ClientInterceptor(ORBInitializer *orb_init)
   : _orb_init(orb_init),
     _callChainLRUCache(LRUSize),
-    _bus_ctx_obj(CORBA::Object::_nil()),
     _bus_ctx(0)
-    // _pi_current(pi_current),
-    // _codec(codec)
 { 
   log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");

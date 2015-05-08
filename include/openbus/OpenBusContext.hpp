@@ -589,8 +589,6 @@ private:
   PortableInterceptor::ORBInitializer_var _orb_initializer_obj;
   interceptors::ORBInitializer * _orb_init;
   CORBA::ORB_ptr _orb;
-  ::IOP::Codec_var _codec;
-  PortableInterceptor::Current_var _pi_current;
   Connection *_defaultConnection;
   BusidConnection _busidConnection;
   CallDispatchCallback _callDispatchCallback;

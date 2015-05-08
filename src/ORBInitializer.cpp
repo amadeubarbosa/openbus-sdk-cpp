@@ -91,14 +91,12 @@ CORBA::ORB_ptr ORBInitializer(int &argc, char **argv)
     interceptors::ClientInterceptor *cln_int(
       dynamic_cast<interceptors::ClientInterceptor *>(
         _orb_initializer->cln_interceptor.in()));
-    cln_int->_bus_ctx_obj = bus_ctx_obj;
     cln_int->_bus_ctx = dynamic_cast<OpenBusContext *>(bus_ctx_obj.in());
     assert(cln_int->_bus_ctx != 0);
     
     interceptors::ServerInterceptor *srv_int(
       dynamic_cast<interceptors::ServerInterceptor *>(
         _orb_initializer->srv_interceptor.in()));
-    srv_int->_bus_ctx_obj = bus_ctx_obj;
     srv_int->_bus_ctx = dynamic_cast<OpenBusContext *>(bus_ctx_obj.in());
     assert(srv_int->_bus_ctx != 0);
   }

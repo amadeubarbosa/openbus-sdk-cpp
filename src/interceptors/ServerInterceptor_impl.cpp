@@ -30,9 +30,7 @@ Session::Session(const std::string &login)
 ServerInterceptor::ServerInterceptor(ORBInitializer *orb_init)
   : _orb_init(orb_init),
     _sessionLRUCache(LRUSize),
-    _bus_ctx_obj(CORBA::Object::_nil()),
     _bus_ctx(0)
-    // _codec(codec)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");

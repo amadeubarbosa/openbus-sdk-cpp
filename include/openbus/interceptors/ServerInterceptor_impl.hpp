@@ -76,7 +76,6 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
 #endif
   ORBInitializer *_orb_init;
   LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
-  CORBA::Object_var _bus_ctx_obj;
   OpenBusContext *_bus_ctx;
   void save_dispatcher_connection(
     Connection &,
