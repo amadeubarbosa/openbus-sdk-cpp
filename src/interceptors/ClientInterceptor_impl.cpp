@@ -417,7 +417,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   CORBA::Any_var any = r->received_exception();
 
   TAO::Any_Dual_Impl_T<CORBA::Exception> *any_impl =
-    dynamic_cast <TAO::Any_Dual_Impl_T<CORBA::Exception> *> (any->impl());
+    static_cast <TAO::Any_Dual_Impl_T<CORBA::Exception> *> (any->impl());
   if (!any_impl)
   {
     return;
