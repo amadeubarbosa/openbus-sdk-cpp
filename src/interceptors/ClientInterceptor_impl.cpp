@@ -348,12 +348,14 @@ boost::uuids::uuid ClientInterceptor::get_request_id(
 }
 
 ClientInterceptor::ClientInterceptor(boost::shared_ptr<orb_info> p,
-  PortableInterceptor::Current_ptr pi_current)
+                                     PortableInterceptor::Current_ptr pi_current,
+                                     IOP::Codec_ptr codec)
   : _orb_info(p),
     _callChainLRUCache(LRUSize),
     _bus_ctx_obj(CORBA::Object::_nil()),
     _bus_ctx(0),
-    _pi_current(pi_current)
+    _pi_current(pi_current),
+    _codec(codec)
 { 
   log_scope l(log().general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
@@ -456,7 +458,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     try 
     {
       CORBA::Any_var any(
-        _orb_info->codec->decode_value(sctx->context_data, idl_cr::_tc_CredentialReset));
+        _codec->decode_value(sctx->context_data, idl_cr::_tc_CredentialReset));
       credential_reset = extract<idl_cr::CredentialReset>(any);
     }
     catch (const CORBA::Exception &) 

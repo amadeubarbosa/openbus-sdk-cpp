@@ -27,11 +27,13 @@ Session::Session(const std::string &login)
     boost::uuids::hash_value(boost::uuids::random_generator()()));
 }
 
-ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p)
+ServerInterceptor::ServerInterceptor(boost::shared_ptr<orb_info> p,
+                                     IOP::Codec_ptr codec)
   : _orb_info(p),
     _sessionLRUCache(LRUSize),
     _bus_ctx_obj(CORBA::Object::_nil()),
-    _bus_ctx(0)
+    _bus_ctx(0),
+    _codec(codec)
 {
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");
@@ -59,7 +61,7 @@ void ServerInterceptor::send_credential_reset(
               idl::EncryptedBlockSize);
   CORBA::Any any;
   any <<= credentialReset;
-  CORBA::OctetSeq_var o(_orb_info->codec->encode_value(any));
+  CORBA::OctetSeq_var o(_codec->encode_value(any));
   IOP::ServiceContext serviceContext;
   serviceContext.context_id = idl_cr::CredentialContextId;
   CORBA::OctetSeq s(o->length(), o->length(), o->get_buffer(), 0);
@@ -77,7 +79,7 @@ credential ServerInterceptor::get_credential(PI::ServerRequestInfo &r) const
     IOP::ServiceContext_var sc(
       r.get_request_service_context(idl_cr::CredentialContextId));
     CORBA::Any_var any(
-      _orb_info->codec->decode_value(sc->context_data,
+      _codec->decode_value(sc->context_data,
                            idl_cr::_tc_CredentialData));
 
     idl_cr::CredentialData credential_data(
@@ -90,7 +92,7 @@ credential ServerInterceptor::get_credential(PI::ServerRequestInfo &r) const
     {
       IOP::ServiceContext_var sc(r.get_request_service_context(1234));
       CORBA::Any_var any(
-        _orb_info->codec->decode_value(sc->context_data,
+        _codec->decode_value(sc->context_data,
                              openbus::legacy::v1_5::_tc_Credential));
 
       openbus::legacy::v1_5::Credential legacy_credential(
@@ -138,7 +140,7 @@ void ServerInterceptor::build_legacy_chain(
   }
   CORBA::Any legacy_chain_any;
   legacy_chain_any <<= legacyChain;
-  CORBA::OctetSeq_var legacy_chain_cdr(_orb_info->codec->encode_value(legacy_chain_any));
+  CORBA::OctetSeq_var legacy_chain_cdr(_codec->encode_value(legacy_chain_any));
   idl_cr::SignedCallChain signed_legacy_chain;
   std::memset(signed_legacy_chain.signature, '\0', idl::EncryptedBlockSize);
   signed_legacy_chain.encoded = idl::OctetSeq(
@@ -306,7 +308,7 @@ void ServerInterceptor::receive_request_service_contexts(
                       credential_.data.chain.encoded.length(),
                       credential_.data.chain.encoded.get_buffer());
     CORBA::Any_var any(
-      _orb_info->codec->decode_value(o, idl_ac::_tc_CallChain));
+      _codec->decode_value(o, idl_ac::_tc_CallChain));
 
     idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
     if (std::strcmp(chain.target, conn._login()->entity)) 
