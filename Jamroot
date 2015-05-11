@@ -244,19 +244,55 @@ install stage
   : <location>install
   ;
 
-# feature.feature core-idl-diff
-#   : off on
-#   : composite link-incompatible
-#   ;
-  
-# install stage-stubs
-#   : cpp-h-stub
-#   : <location>install/stubs
-#     <install-dependencies>on
-#     <install-type>CPP
-#     <install-type>H
-#   ;
-# explicit stage-stubs ;
+tao-idl.cpp-h install-access_control_idl
+  : $(openbus-idl-path)/access_control.idl
+  ;
+explicit install-access_control_idl ;
+
+tao-idl.cpp-h install-core_idl
+  : $(openbus-idl-path)/core.idl
+  ;
+explicit core_idl ;
+
+tao-idl.cpp-h install-credential_idl
+  : $(openbus-idl-path)/credential.idl
+  ;
+explicit install-credential_idl ;
+
+tao-idl.cpp-h install-offer_registry_idl
+  : $(openbus-idl-path)/offer_registry.idl
+  ;
+explicit offer_registry_idl ;
+
+tao-idl.cpp-h install-data_export_idl
+  : $(openbus-idl-path)/data_export.idl
+  ;
+explicit data_export_idl ;
+
+tao-idl.cpp-h install-credential_v1_5_idl
+  : $(here)/legacy/idl/credential_v1_5.idl
+  ;
+explicit credential_v1_5_idl ;
+
+tao-idl.cpp-h install-scs_idl
+  : $(scs-idl-path)/scs.idl
+  ;
+explicit scs_idl ;
+
+install stage-stubs
+  : install-access_control_idl
+    install-core_idl
+    install-credential_idl
+    install-offer_registry_idl
+    install-data_export_idl
+    install-credential_v1_5_idl
+    install-scs_idl
+  : <location>install/stubs
+    <install-dependencies>on
+    <install-type>CPP
+    <install-type>H
+  ;
+explicit stage-stubs ;
 
 install stage-tests : tests//tests : <location>stage-tests ;
 explicit stage-tests ;
