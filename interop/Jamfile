@@ -11,8 +11,6 @@ if ! $(boost-process-root-path)
 project openbus/interop/run
   : requirements
     <toolset>msvc:<define>_CRT_SECURE_NO_WARNINGS
-    <toolset>clang:<cxxflags>-std=c++11
-    <toolset>gcc:<cxxflags>-std=c++11
     <threading>multi
   : default-build
     <link>shared
@@ -42,6 +40,8 @@ exe run-cpp11
     /boost//system
     /boost//iostreams
   : <include>$(boost-process-root-path)
+    <toolset>clang:<cxxflags>-std=c++11
+    <toolset>gcc:<cxxflags>-std=c++11
   ;
 explicit run-cpp11 ;
 
