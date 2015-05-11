@@ -92,8 +92,8 @@ struct onReloginCallback
 
 int main(int argc, char** argv)
 {
-  CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-  CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+  openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+  CORBA::Object_var o = orb_ctx.orb()->resolve_initial_references("RootPOA");
   PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
   assert(!CORBA::is_nil(poa));
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
@@ -140,12 +140,12 @@ int main(int argc, char** argv)
   }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-  boost::thread orb_thread(boost::bind(&run_orb, orb));
+  boost::thread orb_thread(boost::bind(&run_orb, orb_ctx.orb()));
 #endif
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-    (orb->resolve_initial_references("OpenBusContext"));
+    (orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
   std::auto_ptr <openbus::Connection> conn;
   do
@@ -255,7 +255,7 @@ int main(int argc, char** argv)
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
 #else
-    orb->run();
+    orb_ctx.orb()->run();
 #endif
   }
   catch(offer_registry::InvalidService const&)

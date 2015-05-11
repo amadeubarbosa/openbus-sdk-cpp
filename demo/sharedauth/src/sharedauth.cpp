@@ -153,8 +153,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  // Inicializando CORBA e ativando o RootPOA
-  CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
+  openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
 
   unsigned short bus_port = 2089;
   std::string bus_host = "localhost";
@@ -184,7 +183,7 @@ int main(int argc, char** argv)
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-    (orb->resolve_initial_references("OpenBusContext"));
+    (orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
   std::auto_ptr <openbus::Connection> conn;
 
