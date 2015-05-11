@@ -252,7 +252,7 @@ explicit install-access_control_idl ;
 tao-idl.cpp-h install-core_idl
   : $(openbus-idl-path)/core.idl
   ;
-explicit core_idl ;
+explicit install-core_idl ;
 
 tao-idl.cpp-h install-credential_idl
   : $(openbus-idl-path)/credential.idl
@@ -262,22 +262,22 @@ explicit install-credential_idl ;
 tao-idl.cpp-h install-offer_registry_idl
   : $(openbus-idl-path)/offer_registry.idl
   ;
-explicit offer_registry_idl ;
+explicit install-offer_registry_idl ;
 
 tao-idl.cpp-h install-data_export_idl
   : $(openbus-idl-path)/data_export.idl
   ;
-explicit data_export_idl ;
+explicit install-data_export_idl ;
 
 tao-idl.cpp-h install-credential_v1_5_idl
   : $(here)/legacy/idl/credential_v1_5.idl
   ;
-explicit credential_v1_5_idl ;
+explicit install-credential_v1_5_idl ;
 
 tao-idl.cpp-h install-scs_idl
   : $(scs-idl-path)/scs.idl
   ;
-explicit scs_idl ;
+explicit install-scs_idl ;
 
 install stage-stubs
   : install-access_control_idl
