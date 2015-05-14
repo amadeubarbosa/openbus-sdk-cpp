@@ -155,8 +155,9 @@ bool registerService(scs::core::IComponent_var component, offer_registry::Servic
 int main(int argc, char** argv)
 {
   // Inicializando CORBA e ativando o RootPOA
-  openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
-  CORBA::Object_var o = orb_ctx.orb()->resolve_initial_references("RootPOA");
+  boost::shared_ptr<openbus::orb_ctx> 
+    orb_ctx(openbus::ORBInitializer(argc, argv));
+  CORBA::Object_var o = orb_ctx->orb()->resolve_initial_references("RootPOA");
   PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
   assert(!CORBA::is_nil(poa));
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
@@ -193,12 +194,12 @@ int main(int argc, char** argv)
   }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-  boost::thread orb_thread(boost::bind(&run_orb, orb_ctx.orb()));
+  boost::thread orb_thread(boost::bind(&run_orb, orb_ctx->orb()));
 #endif
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-    (orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
+    (orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
   std::auto_ptr <openbus::Connection> conn;
   do
@@ -244,17 +245,17 @@ int main(int argc, char** argv)
   while(true);
 
   scs::core::ComponentId componentId = { "Greetings", '1', '0', '0', "" };
-  scs::core::ComponentContext english_greetings_component(orb_ctx.orb(), componentId);
+  scs::core::ComponentContext english_greetings_component(orb_ctx->orb(), componentId);
   GreetingsImpl english_greetings_servant("Hello");
   english_greetings_component.addFacet
     ("greetings", _tc_Greetings->id(), &english_greetings_servant);
 
-  scs::core::ComponentContext portuguese_greetings_component(orb_ctx.orb(), componentId);
+  scs::core::ComponentContext portuguese_greetings_component(orb_ctx->orb(), componentId);
   GreetingsImpl portuguese_greetings_servant("Olá");
   portuguese_greetings_component.addFacet
     ("greetings", _tc_Greetings->id(), &portuguese_greetings_servant);
 
-  scs::core::ComponentContext german_greetings_component(orb_ctx.orb(), componentId);
+  scs::core::ComponentContext german_greetings_component(orb_ctx->orb(), componentId);
   GreetingsImpl german_greetings_servant("Guten Tag");
   german_greetings_component.addFacet
     ("greetings", _tc_Greetings->id(), &german_greetings_servant);
@@ -284,7 +285,7 @@ int main(int argc, char** argv)
 #ifdef OPENBUS_SDK_MULTITHREAD
   orb_thread.join();
 #else
-  orb_ctx.orb()->run();
+  orb_ctx->orb()->run();
 #endif
 }
 

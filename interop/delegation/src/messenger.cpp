@@ -127,7 +127,8 @@ int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
     std::auto_ptr <openbus::Connection> conn(
       bus_ctx->createConnection(bus_host, bus_port));
@@ -143,7 +144,8 @@ int main(int argc, char** argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "C++";
-    scs::core::ComponentContext messenger_component(bus_ctx->orb(), componentId);
+    scs::core::ComponentContext
+      messenger_component(bus_ctx->orb(), componentId);
     MessengerImpl messenger_servant(*bus_ctx);
     messenger_component.addFacet(
       "messenger", delegation::_tc_Messenger->id(), &messenger_servant);

@@ -91,7 +91,8 @@ int main(int argc, char** argv)
 {
   try
   {
-    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
 
     boost::optional<openbus::PrivateKey> private_key;
     unsigned short bus_port(2089);
@@ -126,12 +127,12 @@ int main(int argc, char** argv)
     }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-  boost::thread orb_thread(boost::bind(&run_orb, orb_ctx.orb()));
+  boost::thread orb_thread(boost::bind(&run_orb, orb_ctx->orb()));
 #endif
 
   openbus::OpenBusContext *bus_ctx(
     dynamic_cast<openbus::OpenBusContext*>(
-      orb_ctx.orb()->resolve_initial_references("OpenBusContext")));
+      orb_ctx->orb()->resolve_initial_references("OpenBusContext")));
     assert(bus_ctx != 0);
     std::auto_ptr <openbus::Connection> conn(
       bus_ctx->createConnection(bus_host, bus_port));
@@ -180,7 +181,7 @@ int main(int argc, char** argv)
 #ifdef OPENBUS_SDK_MULTITHREAD
       orb_thread.join();
 #else
-      orb_ctx.orb()->run();
+      orb_ctx->orb()->run();
 #endif
     }
   }

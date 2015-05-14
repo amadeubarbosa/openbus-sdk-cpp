@@ -56,13 +56,15 @@ void load_options(int argc, char **argv)
   }
 }
 
-struct HelloProxyImpl : virtual public POA_tecgraf::openbus::interop::chaining::HelloProxy
+struct HelloProxyImpl :
+  virtual public POA_tecgraf::openbus::interop::chaining::HelloProxy
 {
   HelloProxyImpl(openbus::OpenBusContext &c) : ctx(c)
   {
   }
 
-  char *fetchHello(const ::tecgraf::openbus::interop::chaining::OctetSeq &encodedChain)
+  char *fetchHello(
+    const ::tecgraf::openbus::interop::chaining::OctetSeq &encodedChain)
   {
     openbus::CallerChain chain = ctx.decodeChain(
       CORBA::OctetSeq(encodedChain.maximum(), encodedChain.length(),
@@ -160,10 +162,11 @@ int main(int argc, char **argv)
     load_options(argc, argv);
     // openbus::log().set_level(openbus::debug_level);
 
-    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
-    std::auto_ptr<openbus::Connection> conn = bus_ctx->createConnection(bus_host,
-                                                                    bus_port);
+    std::auto_ptr<openbus::Connection>
+      conn(bus_ctx->createConnection(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -186,7 +189,8 @@ int main(int argc, char **argv)
     conn->onInvalidLogin(on_invalid_login(*bus_ctx, comp, props, *conn));
 
     HelloProxyImpl proxy(*bus_ctx);
-    comp.addFacet("HelloProxy", "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0",
+    comp.addFacet("HelloProxy",
+		  "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0",
                   &proxy);
     login_register(*bus_ctx, comp, props, *conn);
 #ifdef OPENBUS_SDK_MULTITHREAD

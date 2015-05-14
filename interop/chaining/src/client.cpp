@@ -54,15 +54,18 @@ int main(int argc, char **argv)
     load_options(argc, argv);
     // openbus::log().set_level(openbus::debug_level);
 
-    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
-    CORBA::Object_var o = orb_ctx.orb()->resolve_initial_references("RootPOA");
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
+    CORBA::Object_var o = orb_ctx->orb()->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    CORBA::Object_var obj(orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
-    openbus::OpenBusContext *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+    CORBA::Object_var
+      obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
+    openbus::OpenBusContext
+      *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
     std::auto_ptr<openbus::Connection> conn(bus_ctx->createConnection(bus_host, 
                                                                   bus_port));
@@ -85,7 +88,8 @@ int main(int argc, char **argv)
       {
         continue;
       }
-      CORBA::Object_var o = offers[idx].service_ref->getFacetByName("HelloProxy");
+      CORBA::Object_var
+	o(offers[idx].service_ref->getFacetByName("HelloProxy"));
       tecgraf::openbus::interop::chaining::HelloProxy *helloProxy = 
         tecgraf::openbus::interop::chaining::HelloProxy::_narrow(o);
       openbus::idl_or::ServicePropertySeq properties = offers[idx].properties;

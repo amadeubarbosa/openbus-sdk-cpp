@@ -10,6 +10,7 @@
 #include "openbus/decl.hpp"
 
 #include <tao/ORB.h>
+#include <boost/shared_ptr.hpp>
 
 /**
 * \brief openbus
@@ -26,7 +27,7 @@ namespace openbus
  * ser obtida através do método orb().
  *
  */
-class orb_ctx
+class OPENBUS_SDK_DECL orb_ctx
 {
 public:
   /**
@@ -70,10 +71,7 @@ private:
  * CORBA::ORB::resolve_initial_reference("OpenBusContext")
  *
  * O ORB é inicializado da mesma forma feita pela operação
- * 'CORBA::ORB_init' definida pelo padrão CORBA. Em particular,
- * algumas implementações de CORBA não permitem inicialização de
- * múltiplos ORBs num mesmo processo, como por exemplo o ORB Mico
- * 2.3.13.
+ * 'CORBA::ORB_init' definida pelo padrão CORBA. 
  * 
  * Chamadas realizadas e recebidas através deste ORB são interceptadas
  * pela biblioteca de acesso do OpenBus e podem lançar exceções de
@@ -101,22 +99,16 @@ private:
  *    representa um bug no servidor sendo chamado ou um erro de
  *    implantação do barramento.
  * 
- * @return O ORB inicializado, similar à operação 'CORBA::ORB_init'
- * definida pelo padrão CORBA.
- *
- * Atenção: O Mico 2.3.13 não permite a inicialização de mais de um
- *          ORB. Após uma primeira chamada bem sucedida de
- *          ORBInitializer(), todas as chamadas consecutivas
- *          retornarão o mesmo ORB que foi criado na primeira chamada.
- * 
  * @param[in] argc Número de parâmetros usados na inicialização do ORB.
  * @param[in] argv Parâmetros usados na inicialização do ORB.
  * 
  * @throw CORBA::Exception
  *
- * @return Um invólucro que contêm o ORB inicializado.
+ * @return Uma referencia do tipo boost::shared_ptr para um 
+ * invólucro que contêm o ORB inicializado.
  */
-  OPENBUS_SDK_DECL orb_ctx ORBInitializer(int &argc, char **argv);
+  OPENBUS_SDK_DECL boost::shared_ptr<orb_ctx>
+  ORBInitializer(int &argc, char **argv);
 }
 
 #endif

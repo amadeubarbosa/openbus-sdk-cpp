@@ -92,7 +92,8 @@ struct forwarding_thread
   }
 };
 
-struct ForwarderImpl : virtual public POA_tecgraf::openbus::interop::delegation::Forwarder {
+struct ForwarderImpl :
+  virtual public POA_tecgraf::openbus::interop::delegation::Forwarder {
   ForwarderImpl(openbus::OpenBusContext& c, delegation::Messenger_var messenger)
     : ctx(c), messenger(messenger) {}
 
@@ -197,9 +198,11 @@ int main(int argc, char** argv) {
   {
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
-    std::auto_ptr <openbus::Connection> conn(bus_ctx->createConnection(bus_host, bus_port));
+    std::auto_ptr <openbus::Connection>
+      conn(bus_ctx->createConnection(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
     
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -229,7 +232,8 @@ int main(int argc, char** argv) {
       componentId.minor_version = '0';
       componentId.patch_version = '0';
       componentId.platform_spec = "C++";
-      scs::core::ComponentContext forwarder_component(bus_ctx->orb(), componentId);
+      scs::core::ComponentContext
+	forwarder_component(bus_ctx->orb(), componentId);
     
       ForwarderImpl forwarder_servant(*bus_ctx, m);
       forwarder_component.addFacet(

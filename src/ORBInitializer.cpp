@@ -11,6 +11,7 @@
   #include <boost/thread.hpp>
   #include <boost/thread/once.hpp>
 #endif
+#include <boost/make_shared.hpp>
 
 #include <memory>
 
@@ -71,7 +72,7 @@ orb_ctx::~orb_ctx()
   }  
 }
 
-orb_ctx ORBInitializer(int &argc, char **argv) 
+boost::shared_ptr<orb_ctx> ORBInitializer(int &argc, char **argv) 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -117,6 +118,6 @@ orb_ctx ORBInitializer(int &argc, char **argv)
     assert(srv_int->_bus_ctx != 0);
   }
   l.log("Retornando ORB");
-  return orb_ctx(orb);
+  return boost::make_shared<orb_ctx>(orb);
 }
 }

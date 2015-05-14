@@ -104,8 +104,9 @@ void clock_loop()
 
 int main(int argc, char** argv)
 {
-  openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
-  CORBA::Object_var o = orb_ctx.orb()->resolve_initial_references("RootPOA");
+  boost::shared_ptr<openbus::orb_ctx> 
+    orb_ctx(openbus::ORBInitializer(argc, argv));
+  CORBA::Object_var o = orb_ctx->orb()->resolve_initial_references("RootPOA");
   PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
   assert(!CORBA::is_nil(poa));
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
@@ -141,11 +142,11 @@ int main(int argc, char** argv)
       bus_port = vm["bus-port"].as<unsigned int>();
   }
 
-  boost::thread orb_thread(boost::bind(&run_orb, orb_ctx.orb()));
+  boost::thread orb_thread(boost::bind(&run_orb, orb_ctx->orb()));
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-    (orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
+    (orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
   std::auto_ptr <openbus::Connection> conn;
   do

@@ -67,7 +67,8 @@ int main(int argc, char **argv)
   {
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
     for (std::size_t busIdx = 0; busIdx != 2; ++busIdx)
     {

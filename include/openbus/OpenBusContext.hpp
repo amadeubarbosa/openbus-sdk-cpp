@@ -592,7 +592,8 @@ private:
   BusidConnection _busidConnection;
   CallDispatchCallback _callDispatchCallback;
 
-  friend orb_ctx openbus::ORBInitializer(int &argc, char **argv);
+  friend boost::shared_ptr<orb_ctx> openbus::ORBInitializer(
+    int &argc, char **argv);
 };
 }
 

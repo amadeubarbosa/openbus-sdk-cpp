@@ -27,7 +27,8 @@ void ORBRun(CORBA::ORB_var orb)
 struct BroadcasterImpl : 
   virtual public POA_tecgraf::openbus::interop::delegation::Broadcaster
 {
-  BroadcasterImpl(openbus::OpenBusContext& c, delegation::Messenger_var messenger)
+  BroadcasterImpl(openbus::OpenBusContext& c,
+		  delegation::Messenger_var messenger)
     : ctx(c), messenger(messenger) {}
 
   void post(const char* message)
@@ -111,9 +112,11 @@ int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
-    std::auto_ptr <openbus::Connection> conn(bus_ctx->createConnection(bus_host, bus_port));
+    std::auto_ptr <openbus::Connection>
+      conn(bus_ctx->createConnection(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
     
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -126,8 +129,10 @@ int main(int argc, char** argv) {
     properties.length(2);
     properties[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
     properties[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    properties[static_cast<CORBA::ULong>(1)].name  = "openbus.component.interface";
-    properties[static_cast<CORBA::ULong>(1)].value = delegation::_tc_Messenger->id();
+    properties[static_cast<CORBA::ULong>(1)].name  =
+      "openbus.component.interface";
+    properties[static_cast<CORBA::ULong>(1)].value =
+      delegation::_tc_Messenger->id();
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
       find_offers(bus_ctx, properties);
     
@@ -143,7 +148,8 @@ int main(int argc, char** argv) {
       componentId.minor_version = '0';
       componentId.patch_version = '0';
       componentId.platform_spec = "C++";
-      scs::core::ComponentContext broadcaster_component(bus_ctx->orb(), componentId);
+      scs::core::ComponentContext
+	broadcaster_component(bus_ctx->orb(), componentId);
     
       BroadcasterImpl broadcaster_servant(*bus_ctx, m);
       broadcaster_component.addFacet(

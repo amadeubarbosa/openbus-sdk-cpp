@@ -37,14 +37,17 @@ void call_orb(CORBA::ORB_var orb)
 int main(int argc, char** argv)
 {
   openbus::configuration cfg(argc, argv);
-  openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
+  boost::shared_ptr<openbus::orb_ctx>
+    orb_ctx(openbus::ORBInitializer(argc, argv));
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-  boost::thread orb_thread(boost::bind(&call_orb, orb_ctx.orb()));
+  boost::thread orb_thread(boost::bind(&call_orb, orb_ctx->orb()));
 #endif
 
-  CORBA::Object_var obj(orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
-  openbus::OpenBusContext *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+  CORBA::Object_var
+    obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
+  openbus::OpenBusContext
+    *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
   std::auto_ptr <openbus::Connection> conn(
     bus_ctx->createConnection(cfg.host(), cfg.port()));
@@ -57,7 +60,8 @@ int main(int argc, char** argv)
   componentId.minor_version = '0';
   componentId.patch_version = '0';
   componentId.platform_spec = "";    
-  CORBA::Object_var poa_obj = orb_ctx.orb()->resolve_initial_references("RootPOA");
+  CORBA::Object_var
+    poa_obj(orb_ctx->orb()->resolve_initial_references("RootPOA"));
   PortableServer::POA_var poa = PortableServer::POA::_narrow(poa_obj);
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
   poa_manager->activate();
@@ -105,7 +109,7 @@ int main(int argc, char** argv)
   conn.reset();
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-  orb_ctx.orb()->shutdown(true);
+  orb_ctx->orb()->shutdown(true);
   orb_thread.join();
 #endif
   return 0; //MSVC

@@ -137,17 +137,20 @@ int main(int argc, char **argv)
     load_options(argc, argv);
     // openbus::log().set_level(openbus::debug_level);
 
-    openbus::orb_ctx orb_ctx(openbus::ORBInitializer(argc, argv));
-    CORBA::Object_var o = orb_ctx.orb()->resolve_initial_references("RootPOA");
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
+    CORBA::Object_var o = orb_ctx->orb()->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    CORBA::Object_var obj(orb_ctx.orb()->resolve_initial_references("OpenBusContext"));
-    openbus::OpenBusContext *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
-    std::auto_ptr<openbus::Connection> conn = bus_ctx->createConnection(bus_host,
-                                                                    bus_port);
+    CORBA::Object_var
+      obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
+    openbus::OpenBusContext
+      *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+    std::auto_ptr<openbus::Connection>
+      conn(bus_ctx->createConnection(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
 
 #ifdef OPENBUS_SDK_MULTITHREAD
