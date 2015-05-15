@@ -172,7 +172,7 @@ int main(int argc, char **argv)
   catch (const CORBA::Exception &e) 
   {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
-    return -1;
+    throw;
   }
   return 0; //MSVC
 }

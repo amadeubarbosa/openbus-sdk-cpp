@@ -346,6 +346,7 @@ install stage-deps
   : openbus
     /boost//program_options
     /boost//date_time
+    /boost//filesystem
   : <location>install/deps
     <install-dependencies>on
     <install-type>LIB

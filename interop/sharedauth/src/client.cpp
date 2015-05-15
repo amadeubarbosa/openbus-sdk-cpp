@@ -10,12 +10,15 @@
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
+#include <boost/interprocess/sync/file_lock.hpp>
 
 namespace sharedauth = tecgraf::openbus::interop::sharedauth;
 
 const std::string client_entity("interop_sharedauth_cpp_sharedauth");
 std::string bus_host;
 unsigned short bus_port;
+
+using namespace boost::interprocess;
 
 void load_options(int argc, char **argv)
 {
@@ -56,21 +59,55 @@ int main(int argc, char** argv) {
     std::auto_ptr <openbus::Connection> conn
       (bus_ctx->createConnection(bus_host, bus_port));
 
+    struct secret_ctx
     {
+      secret_ctx(const std::string &path)
+        : path(path)
+      {
+        do
+        {
+          try
+          {
+            flock = file_lock(path.c_str());
+            break;
+          }
+          catch (const interprocess_exception &)
+          {
+            sleep(1);
+          }          
+        } while(true);
+        flock.lock();
+        file.open(path);
+        file.seekg(0, std::ios::end);
+        secret_seq.length(static_cast<CORBA::ULong>(file.tellg()));
+        file.seekg(0, std::ios::beg);
+        file.rdbuf()->sgetn
+          (static_cast<char*>(static_cast<void*>(secret_seq.get_buffer()))
+           , secret_seq.length());
+        flock.unlock();
+      }
+      ~secret_ctx()
+      {
+        try
+        {
+          flock.unlock();
+        }
+        catch (...)
+        {
+        }
+      } 
+      const std::string path;
+      std::ifstream file;
       CORBA::OctetSeq secret_seq;
-      std::ifstream file(".secret");
-      file.seekg(0, std::ios::end);
-      secret_seq.length(static_cast<CORBA::ULong>(file.tellg()));
-      file.seekg(0, std::ios::beg);
-      file.rdbuf()->sgetn
-        (static_cast<char*>(static_cast<void*>(secret_seq.get_buffer()))
-         , secret_seq.length());
+      file_lock flock;
+    };
 
-      openbus::SharedAuthSecret secret(
-        bus_ctx->decodeSharedAuthSecret(secret_seq));
-      conn->loginBySharedAuth(secret);
-      bus_ctx->setDefaultConnection(conn.get());
-    }
+    secret_ctx secret_file(".secret");
+    openbus::SharedAuthSecret
+      secret(bus_ctx->decodeSharedAuthSecret(secret_file.secret_seq));
+    conn->loginBySharedAuth(secret);
+
+    bus_ctx->setDefaultConnection(conn.get());
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
@@ -104,17 +141,17 @@ int main(int argc, char** argv) {
   catch(const std::exception &e) 
   {
     std::cout << "[error (std::exception)] " << e.what() << std::endl;
-    return -1;
+    throw;
   } 
   catch (const CORBA::Exception &e) 
   {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
-    return -1;
+    throw;
   } 
   catch (...) 
   {
     std::cout << "[error *unknow exception*]" << std::endl;
-    return -1;    
+    throw;
   }
   return 0; //MSVC
 }

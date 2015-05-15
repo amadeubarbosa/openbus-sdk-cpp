@@ -12,6 +12,8 @@
 #include <fstream>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/interprocess/sync/file_lock.hpp>
 
 namespace sharedauth = tecgraf::openbus::interop::sharedauth;
 
@@ -19,6 +21,8 @@ const std::string entity("interop_sharedauth_cpp_sharedauth");
 std::string private_key;
 std::string bus_host;
 unsigned short bus_port;
+
+using namespace boost::interprocess;
 
 void load_options(int argc, char **argv)
 {
@@ -75,15 +79,40 @@ int main(int argc, char** argv) {
       std::cout << e.what() << std::endl;
     }
 
+    struct secret_ctx
     {
-      openbus::SharedAuthSecret secret(conn->startSharedAuth());
-      CORBA::OctetSeq secret_seq(bus_ctx->encodeSharedAuthSecret(secret));
+      secret_ctx(const std::string &path, const CORBA::OctetSeq &secret_seq)
+        : path(path), file(path), flock(path.c_str()), secret_seq(secret_seq)
+      {
+        flock.lock();
+        std::copy(secret_seq.get_buffer()
+                  , secret_seq.get_buffer() + secret_seq.length()
+                  , std::ostream_iterator<char>(file));        
+        file.flush();
+        flock.unlock();
+      }
+      ~secret_ctx()
+      {
+        try
+        {
+          file.flush();
+          boost::filesystem::remove(path);
+          flock.unlock();
+        }
+        catch (...)
+        {
+        }
+      } 
+      std::string path;
+      std::ofstream file;
+      file_lock flock;
+      CORBA::OctetSeq secret_seq;
+    };
+    
+    openbus::SharedAuthSecret secret(conn->startSharedAuth());
+    CORBA::OctetSeq secret_seq(bus_ctx->encodeSharedAuthSecret(secret));
 
-      std::ofstream file(".secret");
-      std::copy(secret_seq.get_buffer()
-                , secret_seq.get_buffer() + secret_seq.length()
-                , std::ostream_iterator<char>(file));
-    }
+    secret_ctx secret_file(".secret", secret_seq);
 
     std::cout << "Chamando a faceta Hello por este cliente." << std::endl;
 
@@ -121,17 +150,17 @@ int main(int argc, char** argv) {
   catch(const std::exception &e) 
   {
     std::cout << "[error (std::exception)] " << e.what() << std::endl;
-    return -1;
+    throw;
   } 
   catch (const CORBA::Exception &e) 
   {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
-    return -1;
+    throw;
   } 
   catch (...) 
   {
     std::cout << "[error *unknow exception*]" << std::endl;
-    return -1;    
+    throw;
   }
   return 0; //MSVC
 }

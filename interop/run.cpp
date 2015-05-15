@@ -78,27 +78,33 @@ void exec(
 
 void run_interop(
   const std::string &interop,
-  const std::vector<std::string> &services)
+  const std::vector<std::string> &services,
+  const std::vector<path> &tmp_files = std::vector<path>())
 {
   for (it_flavors_t flavor(flavors.begin());flavor != flavors.end(); ++flavor)
   {    
     std::cout << "->Running interop '" << interop << "' "
               << "with flavor " << (*flavor).first << "." << std::endl;
     childs_t service_childs;
+    for (std::vector<path>::const_iterator path(tmp_files.begin());
+         path != tmp_files.end(); ++path)
+    {
+      remove(*path);
+    }
     for (std::vector<std::string>::const_iterator service(services.begin());
-	 service != services.end(); ++service)
+         service != services.end(); ++service)
     {
       exec(interop, (*flavor).second, "service", (*service), service_childs);
     }
     childs_t client_childs;
     exec(interop, (*flavor).second, "client", "client", client_childs);
     for (it_childs_t child(client_childs.begin());
-	 child != client_childs.end(); ++child)
+         child != client_childs.end(); ++child)
     {
       wait_for_exit(*child);
     }
     for (it_childs_t child(service_childs.begin());
-	 child != service_childs.end(); ++child)
+         child != service_childs.end(); ++child)
     {
       terminate(*child);
     }
@@ -120,7 +126,9 @@ int main()
     std::vector<std::string> services;
     services.push_back("server");
     services.push_back("sharedauth");
-    run_interop("sharedauth", services);
+    std::vector<path> tmp_files;
+    tmp_files.push_back("stage-interop/sharedauth/.secret");
+    run_interop("sharedauth", services, tmp_files);
   }
   {
     std::vector<std::string> services;

@@ -73,7 +73,8 @@ exe sharedauth_sharedauth
     /scs//scs 
     /logger//logger 
     /boost//headers 
-    /boost//program_options 
+    /boost//program_options
+    /boost//filesystem
     /openssl//openssl
     /TAO//TAO
     hello-stub

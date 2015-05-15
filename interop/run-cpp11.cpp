@@ -79,12 +79,17 @@ void exec(
 
 void run_interop(
   const std::string &interop,
-  const std::vector<std::string> &services)
+  const std::vector<std::string> &services,
+  const std::vector<path> &tmp_files = {})
 {
   for (auto flavor : flavors)
   {    
     std::cout << "->Running interop '" << interop << "' "
               << "with flavor " << flavor.first << "." << std::endl;
+    for (auto tmp_file : tmp_files)
+    {
+      remove(tmp_file);
+    }
     std::vector<child> service_childs;
     for (auto service : services)
     {
@@ -106,7 +111,8 @@ void run_interop(
 int main()
 {
   run_interop("simple", {"server"});
-  run_interop("sharedauth", { "server", "sharedauth" });
+  run_interop("sharedauth", { "server", "sharedauth" },
+              { "stage-interop/sharedauth/.secret" });
   run_interop("delegation", { "broadcaster", "forwarder", "messenger" });
   run_interop("multiplexing", { "server" });
   run_interop("reloggedjoin", { "server", "proxy" });
