@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
           }          
         } while(true);
         flock.lock();
-        file.open(path);
+        file.open(path.c_str());
         file.seekg(0, std::ios::end);
         secret_seq.length(static_cast<CORBA::ULong>(file.tellg()));
         file.seekg(0, std::ios::beg);

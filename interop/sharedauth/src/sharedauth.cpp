@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     struct secret_ctx
     {
       secret_ctx(const std::string &path, const CORBA::OctetSeq &secret_seq)
-        : path(path), file(path), flock(path.c_str()), secret_seq(secret_seq)
+        : path(path), file(path.c_str()), flock(path.c_str()), secret_seq(secret_seq)
       {
         flock.lock();
         std::copy(secret_seq.get_buffer()
