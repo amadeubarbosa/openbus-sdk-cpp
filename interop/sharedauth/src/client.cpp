@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
           }
           catch (const interprocess_exception &)
           {
-            sleep(1);
+	    boost::this_thread::sleep_for(boost::chrono::seconds(1));
           }          
         } while(true);
         flock.lock();
@@ -102,9 +102,33 @@ int main(int argc, char** argv) {
       file_lock flock;
     };
 
-    secret_ctx secret_file(".secret");
+    const std::string lock_path(".secret.lock");
+    CORBA::OctetSeq secret_seq;
+    file_lock flock;
+    do
+    {
+      try
+      {
+	flock = file_lock(lock_path.c_str());
+	break;
+      }
+      catch (const interprocess_exception &)
+      {
+	boost::this_thread::sleep_for(boost::chrono::seconds(1));
+      } 
+    } while(true);
+    flock.lock();
+    std::fstream file(".secret");
+    file.seekg(0, std::ios::end);
+    secret_seq.length(static_cast<CORBA::ULong>(file.tellg()));
+    file.seekg(0, std::ios::beg);
+    file.rdbuf()->sgetn
+      (static_cast<char*>(static_cast<void*>(secret_seq.get_buffer()))
+       , secret_seq.length());
+    flock.unlock();
     openbus::SharedAuthSecret
-      secret(bus_ctx->decodeSharedAuthSecret(secret_file.secret_seq));
+      secret(bus_ctx->decodeSharedAuthSecret(secret_seq));
+
     conn->loginBySharedAuth(secret);
 
     bus_ctx->setDefaultConnection(conn.get());

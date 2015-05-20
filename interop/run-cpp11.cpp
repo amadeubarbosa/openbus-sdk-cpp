@@ -112,7 +112,8 @@ int main()
 {
   run_interop("simple", {"server"});
   run_interop("sharedauth", { "server", "sharedauth" },
-              { "stage-interop/sharedauth/.secret" });
+              { "stage-interop/sharedauth/.secret",
+		"stage-interop/sharedauth/.secret.lock" });
   run_interop("delegation", { "broadcaster", "forwarder", "messenger" });
   run_interop("multiplexing", { "server" });
   run_interop("reloggedjoin", { "server", "proxy" });

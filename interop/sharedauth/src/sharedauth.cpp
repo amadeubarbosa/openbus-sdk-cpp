@@ -78,42 +78,26 @@ int main(int argc, char** argv) {
     {
       std::cout << e.what() << std::endl;
     }
-
-    struct secret_ctx
-    {
-      secret_ctx(const std::string &path, const CORBA::OctetSeq &secret_seq)
-        : path(path), file(path.c_str()), flock(path.c_str()), secret_seq(secret_seq)
-      {
-        flock.lock();
-        std::copy(secret_seq.get_buffer()
-                  , secret_seq.get_buffer() + secret_seq.length()
-                  , std::ostream_iterator<char>(file));        
-        file.flush();
-        flock.unlock();
-      }
-      ~secret_ctx()
-      {
-        try
-        {
-          file.flush();
-          boost::filesystem::remove(path);
-          flock.unlock();
-        }
-        catch (...)
-        {
-        }
-      } 
-      std::string path;
-      std::ofstream file;
-      file_lock flock;
-      CORBA::OctetSeq secret_seq;
-    };
     
     openbus::SharedAuthSecret secret(conn->startSharedAuth());
     CORBA::OctetSeq secret_seq(bus_ctx->encodeSharedAuthSecret(secret));
 
-    secret_ctx secret_file(".secret", secret_seq);
-
+    {
+      const std::string secret_path(".secret");
+      const std::string lock_path(".secret.lock");
+      boost::filesystem::remove(secret_path);
+      std::ofstream(lock_path.c_str());
+      file_lock flock(lock_path.c_str());
+      flock.lock();
+      std::ofstream file(secret_path.c_str());
+      assert(file);
+      std::copy(secret_seq.get_buffer()
+		, secret_seq.get_buffer() + secret_seq.length()
+		, std::ostream_iterator<char>(file));
+      file.flush();
+      flock.unlock();
+    }
+    
     std::cout << "Chamando a faceta Hello por este cliente." << std::endl;
 
     openbus::idl_or::ServicePropertySeq props;

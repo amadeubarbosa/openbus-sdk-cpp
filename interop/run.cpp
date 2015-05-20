@@ -128,6 +128,7 @@ int main()
     services.push_back("sharedauth");
     std::vector<path> tmp_files;
     tmp_files.push_back("stage-interop/sharedauth/.secret");
+    tmp_files.push_back("stage-interop/sharedauth/.secret.lock");
     run_interop("sharedauth", services, tmp_files);
   }
   {
