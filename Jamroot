@@ -19,7 +19,7 @@ if ! $(ace-root-path)
 taoidl-root-path = [ os.environ TAOIDL_ROOT_PATH ] ;
 if ! $(taoidl-root-path)
 {
-  taoidl-root-path = $(here)/../../build/tao-bb ;
+  taoidl-root-path = $(here)/../../build/tao-bb-1.0 ;
 }
 modules.load tao-idl : : $(taoidl-root-path) ;
 import tao-idl ;
