@@ -1,0 +1,39 @@
+Category {
+  id = "TestCppHelloCategory",
+  name = "Categoria gerada pelo script",
+}
+
+Entity {
+  id = "test",
+  category = "TestCppHelloCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Entity {
+  id = "TestCppHello",
+  category = "TestCppHelloCategory",
+  name = "Entidade gerada pelo script",
+}
+
+Certificate {
+  id = "TestCppHello",
+  certificate = "TestCppHello.crt",
+}
+
+Interface {
+  id = "IDL:Hello:1.0"
+}
+
+Grant {
+  id = "test",
+  interfaces = {
+    "IDL:Hello:1.0",
+  }
+}
+
+Grant {
+  id = "TestCppHello",
+  interfaces = {
+    "IDL:Hello:1.0",
+  }
+}

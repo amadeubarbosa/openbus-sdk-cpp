@@ -1,0 +1,260 @@
+
+--------------------------------------------------------------------------------
+                  Guia de Instalação do OpenBus SDK C++ TAO             
+                        openbus-dev@tecgraf.puc-rio.br
+                         http://www.tecgraf.puc-rio.br
+--------------------------------------------------------------------------------
+
+1. Requisitos
+   1.1. Compilador C++ com suporte ao padrão C++98.
+   1.2. OpenSSL 1.0.0o [http://www.openssl.org]
+   1.3. ACE+TAO 6.3.0 [http://download.dre.vanderbilt.edu]
+   1.4. Boost 1.51.0 [http://www.boost.org]
+   1.5. Boost Build 2014-10 [http://www.tecgraf.puc-rio.br/ftp_pub/openbus/repository/boost-build-2014-10_tecgraf_28112014snapshot.tgz]
+   1.5.1. Módulo Jamfile tao-idl [http://www.tecgraf.puc-rio.br/ftp_pub/openbus/tao-bb-1.0.tar.gz]
+   1.6. SCS C++ 1.2.0 [http://www.tecgraf.puc-rio.br/ftp_pub/openbus/scs-cpp-1.2.0.2.tgz]
+   1.7. Logger C++ v2 [http://www.tecgraf.puc-rio.br/ftp_pub/openbus/logger-2.1.tgz]
+
+2. Uso e Definições
+   2.1. Nomes das bibliotecas
+     2.1.1. O modo multi-thread é identificado através do sufixo 'mt'.
+     2.1.2. Versões em modo 'debug' são identificadas através do
+            sufixo 'd' e o modo 'release' se caracteriza pela ausência
+            do sufixo correspondente ao modo 'debug'.
+     2.1.3. Bibliotecas ligadas em modo 'estático' são identificadas
+            através do sufixo 's' e bibliotecas ligadas em modo
+            'dinâmico' pela ausência do sufixo correspondente ao modo
+            'estático'.
+
+     Exemplos:
+       openbus-mt-d: Multi-thread/Dinâmico/Debug
+       libopenbus-mt-s-d: Multi-thread/Estático/Debug
+       openbus-mt: Multi-thread/Dinâmico/Release
+       libopenbus-mt-s: Multi-thread/Estático/Release
+
+   2.2. Localização de uma dependência
+     2.2.1. Dependência **com** suporte ao Boost Build
+       Por padrão a dependência é procurada automaticamente
+       '../xpto'. Este caminho deve apontar para onde foi extraído o
+       pacote fonte da dependência XPTO. O caminho pode ser redefinido
+       através da variável Boost Build 'XPTO_ROOT_PATH', por exemplo:
+       
+       Pacote da dependência XPTO extraído em '/opt/libs/xpto'.
+       $>b2 ... -sXPTO_ROOT_PATH=/opt/libs/xpto
+       
+     2.2.2. Dependência **sem** suporte ao Boost Build
+       O caminho de uma dependência de compilação com nome 'xpto'
+       é determinado através das seguintes opções em ordem de avaliação:
+
+       (A) As variáveis XPTO_BIN_PATH, XPTO_LIB_PATH e
+       XPTO_INCLUDE_PATH identificam o local onde encontrar os
+       respectivos artefatos para qualquer sabor requisitado na
+       compilação. As variáveis devem ser definidas através da opção
+       de linha de comando '-s' do Boost Build. Por exemplo, para se
+       definir a localização de uma determinada instalação do OpenSSL:
+         $>b2 ... -sOPENSSL_BIN_PATH=$INSTALL/openssl/bin
+           -sOPENSSL_LIB_PATH=$INSTALL/openssl/lib
+           -sOPENSSL_INCLUDE_PATH=$INSTALL/openssl/include
+
+       (B) Variáveis específicas para um determinado flavor permitem o
+       build de mais de um flavor através de um único comando de
+       compilação. Há uma flexibilidade maior em se utilizar uma
+       estrutura multi-flavor mais complexa quanto a organização dos
+       diretórios. As variáveis são formadas pelo nome da dependência
+       e sufixos que determinam o flavor:
+         XPTO_DEBUG_SHARED_BIN_PATH       
+         XPTO_DEBUG_SHARED_LIB_PATH       
+         XPTO_DEBUG_SHARED_INCLUDE_PATH       
+
+         XPTO_DEBUG_STATIC_BIN_PATH       
+         XPTO_DEBUG_STATIC_LIB_PATH       
+         XPTO_DEBUG_STATIC_INCLUDE_PATH       
+
+         XPTO_RELEASE_SHARED_BIN_PATH       
+         XPTO_RELEASE_SHARED_LIB_PATH       
+         XPTO_RELEASE_SHARED_INCLUDE_PATH       
+
+         XPTO_RELEASE_STATIC_BIN_PATH       
+         XPTO_RELEASE_STATIC_LIB_PATH       
+         XPTO_RELEASE_STATIC_INCLUDE_PATH       
+
+         Exemplo: Geração de bibliotecas estáticas e dinâmicas em modo
+           'release':
+           $>b2 ... link=static link=shared variant=release
+           -sOPENSSL_RELEASE_STATIC_BIN_PATH=$INSTALL/openssl-mt-s/bin
+           -sOPENSSL_RELEASE_STATIC_LIB_PATH=$INSTALL/openssl-mt-s/lib
+           -sOPENSSL_RELEASE_STATIC_INCLUDE_PATH=$INSTALL/openssl-mt-s/include
+           -sOPENSSL_RELEASE_SHARED_BIN_PATH=$INSTALL/openssl-mt/bin
+           -sOPENSSL_RELEASE_SHARED_LIB_PATH=$INSTALL/openssl-mt/lib
+           -sOPENSSL_RELEASE_SHARED_INCLUDE_PATH=$INSTALL/openssl-mt/include
+
+       (C) Busca-se um diretório padrão de instalação da dependência em
+       ../install/xpto-<sabor>. Onde a variável 'sabor' pode assumir
+       os seguintes valores:
+         mt-d: Multi-thread/Dinâmico/Debug
+         mt-s-d: Multi-thread/Estático/Debug
+         mt: Multi-thread/Dinâmico/Release
+         mt-s: Multi-thread/Estático/Release
+
+         Exemplo: A dependência OpenSSL compilada em modo 'release' e
+         'estático' será procurada em:
+           ../install/openssl-mt-s
+
+   2.3. Sabores
+     É possível compilar a biblioteca nos modos 'release', 'debug',
+     'estático' e 'dinâmico' através das seguintes propriedades do
+     Boost Build a serem fornecidas na linha de comando que dispara a
+     compilação:
+
+     link=shared variant=release (Dinâmico e release)
+     link=static variant=release (Estático e release)
+     link=shared variant=debug (Dinâmico e debug)
+     link=static variant=release (Estático e release)
+
+   2.4. Modo verbose
+     O modo verbose do Boost Build pode ser ativado através da opção
+     de linha de comando '-d+2'.
+
+3. Build via Boost Build (Resumo)
+  3.1. Extrair o pacote Logger C++ v2. [Link na seção 1.7]
+  3.2. Extrair o pacote SCS C++ 1.2.0. [Link na seção 1.6]
+  3.3. Extrair o pacote do Boost 1.51.0. [Link na seção 1.4]
+  3.4. Extrair o pacote do ACE+TAO 6.3.0 e compilar. [Link na seção 1.3]
+  3.5. Extrair o pacote do OpenSSL 1.0.0o e compilar. [Link na seção 1.2]
+  3.6. Compilar o OpenBus SDK C++ TAO 2.0.1:
+    $>b2 link=[shared|static] variant=[release|debug]
+      -sACE_ROOT_PATH=$ACE_TAO_PACKAGE
+      -sOPENSSL_LIB_PATH=$OPENSSL_LIB_PATH
+      -sOPENSSL_INCLUDE_PATH=$OPENSSL_INCLUDE_PATH
+      -sLOGGER_ROOT_PATH=$LOGGER_PACKAGE
+      -sSCS_ROOT_PATH=$SCS_PACKAGE
+      -sBOOST_ROOT_PATH=$BOOST_PACKAGE
+
+4. Passo-a-passo
+   4.0. Extrair os pacotes em $ROOT/build e instalar as dependências
+        $ROOT/install. É possível utilizar uma organização diferente
+        através das instruções da seção 2.2.        
+   4.1. Boost Build (Seguir para 4.2 se o Boost Build já estiver disponível)
+     4.1.1. Obter a ferramenta através do link da seção 1.5.
+     4.1.2. Instalar o Boost Build:
+       ** Recomenda-se a leitura da documentação para se realizar uma
+          instalação apropriada à plataforma
+          desejada. [boost-build/index.html] **
+       Unix:
+         $>./bootstrap.sh
+         $>./b2 install --prefix=$INSTALL/boost-build     
+       Windows:
+         ** Abrir um console do Visual Studio ou carregar o arquivo de
+            lote 'vcvarsall.bat' **
+         $>.\bootstrap.bat
+         $>.\b2 install --prefix=%INSTALL%\boost-build
+
+   4.2. ACE+TAO (Seguir para 4.3 se o ACE+TAO já estiver disponível)
+     4.2.1. Extrair o pacote obtido através do link da seção 1.3.
+     4.2.2. Compilar seguindo as instruções abaixo conforme o sistema operacional:
+
+       Linux
+       1) Definir a variável de ambiente ACE_ROOT com o caminho que aponta
+          para o pacote:
+          $> export ACE_ROOT=$WORKSPACE/build/ACE_wrappers
+       2) Definir a variável de ambiente TAO_ROOT com o caminho que aponta
+          para o diretório do TAO que está contido no pacote:
+          $> export TAO_ROOT=$ACE_ROOT/TAO
+       3) Definir a variável de ambiente LD_LIBRARY_PATH para apontar para
+          o local em que os binários do ACE+TAO serão disponibilizados:
+          $> export LD_LIBRARY_PATH=$ACE_ROOT/lib
+       4) Definir o arquivo de configuração ace/config.h:
+          $> echo '#include "ace/config-linux.h"' > $ACE_ROOT/ace/config.h
+       5) Definir o arquivo de configuração include/makeinclude/platform_macros.GNU:
+          $> echo 'include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU' > $ACE_ROOT/include/makeinclude/platform_macros.GNU
+       6) Entrar no diretório $ACE_ROOT/ace e compilar a biblioteca em
+          modo dinâmico e estático ACE:
+          $> cd $ACE_ROOT/ace
+          $> make
+          $> make static_libs_only=1
+       7) Entrar no diretório $TAO_ROOT e compilar as bibliotecas necessárias
+          do TAO:
+          $> make TAO AnyTypeCode PortableServer PI PI_Server CodecFactory
+          $> make static_libs_only=1 TAO AnyTypeCode PortableServer PI PI_Server CodecFactory
+       OBS.: A compilação pode ser acelerada em uma máquina multi-core através
+             do argumento -j<num_cores>.
+
+       MSVC 9.0 ou 12.0 64 bits (Windows)
+       1) Definir a variável de ambiente ACE_ROOT com o caminho que aponta
+          para o pacote:
+          $> set ACE_ROOT=%WORKSPACE%\build\ACE_wrappers
+       2) Definir a variável de ambiente TAO_ROOT com o caminho que aponta
+          para o diretório do TAO que está contido no pacote:
+          $> set TAO_ROOT=%ACE_ROOT%\TAO
+       3) Definir a variável de ambiente PATH para apontar para
+          o local em que os binários do ACE+TAO serão disponibilizados:
+          $> set PATH=%ACE_ROOT%\bin;%ACE_ROOT%\lib;%PATH%
+       4) Definir o arquivo de configuração ace/config.h:
+          $> ECHO #include "ace/config-win32.h" > ace\config.h 
+       7) Entrar no diretório $TAO_ROOT e compilar as bibliotecas necessárias
+          do TAO:
+          $> %ACE_ROOT%\bin\mwc.pl -type nmake -value_template platforms=x64 -value_template configurations=Debug -value_template compile_flags+=/MP TAO_ACE.mwc
+          $> nmake TAO AnyTypeCode PortableServer PI PI_Server CodecFactory
+          $> %ACE_ROOT%\bin\mwc.pl -type nmake -value_template platforms=x64 -value_template configurations=Release -value_template compile_flags+=/MP TAO_ACE.mwc
+          $> nmake TAO AnyTypeCode PortableServer PI PI_Server CodecFactory
+          $> %ACE_ROOT%\bin\mwc.pl -type nmake -value_template platforms=x64 -value_template "configurations='Static Debug'" -value_template "compile_flags='/W3 /EHsc /Zi /GR /Gy /MTd /MP'" -static TAO_ACE.mwc
+          $> nmake TAO AnyTypeCode PortableServer PI PI_Server CodecFactory
+          $> %ACE_ROOT%\bin\mwc.pl -type nmake -value_template platforms=x64 -value_template "configurations='Static Release'" -value_template "compile_flags='/W3 /EHsc /Zi /GR /Gy /MT /MP'" -static TAO_ACE.mwc
+          $> nmake TAO AnyTypeCode PortableServer PI PI_Server CodecFactory
+       
+   4.3. OpenSSL (Seguir para 4.4 se o OpenSSL já estiver disponível)
+     4.2.1. O OpenSSL deve estar disponível conforme o sabor desejado
+            (release/debug/dinâmico/estático). Para construir o OpenSSL, o
+             pacote pode ser obtido através do link da seção 1.2.
+     4.2.2. Extrair o pacote.
+     4.2.3. Editar o script 'build_openssl-unix.sh' ou
+            'build_openssl-win.bat' que está disponível no pacote da
+            biblioteca OpenBus SDK C++ no diretório 'contrib'.
+       a. Definir o caminho absoluto para onde o pacote foi extraído.
+       b. Alterar conforme necessário o número de jobs a serem utilizados
+          na compilação.
+       c. Definir em OPENSSL_ROOT_PATH o caminho do pacote do OpenSSL.
+       d. As versões do OpenSSL serão instaladas por padrão em
+          '$HOME/install'. Se necessário o local deve ser alterado
+          somente através da variável 'ROOT'. Quatro versões serão
+          instaladas respectivamente em:
+            $ROOT/install/openssl-mt-d
+            $ROOT/install/openssl-mt-s-d
+            $ROOT/install/openssl-mt
+            $ROOT/install/openssl-mt-s
+     4.2.4. Executar o script.
+     
+   4.4. Extrair o pacote do Logger C++ v2 obtido através do link da seção 1.7.
+   
+   4.5. Extrair o pacote SCS C++ 1.2.0 obtido através do link da seção 1.6.
+   
+   4.6. Extrair o pacote do Boost 1.51.0 obtido através do link da seção 1.4.
+   
+   4.7. Compilar a biblioteca OpenBus SDK C++ 2.0.0:
+     Construção da biblioteca nos quatro sabores
+     ({debug/shared},{debug/static},{release/shared},{release,static}):
+  
+       $>$INSTALL/boost-build/bin/b2 link=shared link=static
+         variant=debug variant=release
+
+       MSVC: Adicionar o argumento 'toolset=msvc-[9.0|12.0]', por exemplo,
+             para o MSVC versão 12.0 a string toolset=msvc-12.0 deve ser
+             adicionada na linha de execução do b2.
+       64 bits: Adicionar o argumento 'address-model=64' a linha de execução
+                do b2.
+
+   4.8. O resultado do build deve estar disponível no diretório 'install'.
+   
+   4.9. Disponibilização dos stubs gerados no diretório 'install/stubs':
+         $>$INSTALL/boost-build/bin/b2 stage-stubs
+
+   4.10. (Opcional) As dependências do podem ser disponibilizadas em
+         'install/deps' atragés do comando:
+         
+          $>$INSTALL/boost-build/bin/b2 link=[static|shared] variant=[release|debug]
+            stage-deps
+
+          Atenção: Para as instalação acima, não escolha mais de um
+                   sabor em único comando. Utilize um comando para
+                   cada sabor.
+                   

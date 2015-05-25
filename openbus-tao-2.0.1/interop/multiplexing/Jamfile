@@ -1,0 +1,64 @@
+project openbus/interop/multiplexing
+  : requirements
+    <include>../
+  ;
+
+path-constant here : . ;
+
+obj hello-stub
+  : $(here)/idl/hello.idl
+  ;
+explicit hello-stub ;
+
+obj hello-skeleton
+  : $(here)/idl/hello.idl
+  : <generate>skeleton
+  ;
+explicit hello-skeleton ;
+
+exe multiplexing_client
+  : src/client.cpp
+    /openbus//openbus
+    /scs//scs
+    /logger//logger
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /TAO//TAO
+    hello-stub
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
+explicit multiplexing_client ;
+
+exe multiplexing_server
+  : src/server.cpp
+    /openbus//openbus
+    /scs//scs
+    /logger//logger
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /TAO//TAO
+    hello-stub
+    hello-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>hello-skeleton
+    <implicit-dependency>hello-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
+explicit multiplexing_server ;
+
+alias multiplexing
+  : multiplexing_client
+    multiplexing_server  
+    admin/interop_multiplexing_cpp_server.key
+  ;
