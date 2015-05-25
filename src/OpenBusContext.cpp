@@ -42,7 +42,7 @@ OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb,
 }
 
 std::auto_ptr<Connection> OpenBusContext::createConnection(
-  const std::string host, unsigned short port, 
+  const std::string &host, unsigned short port, 
   const Connection::ConnectionProperties &props)
 {
   log_scope l(log().general_logger(), debug_level, 
@@ -114,7 +114,7 @@ CallerChain OpenBusContext::getCallerChain()
   {
     return CallerChain();
   }
-    
+  
   CORBA::Any_var any(
     _orb_init->pi_current->get_slot(_orb_init->signed_call_chain));
     
@@ -130,7 +130,6 @@ CallerChain OpenBusContext::getCallerChain()
                       const_cast<unsigned char *>
                       (signed_chain.encoded.get_buffer())),
       idl_ac::_tc_CallChain);
-  // any = _orb_init->codec->decode_value(signed_chain.encoded, idl_ac::_tc_CallChain);
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
     
   return CallerChain(
@@ -174,14 +173,20 @@ CallerChain OpenBusContext::getJoinedChain() const
   {
     return CallerChain();
   }
-    
-  any =
-    _orb_init->codec->decode_value(
-      CORBA::OctetSeq(signed_chain.encoded.maximum(),
-                      signed_chain.encoded.length(),
-                      const_cast<unsigned char *>
-                      (signed_chain.encoded.get_buffer())),
-      idl_ac::_tc_CallChain);
+  try
+  {
+    any =
+      _orb_init->codec->decode_value(
+        CORBA::OctetSeq(signed_chain.encoded.maximum(),
+                        signed_chain.encoded.length(),
+                        const_cast<unsigned char *>
+                        (signed_chain.encoded.get_buffer())),
+        idl_ac::_tc_CallChain);
+  }
+  catch (const CORBA::Exception &)
+  {
+    return CallerChain();
+  }
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
 
   return CallerChain(

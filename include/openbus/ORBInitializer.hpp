@@ -1,7 +1,23 @@
 // -*- coding: iso-8859-1-unix -*-
 /**
-* \mainpage API - SDK Openbus C++
-* \file openbus/ORBInitializer.h
+  \mainpage API do OpenBus SDK C++
+  
+  Este documento apresenta uma API C++ para o acesso ao barramento
+  OpenBus. O conteúdo aqui apresentado foi extraído automaticamente
+  dos fontes da biblioteca. 
+
+  O ponto de entrada da interface é a classe \ref
+  openbus::ORBInitializer, que retorna um invólucro que representa um
+  ORB. Através do ORB, é possível obter uma instância de \ref
+  openbus::OpenBusContext, que permite controlar o contexto das
+  chamadas de um ORB para acessar informações que identificam essas
+  chamadas em barramentos OpenBus.
+
+  <a href="https://jira.tecgraf.puc-rio.br/confluence/display/OPENBUS020/Manual+OpenBus+2.0.0">Manual do OpenBus</a>
+
+  <a href="https://jira.tecgraf.puc-rio.br/confluence/display/OPENBUS020/CORE">Download do barramento</a>
+ 
+  \file openbus/ORBInitializer.h
 */
 
 #ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_H_
@@ -13,18 +29,17 @@
 #include <boost/shared_ptr.hpp>
 
 /**
-* \brief openbus
+* \brief Namespace para a biblioteca de acesso.
 */
-namespace openbus 
-{
+namespace openbus {
 
 /**
- * \brief Representa um ORB através de um invólucro.
- *
- * Representa um ORB através de um invólucro que compartilha a 
- * propriedade(ownership) sobre a instância do ORB. O destrutor 
- * do invólucro chama orb::destroy(). A instância do ORB pode 
- * ser obtida através do método orb().
+ * \class orb_ctx
+ * \brief 
+ * Representa um ORB através de um invólucro que assume a 
+ * propriedade(ownership) sobre o ORB. O destrutor do invólucro chama
+ * orb::destroy(). A instância do ORB pode ser obtida através do
+ * método orb().
  *
  */
 class OPENBUS_SDK_DECL orb_ctx
@@ -43,7 +58,7 @@ public:
   /**
    * \brief Compartilha a instância do ORB.
    *
-   * Retorna um smart pointer de CORBA referente a instância do ORB que é 
+   * Retorna um ponteiro para a instância do ORB que é 
    * armazenada internamente.
    * 
    * @return CORBA::ORB_var
@@ -66,7 +81,8 @@ private:
  * fazer chamadas CORBA ordinárias sem o controle de acesso do OpenBus
  * que permite identificação da origem das chamadas. Esse controle de
  * acesso é feito através conexões que são obtidas e manipuladas
- * através de um OpenBusContext. Cada ORB possui um OpenBusContext
+ * através de um  \ref OpenBusContext. O ORB possui um 
+ * \ref OpenBusContext 
  * associado, que pode ser obitido através do comando:
  * CORBA::ORB::resolve_initial_reference("OpenBusContext")
  *
@@ -104,7 +120,7 @@ private:
  * 
  * @throw CORBA::Exception
  *
- * @return Uma referencia do tipo boost::shared_ptr para um 
+ * @return Um smart pointer do tipo \ref boost::shared_ptr para um 
  * invólucro que contêm o ORB inicializado.
  */
   OPENBUS_SDK_DECL boost::shared_ptr<orb_ctx>

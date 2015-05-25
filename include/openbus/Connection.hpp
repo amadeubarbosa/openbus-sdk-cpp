@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 /**
-* API - SDK Openbus C++
+* API do OpenBus SDK C++
 * \file openbus/Connection.hpp
 * 
 */
@@ -115,7 +115,7 @@ class Connection;
  * nome da mesma entidade que gerou e compartilhou o segredo.
  *
  * Cada segredo de autenticação compartilhada pertence a um único barramento e
- * só pode utilizado em uma única autenticação.
+ * só pode ser utilizado em uma única autenticação.
  *
  */
 class OPENBUS_SDK_DECL SharedAuthSecret
@@ -129,12 +129,11 @@ public:
    void cancel();
   
   /**
-   * \brief Fornece o identificador do barramento em que o segredo
+   * \brief Retorna o identificador do barramento em que o segredo
    * pode ser utilizado.
-   *
-   * \return O identificador.
    */
-  std::string busid() const {
+  std::string busid() const
+  {
     return busid_;
   }
 private:
@@ -158,9 +157,9 @@ private:
  * possui um identificador único e está sempre associado ao nome de uma
  * entidade que é autenticada no momento do estabelecimento do login.
  * Há basicamente três formas de autenticação de entidade disponíveis:
- * - Por Senha: veja a operação 'loginByPassword'
- * - Por Certificado de login: veja a operação 'loginByCertificate'
- * - Por Autenticação compartilhada: veja a operação 'loginBySharedAuth'
+ * - Por Senha: veja a operação \ref loginByPassword
+ * - Por Certificado de login: veja a operação \ref loginByCertificate
+ * - Por Autenticação compartilhada: veja a operação \ref loginBySharedAuth
  *
  * A entidade associada ao login é responsável por todas as chamadas feitas
  * através daquela conexão e essa entidade deve ser levada em consideração
@@ -195,7 +194,7 @@ public:
    * \param conn Conexão que recebeu a notificação de login inválido.
    * \param login Informações do login que se tornou inválido.
    */
-  typedef boost::function<void (Connection &, idl_ac::LoginInfo)> 
+  typedef boost::function<void (Connection & conn, idl_ac::LoginInfo login)> 
     InvalidLoginCallback_t;
   
   /**
@@ -204,8 +203,8 @@ public:
   * A autenticação por senha é validada usando um dos validadores de senha
   * definidos pelo adminsitrador do barramento.
   *
-  * @param[in] entity Identificador da entidade a ser autenticada.
-  * @param[in] password Senha de autenticação no barramento da entidade.
+  * @param entity Identificador da entidade a ser autenticada.
+  * @param password Senha de autenticação no barramento da entidade.
   * 
   * @throw AlreadyLoggedIn A conexão já está logada.
   * @throw idl_ac::AccessDenied
@@ -224,8 +223,8 @@ public:
   * A autenticação por certificado é validada usando um certificado de login
   * registrado pelo adminsitrador do barramento.
   * 
-  * @param[in] entity Identificador da entidade a ser conectada.
-  * @param[in] privKey Chave privada da entidade utilizada na autenticação.
+  * @param entity Identificador da entidade a ser conectada.
+  * @param privKey Chave privada da entidade utilizada na autenticação.
   * 
   * @throw AlreadyLoggedIn A conexão já está autenticada.
   * @throw idl_ac::AccessDenied 
@@ -239,7 +238,7 @@ public:
   *        autenticação da conexão.
   * @throw CORBA::Exception
   */
-  void loginByCertificate(const std::string &entity, const PrivateKey &);
+  void loginByCertificate(const std::string &entity, const PrivateKey &privKey);
   
   /**
   * \brief Inicia o processo de login por autenticação compartilhada.
@@ -269,7 +268,7 @@ public:
   * A autenticação compartilhada é feita a partir de um segredo obtido
   * através da operação 'startSharedAuth' de uma conexão autenticada.
   * 
-  * @param[in] secret Segredo a ser fornecido na conclusão do processo de login.
+  * @param secret Segredo a ser fornecido na conclusão do processo de login.
   * 
   * @throw InvalidLoginProcess A tentativa de login associada ao segredo
   *        informado é inválido, por exemplo depois do segredo ser

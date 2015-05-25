@@ -2,6 +2,7 @@
 
 #include "helloS.h"
 #include <openbus/OpenBusContext.hpp>
+#include <openbus/log.hpp>
 #include <scs/ComponentContext.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -55,6 +56,7 @@ int main(int argc, char** argv)
 {
   try
   {
+    openbus::log().set_level(openbus::debug_level);
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
     CORBA::Object_var o(orb_ctx->orb()->resolve_initial_references("RootPOA"));
