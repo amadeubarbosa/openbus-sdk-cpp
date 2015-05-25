@@ -230,7 +230,9 @@
    
    4.6. Extrair o pacote do Boost 1.51.0 obtido através do link da seção 1.4.
    
-   4.7. Compilar a biblioteca OpenBus SDK C++ 2.0.0:
+   4.7. Extrair o pacote do tao-bb-1.0 obtido através do link da seção 1.5.1.
+
+   4.8. Compilar a biblioteca OpenBus SDK C++ 2.0.1:
      Construção da biblioteca nos quatro sabores
      ({debug/shared},{debug/static},{release/shared},{release,static}):
   
@@ -243,13 +245,13 @@
        64 bits: Adicionar o argumento 'address-model=64' a linha de execução
                 do b2.
 
-   4.8. O resultado do build deve estar disponível no diretório 'install'.
+   4.9. O resultado do build deve estar disponível no diretório 'install'.
    
-   4.9. Disponibilização dos stubs gerados no diretório 'install/stubs':
+   4.10. Disponibilização dos stubs gerados no diretório 'install/stubs':
          $>$INSTALL/boost-build/bin/b2 stage-stubs
 
-   4.10. (Opcional) As dependências do podem ser disponibilizadas em
-         'install/deps' atragés do comando:
+   4.11. (Opcional) As dependências podem ser disponibilizadas em
+         'install/deps' através do comando:
          
           $>$INSTALL/boost-build/bin/b2 link=[static|shared] variant=[release|debug]
             stage-deps
@@ -257,4 +259,8 @@
           Atenção: Para as instalação acima, não escolha mais de um
                    sabor em único comando. Utilize um comando para
                    cada sabor.
-                   
+
+   4.12. (Opcional) As demos podem ser compiladas através do comando:
+         
+          $>$INSTALL/boost-build/bin/b2 link=static link=shared
+            variant=release variant=debug stage-demos
