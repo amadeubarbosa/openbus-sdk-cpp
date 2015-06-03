@@ -1,4 +1,4 @@
-project openbus/demo/independent_clock ;
+project openbus/demos/independent_clock ;
 
 path-constant here : . ;
 
@@ -13,43 +13,41 @@ obj independent_clock-skeleton
   ;
 explicit independent_clock-skeleton ;
 
-exe independent_clock_client
- : src/client.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   independent_clock-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>independent_clock-stub
-   <implicit-dependency>independent_clock-stub
-   <link>static,<target-os>linux:<source>/dl//dl
-   
- ;
-explicit independent_clock_client ;
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      /TAO//TAO
+      $(deps)
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
+      <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
+    ;
+  explicit $(name) ;
+}
 
-exe independent_clock_server
- : src/server.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   independent_clock-stub
-   independent_clock-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>independent_clock-stub
-   <implicit-dependency>independent_clock-stub
-   <dependency>independent_clock-skeleton
-   <implicit-dependency>independent_clock-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit independent_clock_server ;
+demo-exe independent_clock_client
+  : client
+  : independent_clock-stub
+  ;
+  
+demo-exe independent_clock_server
+  : server
+  : independent_clock-stub
+    independent_clock-skeleton
+  ;
 
 alias independent_clock
   : independent_clock_client
     independent_clock_server
+    admin/DemoCppIndependentClock.key
   ;

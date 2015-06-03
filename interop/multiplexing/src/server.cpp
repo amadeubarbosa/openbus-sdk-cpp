@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "helloS.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -25,15 +26,13 @@ struct bus
   unsigned short port;
 };
 std::map<std::size_t, bus> buses;
-
 void load_options(int argc, char **argv)
 {
   namespace po = boost::program_options;
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -45,7 +44,6 @@ void load_options(int argc, char **argv)
      "Port to second OpenBus");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::store(po::parse_config_file<char>("test.properties", desc), vm);
   po::notify(vm);
   if (vm.count("private-key"))
   {
@@ -85,7 +83,8 @@ public:
   }
 
   result_type operator()(openbus::OpenBusContext &context, 
-                         const std::string busId, const std::string loginId, 
+                         const std::string busId,
+                         const std::string loginId,
                          const std::string operation)
   {
     for (std::vector<openbus::Connection *>::const_iterator it = 
@@ -111,13 +110,18 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 
   char *sayHello() 
   {
-    openbus::CallerChain chain = _ctx.getCallerChain();
-    assert(chain != openbus::CallerChain());
-    std::string msg = "Hello " + std::string(chain.caller().entity) + "@"
-      + chain.busid() + "!";
+    openbus::CallerChain chain(_ctx.getCallerChain());
+    if (chain == openbus::CallerChain())
+    {
+      std::cerr << "chain == openbus::CallerChain()"
+                << std::endl;
+      std::abort();
+    }
+    std::string msg("Hello " + std::string(chain.caller().entity) + "@"
+                    + chain.busid() + "!");
     std::cout << msg << std::endl;
-    CORBA::String_var r = CORBA::string_dup(msg.c_str());
-    return r._retn();
+    CORBA::String_var ret(msg.c_str());
+    return ret._retn();
   }
 private:
   openbus::OpenBusContext &_ctx;
@@ -156,23 +160,17 @@ int main(int argc, char **argv) {
   {
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_ptr orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-    openbus::OpenBusContext *busCtx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
     std::auto_ptr <openbus::Connection> connBusB
-      (busCtx->createConnection(buses[0].host, buses[0].port));
+      (bus_ctx->createConnection(buses[0].host, buses[0].port));
     std::auto_ptr <openbus::Connection> conn1BusA
-      (busCtx->createConnection(buses[1].host, buses[1].port));
+      (bus_ctx->createConnection(buses[1].host, buses[1].port));
     std::auto_ptr <openbus::Connection> conn2BusA
-      (busCtx->createConnection(buses[1].host, buses[1].port));
+      (bus_ctx->createConnection(buses[1].host, buses[1].port));
     std::auto_ptr <openbus::Connection> conn3BusA
-      (busCtx->createConnection(buses[1].host, buses[1].port));
+      (bus_ctx->createConnection(buses[1].host, buses[1].port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());
@@ -180,7 +178,7 @@ int main(int argc, char **argv) {
     connVec.push_back(connBusB.get());
     
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orbRun(ORBRun, busCtx->orb());
+    boost::thread orbRun(ORBRun, bus_ctx->orb());
 #endif
     
     scs::core::ComponentId componentId;
@@ -189,9 +187,9 @@ int main(int argc, char **argv) {
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "";
-    scs::core::ComponentContext ctx(busCtx->orb(), componentId);
+    scs::core::ComponentContext ctx(bus_ctx->orb(), componentId);
     
-    HelloImpl srv(*busCtx);
+    HelloImpl srv(*bus_ctx);
     ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", &srv);
     
     try 
@@ -206,28 +204,34 @@ int main(int argc, char **argv) {
       std::cout << e.what() << std::endl;
     }
     
-    busCtx->onCallDispatch(CallDispatchCallback(*conn1BusA, *connBusB));
+    bus_ctx->onCallDispatch(CallDispatchCallback(*conn1BusA, *connBusB));
+
+    std::vector<openbus::Connection *> connections;
+    connections.push_back(conn1BusA.get());
+    connections.push_back(conn2BusA.get());
+    connections.push_back(conn3BusA.get());
+    connections.push_back(connBusB.get());
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread register1(boost::bind(registerOffer, boost::ref(*busCtx), 
+    boost::thread register1(boost::bind(registerOffer, boost::ref(*bus_ctx), 
                                         boost::ref(*conn1BusA), 
                                         boost::ref(ctx)));
-    boost::thread register2(boost::bind(registerOffer, boost::ref(*busCtx), 
+    boost::thread register2(boost::bind(registerOffer, boost::ref(*bus_ctx), 
                                         boost::ref(*conn2BusA), 
                                         boost::ref(ctx)));
-    boost::thread register3(boost::bind(registerOffer, boost::ref(*busCtx), 
+    boost::thread register3(boost::bind(registerOffer, boost::ref(*bus_ctx), 
                                         boost::ref(*conn3BusA), 
                                         boost::ref(ctx)));
-    boost::thread register4(boost::bind(registerOffer, boost::ref(*busCtx), 
+    boost::thread register4(boost::bind(registerOffer, boost::ref(*bus_ctx), 
                                         boost::ref(*connBusB), 
                                         boost::ref(ctx)));
     orbRun.join();
 #else
-    registerOffer(*busCtx, *conn1BusA, ctx);
-    registerOffer(*busCtx, *conn2BusA, ctx);
-    registerOffer(*busCtx, *conn3BusA, ctx);
-    registerOffer(*busCtx, *connBusB, ctx);
-    busCtx->orb()->run();
+    registerOffer(*bus_ctx, *conn1BusA, ctx);
+    registerOffer(*bus_ctx, *conn2BusA, ctx);
+    registerOffer(*bus_ctx, *conn3BusA, ctx);
+    registerOffer(*bus_ctx, *connBusB, ctx);
+    bus_ctx->orb()->run();
 #endif
   } 
   catch (const std::exception &e) 
@@ -240,4 +244,5 @@ int main(int argc, char **argv) {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

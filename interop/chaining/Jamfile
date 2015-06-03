@@ -1,4 +1,6 @@
-project openbus/interop/chaining ;
+project openbus/interop
+  : requirements <include>../
+  ;
 
 path-constant here : . ;
 
@@ -25,65 +27,76 @@ obj proxy-skeleton
 explicit proxy-skeleton ;
 
 exe chaining_client
- : src/client.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   proxy-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>proxy-stub
-   <implicit-dependency>proxy-stub
-   <link>static,<target-os>linux:<source>/dl//dl
-   
- ;
-explicit chaining_client ;
-
-exe chaining_server
- : src/server.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
-   hello-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <dependency>hello-skeleton
-   <implicit-dependency>hello-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit chaining_server ;
+  : src/client.cpp
+    /openbus//openbus
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /scs//scs
+    /logger//logger
+    /TAO//TAO
+    proxy-stub
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>proxy-stub
+    <implicit-dependency>proxy-stub
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
 
 exe chaining_proxy
- : src/proxy.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   proxy-stub
-   proxy-skeleton
-   hello-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>proxy-stub
-   <implicit-dependency>proxy-stub
-   <dependency>proxy-skeleton
-   <implicit-dependency>proxy-skeleton
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit chaining_proxy ;
-
-alias chaining
-  : chaining_client
-    chaining_server
-    chaining_proxy
+  : src/proxy.cpp
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /scs//scs
+    /openbus//openbus
+    /logger//logger
+    /TAO//TAO
+    hello-stub
+    proxy-stub
+    proxy-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>proxy-stub
+    <implicit-dependency>proxy-stub
+    <dependency>proxy-skeleton
+    <implicit-dependency>proxy-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
   ;
+
+exe chaining_server
+  : src/server.cpp
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /scs//scs
+    /openbus//openbus
+    /logger//logger
+    /TAO//TAO
+    proxy-stub
+    proxy-skeleton
+    hello-stub
+    hello-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>proxy-stub
+    <implicit-dependency>proxy-stub
+    <dependency>proxy-skeleton
+    <implicit-dependency>proxy-skeleton
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>hello-skeleton
+    <implicit-dependency>hello-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
+
+alias chaining :
+  chaining_client 
+  chaining_proxy
+  chaining_server
+;

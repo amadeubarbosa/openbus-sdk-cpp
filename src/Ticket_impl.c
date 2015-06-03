@@ -55,7 +55,7 @@ int tickets_check(tickets_History *h, tickets_Value id)
 		}
     else
     {
-			int i;
+			unsigned int i;
 			tickets_Value extra = shift - TICKETS_SIZE;
 			if (extra < TICKETS_SIZE) 
       {

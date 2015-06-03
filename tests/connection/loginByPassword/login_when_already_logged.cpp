@@ -1,22 +1,28 @@
 // -*- coding: iso-8859-1-unix -*-
 #include <openbus/OpenBusContext.hpp>
+#include <openbus/ORBInitializer.hpp>
+
 #include <configuration.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   openbus::configuration cfg(argc, argv);
-  CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
-  CORBA::Object_ptr o(orb->resolve_initial_references("OpenBusContext"));
-  openbus::OpenBusContext* bus_ctx(dynamic_cast<openbus::OpenBusContext *>(o));
-  std::auto_ptr <openbus::Connection> conn(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
-  conn->loginByPassword(cfg.user(), cfg.password());
+  boost::shared_ptr<openbus::orb_ctx>
+    orb_ctx(openbus::ORBInitializer(argc, argv));
+  CORBA::Object_var
+    obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
+  openbus::OpenBusContext
+    *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+  std::auto_ptr <openbus::Connection>
+    conn(bus_ctx->createConnection(cfg.host(), cfg.port()));
+  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
   try
   {
-    conn->loginByPassword(cfg.user(), cfg.password());
+    conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
     std::abort();
   }
-  catch (const openbus::AlreadyLoggedIn &)
+  catch(openbus::AlreadyLoggedIn const&)
   {
   }
+  return 0; //MSVC
 }

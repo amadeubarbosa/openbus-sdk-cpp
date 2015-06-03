@@ -19,8 +19,7 @@ PublicKey::PublicKey(const PublicKey &o)
   _keySeq = o._keySeq;
 }
 
-PublicKey&
-PublicKey::operator=(const PublicKey &o)
+PublicKey& PublicKey::operator=(const PublicKey &o)
 {
   if (this == &o)
   {
@@ -35,8 +34,8 @@ PublicKey::operator=(const PublicKey &o)
   return *this;
 }
 
-idl::OctetSeq PublicKey::encrypt(const unsigned char *buf,
-                                 std::size_t size)
+
+idl::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -48,7 +47,8 @@ idl::OctetSeq PublicKey::encrypt(const unsigned char *buf,
   assert(r == 1);
   r = EVP_PKEY_encrypt(ctx.get(), 0, &encryptedLen, buf, size);
   assert(r == 1);
-  openssl::openssl_buffer encrypted(idl::OctetSeq::allocbuf(encryptedLen));
+  openssl::openssl_buffer encrypted(idl::OctetSeq::allocbuf(
+                                      static_cast<CORBA::ULong>(encryptedLen)));
   encrypted.deleter(idl::OctetSeq::freebuf);
   if(encrypted.get() == 0)
   if(!encrypted)
@@ -57,21 +57,26 @@ idl::OctetSeq PublicKey::encrypt(const unsigned char *buf,
   }
   r = EVP_PKEY_encrypt(ctx.get(), encrypted.get(), &encryptedLen, buf, size);
   assert(r == 1);
-  return idl::OctetSeq(encryptedLen, encryptedLen, encrypted.release(), true);
+  return idl::OctetSeq(
+    static_cast<CORBA::ULong>(encryptedLen),
+    static_cast<CORBA::ULong>(encryptedLen),
+    encrypted.release(),
+    true);
 }
 
-bool PublicKey::verify(const unsigned char *sig,
-                       std::size_t siglen, 
-                       const unsigned char *tbs,
-                       std::size_t tbslen)
+bool PublicKey::verify(const unsigned char *sig, std::size_t siglen, 
+                       const unsigned char *tbs, std::size_t tbslen)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
 #endif
   openssl::pkey_ctx ctx (EVP_PKEY_CTX_new(_pkey.get(), 0));
   assert(!!ctx);
-  int r (EVP_PKEY_verify_init(ctx.get()));
-  assert(r == 1);
+  int r(EVP_PKEY_verify_init(ctx.get()));
+  if (r != 1)
+  {
+    return false;
+  }
   return (EVP_PKEY_verify(ctx.get(), sig, siglen, tbs, tbslen) == 1);
 }
 

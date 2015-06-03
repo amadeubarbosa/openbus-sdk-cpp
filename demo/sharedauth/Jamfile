@@ -1,4 +1,4 @@
-project openbus/interop/sharedauth ;
+project openbus/demos/sharedauth ;
 
 path-constant here : . ;
 
@@ -13,74 +13,47 @@ obj hello-skeleton
   ;
 explicit hello-skeleton ;
 
-obj sharedauth-stub
-  : $(here)/idl/sharedauth.idl
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      /TAO//TAO
+      $(deps)
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
+      <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
+    ;
+  explicit $(name) ;
+}
+
+demo-exe sharedauth_client
+  : client
+  : hello-stub
   ;
-explicit sharedauth-stub ;
-
-exe sharedauth_client
- : src/client.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
-   sharedauth-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <dependency>sharedauth-stub
-   <implicit-dependency>sharedauth-stub
-   <link>static,<target-os>linux:<source>/dl//dl
-   
- ;
-explicit sharedauth_client ;
-
-exe sharedauth_client-sharedauth
- : src/client_sharedauth.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
-   sharedauth-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <dependency>sharedauth-stub
-   <implicit-dependency>sharedauth-stub
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit sharedauth_client-sharedauth ;
-
-exe sharedauth_server
- : src/server.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
-   hello-skeleton
-   sharedauth-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <dependency>hello-skeleton
-   <implicit-dependency>hello-skeleton
-   <dependency>sharedauth-stub
-   <implicit-dependency>sharedauth-stub
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit sharedauth_server ;
+  
+demo-exe sharedauth_sharedauth
+  : sharedauth
+  : hello-stub
+  ;
+  
+demo-exe sharedauth_server
+  : server
+  : hello-stub
+    hello-skeleton
+    ;
 
 alias sharedauth
   : sharedauth_client
-    sharedauth_client-sharedauth
+    sharedauth_sharedauth
     sharedauth_server
+    admin/DemoCppHello.key
   ;

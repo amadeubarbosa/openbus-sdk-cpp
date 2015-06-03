@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 /**
-* API - SDK Openbus C++
+* API do OpenBus SDK C++
 * \file openbus/Connection.hpp
 * 
 */
@@ -16,6 +16,7 @@
 #include "offer_registryC.h"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
+#include "openbus/crypto/PublicKey.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
 #include "openbus/LRUCache_impl.hpp"
@@ -44,10 +45,9 @@ namespace openbus
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
 
   class OpenBusContext;
-  class PublicKey;
   class LoginCache;
 #ifndef OPENBUS_SDK_MULTITHREAD
-  // class RenewLogin;
+  class RenewLogin;
 #endif
 
   namespace interceptors
@@ -104,6 +104,51 @@ struct OPENBUS_SDK_DECL InvalidPropertyValue : public std::exception
   const std::string value;
 };
 
+class Connection;
+  
+/**
+ * \brief Segredo para compartilhamento de autenticação.
+ *
+ * Objeto que representa uma tentativa de compartilhamento de
+ * autenticação através do compartilhamento de um segredo, que pode
+ * ser utilizado para realizar uma autenticação junto ao barramento em
+ * nome da mesma entidade que gerou e compartilhou o segredo.
+ *
+ * Cada segredo de autenticação compartilhada pertence a um único barramento e
+ * só pode ser utilizado em uma única autenticação.
+ *
+ */
+class OPENBUS_SDK_DECL SharedAuthSecret
+{
+public:
+   /**
+    * \brief Cancela o segredo caso esse ainda esteja ativo, de forma
+    * que ele não poderá ser mais utilizado.  
+    *
+    */
+   void cancel();
+  
+  /**
+   * \brief Retorna o identificador do barramento em que o segredo
+   * pode ser utilizado.
+   */
+  std::string busid() const
+  {
+    return busid_;
+  }
+private:
+  SharedAuthSecret();
+  SharedAuthSecret(const std::string &bus_id, idl_ac::LoginProcess_var,
+                   const idl::OctetSeq &secret,
+                   interceptors::ORBInitializer *);
+  std::string busid_;
+  idl_ac::LoginProcess_var login_process_;
+  idl::OctetSeq secret_;
+  interceptors::ORBInitializer *orb_initializer_;
+  friend class OpenBusContext;
+  friend class Connection;
+};
+
 /**
  * \brief Conexão para acesso identificado a um barramento.
  *
@@ -112,9 +157,9 @@ struct OPENBUS_SDK_DECL InvalidPropertyValue : public std::exception
  * possui um identificador único e está sempre associado ao nome de uma
  * entidade que é autenticada no momento do estabelecimento do login.
  * Há basicamente três formas de autenticação de entidade disponíveis:
- * - Por Senha: veja a operação 'loginByPassword'
- * - Por Certificado de login: veja a operação 'loginByCertificate'
- * - Por Autenticação compartilhada: veja a operação 'loginBySharedAuth'
+ * - Por Senha: veja a operação \ref loginByPassword
+ * - Por Certificado de login: veja a operação \ref loginByCertificate
+ * - Por Autenticação compartilhada: veja a operação \ref loginBySharedAuth
  *
  * A entidade associada ao login é responsável por todas as chamadas feitas
  * através daquela conexão e essa entidade deve ser levada em consideração
@@ -149,7 +194,7 @@ public:
    * \param conn Conexão que recebeu a notificação de login inválido.
    * \param login Informações do login que se tornou inválido.
    */
-  typedef boost::function<void (Connection &, idl_ac::LoginInfo)> 
+  typedef boost::function<void (Connection & conn, idl_ac::LoginInfo login)> 
     InvalidLoginCallback_t;
   
   /**
@@ -158,8 +203,8 @@ public:
   * A autenticação por senha é validada usando um dos validadores de senha
   * definidos pelo adminsitrador do barramento.
   *
-  * @param[in] entity Identificador da entidade a ser autenticada.
-  * @param[in] password Senha de autenticação no barramento da entidade.
+  * @param entity Identificador da entidade a ser autenticada.
+  * @param password Senha de autenticação no barramento da entidade.
   * 
   * @throw AlreadyLoggedIn A conexão já está logada.
   * @throw idl_ac::AccessDenied
@@ -178,8 +223,8 @@ public:
   * A autenticação por certificado é validada usando um certificado de login
   * registrado pelo adminsitrador do barramento.
   * 
-  * @param[in] entity Identificador da entidade a ser conectada.
-  * @param[in] privKey Chave privada da entidade utilizada na autenticação.
+  * @param entity Identificador da entidade a ser conectada.
+  * @param privKey Chave privada da entidade utilizada na autenticação.
   * 
   * @throw AlreadyLoggedIn A conexão já está autenticada.
   * @throw idl_ac::AccessDenied 
@@ -193,7 +238,7 @@ public:
   *        autenticação da conexão.
   * @throw CORBA::Exception
   */
-  void loginByCertificate(const std::string &entity, const PrivateKey &);
+  void loginByCertificate(const std::string &entity, const PrivateKey &privKey);
   
   /**
   * \brief Inicia o processo de login por autenticação compartilhada.
@@ -208,54 +253,48 @@ public:
   * administrador do barramento. Caso contrário essas informações se tornam
   * inválidas e não podem mais ser utilizadas para criar um login.
   * 
-  * @return Um par composto de um objeto que representa o processo de login 
-  *         iniciado e de um segredo a ser fornecido na conclusão do processo 
-  *         de login.
+  * @return Segredo a ser fornecido na conclusão do processo de login.
   *
   * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu 
   *        o estabelecimento da conexão.
   * @throw CORBA::Exception
   */
-  std::pair <idl_ac::LoginProcess_ptr, idl::OctetSeq> startSharedAuth();
+  SharedAuthSecret startSharedAuth();
   
   /**
   * \brief Efetua login de uma entidade usando autenticação compartilhada.
   * 
-  * A autenticação compartilhada é feita a partir de informações obtidas a 
+  * A autenticação compartilhada é feita a partir de um segredo obtido
   * através da operação 'startSharedAuth' de uma conexão autenticada.
   * 
-  * @param[in] loginProcess Objeto que represeta o processo de login iniciado.
-  * @param[in] secret Segredo a ser fornecido na conclusão do processo de login.
+  * @param secret Segredo a ser fornecido na conclusão do processo de login.
   * 
-  * @throw InvalidLoginProcess O LoginProcess informado é inválido, por exemplo 
-  *        depois de ser cancelado ou ter expirado.
+  * @throw InvalidLoginProcess A tentativa de login associada ao segredo
+  *        informado é inválido, por exemplo depois do segredo ser
+  *        cancelado, ter expirado, ou já ter sido utilizado.
   * @throw AlreadyLoggedIn A conexão já está autenticada.
-  * @throw idl_ac::AccessDenied 
-  *        O segredo fornecido não corresponde ao esperado pelo barramento.
-  * @throw idl::ServiceFailure 
-  *        Ocorreu uma falha interna nos serviÃ§os do barramento que impediu o 
-  *        estabelecimento da conexão.
+  * @throw AccessDenied O segredo fornecido não corresponde ao esperado
+  *        pelo barramento.
+  * @throw ServiceFailure Ocorreu uma falha interna nos serviços do
+  *        barramento que impediu a autenticação da conexão.
   * @throw CORBA::Exception
   */
-  void loginBySharedAuth(idl_ac::LoginProcess_ptr loginProcess,
-                         const idl::OctetSeq &secret);
+  void loginBySharedAuth(const SharedAuthSecret &secret);
   
- /**
-  * \brief Efetua logout da conexão, tornando o login atual inválido.
-  * 
-  * Após a chamada a essa operação a conexão fica desautenticada, implicando que
-  * qualquer chamada realizada pelo ORB usando essa conexão resultará numa
-  * exceção de sistema 'CORBA::NO_PERMISSION{NoLogin}' e chamadas recebidas por
-  * esse ORB serão respondidas com a exceção 'CORBA::NO_PERMISSION{UnknownBus}'
-  * indicando que não foi possível validar a chamada pois a conexão está
-  * temporariamente desautenticada.
-  * 
-  * @return Verdadeiro se o processo de logout for concluído com êxito e falso
-  *         se a conexão já estiver desautenticada (login inválido) ou se houver
-  *         uma falha durante o processo remoto do logout.
-  *
-  */
+  /**
+	 * \brief Efetua logout da conexão, tornando o login atual inválido.
+	 * 
+	 * Após a chamada a essa operação a conexão fica desautenticada, implicando que
+	 * qualquer chamada realizada pelo ORB usando essa conexão resultará numa
+	 * exceção de sistema 'CORBA::NO_PERMISSION{NoLogin}' e chamadas recebidas
+	 * por esse ORB serão respondidas com a exceção
+	 * 'CORBA::NO_PERMISSION{UnknownBus}' indicando que não foi possível
+	 * validar a chamada pois a conexão está temporariamente desautenticada.
+	 * 
+	 * @return Verdadeiro se o processo de logout for concluído com êxito e 
+	 *         falso se não for possível invalidar o login atual.
+	 */
   bool logout();
   	
   /**
@@ -298,32 +337,24 @@ public:
    * Identificador do barramento ao qual essa conexão se refere.
    */
   const std::string busid() const;
-  
   ~Connection();  
 private:
   /**
   * Connection deve ser adquirido atraves de: OpenBusContext::createConnection()
   */
-  Connection(const std::string host,
-             const unsigned short port,
-             CORBA::ORB_ptr, 
-             boost::shared_ptr<interceptors::orb_info>,
-             OpenBusContext &, 
+  Connection(const std::string host, const unsigned short port, CORBA::ORB_ptr, 
+             interceptors::ORBInitializer *, OpenBusContext &, 
              const ConnectionProperties &props);
 
   Connection(const Connection &);
   Connection &operator=(const Connection &);
 
 #ifdef OPENBUS_SDK_MULTITHREAD  
-  static void renewLogin(
-    Connection &conn,
-    idl_ac::AccessControl_ptr acs, 
-    OpenBusContext &ctx,
-    idl_ac::ValidityTime t);
+  static void renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
+                         OpenBusContext &ctx, idl_ac::ValidityTime t);
 #endif
-  void login(
-    idl_ac::LoginInfo &loginInfo, 
-    idl_ac::ValidityTime validityTime);
+  void login(idl_ac::LoginInfo &loginInfo, 
+             idl_ac::ValidityTime validityTime);
 
   void checkBusid() const;
   bool _logout(bool local = true);
@@ -360,17 +391,19 @@ private:
     return _login_registry;
   }
 
+  idl_ac::LoginInfo get_login();
+
   const std::string _host;
   const unsigned short _port;
-  CORBA::ORB_var _orb;
-  boost::shared_ptr<interceptors::orb_info> _orb_info;
+  interceptors::ORBInitializer * _orb_init;
+  CORBA::ORB_ptr _orb;
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;
 #else
-  // boost::scoped_ptr<RenewLogin> _renewLogin;
+  boost::scoped_ptr<RenewLogin> _renewLogin;
 #endif
-  boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo;
+  boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo, _invalid_login;
   InvalidLoginCallback_t _onInvalidLogin;
   
   enum LegacyDelegate 
@@ -389,7 +422,6 @@ private:
   /* Variaveis que sao modificadas somente no construtor. */
   OpenBusContext &_openbusContext;
   PrivateKey _key;
-  PortableInterceptor::Current_var _piCurrent;
   scs::core::IComponent_var _iComponent;
   idl_ac::AccessControl_var _access_control;
   idl_ac::LoginRegistry_var _login_registry;
@@ -415,7 +447,9 @@ private:
     friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);
     friend bool operator!=(const SecretSession &lhs, const SecretSession &rhs);
   };
-  LRUCache<hash_value, SecretSession> _profile2session;
+  typedef LRUCache<hash_value, std::string> profile2login_LRUCache;
+  profile2login_LRUCache _profile2login;
+  LRUCache<std::string, SecretSession> _login2session;
 
   friend struct openbus::interceptors::ServerInterceptor;
   friend struct openbus::interceptors::ClientInterceptor;
@@ -425,7 +459,7 @@ private:
 };
 
 inline bool operator==(const Connection::SecretSession &lhs, 
-                       const Connection::SecretSession &rhs)
+                const Connection::SecretSession &rhs)
 {
   return lhs.id == rhs.id
     && lhs.remote_id == rhs.remote_id
@@ -434,7 +468,7 @@ inline bool operator==(const Connection::SecretSession &lhs,
 }
 
 inline bool operator!=(const Connection::SecretSession &lhs, 
-                       const Connection::SecretSession &rhs)
+                const Connection::SecretSession &rhs)
 {
   return !(lhs == rhs);
 }

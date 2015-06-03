@@ -2,6 +2,7 @@
 
 #include "proxyS.h"
 #include "helloC.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
@@ -55,21 +56,19 @@ void load_options(int argc, char **argv)
   }
 }
 
-struct HelloProxyImpl : virtual public POA_tecgraf::openbus::interop::simple::HelloProxy
+struct HelloProxyImpl :
+  virtual public POA_tecgraf::openbus::interop::chaining::HelloProxy
 {
   HelloProxyImpl(openbus::OpenBusContext &c) : ctx(c)
   {
   }
 
-  char *fetchHello(const tecgraf::openbus::interop::simple::OctetSeq& encodedChain)
+  char *fetchHello(
+    const ::tecgraf::openbus::interop::chaining::OctetSeq &encodedChain)
   {
-    CORBA::OctetSeq seq;
-    seq.length(encodedChain.length());
-    for (CORBA::ULong i(0); i != seq.length(); ++i)
-    {
-      seq[i] = encodedChain[i];
-    }    
-    openbus::CallerChain chain = ctx.decodeChain(seq);
+    openbus::CallerChain chain = ctx.decodeChain(
+      CORBA::OctetSeq(encodedChain.maximum(), encodedChain.length(),
+                      const_cast<unsigned char *>(encodedChain.get_buffer())));
     assert(chain != openbus::CallerChain());
     ctx.joinChain(chain);
     
@@ -161,23 +160,17 @@ int main(int argc, char **argv)
   try
   {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    // openbus::log().set_level(openbus::debug_level);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host,
-                                                                    bus_port);
-    ctx->setDefaultConnection(conn.get());
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
+    std::auto_ptr<openbus::Connection>
+      conn(bus_ctx->createConnection(bus_host, bus_port));
+    bus_ctx->setDefaultConnection(conn.get());
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orb_run(boost::bind(ORBRun, ctx->orb()));
+    boost::thread orb_run(boost::bind(ORBRun, bus_ctx->orb()));
 #endif
 
     scs::core::ComponentId componentId;
@@ -186,23 +179,24 @@ int main(int argc, char **argv)
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "c++";
-    scs::core::ComponentContext comp(ctx->orb(), componentId);
+    scs::core::ComponentContext comp(bus_ctx->orb(), componentId);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
     props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
     props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
 
-    conn->onInvalidLogin(on_invalid_login(*ctx, comp, props, *conn));
+    conn->onInvalidLogin(on_invalid_login(*bus_ctx, comp, props, *conn));
 
-    HelloProxyImpl proxy(*ctx);
-    comp.addFacet("HelloProxy", "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0",
+    HelloProxyImpl proxy(*bus_ctx);
+    comp.addFacet("HelloProxy",
+		  "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0",
                   &proxy);
-    login_register(*ctx, comp, props, *conn);
+    login_register(*bus_ctx, comp, props, *conn);
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
 #else
-    ctx->orb()->run();
+    bus_ctx->orb()->run();
 #endif
   }
   catch (const CORBA::Exception &e)
@@ -210,4 +204,5 @@ int main(int argc, char **argv)
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

@@ -34,6 +34,8 @@ struct Login;
 namespace interceptors 
 {
 
+namespace PI = PortableInterceptor;
+
 struct OPENBUS_SDK_DECL Session 
 {
   Session(const std::string &login);
@@ -45,42 +47,58 @@ struct OPENBUS_SDK_DECL Session
 
 struct credential
 {
-  tecgraf::openbus::core::v2_0::credential::CredentialData_var data;
+  tecgraf::openbus::core::v2_0::credential::CredentialData data;
   openbus::legacy::v1_5::Credential legacy;
+
+  bool is_legacy() const
+  {
+    if (std::string(legacy.owner).empty())
+    {
+      return false;
+    }
+    return true;
+  }
 };
 
-struct OPENBUS_SDK_DECL ServerInterceptor
-  : public PortableInterceptor::ServerRequestInterceptor 
+struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
 {
-  ServerInterceptor(boost::shared_ptr<orb_info>);
-  void receive_request_service_contexts(
-    PortableInterceptor::ServerRequestInfo_ptr);
-  void receive_request(PortableInterceptor::ServerRequestInfo_ptr);
-  void send_reply(PortableInterceptor::ServerRequestInfo_ptr);
-  void send_exception(PortableInterceptor::ServerRequestInfo_ptr);
-  void send_other(PortableInterceptor::ServerRequestInfo_ptr);
+  ServerInterceptor(ORBInitializer *);
+  void receive_request_service_contexts(PI::ServerRequestInfo_ptr);
+  void receive_request(PI::ServerRequestInfo_ptr);
+  void send_reply(PI::ServerRequestInfo_ptr);
+  void send_exception(PI::ServerRequestInfo_ptr);
+  void send_other(PI::ServerRequestInfo_ptr);
   char *name();
   void destroy();
-  boost::shared_ptr<OpenBusContext> _openbus_ctx;
+
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
 #endif
-  boost::shared_ptr<orb_info> _orb_info;
-  Connection &get_dispatcher(
-    boost::shared_ptr<OpenBusContext>, 
-    const std::string &bus,
+  ORBInitializer *_orb_init;
+  LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
+  OpenBusContext *_bus_ctx;
+  void save_dispatcher_connection(
+    Connection &,
+    PI::ServerRequestInfo &,
+    OpenBusContext *);
+
+  Connection &get_dispatcher_connection(
+    OpenBusContext *, 
+    const std::string &busid,
     const std::string &login,
-    const std::string &operation);
-  credential get_credential(const PortableInterceptor::ServerRequestInfo_ptr);
+    PI::ServerRequestInfo &);
+
+  credential get_credential(PI::ServerRequestInfo &) const;
+
   void build_legacy_chain(
-    PortableInterceptor::ServerRequestInfo &,
-    std::string target,
-    const openbus::legacy::v1_5::Credential &);
+    PI::ServerRequestInfo &,
+    const std::string &target,
+    const openbus::legacy::v1_5::Credential &) const;
+
   void send_credential_reset(
     Connection &, 
     boost::shared_ptr<Login>, 
-    PortableInterceptor::ServerRequestInfo &);
-  LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
+    PI::ServerRequestInfo &);
 };
 
 }}

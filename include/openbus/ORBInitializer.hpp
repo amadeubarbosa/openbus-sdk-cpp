@@ -1,7 +1,23 @@
 // -*- coding: iso-8859-1-unix -*-
 /**
-* \mainpage API - SDK Openbus C++
-* \file openbus/ORBInitializer.h
+  \mainpage API do OpenBus SDK C++
+  
+  Este documento apresenta uma API C++ para o acesso ao barramento
+  OpenBus. O conteúdo aqui apresentado foi extraído automaticamente
+  dos fontes da biblioteca. 
+
+  O ponto de entrada da interface é a classe \ref
+  openbus::ORBInitializer, que retorna um invólucro que representa um
+  ORB. Através do ORB, é possível obter uma instância de \ref
+  openbus::OpenBusContext, que permite controlar o contexto das
+  chamadas de um ORB para acessar informações que identificam essas
+  chamadas em barramentos OpenBus.
+
+  <a href="https://jira.tecgraf.puc-rio.br/confluence/display/OPENBUS020/Manual+OpenBus+2.0.0">Manual do OpenBus</a>
+
+  <a href="https://jira.tecgraf.puc-rio.br/confluence/display/OPENBUS020/CORE">Download do barramento</a>
+ 
+  \file openbus/ORBInitializer.h
 */
 
 #ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_H_
@@ -10,12 +26,52 @@
 #include "openbus/decl.hpp"
 
 #include <tao/ORB.h>
+#include <boost/shared_ptr.hpp>
 
 /**
-* \brief openbus
+* \brief Namespace para a biblioteca de acesso.
 */
-namespace openbus 
+namespace openbus {
+
+/**
+ * \class orb_ctx
+ * \brief 
+ * Representa um ORB através de um invólucro que assume a 
+ * propriedade(ownership) sobre o ORB. O destrutor do invólucro chama
+ * orb::destroy(). A instância do ORB pode ser obtida através do
+ * método orb().
+ *
+ */
+class OPENBUS_SDK_DECL orb_ctx
 {
+public:
+  /**
+   * \brief Construtor que recebe um CORBA::ORB_var.
+   */
+  orb_ctx(CORBA::ORB_var orb);
+
+  /**
+   * \brief Destrutor que chama orb::destroy().
+   */
+  ~orb_ctx();
+
+  /**
+   * \brief Compartilha a instância do ORB.
+   *
+   * Retorna um ponteiro para a instância do ORB que é 
+   * armazenada internamente.
+   * 
+   * @return CORBA::ORB_var
+   */
+  CORBA::ORB_var orb() const
+  {
+    return orb_;
+  }
+private:
+  orb_ctx &operator=(const orb_ctx &);
+  CORBA::ORB_var orb_;
+};
+
 /**
  * \brief Inicializa um ORB utilizado exclusivamente para chamadas
  *        através de barramentos OpenBus.
@@ -25,15 +81,13 @@ namespace openbus
  * fazer chamadas CORBA ordinárias sem o controle de acesso do OpenBus
  * que permite identificação da origem das chamadas. Esse controle de
  * acesso é feito através conexões que são obtidas e manipuladas
- * através de um OpenBusContext. Cada ORB possui um OpenBusContext
+ * através de um  \ref OpenBusContext. O ORB possui um 
+ * \ref OpenBusContext 
  * associado, que pode ser obitido através do comando:
  * CORBA::ORB::resolve_initial_reference("OpenBusContext")
  *
  * O ORB é inicializado da mesma forma feita pela operação
- * 'CORBA::ORB_init' definida pelo padrão CORBA. Em particular,
- * algumas implementações de CORBA não permitem inicialização de
- * múltiplos ORBs num mesmo processo, como por exemplo o ORB Mico
- * 2.3.13.
+ * 'CORBA::ORB_init' definida pelo padrão CORBA. 
  * 
  * Chamadas realizadas e recebidas através deste ORB são interceptadas
  * pela biblioteca de acesso do OpenBus e podem lançar exceções de
@@ -61,22 +115,16 @@ namespace openbus
  *    representa um bug no servidor sendo chamado ou um erro de
  *    implantação do barramento.
  * 
- * @return O ORB inicializado, similar à operação 'CORBA::ORB_init'
- * definida pelo padrão CORBA.
- *
- * Atenção: O Mico 2.3.13 não permite a inicialização de mais de um
- *          ORB. Após uma primeira chamada bem sucedida de
- *          ORBInitializer(), todas as chamadas consecutivas
- *          retornarão o mesmo ORB que foi criado na primeira chamada.
- * 
  * @param[in] argc Número de parâmetros usados na inicialização do ORB.
  * @param[in] argv Parâmetros usados na inicialização do ORB.
  * 
  * @throw CORBA::Exception
  *
- * @return O ORB inicializado.
+ * @return Um smart pointer do tipo \ref boost::shared_ptr para um 
+ * invólucro que contêm o ORB inicializado.
  */
-  OPENBUS_SDK_DECL CORBA::ORB_ptr ORBInitializer(int &argc, char **argv);
+  OPENBUS_SDK_DECL boost::shared_ptr<orb_ctx>
+  ORBInitializer(int &argc, char **argv);
 }
 
 #endif

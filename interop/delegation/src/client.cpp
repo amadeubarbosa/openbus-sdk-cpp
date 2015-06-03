@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "messagesC.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -8,6 +9,7 @@
 #include <scs/ComponentContext.h>
 #include <log/output/file_output.h>
 
+#include <tao/PortableServer/PortableServer.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -26,7 +28,6 @@ void mysleep()
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 
-openbus::CallerChain* certification;
 const std::string entity("interop_delegation_cpp_client");
 std::string bus_host;
 unsigned short bus_port;
@@ -43,7 +44,6 @@ void load_options(int argc, char **argv)
      "Port to OpenBus");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::store(po::parse_config_file<char>("test.properties", desc), vm);
   po::notify(vm);
   if (vm.count("help")) 
   {
@@ -63,19 +63,13 @@ void load_options(int argc, char **argv)
 int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = 
-      dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host, bus_port));
-    ctx->setDefaultConnection(conn.get());
+    openbus::log().set_level(openbus::debug_level);
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
+    std::auto_ptr <openbus::Connection> conn(
+      bus_ctx->createConnection(bus_host, bus_port));
+    bus_ctx->setDefaultConnection(conn.get());
     
     conn->loginByPassword(entity, entity);
 
@@ -87,26 +81,28 @@ int main(int argc, char** argv) {
     props[static_cast<CORBA::ULong>(1)].value = delegation::_tc_Messenger->id();
 
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+      find_offers(bus_ctx, props);
     if (offers->length() > 0)
     {
-      CORBA::Object_var o = 
-        offers[static_cast<CORBA::ULong> (0)].service_ref->getFacetByName("messenger");
+      CORBA::Object_var o(
+        offers[static_cast<CORBA::ULong> (0)]
+        .service_ref->getFacetByName("messenger"));
       delegation::Messenger_var m = delegation::Messenger::_narrow(o);
       props[1].value = delegation::_tc_Forwarder->id();
-      offers = ctx->getOfferRegistry()->findServices(props);
+      offers = find_offers(bus_ctx, props);
       if(offers->length() > 0)
       {
         o = offers[static_cast<CORBA::ULong> (0)]
           .service_ref->getFacetByName("forwarder");
         delegation::Forwarder_var forwarder = delegation::Forwarder::_narrow(o);
         props[1].value = delegation::_tc_Broadcaster->id();
-        offers = ctx->getOfferRegistry()->findServices(props);
+        offers = find_offers(bus_ctx, props);
         if(offers->length() > 0)
         {
           o = offers[static_cast<CORBA::ULong> (0)]
             .service_ref->getFacetByName("broadcaster");
-          delegation::Broadcaster_var broadcaster = delegation::Broadcaster::_narrow(o);
+          delegation::Broadcaster_var broadcaster(
+            delegation::Broadcaster::_narrow(o));
           conn->logout();
 
           conn->loginByPassword("bill", "bill");
@@ -124,7 +120,7 @@ int main(int argc, char** argv) {
 
           conn->loginByPassword("steve", "steve");
           broadcaster->subscribe();
-          broadcaster->post("Testando a lista!");
+          broadcaster->post("Testing the list!");
           conn->logout();
 
           mysleep();
@@ -135,11 +131,44 @@ int main(int argc, char** argv) {
               ++first)
           {
             conn->loginByPassword(*first, *first);
-            delegation::PostDescSeq_var posts = m->receivePosts();
-            for(std::size_t i = 0; i != posts->length(); ++i)
+            delegation::PostDescSeq_var posts(m->receivePosts());
+            if (std::string(*first) != "bill" && posts->length() != 1)
             {
-              std::cout << "id (" << i << ") (from)" << (*posts)[i].from 
-                        << " (body)" << (*posts)[i].message << std::endl;
+              std::cerr << "Error: Retrieving messages for '"
+                        << *first << "': posts.length() != 1"
+                        << std::endl;
+              std::abort();
+            }
+            else if (std::string(*first) == "bill" && posts->length() != 0)
+            {
+              std::cerr << "Error: Retrieving messages for 'bill' \
+                            : posts.length() != 0"
+                        << std::endl;
+              std::abort();
+              
+            }
+            for(CORBA::ULong i(0); i != posts->length(); ++i)
+            {
+              if (std::string(*first) != "willian"
+                  && (std::string("steve->interop_delegation_cpp_broadcaster")
+                      != posts[i].from.in()))
+              {
+                std::cerr << "Error: steve->interop_delegation_cpp_broadcaster"
+                          << " != " << posts[i].from.in()
+                          << std::endl;
+                std::abort();
+              }
+              else if(std::string(*first) == "willian"
+                  && (std::string("interop_delegation_cpp_forwarder")
+                      != posts[i].from.in()))
+              {
+                std::cerr << "Error: interop_delegation_cpp_forwarder"
+                          << " != " << posts[i].from.in()
+                          << std::endl;
+                std::abort();
+              }                
+              std::cout << "message(" << i << ") (from) " << (*posts)[i].from 
+                        << " (body) " << (*posts)[i].message << std::endl;
             }
             broadcaster->unsubscribe();
             conn->logout();
@@ -171,4 +200,5 @@ int main(int argc, char** argv) {
     std::cout << "[error *unknow exception*]" << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

@@ -1,12 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include "proxyC.h"
+#include "proxyS.h"
+#include "helloC.h"
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
 #include <openbus/log.hpp>
 
-#include <tao/PortableServer/PortableServer.h>
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -52,20 +52,24 @@ int main(int argc, char **argv)
   try
   {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    // openbus::log().set_level(openbus::debug_level);
 
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
+    CORBA::Object_var o = orb_ctx->orb()->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
     assert(!CORBA::is_nil(poa));
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host, 
+    CORBA::Object_var
+      obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
+    openbus::OpenBusContext
+      *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+
+    std::auto_ptr<openbus::Connection> conn(bus_ctx->createConnection(bus_host, 
                                                                   bus_port));
-    ctx->setDefaultConnection(conn.get());
+    bus_ctx->setDefaultConnection(conn.get());
     conn->loginByPassword(entity, entity);
 
     openbus::idl_or::ServicePropertySeq props;
@@ -77,36 +81,35 @@ int main(int argc, char **argv)
       "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0";
 
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(props);
+      bus_ctx->getOfferRegistry()->findServices(props);
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
       if (offers[idx].service_ref->_non_existent())
       {
         continue;
       }
-      CORBA::Object_var o = offers[idx].service_ref->getFacetByName("HelloProxy");
-      tecgraf::openbus::interop::simple::HelloProxy *helloProxy = 
-        tecgraf::openbus::interop::simple::HelloProxy::_narrow(o);
+      CORBA::Object_var
+	o(offers[idx].service_ref->getFacetByName("HelloProxy"));
+      tecgraf::openbus::interop::chaining::HelloProxy *helloProxy = 
+        tecgraf::openbus::interop::chaining::HelloProxy::_narrow(o);
       openbus::idl_or::ServicePropertySeq properties = offers[idx].properties;
-      CORBA::String_var loginId;
+      const char *loginId(0);
       for (CORBA::ULong idx = 0; idx != properties.length(); ++idx)
       {
         if (std::string(properties[idx].name) == "openbus.offer.login")
         {
-          loginId = properties[idx].value;
+          loginId = properties[idx].value.in();
           break;
         }
       }
       assert(loginId != 0);
-      openbus::CallerChain chain = ctx->makeChainFor(loginId.in());
-      CORBA::OctetSeq encodedChain = ctx->encodeChain(chain);
-      tecgraf::openbus::interop::simple::OctetSeq seq;
-      seq.length(encodedChain.length());
-      for (CORBA::ULong i(0); i != seq.length(); ++i)
-      {
-        seq[i] = encodedChain[i];
-      }
-      const char *msg = helloProxy->fetchHello(seq);
+      openbus::CallerChain chain = bus_ctx->makeChainFor(loginId);
+      CORBA::OctetSeq encodedChain = bus_ctx->encodeChain(chain);
+      const char *msg = helloProxy->fetchHello(
+        tecgraf::openbus::interop::chaining::OctetSeq(
+          encodedChain.maximum(),
+          encodedChain.length(),
+          const_cast<unsigned char *> (encodedChain.get_buffer())));
       std::string s = "Hello " + entity + "!";
       if (!(msg == s))
       {
@@ -119,4 +122,5 @@ int main(int argc, char **argv)
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

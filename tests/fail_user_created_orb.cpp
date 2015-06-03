@@ -2,7 +2,7 @@
 
 #include <configuration.h>
 
-int main(int argc, char **argv)
+int main(int argc, char* argv[])
 {
   openbus::configuration cfg(argc, argv);
   CORBA::ORB_var orb(CORBA::ORB_init(argc, argv, ""));
@@ -15,4 +15,5 @@ int main(int argc, char **argv)
   catch(const CORBA::ORB::InvalidName &)
   {
   }
+  return 0; //MSVC
 }

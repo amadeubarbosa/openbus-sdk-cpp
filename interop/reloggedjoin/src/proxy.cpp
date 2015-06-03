@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "helloS.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
@@ -16,6 +17,7 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
 
 const std::string entity("interop_reloggedjoin_cpp_proxy");
 std::string private_key;
@@ -28,8 +30,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Opcoes permitidas");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -59,55 +60,74 @@ void load_options(int argc, char **argv)
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello 
 {
-  HelloImpl(openbus::OpenBusContext &c) : ctx(c) 
+  HelloImpl(openbus::OpenBusContext &c) : bus_ctx(c) 
   { 
   }
 
   char *sayHello() 
   {
-    openbus::Connection *const conn = ctx.getCurrentConnection();
-    conn->logout();
-    try 
+    try
     {
-      conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
-    }
-    catch(const openbus::InvalidPrivateKey &e)
-    {
-      std::cout << e.what() << std::endl;
-    }
-    openbus::CallerChain chain = ctx.getCallerChain();
-    assert(chain != openbus::CallerChain());
-    std::string entity(chain.caller().entity);
-    std::string msg = "Hello " + entity + "!";
+      openbus::Connection *const conn = bus_ctx.getCurrentConnection();
+      conn->logout();
+      try 
+      {
+        conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
+      }
+      catch(const openbus::InvalidPrivateKey &e)
+      {
+        std::cout << e.what() << std::endl;
+      }
+      openbus::CallerChain chain = bus_ctx.getCallerChain();
+      if (chain == openbus::CallerChain())
+      {
+        std::abort();
+      }
+      std::string entity(chain.caller().entity);
+      std::string msg("Hello " + entity + "!");
 
-    openbus::idl_or::ServicePropertySeq props;
-    props.length(2);
-    props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    props[static_cast<CORBA::ULong>(1)].name = "reloggedjoin.role";
-    props[static_cast<CORBA::ULong>(1)].value = "server";
+      openbus::idl_or::ServicePropertySeq props;
+      props.length(2);
+      props[0].name  = "offer.domain";
+      props[0].value = "Interoperability Tests";
+      props[1].name = "reloggedjoin.role";
+      props[1].value = "server";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx.getOfferRegistry()->findServices(props);
-    for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
-    {
-      CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
-      tecgraf::openbus::interop::simple::Hello_var hello = 
-        tecgraf::openbus::interop::simple::Hello::_narrow(o);
-      ctx.joinChain(chain);
-      return hello->sayHello();
+      bus_ctx.joinChain(chain);
+
+      openbus::idl_or::ServiceOfferDescSeq_var offers(
+        find_offers(&bus_ctx, props));
+      if (offers->length() < 1)
+      {
+        std::cerr << "offers->length() != 0" << std::endl;
+        std::abort();
+      }
+      for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
+      {
+        CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
+        tecgraf::openbus::interop::simple::Hello_var hello = 
+          tecgraf::openbus::interop::simple::Hello::_narrow(o);
+        return hello->sayHello();
+      }
     }
+    catch (const CORBA::SystemException &e)
+    {
+      std::cerr << "repid: " << e._rep_id() << "minor code: " << e.minor()
+                << std::endl;
+      std::abort();
+    }
+    return "";
   }
 private:
-  openbus::OpenBusContext &ctx;
+  openbus::OpenBusContext &bus_ctx;
 };
 
 void loginAndRegister(
-  const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp,
+  const openbus::OpenBusContext &bus_ctx, scs::core::ComponentContext &comp,
   const openbus::idl_or::ServicePropertySeq &props, openbus::Connection &conn)
 {
   conn.loginByCertificate(entity, openbus::PrivateKey(private_key));
-  ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
+  bus_ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
 }
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -123,21 +143,14 @@ int main(int argc, char **argv)
   {
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-    
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr<openbus::Connection> conn = ctx->createConnection(bus_host, 
-                                                                    bus_port);
-    ctx->setDefaultConnection(conn.get());    
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
+    std::auto_ptr<openbus::Connection> conn(
+      bus_ctx->createConnection(bus_host, bus_port));
+    bus_ctx->setDefaultConnection(conn.get());    
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orb_run(boost::bind(ORBRun, ctx->orb()));
+    boost::thread orb_run(boost::bind(ORBRun, bus_ctx->orb()));
 #endif
 
     scs::core::ComponentId componentId;
@@ -146,27 +159,29 @@ int main(int argc, char **argv)
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "c++";
-    scs::core::ComponentContext comp(ctx->orb(), componentId);
+    scs::core::ComponentContext comp(bus_ctx->orb(), componentId);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(2);
-    props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    props[static_cast<CORBA::ULong>(1)].name = "reloggedjoin.role";
-    props[static_cast<CORBA::ULong>(1)].value = "proxy";
+    props[0].name = "offer.domain";
+    props[0].value = "Interoperability Tests";
+    props[1].name = "reloggedjoin.role";
+    props[1].value = "proxy";
 
-    HelloImpl srv(*ctx);
+    HelloImpl srv(*bus_ctx);
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
-    loginAndRegister(*ctx, comp, props, *conn);
+    loginAndRegister(*bus_ctx, comp, props, *conn);
+
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
 #else
-    ctx->orb()->run();
+    bus_ctx->orb()->run();
 #endif
   } 
   catch (const CORBA::Exception &e) 
   {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
-  } 
+  }
+  return 0; //MSVC
 }

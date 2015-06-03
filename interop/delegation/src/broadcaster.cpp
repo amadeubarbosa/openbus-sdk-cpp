@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "messagesS.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -12,6 +13,7 @@
   #include <boost/thread.hpp>
 #endif
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 
@@ -25,12 +27,13 @@ void ORBRun(CORBA::ORB_var orb)
 struct BroadcasterImpl : 
   virtual public POA_tecgraf::openbus::interop::delegation::Broadcaster
 {
-  BroadcasterImpl(openbus::OpenBusContext& c, delegation::Messenger_var messenger)
+  BroadcasterImpl(openbus::OpenBusContext& c,
+		  delegation::Messenger_var messenger)
     : ctx(c), messenger(messenger) {}
 
   void post(const char* message)
   {
-    ctx.exitChain();
+    ctx.joinChain();
     boost::unique_lock<boost::mutex> lock(mutex);
     for(std::vector<std::string>::const_iterator
           first = subscribers.begin(), last = subscribers.end()
@@ -77,8 +80,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -109,21 +111,16 @@ void load_options(int argc, char **argv)
 int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
-
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
-
-    openbus::OpenBusContext *const ctx = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
-    std::auto_ptr <openbus::Connection> conn(ctx->createConnection(bus_host, bus_port));
-    ctx->setDefaultConnection(conn.get());
+    openbus::log().set_level(openbus::debug_level);
+    boost::shared_ptr<openbus::orb_ctx>
+      orb_ctx(openbus::ORBInitializer(argc, argv));
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
+    std::auto_ptr <openbus::Connection>
+      conn(bus_ctx->createConnection(bus_host, bus_port));
+    bus_ctx->setDefaultConnection(conn.get());
     
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orbRun(ORBRun, ctx->orb());
+    boost::thread orbRun(ORBRun, bus_ctx->orb());
 #endif
 
     conn->loginByCertificate(entity, openbus::PrivateKey(private_key));    
@@ -132,10 +129,12 @@ int main(int argc, char** argv) {
     properties.length(2);
     properties[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
     properties[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
-    properties[static_cast<CORBA::ULong>(1)].name  = "openbus.component.interface";
-    properties[static_cast<CORBA::ULong>(1)].value = delegation::_tc_Messenger->id();
+    properties[static_cast<CORBA::ULong>(1)].name  =
+      "openbus.component.interface";
+    properties[static_cast<CORBA::ULong>(1)].value =
+      delegation::_tc_Messenger->id();
     openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx->getOfferRegistry()->findServices(properties);
+      find_offers(bus_ctx, properties);
     
     if (offers->length() > 0)
     {
@@ -149,9 +148,10 @@ int main(int argc, char** argv) {
       componentId.minor_version = '0';
       componentId.patch_version = '0';
       componentId.platform_spec = "C++";
-      scs::core::ComponentContext broadcaster_component(ctx->orb(), componentId);
+      scs::core::ComponentContext
+	broadcaster_component(bus_ctx->orb(), componentId);
     
-      BroadcasterImpl broadcaster_servant(*ctx, m);
+      BroadcasterImpl broadcaster_servant(*bus_ctx, m);
       broadcaster_component.addFacet(
         "broadcaster", delegation::_tc_Broadcaster->id(), &broadcaster_servant);
     
@@ -161,9 +161,10 @@ int main(int argc, char** argv) {
       props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
       props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
 
-      ctx->getOfferRegistry()->registerService(
+      bus_ctx->getOfferRegistry()->registerService(
       broadcaster_component.getIComponent(), props);
       std::cout << "Broadcaster no ar" << std::endl;
+
 #ifdef OPENBUS_SDK_MULTITHREAD
       orbRun.join();
 #endif
@@ -189,4 +190,5 @@ int main(int argc, char** argv) {
     std::cout << "[error *unknow exception*]" << std::endl;
     return -1;
   }
+  return 0; //MSVC
 }

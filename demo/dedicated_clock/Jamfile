@@ -1,4 +1,4 @@
-project openbus/demo/dedicated_clock ;
+project openbus/demos/dedicated_clock ;
 
 path-constant here : . ;
 
@@ -13,43 +13,41 @@ obj dedicated_clock-skeleton
   ;
 explicit dedicated_clock-skeleton ;
 
-exe dedicated_clock_client
- : src/client.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   dedicated_clock-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>dedicated_clock-stub
-   <implicit-dependency>dedicated_clock-stub
-   <link>static,<target-os>linux:<source>/dl//dl
-   
- ;
-explicit dedicated_clock_client ;
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      /TAO//TAO
+      $(deps)
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
+      <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
+    ;
+  explicit $(name) ;
+}
 
-exe dedicated_clock_server
- : src/server.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   dedicated_clock-stub
-   dedicated_clock-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>dedicated_clock-stub
-   <implicit-dependency>dedicated_clock-stub
-   <dependency>dedicated_clock-skeleton
-   <implicit-dependency>dedicated_clock-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit dedicated_clock_server ;
+demo-exe dedicated_clock_client
+  : client
+  : dedicated_clock-stub
+  ;
+  
+demo-exe dedicated_clock_server
+  : server
+  : dedicated_clock-stub
+    dedicated_clock-skeleton
+  ;
 
 alias dedicated_clock
   : dedicated_clock_client
     dedicated_clock_server
+    admin/DemoCppDedicatedClock.key
   ;

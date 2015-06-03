@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 /**
-* API - SDK Openbus C++
+* API do OpenBus SDK C++
 * \file openbus/OpenBusContext.hpp
 */
 
@@ -13,8 +13,10 @@
 #include "credentialC.h"
 #include "access_controlC.h"
 #include "offer_registryC.h"
+#include "data_exportC.h"
 
 #include <tao/LocalObject.h>
+
 #include <boost/function.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
@@ -27,6 +29,7 @@ namespace openbus
   namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
   namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
   namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+  namespace idl_data_export = tecgraf::openbus::core::v2_0::data_export;
 
   namespace interceptors
   {
@@ -51,9 +54,7 @@ namespace access_control
 inline bool operator==(const LoginInfo &lhs, const LoginInfo &rhs)
 {
   return lhs.id.in() == rhs.id.in() 
-    || (lhs.id.in()
-        && rhs.id.in()
-        && !std::strcmp(lhs.id.in(), rhs.id.in()));
+    || (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
 }
 
 inline bool operator!=(const LoginInfo &lhs, const LoginInfo &rhs)
@@ -67,7 +68,7 @@ inline bool operator==(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
   {
     return false;
   }
-  for (std::size_t i = 0; i < rhs.length(); ++i)
+  for (CORBA::ULong i(0); i < rhs.length(); ++i)
   {
     if (lhs[i] != rhs[i])
     {
@@ -89,6 +90,20 @@ inline bool operator!=(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
 */
 namespace openbus 
 {
+
+struct OPENBUS_SDK_DECL InvalidEncodedStream : public std::exception
+{
+  InvalidEncodedStream();
+  InvalidEncodedStream(const std::string &msg);
+  ~InvalidEncodedStream() throw();
+  const char *what() const throw()
+  {
+    return msg_.c_str();
+  }
+private:
+  std::string msg_;
+};
+  
 /**
  * \brief Cadeia de chamadas oriundas de um barramento.
  * 
@@ -101,7 +116,7 @@ namespace openbus
 struct OPENBUS_SDK_DECL CallerChain 
 {
   /**
-  * Barramento através do qual as chamadas foram originadas.
+  * \brief Barramento através do qual as chamadas foram originadas.
   */
   const std::string busid() const 
   {
@@ -109,16 +124,19 @@ struct OPENBUS_SDK_DECL CallerChain
   }
 
 	/**
-   * Entidade para a qual a chamada estava destinada. Só é possível fazer 
-   * chamadas dentro dessa cadeia (através do método joinChain da interface 
-   * OpenBusContext) se a entidade da conexão corrente for o mesmo do target.
+   * \brief Entidade para a qual a chamada estava destinada. 
    *
-   * No caso de conexões legadas, este campo armazenará o nome da entidade 
-   * da conexão que atendeu a requisição. Todas as chamadas feitas como 
-   * parte de uma cadeia de uma chamada legada serão feitas utilizando 
-   * apenas o protocolo do OpenBus 1.5 (apenas com credenciais legadas) 
-   * e portanto serão recusadas por serviços que não aceitem chamadas
-   * legadas (OpenBus 1.5).
+   * Só é possível fazer 
+   * chamadas dentro dessa cadeia através do método 
+   * \ref OpenBusContext::joinChain se a entidade da conexão 
+   * corrente for a mesmo do target.
+   *
+   * No caso de conexões legadas, este campo armazenará o nome da
+   * entidade da conexão que atendeu a requisição. Todas as chamadas
+   * feitas como parte de uma cadeia de uma chamada legada serão
+   * feitas utilizando apenas o protocolo do OpenBus 1.5 (apenas com
+   * credenciais legadas) e portanto serão recusadas por serviços que
+   * não aceitem chamadas legadas (OpenBus 1.5).
    */
   const std::string target() const
   {
@@ -126,9 +144,11 @@ struct OPENBUS_SDK_DECL CallerChain
   }
   
 	/**
-	 * Lista de informações de login de todas as entidades que originaram as
-	 * chamadas nessa cadeia. Quando essa lista é vazia isso indica que a
-	 * chamada não está inclusa em outra cadeia de chamadas.
+	 * \brief Lista de informações de login de todas as entidades que originaram as
+	 * chamadas nessa cadeia. 
+   *
+   * Quando essa lista é vazia isso indica que a  chamada não está inclusa em 
+   * outra cadeia de chamadas.
 	 */
   const idl_ac::LoginInfoSeq &originators() const 
   {
@@ -136,7 +156,8 @@ struct OPENBUS_SDK_DECL CallerChain
   }
   
   /**
-   * Informação de login da entidade que realizou a última chamada da cadeia.
+   * \brief Informação de login da entidade que realizou a última chamada da 
+   * cadeia.
    */
   const idl_ac::LoginInfo &caller() const 
   {
@@ -144,22 +165,28 @@ struct OPENBUS_SDK_DECL CallerChain
   }
 
   /**
-   * \brief Construtor default que indica o valor de CallChain "vazio"
+   * \brief Construtor default que indica há ausência de uma cadeia.
    *
    * O valor de um CallerChain default-constructed pode ser usado para
-   * verificar a ausencia de CallerChain da seguinte forma:
-   * 
-   * CallerChain chain = openbusContext.getCallerChain();
+   * verificar a ausência de uma cadeia da seguinte forma:
+   * \code
+   * CallerChain chain(openbusContext.getCallerChain());
    * if(chain != CallerChain())
    *   // Possui CallerChain
    * else
    *   // Nao possui CallerChain
-   *
+   * \endcode
    */
   CallerChain() 
   {
+    std::memset(_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
   }
+//private:
+#ifndef OPENBUS_SDK_TEST
 private:
+#else
+public:
+#endif
   CallerChain(const std::string &busid, 
               const std::string &target,
               const idl_ac::LoginInfoSeq &originators, 
@@ -175,8 +202,9 @@ private:
               const idl_ac::LoginInfoSeq &originators, 
               const idl_ac::LoginInfo &caller) 
     : _busid(busid), _target(target), _originators(originators), 
-      _caller(caller) 
-  { 
+    _caller(caller) 
+  {
+    std::memset(_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
   }
   
   std::string _busid;
@@ -184,21 +212,15 @@ private:
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
-  idl_cr::SignedCallChain signedCallChain() const 
-  { 
-    return _signedCallChain; 
-  }
-  void signedCallChain(idl_cr::SignedCallChain p) 
-  { 
-    _signedCallChain = p; 
-  }
+  
+  bool is_legacy() const;
+  
   friend class OpenBusContext;
   friend struct openbus::interceptors::ClientInterceptor;
   friend inline bool operator==(CallerChain const &lhs, 
                                 CallerChain const &rhs) 
   {
-    return lhs._busid == rhs._busid
-      && lhs._originators == rhs._originators
+    return lhs._busid == rhs._busid && lhs._originators == rhs._originators
       && lhs._caller == rhs._caller;
   }
 };
@@ -208,29 +230,103 @@ inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs)
   return !(lhs == rhs);
 }
 
+
+/**
+ * \class OpenBusContext
+ * \brief Permite controlar o contexto das chamadas de um ORB para acessar
+ *        informações que identificam essas chamadas em barramentos OpenBus.
+ *
+ * O contexto de uma chamada pode ser definido pela linha de execução atual
+ * do programa em que executa uma chamada, o que pode ser a thread em execução
+ * ou mais comumente o 'CORBA::PICurrent' do padrão CORBA. As informações
+ * acessíveis através do 'OpenBusContext' se referem basicamente à
+ * identificação da origem das chamadas, ou seja, nome das entidades que
+ * autenticaram os acessos ao barramento que originaram as chamadas.
+ * 
+ * A identifcação de chamadas no barramento é controlada através do
+ * OpenBusContext através da manipulação de duas abstrações representadas
+ * pelas seguintes interfaces:
+ * - Connection: Representa um acesso ao barramento, que é usado tanto para
+ *   fazer chamadas como para receber chamadas através do barramento. Para
+ *   tanto a conexão precisa estar autenticada, ou seja, logada. Cada chamada
+ *   feita através do ORB é enviada com as informações do login da conexão
+ *   associada ao contexto em que a chamada foi realizada. Cada chamada
+ *   recebida também deve vir através de uma conexão logada, que deve ser o
+ *   mesmo login com que chamadas aninhadas a essa chamada original devem ser
+ *   feitas.
+ * - CallChain: Representa a identicação de todos os acessos ao barramento que
+ *   originaram uma chamada recebida. Sempre que uma chamada é recebida e
+ *   executada, é possível obter um CallChain através do qual é possível
+ *   inspecionar as informações de acesso que originaram a chamada recebida.
+ */
 class OPENBUS_SDK_DECL OpenBusContext : public CORBA::LocalObject 
 {
 public:
-  typedef boost::function<Connection* (
-    OpenBusContext &context,
-    const std::string busId,
-    const std::string loginId,
-    const std::string operation)> 
-  CallDispatchCallback;
+  /**
+	 * \brief Callback de despacho de chamadas.
+	 * 
+	 * Método a ser implementado pelo objeto de callback a ser chamado quando
+	 * uma chamada proveniente de um barramento é recebida. Esse método é chamado
+	 * para determinar a conexão a ser utilizada na validação de cada chamada
+	 * recebida. Se a conexão informada não estiver conectada ao mesmo barramento
+	 * indicado pelo parâmetro 'busid', a chamada provavelmente será recusada com
+	 * um CORBA::NO_PERMISSION{InvalidLogin} pelo fato do login provavelmente não
+	 * ser válido no barramento da conexão. Como resultado disso o cliente da
+	 * chamada poderá indicar que o servidor não está implementado corretamente e
+	 * lançar a exceção CORBA::NO_PERMISSION{InvalidRemote}. Caso alguma exceção
+	 * ocorra durante a execução do método e não seja tratada, o erro será
+	 * capturado pelo interceptador e registrado no log.
+	 * 
+	 * @param[in] context Gerenciador de contexto do ORB que recebeu a chamada.
+	 * @param[in] busid Identificação do barramento através do qual a chamada foi
+	 *                  feita.
+	 * @param[in] loginId Informações do login do cliente da chamada.
+	 * @param[in] operation Nome da operação sendo chamada.
+	 *
+	 * @return Conexão a ser utilizada para receber a chamada.
+	 */
+  typedef boost::function<
+    Connection* (OpenBusContext &context,
+                 const std::string busId, 
+                 const std::string loginId,
+                 const std::string operation)>
+    CallDispatchCallback;
 
+  /**
+	 * \brief Define a callback a ser chamada para determinar a conexão
+	 *        a ser utilizada para receber cada chamada.
+	 *
+	 * Definição de um objeto que implementa uma interface de callback a
+	 * ser chamada sempre que a conexão receber uma chamada do
+	 * barramento. Essa callback deve devolver a conexão a ser utilizada
+	 * para receber a chamada. A conexão utilizada para receber a
+	 * chamada será a única conexão através da qual novas chamadas
+	 * aninhadas à chamada recebida poderão ser feitas (veja a operação
+	 * 'joinChain').
+	 *
+	 * Se o objeto de callback for definido como 'null' ou devolver 'null', a
+	 * conexão padrão é utilizada para receber a chamada, caso esta esteja
+	 * definida.
+	 *
+	 * Caso esse atributo seja 'null', nenhum objeto de callback é chamado.
+	 */
   void onCallDispatch(CallDispatchCallback c);
 
+  /**
+   * \brief Retorna a callback a ser chamada para determinar a conexão
+   *        a ser utilizada para receber cada chamada
+   */
   CallDispatchCallback onCallDispatch() const;
 
   /**
    * \brief Cria uma conexão para um barramento.
    * 
-   * Cria uma conexão para um barramento. O barramento é indicado por
-   * um nome ou endereço de rede e um número de porta, onde os
-   * serviços núcleo daquele barramento estão executando.
+   * O barramento é indicado por um nome ou endereço de rede e um
+   * número de porta, onde os serviços núcleo daquele barramento estão
+   * executando.
    * 
    * @param[in] host Endereço ou nome de rede onde os serviços núcleo do 
-   *            barramento estao executando.
+   *            barramento estão executando.
    * @param[in] port Porta onde os serviços núcleo do barramento estão 
    *            executando.
    * @param[in] props Lista opcional de propriedades que definem algumas
@@ -255,23 +351,21 @@ public:
    * @return Conexão criada.
    */
   std::auto_ptr<Connection> createConnection(
-    const std::string host,
-    unsigned short port, 
+    const std::string &host, unsigned short port, 
     const Connection::ConnectionProperties &props = 
-      Connection::ConnectionProperties());
+    Connection::ConnectionProperties());
    
   /**
    * \brief Define a conexão padrão a ser usada nas chamadas.
    * 
-   * Define uma conexão a ser utilizada como "Requester" e
-   * "Dispatcher" de chamadas sempre que não houver uma conexão
-   * "Requester" e "Dispatcher" específica definida para o caso
-   * específico, como é feito através das operações
-   * 'setCurrentConnection' e 'setDispatcher'.
+   * Define uma conexão a ser utilizada em chamadas sempre que não houver uma
+	 * conexão específica definida no contexto atual, como é feito através da
+	 * operação \ref setCurrentConnection. 
    * 
-   * @param[in] conn Conexão a ser definida como conexão padrão. O
-   * 'ownership' da conexão não é transferida para o OpenBusContext, e
-   * a conexão deve ser removida do OpenBusContext antes de destruida
+   * @param[in] conn Conexão a ser definida como conexão padrão. Um valor nulo 
+   * significa nenhuma conexão definida como padrão. A propriedade(ownership) 
+   * da conexão não é transferida para o \ref OpenBusContext, e a conexão 
+   * deve ser removida do \ref OpenBusContext antes de destruida
    */
   Connection *setDefaultConnection(Connection *);
    
@@ -302,10 +396,8 @@ public:
   /**
    * \brief Devolve a conexão associada ao contexto corrente.
    * 
-   * @throw CORBA::Exception
-   *
-   * @return Conexão a barramento associada a thread
-   * corrente. OpenBusContext não possui ownership dessa conexão e o
+   * @return Conexão ao barramento associada a thread
+   * corrente. \ref OpenBusContext não possui ownership dessa conexão e o
    * mesmo não é transferido para o código de usuário na execução
    * desta função
    */
@@ -324,12 +416,13 @@ public:
    * Para verificar se a cadeia retornada é válida, o seguinte idioma
    * é usado:
    *
-   * CallerChain chain = connection.getCallerChain()
+   * \code
+   * CallerChain chain(connection.getCallerChain())
    * if(chain != CallerChain())
    *   // chain é válido
    * else
    *   // chain é inválido
-   * 
+   * \endcode
    * \return Cadeia da chamada em execução.
    */
   CallerChain getCallerChain();
@@ -337,16 +430,15 @@ public:
   /**
    * \brief Associa uma cadeia de chamadas ao contexto corrente.
    * 
-   * Associa uma cadeia de chamadas ao contexto corrente, de forma que
-   * todas as chamadas remotas seguintes neste mesmo contexto sejam
-   * feitas como parte dessa cadeia de chamadas.
+   * De forma que todas as chamadas remotas seguintes neste mesmo
+   * contexto sejam feitas como parte dessa cadeia de chamadas.
    * 
-   * \param chain Cadeia de chamadas a ser associada ao contexto corrente.
-   * @throw CORBA::NO_PERMISSION {minor = NoLoginCode}
-   * @throw CORBA::NO_PERMISSION {minor = InvalidChainCode}
-   * @throw CORBA::Exception
+   * \param chain Cadeia de chamadas a ser associada ao contexto
+   * corrente. A ausência de valor ou uma cadeia 'vazia' implica na
+   * utilização da cadeia obtida através de getCallerChain.
+   *
    */
-  void joinChain(const CallerChain &chain);
+  void joinChain(const CallerChain &chain = CallerChain());
   
   /**
    * \brief Faz com que nenhuma cadeia de chamadas esteja associada ao
@@ -363,56 +455,56 @@ public:
   /**
    * \brief Devolve a cadeia de chamadas associada ao contexto corrente.
    * 
-   * Devolve um objeto que representa a cadeia de chamadas associada
-   * ao contexto corrente nesta conexão.  A cadeia de chamadas
+   * A cadeia de chamadas
    * informada foi associada previamente pela operação
-   * 'joinChain'. Caso o contexto corrente não tenha nenhuma cadeia
+   * \ref joinChain. Caso o contexto corrente não tenha nenhuma cadeia
    * associada, essa operação devolve uma cadeia 'vazia'
    * 'default-constructed'
    * 
    * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
-   *
-   * CallerChain chain = openbusContext.getCallerChain()
+   * \code
+   * CallerChain chain(openbusContext.getCallerChain())
    * if(chain != CallerChain())
    *   // chain é válido
    * else
    *   // chain é inválido
-   * 
+   * \endcode
    * \return Cadeia de chamadas associada ao contexto corrente ou uma
    * cadeia 'vazia'.
    *
-   * @throw CORBA::Exception
    */
-  CallerChain getJoinedChain();
+  CallerChain getJoinedChain() const;
 
   /**
    * \brief Cria uma cadeia de chamadas para a entidade com o identificador de
-   * login especificado.
-   *
-   * Cria uma nova cadeia de chamadas para a entidade especificada, onde o dono
-   * da cadeia é a conexão corrente. Utiliza a cadeia atual para a continuação
-   * do encadeamento. O identificador de login especificado deve ser um login
-   * atualmente válido para que a operação tenha sucesso. Caso o contexto
-   * corrente não tenha nenhuma cadeia associada, essa operação devolve uma
-   * cadeia 'vazia' 'default-constructed'.
+   *        login especificado.
+   * 
+   * Cria uma nova cadeia de chamadas para a entidade especificada,
+   * onde o dono da cadeia é a conexão corrente
+   * \ref getCurrentConnection() e utiliza-se a cadeia
+   * atual \ref getJoinedChain() como a cadeia que se
+   * deseja dar seguimento ao encadeamento. O identificador de login
+   * especificado deve ser um login atualmente válido para que a
+   * operação tenha sucesso. Caso o contexto corrente não tenha nenhuma
+   * cadeia associada, essa operação devolve uma cadeia 'vazia'
+   * 'default-constructed'.
    *
    * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
-   *
-   * CallerChain chain = openbusContext.makeChainFor(loginId);
+   * \code
+   * CallerChain chain(openbusContext.makeChainFor(loginId));
    * if(chain != CallerChain())
    *   // chain é válido
    * else
    *   // chain é inválido
-   * 
-   * \param  loginId Identificador de login da entidade para a qual deseja-se
-   *         enviar a cadeia ou uma cadeia 'vazia'.
-   * \return A cadeia gerada para ser utilizada pela entidade com o login
+   * \endcode
+   * \param loginId identificador de login da entidade para a qual deseja-se
+   *        enviar a cadeia.
+   * \return a cadeia gerada para ser utilizada pela entidade com o login
    *         especificado.
    * 
-   * \throw CORBA::NO_PERMISSION {minor = InvalidTargetCode}
-   * \throw CORBA::NO_PERMISSION {minor = UnavailableBusCode}
+   * \exception invalid_logins Caso o login especificado seja inválido.
    */
-  CallerChain makeChainFor(const std::string loginId);
+  CallerChain makeChainFor(const std::string &loginId) const;
 
   /**
    * \brief Codifica uma cadeia de chamadas (CallerChain) para um stream de
@@ -433,7 +525,6 @@ public:
    * \brief Decodifica um stream de bytes de uma cadeia para o formato
    * CallerChain.
    * 
-   * Decodifica um stream de bytes de uma cadeia para o formato CallerChain.
    * Espera-se que a stream de bytes esteja codificada em CDR e seja formada por
    * um identificador de versão concatenado com as informações da cadeia. Caso
    * não seja possível decodificar a sequência de octetos passada, essa operação
@@ -441,18 +532,46 @@ public:
    *
    * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
    *
-   * CallerChain chain = openbusContext.decodeChain(encoded);
+   * \code
+   * CallerChain chain(openbusContext.decodeChain(encoded)); 
    * if(chain != CallerChain())
    *   // chain é válido
    * else
    *   // chain é inválido
+   *
+   * \endcode
    * 
    * \param encoded O stream de bytes que representa a cadeia.
-   * \return A cadeia de chamadas no formato CallerChain, 'vazia' em caso de
-   * falha da decodificação.
+   * \return A cadeia de chamadas no formato CallerChain.
+   * 
+   * \throw InvalidEncodedStream Caso o stream de bytes não seja do
+   * formato esperado.
    */
-  CallerChain decodeChain(const CORBA::OctetSeq encoded);
+  CallerChain decodeChain(const CORBA::OctetSeq &encoded) const;
   
+  /**
+	 * \brief Codifica um segredo de autenticação compartilhada
+   *        SharedAuthSecret para um stream de bytes.
+   * 
+   * Codifica um segredo de autenticação compartilhada em um stream de bytes
+   * para permitir a persistência ou transferência da informação.
+   * 
+   * \param secret Segredo de autenticação compartilhada a ser codificado.
+   * \return Cadeia codificada em um stream de bytes.
+   */
+  CORBA::OctetSeq encodeSharedAuthSecret(const SharedAuthSecret &secret);
+
+  /**
+   * \brief Decodifica um segredo de autenticação compartilhada
+   *				SharedAuthSecret a partir de um stream de bytes.
+   * 
+   * \param encoded Stream de bytes contendo a codificação do segredo.
+   * \return Segredo de autenticação compartilhada decodificado.
+   * \exception InvalidEncodedStream Caso a stream de bytes não seja do formato
+   *						 esperado.
+   */
+  SharedAuthSecret decodeSharedAuthSecret(const CORBA::OctetSeq &encoded);
+
   /** 
    * ORB utilizado pela conexão. 
    */
@@ -468,7 +587,7 @@ private:
    * OpenBusContext deve ser adquirido atraves de:
    *   orb->resolve_initial_references("OpenBusContext")
    */
-  OpenBusContext(CORBA::ORB_ptr, boost::shared_ptr<interceptors::orb_info>);
+  OpenBusContext(CORBA::ORB_ptr, interceptors::ORBInitializer *);
   
   OpenBusContext(const OpenBusContext&);
   OpenBusContext &operator=(const OpenBusContext &);
@@ -478,19 +597,25 @@ private:
     _orb = o;
   }
 
-  Connection *getDispatchConnection();
+  CORBA::OctetSeq encode_exported_versions(idl_data_export::ExportedVersionSeq,
+                                           const std::string &tag);
+
+  std::string decode_exported_versions(
+    const CORBA::OctetSeq &stream,
+    idl_data_export::ExportedVersionSeq_out exported_version_seq) const;
+
   typedef std::map<std::string, Connection *> BusidConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif
-  CORBA::ORB_var _orb;
-  boost::shared_ptr<interceptors::orb_info> _orb_info;
-  PortableInterceptor::Current_var _piCurrent;
+  interceptors::ORBInitializer * _orb_init;
+  CORBA::ORB_ptr _orb;
   Connection *_defaultConnection;
   BusidConnection _busidConnection;
   CallDispatchCallback _callDispatchCallback;
 
-  friend CORBA::ORB_ptr openbus::ORBInitializer(int &argc, char **argv);
+  friend boost::shared_ptr<orb_ctx> openbus::ORBInitializer(
+    int &argc, char **argv);
 };
 }
 

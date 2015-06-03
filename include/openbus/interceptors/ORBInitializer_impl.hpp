@@ -15,7 +15,7 @@
 namespace openbus 
 {
 namespace idl = tecgraf::openbus::core::v2_0;
-const size_t secret_size(16);
+const size_t secret_size = 16;
 typedef boost::array<CORBA::Octet, idl::HashValueSize> hash_value;
 hash_value hash(std::string, CORBA::ULong ticket, 
                 boost::array<unsigned char, secret_size> secret);
@@ -24,48 +24,37 @@ namespace interceptors
 {
 struct ClientInterceptor;
 struct ServerInterceptor;
-
-struct OPENBUS_SDK_DECL Slot
-{
-  Slot(PortableInterceptor::ORBInitInfo_ptr info)
-    : requester_conn(info->allocate_slot_id()),
-    receive_conn(info->allocate_slot_id()),
-    joined_call_chain(info->allocate_slot_id()),
-    signed_call_chain(info->allocate_slot_id()),
-    ignore_interceptor(info->allocate_slot_id())
-  {}
-  const PortableInterceptor::SlotId requester_conn, receive_conn,
-    joined_call_chain, signed_call_chain, ignore_interceptor;
-};
-
-struct orb_info
-{
-  orb_info(PortableInterceptor::ORBInitInfo_ptr);
-  PortableInterceptor::ORBInitInfo_ptr info;
-  Slot slot;
-  IOP::Codec_var codec;
-  PortableInterceptor::Current_var pi_current;
-};
-
+struct ORBInitializer;
+  
 struct OPENBUS_SDK_DECL ignore_interceptor
 {
-  ignore_interceptor(boost::shared_ptr<orb_info>);
+  ignore_interceptor(ORBInitializer *);
   ~ignore_interceptor();
-  boost::shared_ptr<orb_info> _orb_info;
+  ORBInitializer *orb_init;
+};
+
+struct OPENBUS_SDK_DECL ignore_invalid_login
+{
+  ignore_invalid_login(ORBInitializer *);
+  ~ignore_invalid_login();
+  ORBInitializer *orb_init;
 };
 
 struct OPENBUS_SDK_DECL ORBInitializer : 
   public PortableInterceptor::ORBInitializer,
-  public CORBA::LocalObject  
+  public CORBA::LocalObject
 {
   ORBInitializer();
   ~ORBInitializer();
   void pre_init(PortableInterceptor::ORBInitInfo_ptr);
   void post_init(PortableInterceptor::ORBInitInfo_ptr);
 
-  boost::shared_ptr<ClientInterceptor> clientInterceptor; 
-  boost::shared_ptr<ServerInterceptor> serverInterceptor;
-  boost::shared_ptr<orb_info> _orb_info;
+  PortableInterceptor::ClientRequestInterceptor_var cln_interceptor; 
+  PortableInterceptor::ServerRequestInterceptor_var srv_interceptor;
+  IOP::Codec_var codec;
+  PortableInterceptor::Current_var pi_current;
+  PortableInterceptor::SlotId current_connection, joined_call_chain,
+    signed_call_chain, ignore_interceptor, ignore_invalid_login, request_id;
 };
 
 }}

@@ -11,6 +11,8 @@
   #include <boost/thread.hpp>
   #include <boost/thread/once.hpp>
 #endif
+#include <boost/make_shared.hpp>
+
 #include <memory>
 
 namespace openbus 
@@ -21,7 +23,7 @@ namespace openbus
 #if defined(OPENBUS_SDK_THREAD) && !(defined(__GNUC__) && __cplusplus == 201103L)
 namespace {
 
-log_type &get_log()
+log_type& get_log()
 {
   log_type l;
   return l;
@@ -35,13 +37,13 @@ inline void init_log()
 
 }
 
-OPENBUS_SDK_DECL log_type &log()
+OPENBUS_SDK_DECL log_type& log()
 {
   init_log();
   return get_log();
 }
 #else
-OPENBUS_SDK_DECL log_type &log()
+OPENBUS_SDK_DECL log_type& log()
 {
   static log_type l;
   return l;
@@ -54,7 +56,23 @@ PortableInterceptor::ORBInitializer_var orb_initializer;
 boost::mutex _mutex;
 #endif
 
-CORBA::ORB_ptr ORBInitializer(int &argc, char **argv) 
+orb_ctx::orb_ctx(CORBA::ORB_var orb)
+  : orb_(orb)
+{
+}
+
+orb_ctx::~orb_ctx()
+{
+  try
+  {
+    orb_->destroy();
+  }
+  catch (...)
+  {
+  }  
+}
+
+boost::shared_ptr<orb_ctx> ORBInitializer(int &argc, char **argv) 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -81,14 +99,25 @@ CORBA::ORB_ptr ORBInitializer(int &argc, char **argv)
     interceptors::ORBInitializer *_orb_initializer
       (dynamic_cast<interceptors::ORBInitializer *>(orb_initializer.in()));
     assert(_orb_initializer != 0);
-    boost::shared_ptr<OpenBusContext> openbusContext
-      (new OpenBusContext(orb, _orb_initializer->_orb_info));
+    
+    CORBA::Object_var bus_ctx_obj(
+      new OpenBusContext(orb, _orb_initializer));
     l.level_log(debug_level, "Registrando OpenBusContext");
-    orb->register_initial_reference("OpenBusContext", openbusContext.get());
-    _orb_initializer->clientInterceptor->_openbus_ctx = openbusContext;
-    _orb_initializer->serverInterceptor->_openbus_ctx = openbusContext;
+    orb->register_initial_reference("OpenBusContext", bus_ctx_obj);
+
+    interceptors::ClientInterceptor *cln_int(
+      dynamic_cast<interceptors::ClientInterceptor *>(
+        _orb_initializer->cln_interceptor.in()));
+    cln_int->_bus_ctx = dynamic_cast<OpenBusContext *>(bus_ctx_obj.in());
+    assert(cln_int->_bus_ctx != 0);
+    
+    interceptors::ServerInterceptor *srv_int(
+      dynamic_cast<interceptors::ServerInterceptor *>(
+        _orb_initializer->srv_interceptor.in()));
+    srv_int->_bus_ctx = dynamic_cast<OpenBusContext *>(bus_ctx_obj.in());
+    assert(srv_int->_bus_ctx != 0);
   }
   l.log("Retornando ORB");
-  return orb._retn();
+  return boost::make_shared<orb_ctx>(orb);
 }
 }

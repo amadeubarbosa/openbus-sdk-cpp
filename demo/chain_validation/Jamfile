@@ -1,4 +1,5 @@
-project openbus/interop/chain_validation ;
+
+project openbus/demos/chain_validation ;
 
 path-constant here : . ;
 
@@ -13,64 +14,48 @@ obj chain_validation-skeleton
   ;
 explicit chain_validation-skeleton ;
 
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      /TAO//TAO
+      $(deps)
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
+      <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
+    ;
+  explicit $(name) ;
+}
 
-exe chain_validation_client
- : src/client.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   chain_validation-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>chain_validation-stub
-   <implicit-dependency>chain_validation-stub
-   <link>static,<target-os>linux:<source>/dl//dl
-   
- ;
-explicit chain_validation_client ;
-
-exe chain_validation_executive
- : src/executive.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   chain_validation-stub
-   chain_validation-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>chain_validation-stub
-   <implicit-dependency>chain_validation-stub
-   <dependency>chain_validation-skeleton
-   <implicit-dependency>chain_validation-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit chain_validation_executive ;
-
-exe chain_validation_secretary
- : src/secretary.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   chain_validation-stub
-   chain_validation-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>chain_validation-stub
-   <implicit-dependency>chain_validation-stub
-   <dependency>chain_validation-skeleton
-   <implicit-dependency>chain_validation-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit chain_validation_secretary ;
+demo-exe chain_validation_client
+  : client
+  : chain_validation-stub
+  ;
+  
+demo-exe chain_validation_executive
+  : executive
+  : chain_validation-stub
+    chain_validation-skeleton
+  ;
+  
+demo-exe chain_validation_secretary
+  : secretary
+  : chain_validation-stub
+    chain_validation-skeleton
+  ;
 
 alias chain_validation
   : chain_validation_client
     chain_validation_executive
     chain_validation_secretary
+    admin/DemoCppChainValidation.key
   ;

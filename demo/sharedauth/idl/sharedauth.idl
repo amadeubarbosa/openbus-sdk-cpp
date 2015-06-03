@@ -1,6 +1,4 @@
-typedef sequence<octet> OctetSeq;
-
 struct EncodedSharedAuth {
   Object attempt;
-  OctetSeq secret;
+  sequence<octet> secret;
 };

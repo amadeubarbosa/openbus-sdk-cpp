@@ -1,3 +1,4 @@
+
 project openbus/demo/audit ;
 
 path-constant demo-hello : ../hello ;
@@ -13,64 +14,48 @@ obj hello-skeleton
   ;
 explicit hello-skeleton ;
 
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      /TAO//TAO
+      $(deps)
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>hello-stub
+      <implicit-dependency>hello-stub
+      <link>static,<target-os>linux:<source>/dl//dl
+    ;
+  explicit $(name) ;
+}
 
-exe audit_client
- : src/client.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <link>static,<target-os>linux:<source>/dl//dl
-   
- ;
-explicit audit_client ;
-
-exe audit_server
- : src/server.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
-   hello-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <dependency>hello-skeleton
-   <implicit-dependency>hello-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit audit_server ;
-
-exe audit_proxy
- : src/proxy.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
-   hello-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <dependency>hello-skeleton
-   <implicit-dependency>hello-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
-explicit audit_proxy ;
+demo-exe audit_client
+  : client
+  : hello-stub
+  ;
+  
+demo-exe audit_server
+  : server
+  : hello-stub
+    hello-skeleton
+  ;
+  
+demo-exe audit_proxy
+  : proxy
+  : hello-stub
+    hello-skeleton
+  ;
 
 alias audit
   : audit_client
     audit_server
     audit_proxy
+    admin/DemoCppHello.key
   ;

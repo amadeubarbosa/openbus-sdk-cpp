@@ -1,4 +1,7 @@
-project openbus/interop/reloggedjoin ;
+project openbus/interop/reloggedjoin
+  : requirements
+    <include>../
+  ;
 
 path-constant here : . ;
 
@@ -15,62 +18,72 @@ explicit hello-skeleton ;
 
 
 exe reloggedjoin_client
- : src/client.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <link>static,<target-os>linux:<source>/dl//dl
-   
- ;
+  : src/client.cpp
+    /openbus//openbus
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    /TAO//TAO
+    hello-stub
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <link>static,<target-os>linux:<source>/dl//dl  
+  ;
 explicit reloggedjoin_client ;
 
 exe reloggedjoin_server
- : src/server.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
-   hello-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <dependency>hello-skeleton
-   <implicit-dependency>hello-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
+  : src/server.cpp
+    /openbus//openbus
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    /TAO//TAO
+    hello-stub
+    hello-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>hello-skeleton
+    <implicit-dependency>hello-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
 explicit reloggedjoin_server ;
 
 exe reloggedjoin_proxy
- : src/proxy.cpp
-   /openbus//openbus
-   /boost//program_options
-   /scs//scs
-   /boost//headers
-   /logger//logger
-   /openssl//openssl
-   hello-stub
-   hello-skeleton
- : <threading>multi:<source>/boost//thread
-   <dependency>hello-stub
-   <implicit-dependency>hello-stub
-   <dependency>hello-skeleton
-   <implicit-dependency>hello-skeleton
-   <link>static,<target-os>linux:<source>/dl//dl   
- ;
+  : src/proxy.cpp
+    /openbus//openbus
+    /boost//program_options
+    /scs//scs
+    /boost//headers
+    /logger//logger
+    /openssl//openssl
+    /TAO//TAO
+    hello-stub
+    hello-skeleton
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>hello-stub
+    <implicit-dependency>hello-stub
+    <dependency>hello-skeleton
+    <implicit-dependency>hello-skeleton
+    <link>static,<target-os>linux:<source>/dl//dl   
+  ;
 explicit reloggedjoin_proxy ;
 
 alias reloggedjoin
   : reloggedjoin_client
     reloggedjoin_server
     reloggedjoin_proxy
+    admin/interop_reloggedjoin_cpp_server.key 
+    admin/interop_reloggedjoin_cpp_proxy.key 
   ;

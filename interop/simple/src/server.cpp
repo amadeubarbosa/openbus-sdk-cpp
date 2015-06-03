@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "helloS.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
@@ -14,7 +15,7 @@
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
 
-const std::string entity("interop_hello_cpp_server");
+const std::string entity("interop_simple_cpp_server");
 std::string private_key;
 std::string bus_host;
 unsigned short bus_port;
@@ -25,8 +26,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -63,12 +63,12 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 
   char *sayHello() 
   {
-    openbus::CallerChain chain(ctx.getCallerChain());
+    openbus::CallerChain chain = ctx.getCallerChain();
     assert(chain != openbus::CallerChain());
-    std::string msg("Hello " + std::string(chain.caller().entity) + "!");
+    std::string msg = "Hello " + std::string(chain.caller().entity) + "!";
     std::cout << msg << std::endl;
-    CORBA::String_var r = CORBA::string_dup(msg.c_str());
-    return r._retn();
+    CORBA::String_var ret(msg.c_str());
+    return ret._retn();
   }
 private:
   openbus::OpenBusContext &ctx;
@@ -132,23 +132,15 @@ int main(int argc, char **argv)
   {
     load_options(argc, argv);
     openbus::log().set_level(openbus::debug_level);
-
-    CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
-    CORBA::Object_var o(orb->resolve_initial_references("RootPOA"));
-    PortableServer::POA_var poa(PortableServer::POA::_narrow(o));
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager(poa->the_POAManager());
-    poa_manager->activate();
+    boost::shared_ptr<openbus::orb_ctx> orb_ctx(
+      openbus::ORBInitializer(argc, argv));
+    openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
+    std::auto_ptr<openbus::Connection> conn(
+      bus_ctx->createConnection(bus_host, bus_port));
+    bus_ctx->setDefaultConnection(conn.get());
     
-    openbus::OpenBusContext *const ctx(
-      dynamic_cast<openbus::OpenBusContext *>
-      (orb->resolve_initial_references("OpenBusContext")));
-    std::auto_ptr<openbus::Connection> conn(ctx->createConnection(bus_host, 
-                                                                  bus_port));
-    ctx->setDefaultConnection(conn.get());
-
 #ifdef OPENBUS_SDK_MULTITHREAD
-    boost::thread orb_run(boost::bind(ORBRun, orb));
+    boost::thread orb_run(boost::bind(ORBRun, bus_ctx->orb()));
 #endif
     
     scs::core::ComponentId componentId;
@@ -157,27 +149,29 @@ int main(int argc, char **argv)
     componentId.minor_version = '0';
     componentId.patch_version = '0';
     componentId.platform_spec = "c++";
-    scs::core::ComponentContext comp(orb, componentId);
+    scs::core::ComponentContext comp(bus_ctx->orb(), componentId);
 
     openbus::idl_or::ServicePropertySeq props;
     props.length(1);
-    props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
-    props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
+    props[0u].name = "offer.domain";
+    props[0u].value = "Interoperability Tests";
 
-    conn->onInvalidLogin(on_invalid_login(*ctx, comp, props, *conn));
+    conn->onInvalidLogin(on_invalid_login(*bus_ctx, comp, props, *conn));
 
-    HelloImpl srv(*ctx);
+    HelloImpl srv(*bus_ctx);
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
-    login_register(*ctx, comp, props, *conn);
+    login_register(*bus_ctx, comp, props, *conn);
+
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
 #else
-    ctx->orb()->run();
+    bus_ctx->orb()->run();
 #endif
   } 
   catch (const CORBA::Exception &e) 
   {
     std::cout << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
-  } 
+  }
+  return 0; //MSVC
 }

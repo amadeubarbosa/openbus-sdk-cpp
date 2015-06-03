@@ -1,9 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
+#include "greetingsC.h"
+
 #include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
 #include <iostream>
-#include <greetingsC.h>
-#include <tao/PortableServer/PortableServer.h>
+#include <boost/program_options.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -133,17 +133,38 @@ struct onReloginCallback
 
 int main(int argc, char** argv)
 {
-  // Inicializando CORBA e ativando o RootPOA
-  CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-  CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-  PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-  assert(!CORBA::is_nil(poa));
-  PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-  poa_manager->activate();
+  boost::shared_ptr<openbus::orb_ctx> 
+    orb_ctx(openbus::ORBInitializer(argc, argv));
+
+  unsigned short bus_port = 2089;
+  std::string bus_host = "localhost";
+  {
+    namespace po = boost::program_options;
+    po::options_description desc("Allowed options");
+    desc.add_options()
+      ("help", "This help message")
+      ("bus-host", po::value<std::string>(), "Host to Openbus (default: localhost)")
+      ("bus-port", po::value<unsigned short>(), "Host to Openbus (default: 2089)")
+      ;
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+    
+    if(vm.count("help"))
+    {
+      std::cout << desc << std::endl;
+      return 0;
+    }
+ 
+    if(vm.count("bus-host"))
+      bus_host = vm["bus-host"].as<std::string>();
+    if(vm.count("bus-port"))
+      bus_port = vm["bus-port"].as<unsigned short>();
+  }
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-    (orb->resolve_initial_references("OpenBusContext"));
+    (orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
   std::auto_ptr <openbus::Connection> conn;
 
@@ -151,7 +172,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn = openbusContext->createConnection("localhost", 2089);
+      conn = openbusContext->createConnection(bus_host, bus_port);
       conn->onInvalidLogin( ::onReloginCallback());
       conn->loginByPassword("demo", "demo");
       openbusContext->setDefaultConnection(conn.get());

@@ -1,15 +1,97 @@
+# -*- coding: iso-8859-1-unix -*-
 
 import common ;
 import os ;
-import string ;
 import feature ;
-import modules ;
-import "class" : new ;
 import property-set ;
-
+import "class" : new ;
 import version ;
+import path ;
 
-#### To add requirements for version >= or < than determinate version for specific toolset
+path-constant here : . ;
+
+ace-root-path = [ os.environ ACE_ROOT_PATH ] ;
+if ! $(ace-root-path)
+{
+  ace-root-path = $(here)/../../build/ACE_wrappers ;
+}
+
+taoidl-root-path = [ os.environ TAOIDL_ROOT_PATH ] ;
+if ! $(taoidl-root-path)
+{
+  taoidl-root-path = $(here)/../../build/tao-bb-1.0 ;
+}
+modules.load tao-idl : : $(taoidl-root-path) ;
+import tao-idl ;
+
+rule tao-idl-init ( properties * )
+{
+  if <toolset>msvc in $(properties)
+  {
+    local msvc-bin-path ;
+    if <toolset-msvc:version>12.0 in $(properties)
+    {
+      if <address-model>64 in $(properties)
+      {
+        msvc-bin-path = "C:/Program Files (x86)/Microsoft Visual Studio 12.0/VC/bin" ;
+      }
+      else
+      {
+        msvc-bin-path = "C:/Program Files/Microsoft Visual Studio 12.0/VC/bin" ;
+      }
+    }
+    if <toolset-msvc:version>9.0 in $(properties)
+    {
+      if <address-model>64 in $(properties)
+      {
+        msvc-bin-path = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin/amd64" ;
+      }
+      else
+      {
+        msvc-bin-path = "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin" ;
+      }
+    }
+    using tao-idl
+      : $(ace-root-path)/bin
+      : $(ace-root-path)/lib
+      : $(msvc-bin-path)
+      ;
+  }
+  else
+  {
+    using tao-idl
+      : $(ace-root-path)/bin
+      : $(ace-root-path)/lib
+      ;
+  }
+    
+}
+
+openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
+if ! $(openbus-idl-path)
+{
+  openbus-idl-path = $(here)/idl/src ;
+}
+
+scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
+if ! $(scs-root-path)
+{
+  scs-root-path = $(here)/../scs ;
+}
+
+scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
+if ! $(scs-idl-path)
+{
+  scs-idl-path = $(scs-root-path)/idl/src ;
+}
+
+openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
+if ! $(openbus-idl-path)
+{
+  openbus-idl-path = $(here)/idl/src ;
+}
+
+# To add requirements for version >= or < than determinate version for specific toolset
 rule version-less ( lhs rhs )
 {
     return [ version.version-less
@@ -29,33 +111,11 @@ rule add-conditions ( conditions + : toolset : min-version ? : max-version ? : p
         return $(conditions) ;
     }
 }
-################################################################################
 
 rule add-Wno-unused-local-typedefs-gcc>=4.8 ( properties * )
 {
     return [ add-conditions <cxxflags>-Wno-unused-local-typedefs : gcc : 4.8 : : $(properties) ] ;
 }
-
-import tao-idl ;
-
-path-constant here : . ;
-
-ace-root-path = [ os.environ ACE_ROOT_PATH ] ;
-if ! $(ace-root-path)
-{
-  ace-root-path = $(here)/../../build/ACE_wrappers ;
-}
-
-openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
-if ! $(openbus-idl-path)
-{
-  openbus-idl-path = $(here)/../../build/openbus-idl/src ;
-}
-
-using tao-idl
-  : $(ace-root-path)/bin
-  : $(ace-root-path)/lib
-  ;
 
 rule tag ( name : type ? : property-set )
 {
@@ -74,12 +134,12 @@ rule tag ( name : type ? : property-set )
     }
     if <threading>multi in [ $(property-set).raw ]
     {
-      result = [ common.format-name <base>openbus
+      result = [ common.format-name <base> 
         -mt $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     else
     {
-      result = [ common.format-name <base>openbus
+      result = [ common.format-name <base> 
         $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
     }
     return $(result) ;
@@ -87,22 +147,30 @@ rule tag ( name : type ? : property-set )
 }
 
 project openbus
-  : build-dir bin
-  : requirements <tag>@tag
+  : requirements
+    <tag>@tag
     <threading>multi
     <target-os>windows:<pch>off
     <target-os>windows,<link>shared:<runtime-link>shared
     <target-os>windows,<link>static:<runtime-link>static
     <target-os>windows:<debug-store>database
     <target-os>windows:<define>_SCL_SECURE_NO_WARNINGS
+    <target-os>windows:<define>_CRT_SECURE_NO_WARNINGS
+    <toolset>msvc-12.0:<cxxflags>/FS
+    <toolset>msvc-12.0:<cflags>/FS
     <debug-symbols>on
     <define>BOOST_ALL_NO_LIB=1
     <link>shared:<define>OPENBUS_SDK_SHARED
     <define>OPENBUS_SDK_SOURCE
     <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
-    <library>/TAO//TAO
-  : usage-requirements <link>shared:<define>OPENBUS_SDK_SHARED
-  : default-build <threading>multi <link>static
+    <conditional>@tao-idl-init
+  : usage-requirements
+    <link>shared:<define>OPENBUS_SDK_SHARED
+    <toolset>msvc-12.0:<cxxflags>/FS
+  : default-build
+    <threading>multi
+    <variant>debug
+    <link>static
   ;
 
 obj access_control-stub
@@ -134,37 +202,97 @@ obj offer_registry-stub
   ;
 explicit offer_registry-stub ;
 
+obj data_export-stub
+  : $(openbus-idl-path)/data_export.idl
+  ;
+explicit data_export-stub ;
+
 alias idls
   : access_control-stub
     core-stub
     credential-stub
     credential_v1_5-stub
     offer_registry-stub
+    data_export-stub
   ;
 explicit idls ;
 
 lib openbus
-  : [ glob-tree *.cpp *.c : bin assistant demo interop tests ]
+  : [ glob-tree *.cpp *.c : bin demo tests install assistant interop ]
     /scs//scs
     /boost//headers
     /logger//logger
     /openssl//openssl
+    /TAO//TAO
     idls
- : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
-   <target-os>windows:<library>/scs//scs-stub
-   <include>include
-   <threading>multi:<source>/boost//thread
-   <dependency>idls
-   <implicit-dependency>idls
- :
- : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
-   <include>include
-   <dependency>idls
-   <implicit-dependency>idls
- ;
+  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
+    <include>include
+    <threading>multi:<source>/boost//thread
+    <dependency>idls
+    <implicit-dependency>idls
+    <toolset>msvc:<source>/scs//idls
+  :
+  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
+    <include>include
+    <dependency>idls
+    <implicit-dependency>idls
+  ;
 explicit openbus ;
 
-install stage : openbus ;
+install stage
+  : openbus
+  : <location>install
+  ;
+
+tao-idl.cpp-h install-access_control_idl
+  : $(openbus-idl-path)/access_control.idl
+  ;
+explicit install-access_control_idl ;
+
+tao-idl.cpp-h install-core_idl
+  : $(openbus-idl-path)/core.idl
+  ;
+explicit install-core_idl ;
+
+tao-idl.cpp-h install-credential_idl
+  : $(openbus-idl-path)/credential.idl
+  ;
+explicit install-credential_idl ;
+
+tao-idl.cpp-h install-offer_registry_idl
+  : $(openbus-idl-path)/offer_registry.idl
+  ;
+explicit install-offer_registry_idl ;
+
+tao-idl.cpp-h install-data_export_idl
+  : $(openbus-idl-path)/data_export.idl
+  ;
+explicit install-data_export_idl ;
+
+tao-idl.cpp-h install-credential_v1_5_idl
+  : $(here)/legacy/idl/credential_v1_5.idl
+  ;
+explicit install-credential_v1_5_idl ;
+
+tao-idl.cpp-h install-scs_idl
+  : $(scs-idl-path)/scs.idl
+  ;
+explicit install-scs_idl ;
+
+install stage-stubs
+  : install-access_control_idl
+    install-core_idl
+    install-credential_idl
+    install-offer_registry_idl
+    install-data_export_idl
+    install-credential_v1_5_idl
+    install-scs_idl
+  : <location>install/stubs
+    <install-dependencies>on
+    <install-type>CPP
+    <install-type>H
+  ;
+explicit stage-stubs ;
 
 install stage-tests : tests//tests : <location>stage-tests ;
 explicit stage-tests ;
@@ -181,11 +309,17 @@ rule stage-demos-location ( requirements * )
 local all-demos = [ MATCH demo/(.*)/Jamfile : [ glob demo/*/Jamfile ] ] ;
 for local d in $(all-demos)
 {
-  install stage-demo-$(d) : demo/$(d)//$(d) : <conditional>@stage-demos-location
-   : <openbus-stage-demo-name>$(d) ;
+  install stage-demo-$(d)
+    : demo/$(d)//$(d)
+    : <conditional>@stage-demos-location
+    : <openbus-stage-demo-name>$(d)
+  ;
   explicit stage-demo-$(d) ;
 }
-alias stage-demos : stage-demo-$(all-demos) : <conditional>@stage-demos-location ;
+alias stage-demos
+  : stage-demo-$(all-demos)
+  : <conditional>@stage-demos-location
+  ;
 explicit stage-demos ;
 
 rule stage-interop-location ( requirements * )
@@ -198,54 +332,28 @@ rule stage-interop-location ( requirements * )
 local all-interops = [ MATCH interop/(.*)/Jamfile : [ glob interop/*/Jamfile ] ] ;
 for local d in $(all-interops)
 {
-  install stage-interop-$(d) : interop/$(d)//$(d) : <conditional>@stage-interop-location
-   : <openbus-stage-demo-name>$(d) ;
+  install stage-interop-$(d)
+    : interop/$(d)//$(d)
+    : <conditional>@stage-interop-location
+    : <openbus-stage-demo-name>$(d)
+    ;
   explicit stage-interop-$(d) ;
 }
 alias stage-interops : stage-interop-$(all-interops) ;
 explicit stage-interops ;
 
-rule stage-assistant-demos-location ( requirements * )
-{
-  local ps = [ new property-set $(requirements) ] ;
-  local name = [ $(ps).get <openbus-stage-demo-name> ] ;
-  return <location>stage-demos/assistant/$(name) ;
-}
-
-local all-assistant-demos = [ MATCH assistant/demo/(.*)/Jamfile : [ glob assistant/demo/*/Jamfile ] ] ;
-for local d in $(all-assistant-demos)
-{
-  install stage-assistant-demo-$(d) : assistant/demo/$(d)//$(d) : <conditional>@stage-assistant-demos-location
-   : <openbus-stage-demo-name>$(d)
+install stage-deps
+  : openbus
+    /boost//program_options
+    /boost//date_time
+    /boost//filesystem
+  : <location>install/deps
+    <install-dependencies>on
+    <install-type>LIB
+    <install-type>PDB
   ;
-  explicit stage-assistant-demo-$(d) ;
-}
-alias stage-assistant-demos : stage-assistant-demo-$(all-assistant-demos) ;
-explicit stage-assistant-demos ;
-
-install stage-assistant : assistant//assistant : <location>stage ;
-explicit stage-assistant ;
-
-install stage-assistant-tests : assistant/tests//tests
- : <location>stage-tests/assistant ;
-explicit stage-assistant-tests ;
-
-alias assistant-doc-onehtml : assistant/doc//documentation-html/<location>assistant-doc
-  assistant/doc//documentation-images/<location>assistant-doc
-  assistant/doc//documentation-tests
- : <format>onehtml ;
-explicit assistant-doc-onehtml ;
-
-alias assistant-doc : assistant-doc-onehtml
- ;
-explicit assistant-doc ;
-
-install stage-libs-deps : stage-demo-$(all-demos) stage-interop-$(all-interops)
- : <install-dependencies>on <install-type>SHARED_LIB <location>stage ;
-explicit stage-libs-deps ;
+explicit stage-deps ;
 
 alias run-tests : tests//run-tests ;
 explicit run-tests ;
 
-alias assistant : assistant//assistant ;
-explicit assistant ;

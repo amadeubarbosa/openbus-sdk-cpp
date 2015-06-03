@@ -1,9 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
+
+#include "chain_validationC.h"
 #include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
+#include <boost/program_options.hpp>
 #include <iostream>
-#include <chain_validationC.h>
-#include <tao/PortableServer/PortableServer.h>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_0::services::offer_registry;
@@ -45,19 +45,43 @@ int main(int argc, char** argv)
 {
   try
   {
-    // Inicializando CORBA e ativando o RootPOA
-    CORBA::ORB_var orb = openbus::ORBInitializer(argc, argv);
-    CORBA::Object_var o = orb->resolve_initial_references("RootPOA");
-    PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
-    assert(!CORBA::is_nil(poa));
-    PortableServer::POAManager_var poa_manager = poa->the_POAManager();
-    poa_manager->activate();
+    boost::shared_ptr<openbus::orb_ctx> 
+      orb_ctx(openbus::ORBInitializer(argc, argv));
 
-    // Construindo e logando conexao
-    openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
-      (orb->resolve_initial_references("OpenBusContext"));
+    unsigned short bus_port(2089);
+    std::string bus_host("localhost");
+    {
+      namespace po = boost::program_options;
+      po::options_description desc("Allowed options");
+      desc.add_options()
+        ("help", "This help message")
+        ("bus-host", po::value<std::string>(),
+         "Host to Openbus (default: localhost)")
+        ("bus-port", po::value<unsigned short>(),
+         "Host to Openbus (default: 2089)")
+        ;
+      po::variables_map vm;
+      po::store(po::parse_command_line(argc, argv, desc), vm);
+      po::notify(vm);
+      
+      if(vm.count("help"))
+      {
+        std::cout << desc << std::endl;
+        return 0;
+      }
+   
+      if(vm.count("bus-host"))
+        bus_host = vm["bus-host"].as<std::string>();
+      if(vm.count("bus-port"))
+        bus_port = vm["bus-port"].as<unsigned short>();
+    }
+
+    openbus::OpenBusContext *openbusContext(
+      dynamic_cast<openbus::OpenBusContext*>
+      (orb_ctx->orb()->resolve_initial_references("OpenBusContext")));
     assert(openbusContext != 0);
-    std::auto_ptr <openbus::Connection> conn (openbusContext->createConnection("localhost", 2089));
+    std::auto_ptr <openbus::Connection> conn(
+      openbusContext->createConnection(bus_host, bus_port));
     try
     {
       conn->loginByPassword("demo", "demo");
@@ -69,36 +93,31 @@ int main(int argc, char** argv)
     }
     openbusContext->setDefaultConnection(conn.get());
 
-    // Recebendo oferta de secretaria
     openbus::idl_or::ServicePropertySeq props;
-    props.length(3);
+    props.length(2);
     props[0].name  = "openbus.offer.entity";
     props[0].value = "secretary";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
-    offer_registry::ServiceOfferDescSeq_var offers = openbusContext->getOfferRegistry()->findServices(props);
-    // Pegando uma oferta valida
+    offer_registry::ServiceOfferDescSeq_var offers(
+      openbusContext->getOfferRegistry()->findServices(props));
     ::Message_var message = ::get_message(offers);
     if(!CORBA::is_nil(message))
     {
-      // Chama a funcao
       message->sendMessage("Message");
       return 0;
     }
 
-    // Recebendo oferta de executivo
     props[0].name  = "openbus.offer.entity";
     props[0].value = "executive";
     props[1].name  = "openbus.component.facet";
     props[1].value = "message";
     offers = openbusContext->getOfferRegistry()->findServices(props);
-    // Pegando uma oferta valida
     message = ::get_message(offers);
     if(!CORBA::is_nil(message))
     {
       try
       {
-        // Chama a funcao
         message->sendMessage("Message");
         std::cout << "Chamada nao deveria ter sido aceita" << std::endl;
       }
