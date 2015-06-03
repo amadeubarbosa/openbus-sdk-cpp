@@ -1,0 +1,53 @@
+project openbus/demos/multiplexing ;
+
+path-constant here : . ;
+
+obj greetings-stub
+  : $(here)/idl/greetings.idl
+  ;
+explicit greetings-stub ;
+
+obj greetings-skeleton
+  : $(here)/idl/greetings.idl
+  : <generate>skeleton
+  ;
+explicit greetings-skeleton ;
+
+local rule demo-exe ( name : src : deps * )
+{
+  exe $(name)
+    : src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /openssl//openssl
+      /boost//headers
+      /boost//program_options
+      /TAO//TAO
+      $(deps)
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
+      <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
+    ;
+  explicit $(name) ;
+}
+
+demo-exe multiplexing_client
+  : client
+  : greetings-stub
+  ;
+  
+demo-exe multiplexing_server
+  : server
+  : greetings-stub
+    greetings-skeleton
+  ;
+
+alias multiplexing
+  : multiplexing_client
+    multiplexing_server
+    admin/DemoCppMultiplexing.key
+  ;

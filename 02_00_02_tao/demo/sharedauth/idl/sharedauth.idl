@@ -1,0 +1,4 @@
+struct EncodedSharedAuth {
+  Object attempt;
+  sequence<octet> secret;
+};
