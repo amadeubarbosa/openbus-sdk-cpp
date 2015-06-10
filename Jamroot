@@ -67,12 +67,6 @@ rule tao-idl-init ( properties * )
     
 }
 
-openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
-if ! $(openbus-idl-path)
-{
-  openbus-idl-path = $(here)/idl/src ;
-}
-
 scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
 if ! $(scs-root-path)
 {
@@ -83,12 +77,6 @@ scs-idl-path = [ os.environ SCS_IDL_PATH ] ;
 if ! $(scs-idl-path)
 {
   scs-idl-path = $(scs-root-path)/idl/src ;
-}
-
-openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
-if ! $(openbus-idl-path)
-{
-  openbus-idl-path = $(here)/idl/src ;
 }
 
 # To add requirements for version >= or < than determinate version for specific toolset
@@ -174,46 +162,126 @@ project openbus
   ;
 
 obj access_control-stub
-  : $(openbus-idl-path)/access_control.idl
+  : $(here)/idl/access_control.idl
+    core-stub
+    credential-stub
+  : <include>$(here)/idl
+    <implicit-dependency>core-stub
+    <implicit-dependency>credential-stub
+  :
+  : <implicit-dependency>core-stub
+    <implicit-dependency>credential-stub
   ;
 explicit access_control-stub ;
 
-obj core-stub
-  : $(openbus-idl-path)/core.idl
+obj legacy_support-stub
+  : $(here)/idl/legacy_support.idl
+    access_control-stub
+    access_control-legacy-stub
+  : <include>$(here)/idl
+    <implicit-dependency>access_control-stub
+    <implicit-dependency>access_control-legacy-stub
+  :
+  : <implicit-dependency>access_control-stub
+    <implicit-dependency>access_control-legacy-stub
   ;
-explicit core-stub ;
-
-obj credential-stub
-  : $(openbus-idl-path)/credential.idl
-  ;
-explicit credential-stub ;
-
-obj credential_v1_5-stub
-  : $(here)/legacy/idl/credential_v1_5.idl
-  ;
-explicit credential_v1_5-stub ;
+explicit legacy_support-stub ;
 
 obj offer_registry-stub
-  : $(openbus-idl-path)/offer_registry.idl
+  : $(here)/idl/offer_registry.idl
     /scs//idls
+    access_control-stub
   : <implicit-dependency>/scs//idls
+    <implicit-dependency>access_control-stub
+    <include>$(here)/idl
   :
   : <implicit-dependency>/scs//idls
   ;
 explicit offer_registry-stub ;
 
+obj core-stub
+  : $(here)/idl/core.idl
+  : <include>$(here)/idl
+  ;
+explicit core-stub ;
+
+obj credential-stub
+  : $(here)/idl/credential.idl
+    core-legacy-stub   
+  : <implicit-dependency>core-legacy-stub
+    <include>$(here)/idl
+  :
+  : <implicit-dependency>core-legacy-stub
+  ;
+explicit credential-stub ;
+
 obj data_export-stub
-  : $(openbus-idl-path)/data_export.idl
+  : $(here)/idl/data_export.idl
+    access_control-legacy-stub  
+  : <implicit-dependency>access_control-legacy-stub
+    <include>$(here)/idl
+  :
+  : <implicit-dependency>access_control-legacy-stub
   ;
 explicit data_export-stub ;
 
+obj access_control-legacy-stub
+  : $(here)/idl/legacy_access_control.idl
+    core-legacy-stub
+    credential-legacy-stub
+  : <implicit-dependency>core-legacy-stub
+    <implicit-dependency>credential-legacy-stub
+  :
+  : <implicit-dependency>core-legacy-stub
+    <implicit-dependency>credential-legacy-stub
+  ;
+explicit access_control-legacy-stub ;
+
+obj core-legacy-stub
+  : $(here)/idl/legacy_core.idl
+  ;
+explicit core-legacy-stub ;
+
+obj credential-legacy-stub
+  : $(here)/idl/legacy_credential.idl
+    core-legacy-stub
+  : <implicit-dependency>core-legacy-stub
+  :
+  : <implicit-dependency>core-legacy-stub
+  ;
+explicit credential-legacy-stub ;
+
+obj data_export-legacy-stub
+  : $(here)/idl/legacy_data_export.idl
+    access_control-legacy-stub
+  : <implicit-dependency>access_control-legacy-stub
+  :
+  : <implicit-dependency>access_control-legacy-stub
+  ;
+explicit data_export-legacy-stub ;
+
+obj offer_registry-legacy-stub
+  : $(here)/idl/legacy_offer_registry.idl
+    /scs//idls
+  : <implicit-dependency>/scs//idls
+    <include>$(here)/idl
+  :
+  : <implicit-dependency>/scs//idls
+  ;
+explicit offer_registry-legacy-stub ;
+
 alias idls
   : access_control-stub
+    legacy_support-stub
+    offer_registry-stub
     core-stub
     credential-stub
-    credential_v1_5-stub
-    offer_registry-stub
     data_export-stub
+    access_control-legacy-stub
+    core-legacy-stub
+    credential-legacy-stub
+    data_export-legacy-stub
+    offer_registry-legacy-stub
   ;
 explicit idls ;
 
@@ -245,34 +313,59 @@ install stage
   ;
 
 tao-idl.cpp-h install-access_control_idl
-  : $(openbus-idl-path)/access_control.idl
+  : $(here)/idl/access_control.idl
   ;
 explicit install-access_control_idl ;
 
+tao-idl.cpp-h install-legacy_support_idl
+  : $(here)/idl/legacy_support.idl
+  ;
+explicit install-legacy_support_idl ;
+
+tao-idl.cpp-h install-offer_registry_idl
+  : $(here)/idl/offer_registry.idl
+  ;
+explicit install-offer_registry_idl ;
+
 tao-idl.cpp-h install-core_idl
-  : $(openbus-idl-path)/core.idl
+  : $(here)/idl/core.idl
   ;
 explicit install-core_idl ;
 
 tao-idl.cpp-h install-credential_idl
-  : $(openbus-idl-path)/credential.idl
+  : $(here)/idl/credential.idl
   ;
 explicit install-credential_idl ;
 
-tao-idl.cpp-h install-offer_registry_idl
-  : $(openbus-idl-path)/offer_registry.idl
-  ;
-explicit install-offer_registry_idl ;
-
 tao-idl.cpp-h install-data_export_idl
-  : $(openbus-idl-path)/data_export.idl
+  : $(here)/idl/data_export.idl
   ;
 explicit install-data_export_idl ;
 
-tao-idl.cpp-h install-credential_v1_5_idl
-  : $(here)/legacy/idl/credential_v1_5.idl
+tao-idl.cpp-h install-access_control-legacy_idl
+  : $(here)/idl/legacy_access_control.idl
   ;
-explicit install-credential_v1_5_idl ;
+explicit install-access_control-legacy_idl ;
+
+tao-idl.cpp-h install-core-legacy_idl
+  : $(here)/idl/legacy_core.idl
+  ;
+explicit install-core-legacy_idl ;
+
+tao-idl.cpp-h install-credential-legacy_idl
+  : $(here)/idl/legacy_credential.idl
+  ;
+explicit install-credential-legacy_idl ;
+
+tao-idl.cpp-h install-data_export-legacy_idl
+  : $(here)/idl/legacy_data_export.idl
+  ;
+explicit install-data_export-legacy_idl ;
+
+tao-idl.cpp-h install-offer_registry-legacy_idl
+  : $(here)/idl/legacy_offer_registry.idl
+  ;
+explicit install-offer_registry-legacy_idl ;
 
 tao-idl.cpp-h install-scs_idl
   : $(scs-idl-path)/scs.idl
@@ -281,11 +374,17 @@ explicit install-scs_idl ;
 
 install stage-stubs
   : install-access_control_idl
+    install-legacy_support_idl
+    install-core_idl
+    install-offer_registry_idl
     install-core_idl
     install-credential_idl
-    install-offer_registry_idl
     install-data_export_idl
-    install-credential_v1_5_idl
+    install-access_control-legacy_idl
+    install-core-legacy_idl
+    install-credential-legacy_idl
+    install-data_export-legacy_idl
+    install-offer_registry-legacy_idl
     install-scs_idl
   : <location>install/stubs
     <install-dependencies>on
