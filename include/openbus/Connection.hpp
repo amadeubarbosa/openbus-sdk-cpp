@@ -340,10 +340,22 @@ public:
   ~Connection();  
 private:
   /**
-  * Connection deve ser adquirido atraves de: OpenBusContext::createConnection()
+  * Connection deve ser adquirido atraves de: OpenBusContext::connectByReference()
   */
-  Connection(const std::string host, const unsigned short port, CORBA::ORB_ptr, 
-             interceptors::ORBInitializer *, OpenBusContext &, 
+  Connection(scs::core::IComponent_ptr ref,
+             CORBA::ORB_ptr, 
+             interceptors::ORBInitializer *,
+             OpenBusContext &, 
+             const ConnectionProperties &props);
+
+  /**
+  * Connection deve ser adquirido atraves de: OpenBusContext::connectByAddress()
+  */
+  Connection(const std::string host,
+             const unsigned short port,
+             CORBA::ORB_ptr, 
+             interceptors::ORBInitializer *,
+             OpenBusContext &, 
              const ConnectionProperties &props);
 
   Connection(const Connection &);

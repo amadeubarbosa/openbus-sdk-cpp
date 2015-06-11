@@ -189,7 +189,6 @@ explicit legacy_support-stub ;
 
 obj offer_registry-stub
   : $(here)/idl/offer_registry.idl
-    /scs//idls
     access_control-stub
   : <implicit-dependency>/scs//idls
     <implicit-dependency>access_control-stub
@@ -262,7 +261,6 @@ explicit data_export-legacy-stub ;
 
 obj offer_registry-legacy-stub
   : $(here)/idl/legacy_offer_registry.idl
-    /scs//idls
   : <implicit-dependency>/scs//idls
     <include>$(here)/idl
   :

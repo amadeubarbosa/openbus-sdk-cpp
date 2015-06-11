@@ -81,7 +81,7 @@ int main(int argc, char** argv)
       (orb_ctx->orb()->resolve_initial_references("OpenBusContext")));
     assert(openbusContext != 0);
     std::auto_ptr <openbus::Connection> conn(
-      openbusContext->createConnection(bus_host, bus_port));
+      openbusContext->connectByAddress(bus_host, bus_port));
     try
     {
       conn->loginByPassword("demo", "demo");

@@ -17,16 +17,16 @@ int main(int argc, char** argv)
     dynamic_cast<openbus::OpenBusContext *>(obj));
 
   std::auto_ptr<openbus::Connection> conn_A(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_A->loginByPassword("A", "A");
 
   std::auto_ptr<openbus::Connection> conn_B(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_B->loginByCertificate(cfg.certificate_user(),
                              openbus::PrivateKey(argv[argc-1]));
 
   std::auto_ptr<openbus::Connection> conn_C(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_C->loginByPassword("C", "C");
 
   openbus::idl_ac::LoginInfoSeq originators;

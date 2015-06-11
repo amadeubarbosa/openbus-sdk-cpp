@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     for (std::size_t busIdx = 0; busIdx != 2; ++busIdx)
     {
       std::auto_ptr<openbus::Connection> 
-        conn(bus_ctx->createConnection(buses[busIdx].host, buses[busIdx].port));
+        conn(bus_ctx->connectByAddress(buses[busIdx].host, buses[busIdx].port));
       bus_ctx->setDefaultConnection(conn.get());
       conn->loginByPassword(entity, entity);
 

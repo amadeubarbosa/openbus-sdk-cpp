@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     openbus::OpenBusContext *bus_ctx(
       dynamic_cast<openbus::OpenBusContext *>(o));
     std::auto_ptr<openbus::Connection> conn(
-      bus_ctx->createConnection(cfg.host(), cfg.wrong_port()));
+      bus_ctx->connectByAddress(cfg.host(), cfg.wrong_port()));
     std::cout << "No exception was thrown, exception CORBA::SystemException was expected"
               << std::endl;
     std::abort();

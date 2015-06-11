@@ -141,7 +141,7 @@ int main(int argc, char** argv)
       orb_ctx->orb()->resolve_initial_references("OpenBusContext")));
     assert(bus_ctx != 0);
     std::auto_ptr <openbus::Connection> conn(
-      bus_ctx->createConnection(bus_host, bus_port));
+      bus_ctx->connectByAddress(bus_host, bus_port));
     try
     {
       conn->loginByCertificate("proxy", *private_key);

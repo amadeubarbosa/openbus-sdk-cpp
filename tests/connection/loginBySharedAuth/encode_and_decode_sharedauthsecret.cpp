@@ -18,7 +18,7 @@ int main(int argc, char** argv)
     dynamic_cast<openbus::OpenBusContext *>(obj));
   
   std::auto_ptr<openbus::Connection> conn(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn->loginByCertificate(cfg.certificate_user(), 
                            openbus::PrivateKey(argv[argc-1]));
 
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
   
   {
     std::auto_ptr<openbus::Connection> conn(
-      bus_ctx->createConnection(cfg.host(), cfg.port()));
+      bus_ctx->connectByAddress(cfg.host(), cfg.port()));
     conn->loginBySharedAuth(shared_auth);
     if (conn->login() == 0)
     {

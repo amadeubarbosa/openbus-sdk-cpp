@@ -143,7 +143,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn = bus_ctx->createConnection(bus_host, bus_port);
+      conn = bus_ctx->connectByAddress(bus_host, bus_port);
       conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, *private_key) );
       conn->loginByCertificate("demo", *private_key);
       bus_ctx->setDefaultConnection(conn.get());

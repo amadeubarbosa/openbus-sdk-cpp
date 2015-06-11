@@ -18,15 +18,15 @@ int main(int argc, char **argv)
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   
   std::auto_ptr<openbus::Connection> conn_A(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_A->loginByPassword("A", "A");
   
   std::auto_ptr<openbus::Connection> conn_B(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_B->loginByPassword("B", "B");
   
   std::auto_ptr<openbus::Connection> conn_C(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_C->loginByPassword("C", "C");
 
   bus_ctx->setDefaultConnection(conn_A.get());

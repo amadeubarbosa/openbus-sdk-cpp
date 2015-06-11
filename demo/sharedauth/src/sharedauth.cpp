@@ -192,7 +192,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn = openbusContext->createConnection(bus_host, bus_port);
+      conn = openbusContext->connectByAddress(bus_host, bus_port);
 
       CORBA::OctetSeq secret_seq;
       std::ifstream file(argv[1]);

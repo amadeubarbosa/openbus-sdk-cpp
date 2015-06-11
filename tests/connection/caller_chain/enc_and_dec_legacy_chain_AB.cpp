@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   
   std::auto_ptr<openbus::Connection> conn_A(
-    bus_ctx->createConnection(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_A->loginByPassword("A", "A");
   
   bus_ctx->setDefaultConnection(conn_A.get());

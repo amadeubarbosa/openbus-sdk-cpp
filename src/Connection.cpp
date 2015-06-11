@@ -137,13 +137,65 @@ void SharedAuthSecret::cancel()
 }
 
 Connection::Connection(
-  const std::string host, const unsigned short port, CORBA::ORB_ptr orb, 
-  interceptors::ORBInitializer *orb_init, OpenBusContext &m, 
-  const ConnectionProperties &props) 
-  : _host(host), _port(port), _orb_init(orb_init), _orb(orb),
-    _loginInfo(0), _invalid_login(0), _onInvalidLogin(0), _state(UNLOGGED),
+  scs::core::IComponent_ptr ref,
+  CORBA::ORB_ptr, 
+  interceptors::ORBInitializer *,
+  OpenBusContext &, 
+  const ConnectionProperties &props)
+  : _iComponent(ref),
+    _orb_init(orb_init),
+    _orb(orb),
+    _loginInfo(0),
+    _invalid_login(0),
+    _onInvalidLogin(0),
+    _state(UNLOGGED),
     _openbusContext(m),
-    _profile2login(LRUSize), _login2session(LRUSize)
+    _profile2login(LRUSize),
+    _login2session(LRUSize)
+{
+  log_scope l(log().general_logger(), info_level, "Connection::Connection");
+  assert(!CORBA::is_nil(_iComponent.in()));
+  {
+    CORBA::Object_var obj;
+    interceptors::ignore_interceptor _i(_orb_init);
+    obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
+    _access_control = idl_ac::AccessControl::_narrow(obj);
+    assert(!CORBA::is_nil(_access_control.in()));
+    obj = _iComponent->getFacet(idl_or::_tc_OfferRegistry->id());
+    _offer_registry = idl_or::OfferRegistry::_narrow(obj);
+    assert(!CORBA::is_nil(_offer_registry.in()));
+    obj = _iComponent->getFacet(idl_ac::_tc_LoginRegistry->id());
+    _login_registry = idl_ac::LoginRegistry::_narrow(obj);
+    assert(!CORBA::is_nil(_login_registry.in()));
+  }
+	
+  _loginCache.reset(new LoginCache(_login_registry));
+  {
+    interceptors::ignore_interceptor _i(_orb_init);
+    _busid = _access_control->busid();
+    idl::OctetSeq_var o(_access_control->buskey());
+    _buskey.reset(new PublicKey(o));
+  }
+}
+
+Connection::Connection(
+  const std::string host,
+  const unsigned short port, CORBA::ORB_ptr orb, 
+  interceptors::ORBInitializer *orb_init,
+  OpenBusContext &m, 
+  const ConnectionProperties &props) 
+  : _scs_ref(scs::core::IComponent::_nil()),
+    _host(host),
+    _port(port),
+    _orb_init(orb_init),
+    _orb(orb),
+    _loginInfo(0),
+    _invalid_login(0),
+    _onInvalidLogin(0),
+    _state(UNLOGGED),
+    _openbusContext(m),
+    _profile2login(LRUSize),
+    _login2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
 

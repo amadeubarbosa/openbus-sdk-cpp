@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
   try
   {
     std::auto_ptr<openbus::Connection>
-      conn(bus_ctx->createConnection(cfg.host(), 2090));
+      conn(bus_ctx->connectByAddress(cfg.host(), 2090));
   }
   catch(...)
   {

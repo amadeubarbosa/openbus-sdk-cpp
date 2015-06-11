@@ -148,7 +148,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn = openbusContext->createConnection(bus_host, bus_port);
+      conn = openbusContext->connectByAddress(bus_host, bus_port);
       conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, *private_key) );
       conn->loginByCertificate("demo", *private_key);
       openbusContext->setDefaultConnection(conn.get());

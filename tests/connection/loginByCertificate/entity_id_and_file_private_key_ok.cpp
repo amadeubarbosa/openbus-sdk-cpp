@@ -18,7 +18,7 @@ int main(int argc, char** argv)
   openbus::OpenBusContext* openbusContext = 
     dynamic_cast<openbus::OpenBusContext *> (obj_connection_manager);
   std::auto_ptr <openbus::Connection> 
-    conn (openbusContext->createConnection(cfg.host(), cfg.port()));
+    conn (openbusContext->connectByAddress(cfg.host(), cfg.port()));
   conn->loginByCertificate(cfg.certificate_user(), 
                            openbus::PrivateKey(argv[argc-1]));
 }

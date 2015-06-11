@@ -310,8 +310,32 @@ public:
    */
   CallDispatchCallback onCallDispatch() const;
 
+	/**
+	 * \brief Cria uma conexão para um barramento indicado por uma referência
+	 *        CORBA.
+	 * 
+	 * O barramento é indicado por uma referência CORBA a um componente
+	 * SCS que representa os serviços núcleo do barramento. Essa função
+	 * deve ser utilizada ao invés da 'connectByAddress' para permitir o
+	 * uso de SSL nas comunicações com o núcleo do barramento.
+	 * 
+	 * \param reference Referência CORBA a um componente SCS que representa os
+	 *        serviços núcleo do barramento.
+   * \param props Lista opcional de propriedades da conexão 
+   *        (\ref Connection::ConnectionProperties).
+	 *
+	 * \return Conexão criada.
+	 *
+	 * \exception InvalidPropertyValue O valor de uma propriedade não é válido.
+	 */
+  std::auto_ptr<Connection> connectByReference(
+    scs::core::IComponent_ptr ref,
+    const Connection::ConnectionProperties &props = 
+    Connection::ConnectionProperties());
+
   /**
-   * \brief Cria uma conexão para um barramento.
+   * \brief Cria uma conexão para um barramento indicado por um nome 
+   *        ou endereço de rede.
    * 
    * O barramento é indicado por um nome ou endereço de rede e um
    * número de porta, onde os serviços núcleo daquele barramento estão
@@ -330,7 +354,7 @@ public:
    *
    * @return Conexão criada.
    */
-  std::auto_ptr<Connection> createConnection(
+  std::auto_ptr<Connection> connectByAddress(
     const std::string &host, unsigned short port, 
     const Connection::ConnectionProperties &props = 
     Connection::ConnectionProperties());

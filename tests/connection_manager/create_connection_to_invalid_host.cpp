@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
   try
   {
     std::auto_ptr<openbus::Connection> conn(
-      bus_ctx->createConnection("invalid_host", cfg.port()));
+      bus_ctx->connectByAddress("invalid_host", cfg.port()));
   }
   catch(...)
   {

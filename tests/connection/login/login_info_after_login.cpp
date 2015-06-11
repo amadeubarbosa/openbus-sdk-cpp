@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   std::auto_ptr<openbus::Connection>
-    conn(bus_ctx->createConnection(cfg.host(), cfg.port()));
+    conn(bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn->loginByPassword("demo", "demo");
 
   const tecgraf::openbus::core::v2_1::services::access_control::LoginInfo *login = conn->login();

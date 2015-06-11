@@ -33,13 +33,25 @@ OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb,
               "OpenBusContext::OpenBusContext");
 }
 
-std::auto_ptr<Connection> OpenBusContext::createConnection(
+std::auto_ptr<Connection> OpenBusContext::connectByReference(
+  scs::core::IComponent_ptr ref,
+  const Connection::ConnectionProperties &props)
+{
+  log_scope l(log().general_logger(), debug_level, 
+              "OpenBusContext::connectByReference");
+  std::auto_ptr<Connection> conn(
+    new Connection(ref, _orb, _orb_init, *this, props));
+  l.vlog("connection: %p", conn.get());
+  return conn;
+}
+
+std::auto_ptr<Connection> OpenBusContext::connectByAddress(
   const std::string &host, unsigned short port, 
   const Connection::ConnectionProperties &props)
 {
   log_scope l(log().general_logger(), debug_level, 
-              "OpenBusContext::createConnection");
-  l.vlog("createConnection para host %s:%hi", host.c_str(), port);
+              "OpenBusContext::connectByAddress");
+  l.vlog("connectByAddress para host %s:%hi", host.c_str(), port);
   std::auto_ptr<Connection> conn(
     new Connection(host, port, _orb, _orb_init, *this, props));
   l.vlog("connection: %p", conn.get());

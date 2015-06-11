@@ -138,7 +138,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn = bus_ctx->createConnection(bus_host, bus_port);
+      conn = bus_ctx->connectByAddress(bus_host, bus_port);
       conn->onInvalidLogin( ::onReloginCallback());
       conn->loginByPassword("demo", "demo");
       bus_ctx->setDefaultConnection(conn.get());
