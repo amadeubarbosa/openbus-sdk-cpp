@@ -24,14 +24,6 @@ InvalidEncodedStream::~InvalidEncodedStream() throw()
 {
 }
 
-bool CallerChain::is_legacy() const
-{
-  idl::EncryptedBlock null_block;
-  memset(null_block, '\0', idl::EncryptedBlockSize);
-  return (std::memcmp(null_block, _signedCallChain.signature,
-                      idl::EncryptedBlockSize) == 0);
-}
-  
 OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb, 
                                interceptors::ORBInitializer *orb_init)
   : _orb_init(orb_init), _orb(orb), _defaultConnection(0),
@@ -204,35 +196,6 @@ CallerChain OpenBusContext::makeChainFor(const std::string &loginId) const
     return CallerChain();
   }
   CallerChain joined_chain(getJoinedChain());
-  if (joined_chain.is_legacy())
-  {
-    l.log("Construindo cadeia legada.");
-    boost::shared_ptr<Login> target_login(
-      conn->_loginCache->validateLogin(loginId.c_str()));
-    if (!target_login)
-    {
-      l.vlog("Login '%s' invalido.", loginId.c_str());
-      idl_ac::InvalidLogins invalid_logins;
-      invalid_logins.loginIds.length(1);
-      invalid_logins.loginIds[0] = loginId.c_str();
-      throw invalid_logins;
-    }
-    std::string target(target_login->loginInfo->entity.in());
-    idl_ac::LoginInfoSeq originators;
-    originators.length(1);
-    if (joined_chain.originators().length() > 0
-        && conn->_legacyDelegate == Connection::ORIGINATOR)
-    {
-      originators[0u].entity = joined_chain.originators()[0u].entity;
-    }
-    else
-    {
-      originators[0u].entity = joined_chain.caller().entity;
-    }
-    originators[0u].id = "<unknown>";
-    return CallerChain(conn->busid(), target, originators, *(conn->login()),
-                       joined_chain._signedCallChain);
-  }
   idl_cr::SignedCallChain_var signed_chain(
     conn->access_control()->signChainFor(loginId.c_str()));
   CORBA::Any_var any(_orb_init->codec->decode_value(
@@ -253,37 +216,6 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
   idl_data_export::ExportedVersionSeq exported_version_seq;
   exported_version_seq.length(1);
   
-  idl_data_export::LegacyExportedCallChain exported_legacy_chain;
-  exported_legacy_chain.bus = chain.busid().c_str();
-  exported_legacy_chain.target = chain.target().c_str();
-  exported_legacy_chain.caller = chain.caller();
-  if (chain.originators().length() > 0)
-  {
-    exported_legacy_chain.delegate =
-      chain.originators()[static_cast<CORBA::ULong>(0)].entity;
-  }      
-
-  CORBA::Any any;
-  any <<= exported_legacy_chain;
-  CORBA::OctetSeq_var exported_legacy_chain_cdr(
-    _orb_init->codec->encode_value(any));
-
-  idl_data_export::ExportedVersion legacy_exported_version;
-  legacy_exported_version.version = idl_data_export::LegacyVersion;
-  legacy_exported_version.encoded = idl::OctetSeq(
-    exported_legacy_chain_cdr->maximum(),
-    exported_legacy_chain_cdr->length(),
-    const_cast<unsigned char *>
-    (exported_legacy_chain_cdr->get_buffer()));
-
-  if (chain.is_legacy())
-  {
-    exported_version_seq[static_cast<CORBA::ULong>(0)]
-      = legacy_exported_version;
-    return encode_exported_versions(exported_version_seq,
-                                    idl_data_export::MagicTag_CallChain);
-  }
-
   {
     exported_version_seq.length(2);
 
@@ -304,8 +236,6 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
       (exported_chain_cdr->get_buffer()));
     
     exported_version_seq[static_cast<CORBA::ULong>(0)] = exported_version;
-    exported_version_seq[static_cast<CORBA::ULong>(1)]
-      = legacy_exported_version;
   }
   return encode_exported_versions(exported_version_seq,
                                   idl_data_export::MagicTag_CallChain);
@@ -355,47 +285,6 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
           exported_chain.bus.in(), call_chain.target.in(),
           call_chain.originators, call_chain.caller,
           exported_chain.signedChain);      
-      }
-      if (idl_data_export::LegacyVersion == seq[i].version)
-      {        
-        l.log("Decodificando 'LegacyVersion'.");
-        CORBA::Any_var any(_orb_init->codec->decode_value(
-                             CORBA::OctetSeq(seq[i].encoded.maximum(),
-                                             seq[i].encoded.length(),
-                                             const_cast<unsigned char*>
-                                             (seq[i].encoded.get_buffer())),
-                             idl_data_export::_tc_LegacyExportedCallChain));
-        idl_data_export::LegacyExportedCallChain exported_chain(
-          extract<idl_data_export::LegacyExportedCallChain>(any));
-        idl_ac::LoginInfoSeq originators;
-        if (!std::string(exported_chain.delegate).empty())
-        {
-          originators.length(1);
-          idl_ac::LoginInfo delegate;        
-          delegate.id = "<unknown>";
-          delegate.entity = exported_chain.delegate; 
-          originators[static_cast<CORBA::ULong>(0)] = delegate;
-        }
-        idl_cr::SignedCallChain legacy_signed_chain;
-        std::memset(legacy_signed_chain.signature, '\0',
-                    idl::EncryptedBlockSize);
-        idl_ac::CallChain legacy_call_chain;
-        legacy_call_chain.target = exported_chain.target;
-        legacy_call_chain.originators = originators;
-        legacy_call_chain.caller = exported_chain.caller;
-        CORBA::Any legacy_call_chain_any;
-        legacy_call_chain_any <<= legacy_call_chain;
-        CORBA::OctetSeq_var legacy_call_chain_cdr(
-          _orb_init->codec->encode_value(legacy_call_chain_any));
-        legacy_signed_chain.encoded = idl::OctetSeq(
-          legacy_call_chain_cdr->maximum(),
-          legacy_call_chain_cdr->length(),
-          const_cast<unsigned char *>
-          (legacy_call_chain_cdr->get_buffer()));
-
-        return CallerChain(
-          exported_chain.bus.in(), exported_chain.target.in(), originators,
-          exported_chain.caller, legacy_signed_chain);
       }
     }
     throw InvalidEncodedStream("Versão de cadeia incompatível.");

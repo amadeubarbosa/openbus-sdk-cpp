@@ -5,7 +5,6 @@
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/decl.hpp"
 #include "credentialC.h"
-#include "credential_v1_5C.h"
 
 extern "C" 
 {
@@ -48,16 +47,6 @@ struct OPENBUS_SDK_DECL Session
 struct credential
 {
   tecgraf::openbus::core::v2_0::credential::CredentialData data;
-  openbus::legacy::v1_5::Credential legacy;
-
-  bool is_legacy() const
-  {
-    if (std::string(legacy.owner).empty())
-    {
-      return false;
-    }
-    return true;
-  }
 };
 
 struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
@@ -89,11 +78,6 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
     PI::ServerRequestInfo &);
 
   credential get_credential(PI::ServerRequestInfo &) const;
-
-  void build_legacy_chain(
-    PI::ServerRequestInfo &,
-    const std::string &target,
-    const openbus::legacy::v1_5::Credential &) const;
 
   void send_credential_reset(
     Connection &, 

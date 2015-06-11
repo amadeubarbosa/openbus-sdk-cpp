@@ -6,7 +6,6 @@
 #include "openbus/crypto/PublicKey.hpp"
 #include "openbus/log.hpp"
 #include "openbus/any.hpp"
-#include "credential_v1_5C.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -85,68 +84,10 @@ credential ServerInterceptor::get_credential(PI::ServerRequestInfo &r) const
   }
   catch (const CORBA::BAD_PARAM &) 
   {    
-    try 
-    {
-      IOP::ServiceContext_var sc(r.get_request_service_context(1234));
-      CORBA::Any_var any(
-        _orb_init->codec->decode_value(sc->context_data,
-                             openbus::legacy::v1_5::_tc_Credential));
-
-      openbus::legacy::v1_5::Credential legacy_credential(
-        extract<openbus::legacy::v1_5::Credential>(any));
-      credential_.legacy.identifier = legacy_credential.identifier;
-      credential_.legacy.owner = legacy_credential.owner;
-      credential_.legacy.delegate = legacy_credential.delegate;
-      credential_.data.login = credential_.legacy.identifier;
-    }
-    catch (const CORBA::BAD_PARAM &) 
-    {
-      throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, 
-                                 CORBA::COMPLETED_NO);
-    }
+    throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, 
+                               CORBA::COMPLETED_NO);
   }
   return credential_;
-}
-
-void ServerInterceptor::build_legacy_chain(
-  PI::ServerRequestInfo &r,
-  const std::string &target,
-  const openbus::legacy::v1_5::Credential &credential) const
-{
-  idl_ac::CallChain legacyChain;
-  legacyChain.target = target.c_str();
-  if (std::string(credential.delegate.in()).empty())
-  {
-    legacyChain.originators.length(0);
-    idl_ac::LoginInfo login_info;
-    login_info.id = credential.identifier;
-    login_info.entity = credential.owner;
-    legacyChain.caller = login_info;            
-  } 
-  else 
-  {
-    legacyChain.originators.length(1);
-    idl_ac::LoginInfo delegate;
-    delegate.id = "<unknown>";
-    delegate.entity = credential.delegate;
-    legacyChain.originators[0u] = delegate;
-    idl_ac::LoginInfo login;
-    login.id = credential.identifier;
-    login.entity = credential.owner;
-    legacyChain.caller = login;
-  }
-  CORBA::Any legacy_chain_any;
-  legacy_chain_any <<= legacyChain;
-  CORBA::OctetSeq_var legacy_chain_cdr(_orb_init->codec->encode_value(legacy_chain_any));
-  idl_cr::SignedCallChain signed_legacy_chain;
-  std::memset(signed_legacy_chain.signature, '\0', idl::EncryptedBlockSize);
-  signed_legacy_chain.encoded = idl::OctetSeq(
-    legacy_chain_cdr->maximum(),
-    legacy_chain_cdr->length(),
-    legacy_chain_cdr->get_buffer());
-  CORBA::Any signed_legacy_chain_any;
-  signed_legacy_chain_any <<= signed_legacy_chain;
-  r.set_slot(_orb_init->signed_call_chain, signed_legacy_chain_any);
 }
 
 void ServerInterceptor::save_dispatcher_connection(
@@ -224,12 +165,6 @@ void ServerInterceptor::receive_request_service_contexts(
   Connection &conn(
     get_dispatcher_connection(_bus_ctx, std::string(credential_.data.bus),
                               std::string(credential_.data.login), *r));
-
-  if (credential_.is_legacy()) 
-  {
-    build_legacy_chain(*r, conn.login()->entity.in(), credential_.legacy);
-    return;
-  }
 
   boost::shared_ptr<Login> caller;
   try 

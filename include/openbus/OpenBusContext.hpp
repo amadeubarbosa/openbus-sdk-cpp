@@ -131,12 +131,6 @@ struct OPENBUS_SDK_DECL CallerChain
    * \ref OpenBusContext::joinChain se a entidade da conexão 
    * corrente for a mesmo do target.
    *
-   * No caso de conexões legadas, este campo armazenará o nome da
-   * entidade da conexão que atendeu a requisição. Todas as chamadas
-   * feitas como parte de uma cadeia de uma chamada legada serão
-   * feitas utilizando apenas o protocolo do OpenBus 1.5 (apenas com
-   * credenciais legadas) e portanto serão recusadas por serviços que
-   * não aceitem chamadas legadas (OpenBus 1.5).
    */
   const std::string target() const
   {
@@ -212,8 +206,6 @@ public:
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedCallChain _signedCallChain;
-  
-  bool is_legacy() const;
   
   friend class OpenBusContext;
   friend struct openbus::interceptors::ClientInterceptor;
@@ -331,19 +323,7 @@ public:
    *            executando.
    * @param[in] props Lista opcional de propriedades que definem algumas
    *        configurações sobre a forma que as chamadas realizadas ou validadas
-   *        com essa conexão são feitas. A seguir são listadas as propriedades
-   *        válidas:
-   *        - legacy.disable: desabilita o suporte a chamadas usando protocolo
-   *          OpenBus 1.5. Por padrão o suporte está habilitado.
-   *        - legacy.delegate: indica como é preenchido o campo 'delegate' das
-   *          credenciais enviadas em chamadas usando protocolo OpenBus 1.5. Há
-   *          duas formas possíveis (o padrão é 'caller'):
-   *          - caller: o campo 'delegate' é preenchido sempre com a entidade
-   *            do campo 'caller' da cadeia de chamadas.
-   *          - originator: o campo 'delegate' é preenchido sempre com a
-   *            entidade que originou a cadeia de chamadas, que é o primeiro
-   *            login do campo 'originators' ou o campo 'caller' quando este
-   *            é vazio.
+   *        com essa conexão são feitas. 
    *   
    * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
    * @throw CORBA::Exception

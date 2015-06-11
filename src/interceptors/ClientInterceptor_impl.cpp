@@ -5,7 +5,6 @@
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/any.hpp"
 #include "coreC.h"
-#include "credential_v1_5C.h"
 #include "openbus/log.hpp"
 
 #include <tao/AnyTypeCode/AnyTypeCode_Adapter_Impl.h>
@@ -298,40 +297,6 @@ void ClientInterceptor::build_credential(
   r.add_request_service_context(sctx, true);
 }
 
-void ClientInterceptor::build_legacy_credential(
-  PortableInterceptor::ClientRequestInfo &r, 
-  Connection &conn,
-  const idl_ac::LoginInfo &curr_login)
-{
-  legacy::v1_5::Credential credential;
-  credential.identifier = curr_login.id;
-  credential.owner = curr_login.entity;
-  CallerChain caller_chain(get_joined_chain(conn, r));
-  if (caller_chain == CallerChain())
-  {
-    credential.delegate = "";
-  }
-  else
-  {
-    if (conn._legacyDelegate == Connection::ORIGINATOR 
-        && caller_chain._originators.length())
-    {
-      credential.delegate = caller_chain.originators()[0].entity;
-    }
-    else
-    {
-      credential.delegate = caller_chain.caller().entity; 
-    }
-  }
-  IOP::ServiceContext sctx;
-  sctx.context_id = 1234;
-  CORBA::Any any;
-  any <<= credential;
-  CORBA::OctetSeq_var o(_orb_init->codec->encode_value(any));
-  sctx.context_data = o;
-  r.add_request_service_context(sctx, true);
-}
-
 boost::uuids::uuid ClientInterceptor::get_request_id(
   PortableInterceptor::ClientRequestInfo_ptr r)
 {
@@ -374,21 +339,6 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
   }
   l.vlog("login: %s", curr_login.id.in());
   CallerChain caller_chain(get_joined_chain(conn, *r));
-  if (conn._legacyEnabled)
-  {
-    build_legacy_credential(*r, conn, curr_login);
-    if (caller_chain.is_legacy())
-    {
-      return;
-    }
-  }
-  else
-  {
-    if (caller_chain.is_legacy())
-    {
-      throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
-    }
-  }
   build_credential(*r, conn, curr_login);
   CORBA::Any any;
   boost::uuids::uuid request_id = boost::uuids::random_generator()();

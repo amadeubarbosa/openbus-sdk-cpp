@@ -406,12 +406,6 @@ private:
   boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo, _invalid_login;
   InvalidLoginCallback_t _onInvalidLogin;
   
-  enum LegacyDelegate 
-  {
-    CALLER,
-    ORIGINATOR
-  };
-  
   enum State 
   {
     LOGGED,
@@ -429,8 +423,6 @@ private:
   boost::scoped_ptr<LoginCache> _loginCache;
   std::string _busid;
   boost::scoped_ptr<PublicKey> _buskey;
-  LegacyDelegate _legacyDelegate;
-  bool _legacyEnabled;
   /**/
     
   struct SecretSession 

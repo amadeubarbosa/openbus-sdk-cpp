@@ -50,8 +50,6 @@ ClientInterceptor : public PI::ClientRequestInterceptor
                                            const std::string &remote_id);
   void build_credential(PI::ClientRequestInfo &, Connection &conn,
                         const tecgraf::openbus::core::v2_0::services::access_control::LoginInfo &);
-  void build_legacy_credential(PI::ClientRequestInfo &, Connection &conn,
-                               const tecgraf::openbus::core::v2_0::services::access_control::LoginInfo &);
   openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
   boost::uuids::uuid get_request_id(PI::ClientRequestInfo_ptr);
   ORBInitializer *_orb_init;

@@ -142,7 +142,7 @@ Connection::Connection(
   const ConnectionProperties &props) 
   : _host(host), _port(port), _orb_init(orb_init), _orb(orb),
     _loginInfo(0), _invalid_login(0), _onInvalidLogin(0), _state(UNLOGGED),
-    _openbusContext(m), _legacyDelegate(CALLER), _legacyEnabled(true),
+    _openbusContext(m),
     _profile2login(LRUSize), _login2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
@@ -170,31 +170,6 @@ Connection::Connection(
     _busid = _access_control->busid();
     idl::OctetSeq_var o(_access_control->buskey());
     _buskey.reset(new PublicKey(o));
-  }
-  
-  for (ConnectionProperties::const_iterator it = props.begin(); 
-       it != props.end(); ++it)
-  {
-    std::pair<std::string, std::string> prop (*it);
-    if (prop.first == "legacy.delegate")
-    {
-      if (prop.second == "originator")
-      {
-        _legacyDelegate = ORIGINATOR;
-      }
-      else if (prop.second == "caller")
-      {
-        _legacyDelegate = CALLER;
-      }
-      else
-      {
-        throw InvalidPropertyValue("legacy.delegate", prop.second);
-      }
-    }
-    else if (prop.first == "legacy.disable")
-    {
-      _legacyEnabled = false;
-    }
   }
 }
 
