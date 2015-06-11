@@ -180,6 +180,10 @@
              do argumento -j<num_cores>.
 
        MSVC 9.0 ou 12.0 64 bits (Windows)
+       0) É necessário um interpretador Perl para a geração dos
+          arquivos do tipo Makefile. Recomenda-se o uso do ActivePerl
+          5.20, que pode ser obtido em
+            http://www.activestate.com/activeperl/downloads
        1) Definir a variável de ambiente ACE_ROOT com o caminho que aponta
           para o pacote:
           $> set ACE_ROOT=%WORKSPACE%\build\ACE_wrappers
