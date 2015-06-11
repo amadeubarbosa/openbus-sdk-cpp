@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 			  (cfg.password() + "WRONG").c_str());
     std::abort();
   }
-  catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
+  catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
   {
   }
   return 0; //MSVC

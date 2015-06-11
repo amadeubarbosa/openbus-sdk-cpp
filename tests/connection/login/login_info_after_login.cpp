@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
     conn(bus_ctx->createConnection(cfg.host(), cfg.port()));
   conn->loginByPassword("demo", "demo");
 
-  const tecgraf::openbus::core::v2_0::services::access_control::LoginInfo *login = conn->login();
+  const tecgraf::openbus::core::v2_1::services::access_control::LoginInfo *login = conn->login();
   assert(login->id != 0 && std::strlen(login->id) != 0);
   assert(login->entity != 0 && std::strcmp(login->entity, "demo") == 0);
   return 0; //MSVC

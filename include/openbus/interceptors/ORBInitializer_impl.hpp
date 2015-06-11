@@ -14,7 +14,7 @@
 
 namespace openbus 
 {
-namespace idl = tecgraf::openbus::core::v2_0;
+namespace idl = tecgraf::openbus::core::v2_1;
 const size_t secret_size = 16;
 typedef boost::array<CORBA::Octet, idl::HashValueSize> hash_value;
 hash_value hash(std::string, CORBA::ULong ticket, 

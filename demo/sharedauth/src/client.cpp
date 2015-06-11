@@ -24,10 +24,10 @@ void mysleep()
 }
 
 namespace offer_registry
- = tecgraf::openbus::core::v2_0::services::offer_registry;
-namespace services = tecgraf::openbus::core::v2_0::services;
+ = tecgraf::openbus::core::v2_1::services::offer_registry;
+namespace services = tecgraf::openbus::core::v2_1::services;
 namespace access_control
- = tecgraf::openbus::core::v2_0::services::access_control;
+ = tecgraf::openbus::core::v2_1::services::access_control;
 namespace simple
  = tecgraf::openbus::interop::simple;
 
@@ -112,7 +112,7 @@ struct onReloginCallback
         c.loginByPassword("demo", "demo");
         break;
       }
-      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+      catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const& e)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
       openbusContext->setDefaultConnection(conn.get());
       break;
     }
-    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const& e)
+    catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const& e)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: "
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;

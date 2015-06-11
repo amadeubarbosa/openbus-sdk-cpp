@@ -46,7 +46,7 @@ struct OPENBUS_SDK_DECL Session
 
 struct credential
 {
-  tecgraf::openbus::core::v2_0::credential::CredentialData data;
+  tecgraf::openbus::core::v2_1::credential::CredentialData data;
 };
 
 struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 

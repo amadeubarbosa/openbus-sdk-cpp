@@ -19,8 +19,8 @@
 
 namespace openbus 
 {
-namespace idl = tecgraf::openbus::core::v2_0;
-namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
+namespace idl = tecgraf::openbus::core::v2_1;
+namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
 
 class PublicKey;
 

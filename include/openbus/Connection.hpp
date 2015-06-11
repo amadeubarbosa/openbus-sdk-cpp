@@ -40,9 +40,9 @@
 */
 namespace openbus 
 {
-  namespace idl = tecgraf::openbus::core::v2_0;
-  namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
-  namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
+  namespace idl = tecgraf::openbus::core::v2_1;
+  namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
+  namespace idl_or = tecgraf::openbus::core::v2_1::services::offer_registry;
 
   class OpenBusContext;
   class LoginCache;

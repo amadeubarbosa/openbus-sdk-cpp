@@ -8,8 +8,8 @@
 #include <boost/program_options.hpp>
 
 namespace offer_registry
- = tecgraf::openbus::core::v2_0::services::offer_registry;
-namespace services = tecgraf::openbus::core::v2_0::services;
+ = tecgraf::openbus::core::v2_1::services::offer_registry;
+namespace services = tecgraf::openbus::core::v2_1::services;
 
 ::Greetings_ptr get_greetings(offer_registry::ServiceOfferDescSeq_var offers)
 {
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     {
       conn->loginByPassword("demo", "demo");
     }
-    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
+    catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
       return 1;

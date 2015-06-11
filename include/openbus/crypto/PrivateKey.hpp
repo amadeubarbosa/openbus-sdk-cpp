@@ -16,7 +16,7 @@
 
 namespace openbus
 {
-namespace idl = tecgraf::openbus::core::v2_0;
+namespace idl = tecgraf::openbus::core::v2_1;
 struct InvalidPrivateKey : public std::exception
 { 
   const char *what() const throw() 

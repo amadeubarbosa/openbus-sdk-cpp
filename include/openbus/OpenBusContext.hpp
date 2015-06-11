@@ -26,10 +26,10 @@
 
 namespace openbus 
 {
-  namespace idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
-  namespace idl_cr = tecgraf::openbus::core::v2_0::credential;
-  namespace idl_or = tecgraf::openbus::core::v2_0::services::offer_registry;
-  namespace idl_data_export = tecgraf::openbus::core::v2_0::data_export;
+  namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
+  namespace idl_cr = tecgraf::openbus::core::v2_1::credential;
+  namespace idl_or = tecgraf::openbus::core::v2_1::services::offer_registry;
+  namespace idl_data_export = tecgraf::openbus::core::v2_1::data_export;
 
   namespace interceptors
   {
@@ -44,7 +44,7 @@ namespace openbus
 { 
 namespace core 
 { 
-namespace v2_0 
+namespace v2_1 
 { 
 namespace services 
 { 

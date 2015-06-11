@@ -23,10 +23,10 @@
 #endif
 
 namespace offer_registry
- = tecgraf::openbus::core::v2_0::services::offer_registry;
+ = tecgraf::openbus::core::v2_1::services::offer_registry;
 namespace demo = tecgraf::openbus::demo;
-namespace services = tecgraf::openbus::core::v2_0::services;
-namespace access_control = tecgraf::openbus::core::v2_0::services::access_control;
+namespace services = tecgraf::openbus::core::v2_1::services;
+namespace access_control = tecgraf::openbus::core::v2_1::services::access_control;
 
 struct ClockImpl : public POA_tecgraf::openbus::demo::Clock
 {
@@ -54,7 +54,7 @@ struct onReloginCallback
         c.loginByCertificate("demo", private_key);
         break;
       }
-      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
+      catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
       openbusContext->setDefaultConnection(conn.get());
       break;
     }
-    catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
+    catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: "
         "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
         openbusContext->getOfferRegistry()->registerService(clock_component.getIComponent(), properties);
         break;
       }
-      catch(tecgraf::openbus::core::v2_0::services::access_control::AccessDenied const&)
+      catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
           "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
