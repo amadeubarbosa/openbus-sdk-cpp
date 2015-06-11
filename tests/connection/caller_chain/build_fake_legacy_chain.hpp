@@ -12,7 +12,7 @@ openbus::CallerChain build_fake_legacy_chain(
   const openbus::idl_ac::LoginInfo &caller,
   openbus::OpenBusContext *bus_ctx) 
 {
-  openbus::idl_cr::SignedCallChain signed_chain;
+  openbus::idl_cr::SignedData signed_chain;
   std::memset(signed_chain.signature, '\0', openbus::idl::EncryptedBlockSize);
 
   openbus::idl_ac::CallChain call_chain;

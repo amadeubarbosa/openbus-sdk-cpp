@@ -185,7 +185,7 @@ public:
               const std::string &target,
               const idl_ac::LoginInfoSeq &originators, 
               const idl_ac::LoginInfo &caller,
-              const idl_cr::SignedCallChain &chain) 
+              const idl_cr::SignedData &chain) 
     : _busid(busid), _target(target), _originators(originators), 
       _caller(caller), _signedCallChain(chain)
   {
@@ -205,7 +205,7 @@ public:
   std::string _target;
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
-  idl_cr::SignedCallChain _signedCallChain;
+  idl_cr::SignedData _signedCallChain;
   
   friend class OpenBusContext;
   friend struct openbus::interceptors::ClientInterceptor;

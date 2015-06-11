@@ -46,14 +46,14 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   bool ignore_request(PI::ClientRequestInfo &);
   bool ignore_invalid_login(PI::ClientRequestInfo &);
   
-  idl_cr::SignedCallChain get_signed_chain(Connection &, hash_value &hash, 
+  idl_cr::SignedData get_signed_chain(Connection &, hash_value &hash, 
                                            const std::string &remote_id);
   void build_credential(PI::ClientRequestInfo &, Connection &conn,
                         const tecgraf::openbus::core::v2_1::services::access_control::LoginInfo &);
   openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
   boost::uuids::uuid get_request_id(PI::ClientRequestInfo_ptr);
   ORBInitializer *_orb_init;
-  LRUCache<hash_value, idl_cr::SignedCallChain> _callChainLRUCache;
+  LRUCache<hash_value, idl_cr::SignedData> _callChainLRUCache;
   OpenBusContext *_bus_ctx;
   std::map<boost::uuids::uuid, Connection *> _request_id2conn;
 #ifdef OPENBUS_SDK_MULTITHREAD

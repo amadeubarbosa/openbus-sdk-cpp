@@ -119,7 +119,7 @@ CallerChain ClientInterceptor::get_joined_chain(Connection &conn,
                                                 PortableInterceptor::ClientRequestInfo &r)
 {
   CORBA::Any_var any(r.get_slot(_orb_init->joined_call_chain));
-  idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+  idl_cr::SignedData signed_chain(extract<idl_cr::SignedData>(any));
   if (signed_chain.encoded.length() == 0)
   {
     return CallerChain();
@@ -153,12 +153,12 @@ bool ClientInterceptor::ignore_invalid_login(PortableInterceptor::ClientRequestI
   return !!ignore;
 }
 
-idl_cr::SignedCallChain ClientInterceptor::get_signed_chain(
+idl_cr::SignedData ClientInterceptor::get_signed_chain(
   Connection &conn, hash_value &hash, const std::string &remote_id)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::get_signed_chain");
-  idl_cr::SignedCallChain chain;
+  idl_cr::SignedData chain;
   bool cached(false);
   {
 #ifdef OPENBUS_SDK_MULTITHREAD

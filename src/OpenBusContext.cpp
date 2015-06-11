@@ -110,7 +110,7 @@ CallerChain OpenBusContext::getCallerChain()
   CORBA::Any_var any(
     _orb_init->pi_current->get_slot(_orb_init->signed_call_chain));
     
-  idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+  idl_cr::SignedData signed_chain(extract<idl_cr::SignedData>(any));
   if (signed_chain.encoded.length() == 0)
   {
     return CallerChain();
@@ -160,7 +160,7 @@ CallerChain OpenBusContext::getJoinedChain() const
   }
   CORBA::Any_var any(_orb_init->pi_current->get_slot(_orb_init->joined_call_chain));
 
-  idl_cr::SignedCallChain signed_chain(extract<idl_cr::SignedCallChain>(any));
+  idl_cr::SignedData signed_chain(extract<idl_cr::SignedData>(any));
   if (signed_chain.encoded.length() == 0)
   {
     return CallerChain();
@@ -196,7 +196,7 @@ CallerChain OpenBusContext::makeChainFor(const std::string &loginId) const
     return CallerChain();
   }
   CallerChain joined_chain(getJoinedChain());
-  idl_cr::SignedCallChain_var signed_chain(
+  idl_cr::SignedData_var signed_chain(
     conn->access_control()->signChainFor(loginId.c_str()));
   CORBA::Any_var any(_orb_init->codec->decode_value(
                        CORBA::OctetSeq(signed_chain->encoded.maximum(),
