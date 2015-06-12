@@ -360,6 +360,32 @@ public:
     Connection::ConnectionProperties());
    
   /**
+   * \brief Cria uma conexão para um barramento indicado por um nome 
+   *        ou endereço de rede (deprecado).
+   * 
+   * \deprecated O barramento é indicado por um nome ou endereço de rede e um
+   * número de porta, onde os serviços núcleo daquele barramento estão
+   * executando.
+   * 
+   * @param[in] host Endereço ou nome de rede onde os serviços núcleo do 
+   *            barramento estão executando.
+   * @param[in] port Porta onde os serviços núcleo do barramento estão 
+   *            executando.
+   * @param[in] props Lista opcional de propriedades que definem algumas
+   *        configurações sobre a forma que as chamadas realizadas ou validadas
+   *        com essa conexão são feitas. 
+   *   
+   * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
+   * @throw CORBA::Exception
+   *
+   * @return Conexão criada.
+   */
+  std::auto_ptr<Connection> createConnection(
+    const std::string &host, unsigned short port, 
+    const Connection::ConnectionProperties &props = 
+    Connection::ConnectionProperties());
+
+  /**
    * \brief Define a conexão padrão a ser usada nas chamadas.
    * 
    * Define uma conexão a ser utilizada em chamadas sempre que não houver uma

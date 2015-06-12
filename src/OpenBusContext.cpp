@@ -44,7 +44,7 @@ std::auto_ptr<Connection> OpenBusContext::connectByReference(
   l.vlog("connection: %p", conn.get());
   return conn;
 }
-
+  
 std::auto_ptr<Connection> OpenBusContext::connectByAddress(
   const std::string &host, unsigned short port, 
   const Connection::ConnectionProperties &props)
@@ -56,6 +56,13 @@ std::auto_ptr<Connection> OpenBusContext::connectByAddress(
     new Connection(host, port, _orb, _orb_init, *this, props));
   l.vlog("connection: %p", conn.get());
   return conn;
+}
+
+std::auto_ptr<Connection> OpenBusContext::createConnection(
+  const std::string &host, unsigned short port, 
+  const Connection::ConnectionProperties &props)
+{
+  return connectByAddress(host, port, props);
 }
 
 Connection *OpenBusContext::setDefaultConnection(Connection *conn)
