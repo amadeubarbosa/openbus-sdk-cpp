@@ -5,6 +5,7 @@
 #include "openbus/decl.hpp"
 #include <tao/ORB.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 
@@ -152,7 +153,44 @@ private:
   boost::shared_ptr<EVP_PKEY> key;
 };
 
+struct pX509
+{
+  explicit pX509(X509 *crt) : crt(crt, & ::X509_free)
+  {
+  }
+
+  pX509()
+  {
+  }
+
+  X509 *get() const
+  {
+    return crt.get();
+  }
+
+  bool is_empty() const
+  {
+    return !crt;
+  }
+
+  typedef bool(pX509::* unspecified_bool_type)() const;
+
+  operator unspecified_bool_type () const
+  {
+    unspecified_bool_type n = 0;
+    return is_empty()?n:&pX509::is_empty;
+  }
+
+  bool operator!() const 
+  { 
+    return is_empty(); 
+  }
+private:
+  boost::shared_ptr<X509> crt;
+};
+  
 OPENBUS_SDK_DECL pkey byteSeq2PubKey(const unsigned char *, size_t len);
+OPENBUS_SDK_DECL pX509 byteSeq2x509(const unsigned char *, size_t len);
 OPENBUS_SDK_DECL pkey byteSeq2PrvKey(const unsigned char *, size_t len);
 OPENBUS_SDK_DECL CORBA::OctetSeq PubKey2byteSeq(pkey);
 OPENBUS_SDK_DECL CORBA::OctetSeq PrvKey2byteSeq(pkey);

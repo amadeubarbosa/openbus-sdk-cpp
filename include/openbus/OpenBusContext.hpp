@@ -627,12 +627,12 @@ private:
     _orb = o;
   }
 
-  CORBA::OctetSeq encode_exported_versions(idl_data_export::ExportedVersionSeq,
+  CORBA::OctetSeq encode_exported_versions(idl_data_export::VersionedDataSeq,
                                            const std::string &tag);
 
   std::string decode_exported_versions(
     const CORBA::OctetSeq &stream,
-    idl_data_export::ExportedVersionSeq_out exported_version_seq) const;
+    idl_data_export::VersionedDataSeq_out exported_version_seq) const;
 
   typedef std::map<std::string, Connection *> BusidConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD

@@ -232,22 +232,20 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
   log_scope l(log().general_logger(), info_level,
               "OpenBusContext::encodeChain");
   
-  idl_data_export::ExportedVersionSeq exported_version_seq;
+  idl_data_export::VersionedDataSeq exported_version_seq;
   exported_version_seq.length(1);
   
   {
     exported_version_seq.length(2);
 
-    idl_data_export::ExportedCallChain exported_chain;
-    exported_chain.bus = chain.busid().c_str();
-    exported_chain.signedChain = chain._signedCallChain;
+    idl_data_export::ExportedCallChain exported_chain = chain._signedCallChain;
 
     CORBA::Any any;
     any <<= exported_chain;
     CORBA::OctetSeq_var exported_chain_cdr(_orb_init->codec->encode_value(any));
  
-    idl_data_export::ExportedVersion exported_version;
-    exported_version.version = idl_data_export::CurrentVersion;
+    idl_data_export::VersionedData exported_version;
+    exported_version.version = idl_data_export::ExportVersion;
     exported_version.encoded = idl::OctetSeq(
       exported_chain_cdr->maximum(),
       exported_chain_cdr->length(),
@@ -267,7 +265,7 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
               "OpenBusContext::decodeChain");
   try
   {
-    idl_data_export::ExportedVersionSeq_var seq;
+    idl_data_export::VersionedDataSeq_var seq;
     std::string tag(decode_exported_versions(encoded, seq));
 
     if (idl_data_export::MagicTag_CallChain != tag)
@@ -279,7 +277,7 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
 
     for (CORBA::ULong i(0); i < seq->length(); ++i)
     {
-      if (idl_data_export::CurrentVersion == seq[i].version)
+      if (idl_data_export::ExportVersion == seq[i].version)
       {
         l.log("Decodificando 'CurrentVersion'.");
         CORBA::Any_var exported_chain_any(
@@ -293,17 +291,17 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
           extract<idl_data_export::ExportedCallChain>(exported_chain_any));
         CORBA::Any_var call_chain_any(
           _orb_init->codec->decode_value(
-            CORBA::OctetSeq(exported_chain.signedChain.encoded.maximum(),
-                            exported_chain.signedChain.encoded.length(),
+            CORBA::OctetSeq(exported_chain.encoded.maximum(),
+                            exported_chain.encoded.length(),
                             const_cast<unsigned char *>
-                            (exported_chain.signedChain.encoded.get_buffer())),
+                            (exported_chain.encoded.get_buffer())),
             idl_ac::_tc_CallChain));
         idl_ac::CallChain call_chain(
           extract<idl_ac::CallChain>(call_chain_any));
         return CallerChain(
-          exported_chain.bus.in(), call_chain.target.in(),
+          call_chain.bus.in(), call_chain.target.in(),
           call_chain.originators, call_chain.caller,
-          exported_chain.signedChain);      
+          exported_chain);      
       }
     }
     throw InvalidEncodedStream("Versão de cadeia incompatível.");
@@ -323,7 +321,7 @@ CORBA::OctetSeq OpenBusContext::encodeSharedAuthSecret(
 {
   log_scope l(log().general_logger(), info_level,
               "OpenBusContext::encodeSharedAuth");
-  idl_data_export::ExportedVersionSeq exported_version_seq;
+  idl_data_export::VersionedDataSeq exported_version_seq;
   exported_version_seq.length(1);
 
   idl_data_export::ExportedSharedAuth shared_auth;
@@ -335,8 +333,8 @@ CORBA::OctetSeq OpenBusContext::encodeSharedAuthSecret(
   any <<= shared_auth;
   CORBA::OctetSeq_var shared_auth_cdr(_orb_init->codec->encode_value(any));  
   
-  idl_data_export::ExportedVersion exported_curr_version;
-  exported_curr_version.version = idl_data_export::CurrentVersion;
+  idl_data_export::VersionedData exported_curr_version;
+  exported_curr_version.version = idl_data_export::ExportVersion;
   exported_curr_version.encoded = idl::OctetSeq(
     shared_auth_cdr->maximum(),
     shared_auth_cdr->length(),
@@ -354,7 +352,7 @@ SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
 {
   log_scope l(log().general_logger(), info_level,
               "OpenBusContext::decodeSharedAuth");
-  idl_data_export::ExportedVersionSeq_var seq;
+  idl_data_export::VersionedDataSeq_var seq;
   std::string tag(decode_exported_versions(encoded, seq));
 
   if (idl_data_export::MagicTag_SharedAuth != tag)
@@ -367,7 +365,7 @@ SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
   bool found(false);
   for (CORBA::ULong i(0); i < seq->length(); ++i)
   {
-    if (idl_data_export::CurrentVersion == seq[i].version)
+    if (idl_data_export::ExportVersion == seq[i].version)
     {
       CORBA::Any_var any(_orb_init->codec->decode_value(
                            CORBA::OctetSeq(seq[i].encoded.maximum(),
@@ -430,7 +428,7 @@ idl_ac::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
 }
 
 CORBA::OctetSeq OpenBusContext::encode_exported_versions(
-  idl_data_export::ExportedVersionSeq exported_version_seq,
+  idl_data_export::VersionedDataSeq exported_version_seq,
   const std::string &tag)
 {
   CORBA::Any any;
@@ -452,7 +450,7 @@ CORBA::OctetSeq OpenBusContext::encode_exported_versions(
 
 std::string OpenBusContext::decode_exported_versions(
   const CORBA::OctetSeq &stream,
-  idl_data_export::ExportedVersionSeq_out exported_version_seq) const
+  idl_data_export::VersionedDataSeq_out exported_version_seq) const
 {
   if (stream.length() < magic_tag_size )
   {
@@ -470,18 +468,18 @@ std::string OpenBusContext::decode_exported_versions(
   try
   {
     CORBA::Any_var any(_orb_init->codec->decode_value(
-                         seq, idl_data_export::_tc_ExportedVersionSeq));
-    const idl_data_export::ExportedVersionSeq *tmp;
+                         seq, idl_data_export::_tc_VersionedDataSeq));
+    const idl_data_export::VersionedDataSeq *tmp;
     *any >>= tmp;
-    idl_data_export::ExportedVersionSeq_var ret(
-      new idl_data_export::ExportedVersionSeq(*tmp));
+    idl_data_export::VersionedDataSeq_var ret(
+      new idl_data_export::VersionedDataSeq(*tmp));
     exported_version_seq = ret._retn();
   }
   catch (const CORBA::SystemException &e)
   {
     throw InvalidEncodedStream(
       boost::str(
-        boost::format("Falha ao extrair ExportedVersionSeq. Exceção lançada: \
+        boost::format("Falha ao extrair VersionedDataSeq. Exceção lançada: \
         '%1%' com minor code '%2%'.") % e._rep_id() % e.minor()));
   }
   return tag;

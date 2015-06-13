@@ -138,11 +138,12 @@ void SharedAuthSecret::cancel()
 
 Connection::Connection(
   scs::core::IComponent_ptr ref,
-  CORBA::ORB_ptr, 
-  interceptors::ORBInitializer *,
-  OpenBusContext &, 
+  CORBA::ORB_ptr orb, 
+  interceptors::ORBInitializer *orb_init,
+  OpenBusContext &m, 
   const ConnectionProperties &props)
   : _iComponent(ref),
+    _port(0),
     _orb_init(orb_init),
     _orb(orb),
     _loginInfo(0),
@@ -173,8 +174,10 @@ Connection::Connection(
   {
     interceptors::ignore_interceptor _i(_orb_init);
     _busid = _access_control->busid();
-    idl::OctetSeq_var o(_access_control->buskey());
-    _buskey.reset(new PublicKey(o));
+    idl::OctetSeq_var o(_access_control->certificate());
+    openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
+    openssl::pkey pub_key(X509_get_pubkey(crt.get()));
+    _buskey.reset(new PublicKey(pub_key));
   }
 }
 
@@ -184,7 +187,7 @@ Connection::Connection(
   interceptors::ORBInitializer *orb_init,
   OpenBusContext &m, 
   const ConnectionProperties &props) 
-  : _scs_ref(scs::core::IComponent::_nil()),
+  : _iComponent(scs::core::IComponent::_nil()),
     _host(host),
     _port(port),
     _orb_init(orb_init),
@@ -220,8 +223,10 @@ Connection::Connection(
   {
     interceptors::ignore_interceptor _i(_orb_init);
     _busid = _access_control->busid();
-    idl::OctetSeq_var o(_access_control->buskey());
-    _buskey.reset(new PublicKey(o));
+    idl::OctetSeq_var o(_access_control->certificate());
+    openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
+    openssl::pkey pub_key(X509_get_pubkey(crt.get()));
+    _buskey.reset(new PublicKey(pub_key));
   }
 }
 
@@ -312,7 +317,7 @@ void Connection::loginByPassword(const std::string &entity,
   idl_ac::LoginInfo *loginInfo(0);
   try 
   {
-    loginInfo = _access_control->loginByPassword(entity.c_str(), _key.pubKey(), 
+    loginInfo = _access_control->loginByPassword(entity.c_str(), "", _key.pubKey(), 
                                                  encryptedBlock, validityTime);
   } 
   catch (const idl_ac::WrongEncoding &) 

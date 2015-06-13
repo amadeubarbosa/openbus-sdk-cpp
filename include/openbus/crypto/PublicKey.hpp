@@ -25,6 +25,7 @@ class PublicKey
 {
 public:
   PublicKey(const idl::OctetSeq &key);
+  PublicKey(const openssl::pkey &key);
   PublicKey(const PublicKey&);
   PublicKey& operator=(const PublicKey &);
   idl::OctetSeq encrypt(const unsigned char *, std::size_t);

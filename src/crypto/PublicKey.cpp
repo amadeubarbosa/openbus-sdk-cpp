@@ -10,6 +10,11 @@ PublicKey::PublicKey(const idl::OctetSeq &key)
   _pkey = openssl::byteSeq2PubKey(_keySeq.get_buffer(), _keySeq.length());
 }
 
+PublicKey::PublicKey(const openssl::pkey &key)
+  : _pkey(key)
+{
+}
+
 PublicKey::PublicKey(const PublicKey &o)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD

@@ -45,6 +45,16 @@ CORBA::OctetSeq PubKey2byteSeq(pkey key)
   return key2byteSeq<InvalidPublicKey>(key);
 }
 
+pX509 byteSeq2x509(const unsigned char *buf, size_t len)
+{
+  pX509 crt(d2i_X509(0, &buf, static_cast<long>(len)));
+  if (!crt)
+  {
+    throw InvalidPublicKey(); //?
+  }
+  return pX509(crt);
+}
+
 pkey byteSeq2PrvKey(const unsigned char *buf, size_t len) 
 {
   pkey key ( d2i_AutoPrivateKey(0, &buf, static_cast<long>(len)) );

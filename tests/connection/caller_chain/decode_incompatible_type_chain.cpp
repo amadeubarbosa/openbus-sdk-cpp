@@ -38,10 +38,10 @@ int main(int argc, char **argv)
               seq.length());
   IOP::Codec_var codec(get_codec(bus_ctx));
   CORBA::Any_var any(codec->decode_value(
-                       seq, openbus::idl_data_export::_tc_ExportedVersionSeq));
-  const openbus::idl_data_export::ExportedVersionSeq *tmp;
+                       seq, openbus::idl_data_export::_tc_VersionedDataSeq));
+  const openbus::idl_data_export::VersionedDataSeq *tmp;
   any >>= tmp;
-  openbus::idl_data_export::ExportedVersionSeq exported_version_seq(*tmp);
+  openbus::idl_data_export::VersionedDataSeq exported_version_seq(*tmp);
     
   CORBA::Any exported_version_seq_any;
   exported_version_seq_any <<= exported_version_seq;
