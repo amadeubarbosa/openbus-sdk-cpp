@@ -11,9 +11,9 @@
 
 #include "openbus/decl.hpp"
 #include "scsC.h"
-#include "coreC.h"
-#include "access_controlC.h"
-#include "offer_registryC.h"
+#include "openbus_core-2.1C.h"
+#include "openbus_access-2.1C.h"
+#include "openbus_offers-2.1C.h"
 #include "openbus/interceptors/ORBInitializer_impl.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
 #include "openbus/crypto/PublicKey.hpp"

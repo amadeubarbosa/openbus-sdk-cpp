@@ -4,7 +4,7 @@
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/any.hpp"
-#include "coreC.h"
+#include "openbus_core-2.1C.h"
 #include "openbus/log.hpp"
 
 #include <tao/AnyTypeCode/AnyTypeCode_Adapter_Impl.h>

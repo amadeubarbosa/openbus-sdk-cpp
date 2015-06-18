@@ -10,10 +10,10 @@
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/decl.hpp"
 #include "openbus/Connection.hpp"
-#include "credentialC.h"
-#include "access_controlC.h"
-#include "offer_registryC.h"
-#include "data_exportC.h"
+#include "openbus_creden-2.1C.h"
+#include "openbus_access-2.1C.h"
+#include "openbus_offers-2.1C.h"
+#include "openbus_export-2.1C.h"
 
 #include <tao/LocalObject.h>
 
