@@ -342,7 +342,7 @@ private:
   /**
   * Connection deve ser adquirido atraves de: OpenBusContext::connectByReference()
   */
-  Connection(scs::core::IComponent_ptr,
+  Connection(CORBA::Object_ptr,
              CORBA::ORB_ptr, 
              interceptors::ORBInitializer *,
              OpenBusContext &, 

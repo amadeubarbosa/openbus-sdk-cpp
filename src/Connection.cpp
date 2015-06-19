@@ -137,13 +137,12 @@ void SharedAuthSecret::cancel()
 }
 
 Connection::Connection(
-  scs::core::IComponent_ptr ref,
+  CORBA::Object_ptr ref,
   CORBA::ORB_ptr orb, 
   interceptors::ORBInitializer *orb_init,
   OpenBusContext &m, 
   const ConnectionProperties &props)
-  : _iComponent(ref),
-    _port(0),
+  : _port(0),
     _orb_init(orb_init),
     _orb(orb),
     _loginInfo(0),
@@ -155,10 +154,11 @@ Connection::Connection(
     _login2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
-  assert(!CORBA::is_nil(_iComponent.in()));
   {
     CORBA::Object_var obj;
     interceptors::ignore_interceptor _i(_orb_init);
+    _iComponent = scs::core::IComponent::_narrow(ref);
+    assert(!CORBA::is_nil(_iComponent.in()));
     obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
     _access_control = idl_ac::AccessControl::_narrow(obj);
     assert(!CORBA::is_nil(_access_control.in()));

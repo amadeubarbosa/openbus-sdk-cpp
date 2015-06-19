@@ -329,7 +329,7 @@ public:
 	 * \exception InvalidPropertyValue O valor de uma propriedade não é válido.
 	 */
   std::auto_ptr<Connection> connectByReference(
-    scs::core::IComponent_ptr ref,
+    CORBA::Object_ptr ref,
     const Connection::ConnectionProperties &props = 
     Connection::ConnectionProperties());
 

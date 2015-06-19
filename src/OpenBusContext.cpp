@@ -34,7 +34,7 @@ OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb,
 }
 
 std::auto_ptr<Connection> OpenBusContext::connectByReference(
-  scs::core::IComponent_ptr ref,
+  CORBA::Object_ptr ref,
   const Connection::ConnectionProperties &props)
 {
   log_scope l(log().general_logger(), debug_level, 
