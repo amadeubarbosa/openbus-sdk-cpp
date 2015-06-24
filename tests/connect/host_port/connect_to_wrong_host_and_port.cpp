@@ -20,13 +20,11 @@ int main(int argc, char* argv[])
       *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
     std::auto_ptr<openbus::Connection>
       conn(bus_ctx->connectByAddress(cfg.host(), cfg.wrong_port()));
-    std::cout << "No exception was thrown, exception CORBA::SystemException was expected"
-              << std::endl;
-    std::abort();
   }
   catch (const CORBA::SystemException &)
   {
     std::cout << "CORBA::SystemException was thrown." << std::endl;
+    std::abort();
   }
   catch (...)
   {

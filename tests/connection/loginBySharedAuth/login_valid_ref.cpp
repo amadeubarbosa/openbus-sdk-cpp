@@ -27,8 +27,13 @@ int main(int argc, char** argv)
 
   openbus::SharedAuthSecret shared_auth(conn->startSharedAuth());
   {
-    std::auto_ptr<openbus::Connection> conn(
-      bus_ctx->connectByAddress(cfg.host(), cfg.port()));
+    std::stringstream corbaloc;
+    corbaloc << "corbaloc::" << cfg.host() << ":" << cfg.port()
+             << "/" << tecgraf::openbus::core::v2_1::BusObjectKey;
+    CORBA::Object_var
+      ref(orb_ctx->orb()->string_to_object(corbaloc.str().c_str()));
+    std::auto_ptr<openbus::Connection>
+      conn(bus_ctx->connectByReference(ref.in()));
     conn->loginBySharedAuth(shared_auth);
     if (conn->login() == 0)
     {

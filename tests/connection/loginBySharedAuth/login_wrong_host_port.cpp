@@ -27,14 +27,24 @@ int main(int argc, char** argv)
 
   openbus::SharedAuthSecret shared_auth(conn->startSharedAuth());
   {
-    std::auto_ptr<openbus::Connection> conn(
-      bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-    conn->loginBySharedAuth(shared_auth);
-    if (conn->login() == 0)
+    std::auto_ptr<openbus::Connection>
+      conn (bus_ctx->connectByAddress(cfg.host(), cfg.wrong_port()));
+    try
     {
-      std::cerr << "conn->login() == 0" << std::endl;
+      conn->loginBySharedAuth(shared_auth);
+      std::cout << "No exception was thrown, exception CORBA::SystemException was expected"
+                << std::endl;
       std::abort();
+      if (conn->login() == 0)
+      {
+        std::cerr << "conn->login() == 0" << std::endl;
+        std::abort();
+      }
     }
+    catch (const CORBA::SystemException &)
+    {
+      std::cout << "CORBA::SystemException was thrown." << std::endl;
+    }      
   }
   return 0; //MSVC
 }

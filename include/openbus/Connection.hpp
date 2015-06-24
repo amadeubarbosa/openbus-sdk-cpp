@@ -403,8 +403,11 @@ private:
     return _login_registry;
   }
 
+  void init();
+
   idl_ac::LoginInfo get_login();
 
+  CORBA::Object_var _component_ref;
   const std::string _host;
   const unsigned short _port;
   interceptors::ORBInitializer * _orb_init;

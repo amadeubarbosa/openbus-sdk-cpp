@@ -142,7 +142,9 @@ Connection::Connection(
   interceptors::ORBInitializer *orb_init,
   OpenBusContext &m, 
   const ConnectionProperties &props)
-  : _port(0),
+  : _component_ref(ref),
+    _iComponent(scs::core::IComponent::_nil()),
+    _port(0),
     _orb_init(orb_init),
     _orb(orb),
     _loginInfo(0),
@@ -153,32 +155,6 @@ Connection::Connection(
     _profile2login(LRUSize),
     _login2session(LRUSize)
 {
-  log_scope l(log().general_logger(), info_level, "Connection::Connection");
-  {
-    CORBA::Object_var obj;
-    interceptors::ignore_interceptor _i(_orb_init);
-    _iComponent = scs::core::IComponent::_narrow(ref);
-    assert(!CORBA::is_nil(_iComponent.in()));
-    obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
-    _access_control = idl_ac::AccessControl::_narrow(obj);
-    assert(!CORBA::is_nil(_access_control.in()));
-    obj = _iComponent->getFacet(idl_or::_tc_OfferRegistry->id());
-    _offer_registry = idl_or::OfferRegistry::_narrow(obj);
-    assert(!CORBA::is_nil(_offer_registry.in()));
-    obj = _iComponent->getFacet(idl_ac::_tc_LoginRegistry->id());
-    _login_registry = idl_ac::LoginRegistry::_narrow(obj);
-    assert(!CORBA::is_nil(_login_registry.in()));
-  }
-	
-  _loginCache.reset(new LoginCache(_login_registry));
-  {
-    interceptors::ignore_interceptor _i(_orb_init);
-    _busid = _access_control->busid();
-    idl::OctetSeq_var o(_access_control->certificate());
-    openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
-    openssl::pkey pub_key(X509_get_pubkey(crt.get()));
-    _buskey.reset(new PublicKey(pub_key));
-  }
 }
 
 Connection::Connection(
@@ -201,33 +177,9 @@ Connection::Connection(
     _login2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
-
   std::stringstream corbaloc;
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
-  CORBA::Object_var obj(_orb->string_to_object(corbaloc.str().c_str()));
-  {
-    interceptors::ignore_interceptor _i(_orb_init);
-    _iComponent = scs::core::IComponent::_narrow(obj);
-    obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
-    _access_control = idl_ac::AccessControl::_narrow(obj);
-    assert(!CORBA::is_nil(_access_control.in()));
-    obj = _iComponent->getFacet(idl_or::_tc_OfferRegistry->id());
-    _offer_registry = idl_or::OfferRegistry::_narrow(obj);
-    assert(!CORBA::is_nil(_offer_registry.in()));
-    obj = _iComponent->getFacet(idl_ac::_tc_LoginRegistry->id());
-    _login_registry = idl_ac::LoginRegistry::_narrow(obj);
-    assert(!CORBA::is_nil(_login_registry.in()));
-  }
-	
-  _loginCache.reset(new LoginCache(_login_registry));
-  {
-    interceptors::ignore_interceptor _i(_orb_init);
-    _busid = _access_control->busid();
-    idl::OctetSeq_var o(_access_control->certificate());
-    openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
-    openssl::pkey pub_key(X509_get_pubkey(crt.get()));
-    _buskey.reset(new PublicKey(pub_key));
-  }
+  _component_ref = _orb->string_to_object(corbaloc.str().c_str());
 }
 
 Connection::~Connection() 
@@ -246,6 +198,34 @@ Connection::~Connection()
     catch (...)
     {
     }
+  }
+}
+
+void Connection::init()
+{
+  log_scope l(log().general_logger(), info_level, "Connection::init");
+  {
+    interceptors::ignore_interceptor _i(_orb_init);
+    _iComponent = scs::core::IComponent::_narrow(_component_ref);
+    CORBA::Object_var obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
+    _access_control = idl_ac::AccessControl::_narrow(obj);
+    assert(!CORBA::is_nil(_access_control.in()));
+    obj = _iComponent->getFacet(idl_or::_tc_OfferRegistry->id());
+    _offer_registry = idl_or::OfferRegistry::_narrow(obj);
+    assert(!CORBA::is_nil(_offer_registry.in()));
+    obj = _iComponent->getFacet(idl_ac::_tc_LoginRegistry->id());
+    _login_registry = idl_ac::LoginRegistry::_narrow(obj);
+    assert(!CORBA::is_nil(_login_registry.in()));
+  }
+	
+  _loginCache.reset(new LoginCache(_login_registry));
+  {
+    interceptors::ignore_interceptor _i(_orb_init);
+    _busid = _access_control->busid();
+    idl::OctetSeq_var o(_access_control->certificate());
+    openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
+    openssl::pkey pub_key(X509_get_pubkey(crt.get()));
+    _buskey.reset(new PublicKey(pub_key));
   }
 }
 
@@ -282,6 +262,10 @@ void Connection::loginByPassword(const std::string &entity,
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
+  if (CORBA::is_nil(_iComponent))
+  {
+    init();
+  }
   State state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
@@ -336,6 +320,10 @@ void Connection::loginByCertificate(const std::string &entity,
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);;
 #endif
+  if (CORBA::is_nil(_iComponent))
+  {
+    init();
+  }
   State state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
@@ -420,6 +408,10 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
 #endif
+  if (CORBA::is_nil(_iComponent))
+  {
+    init();
+  }
   State state(_state);
 #ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();

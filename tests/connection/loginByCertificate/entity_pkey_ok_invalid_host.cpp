@@ -19,22 +19,20 @@ int main(int argc, char** argv)
     obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
-  
-  std::auto_ptr<openbus::Connection> conn(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn->loginByCertificate(cfg.certificate_user(), 
-                           openbus::PrivateKey(argv[argc-1]));
 
-  openbus::SharedAuthSecret shared_auth(conn->startSharedAuth());
+  std::auto_ptr <openbus::Connection> 
+    conn(bus_ctx->connectByAddress("$invalid_host$", cfg.port()));
+  try
   {
-    std::auto_ptr<openbus::Connection> conn(
-      bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-    conn->loginBySharedAuth(shared_auth);
-    if (conn->login() == 0)
-    {
-      std::cerr << "conn->login() == 0" << std::endl;
-      std::abort();
-    }
-  }
+    conn->loginByCertificate(cfg.certificate_user(), 
+                             openbus::PrivateKey(argv[argc-1]));
+    std::cout << "No exception was thrown, exception CORBA::TRANSIENT was expected"
+              << std::endl;
+    std::abort();
+   }
+   catch (const CORBA::TRANSIENT &)
+   {
+     std::cout << "CORBA::TRANSIENT was thrown." << std::endl;
+   }
   return 0; //MSVC
 }

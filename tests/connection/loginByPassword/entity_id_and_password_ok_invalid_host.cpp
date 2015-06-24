@@ -13,8 +13,18 @@ int main(int argc, char** argv)
     obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
-  std::auto_ptr <openbus::Connection>
-    conn(bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn->loginByPassword(cfg.user(), cfg.password());
+  std::auto_ptr <openbus::Connection> 
+    conn(bus_ctx->connectByAddress("$invalid_host$", cfg.port()));
+  try
+  {
+    conn->loginByPassword(cfg.user(), cfg.password());
+    std::cout << "No exception was thrown, exception CORBA::TRANSIENT was expected"
+              << std::endl;
+    std::abort();
+   }
+   catch (const CORBA::TRANSIENT &)
+   {
+     std::cout << "CORBA::TRANSIENT was thrown." << std::endl;
+   }
   return 0; //MSVC
 }
