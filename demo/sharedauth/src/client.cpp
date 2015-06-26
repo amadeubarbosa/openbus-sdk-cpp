@@ -1,14 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "helloC.h"
+#include <openbus.hpp>
 
-#include <openbus/OpenBusContext.hpp>
 #include <boost/program_options.hpp>
-
 #include <fstream>
 #include <iterator>
 #include <iostream>
-
 #ifdef _WIN32
 #include <windows.h>
 #endif

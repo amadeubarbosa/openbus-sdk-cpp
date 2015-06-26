@@ -2,10 +2,10 @@
 
 #include "independent_clockC.h"
 
-#include <openbus/OpenBusContext.hpp>
-#include <iostream>
-#include <boost/program_options.hpp>
+#include <openbus.hpp>
 
+#include <boost/program_options.hpp>
+#include <iostream>
 #ifdef _WIN32
 #include <windows.h>
 #endif

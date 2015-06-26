@@ -2,21 +2,18 @@
 
 #include "greetingsS.h"
 
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
+#include <openbus.hpp>
 #include <scs/ComponentContext.h>
-#include <iostream>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #endif
-
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
-#include <fstream>
 #include <boost/bind.hpp>
-
+#include <fstream>
+#include <iostream>
 #ifdef _WIN32
 #include <windows.h>
 #endif

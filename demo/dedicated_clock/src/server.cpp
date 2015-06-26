@@ -1,21 +1,19 @@
 // -*- coding: iso-8859-1-unix -*-
 #include "dedicated_clockS.h"
 
-#include <openbus/OpenBusContext.hpp>
+#include <openbus.hpp>
 #include <scs/ComponentContext.h>
-#include <fstream>
-#include <iostream>
-#include <ctime>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #endif
-
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/bind.hpp>
-
+#include <fstream>
+#include <iostream>
+#include <ctime>
 #ifdef _WIN32
 #include <windows.h>
 #endif

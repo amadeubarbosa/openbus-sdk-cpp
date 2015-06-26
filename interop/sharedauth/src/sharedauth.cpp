@@ -3,17 +3,15 @@
 #include "helloC.h"
 #include <util.hpp>
 #include "encodingC.h"
-#include <openbus/ORBInitializer.hpp>
-#include <openbus/log.hpp>
-#include <openbus/OpenBusContext.hpp>
+#include <openbus.hpp>
 
 #include <tao/PortableServer/PortableServer.h>
-#include <iostream>
-#include <fstream>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <iostream>
+#include <fstream>
 
 namespace sharedauth = tecgraf::openbus::interop::sharedauth;
 

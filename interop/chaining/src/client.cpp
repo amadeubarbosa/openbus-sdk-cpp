@@ -2,17 +2,14 @@
 
 #include "proxyS.h"
 #include "helloC.h"
-#include <openbus/ORBInitializer.hpp>
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/Connection.hpp>
-#include <openbus/log.hpp>
+#include <openbus.hpp>
 
+#include <boost/program_options.hpp>
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <iterator>
 #include <cstdlib>
-#include <boost/program_options.hpp>
 
 const std::string entity("interop_chaining_cpp_client");
 std::string bus_host;

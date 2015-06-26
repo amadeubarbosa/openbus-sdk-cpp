@@ -2,11 +2,8 @@
 
 #include "independent_clockS.h"
 
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
+#include <openbus.hpp>
 #include <scs/ComponentContext.h>
-#include <iostream>
-#include <time.h>
 
 #ifndef OPENBUS_SDK_MULTITHREAD
 #error This demo requires multithread
@@ -17,7 +14,8 @@
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <fstream>
-
+#include <iostream>
+#include <time.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif

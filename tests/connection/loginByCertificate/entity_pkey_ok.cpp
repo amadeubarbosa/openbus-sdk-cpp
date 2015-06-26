@@ -1,11 +1,8 @@
 // -*- coding: iso-8859-1-unix -*-
-#include <openbus/OpenBusContext.hpp>
+
 #include <openbus/log.hpp>
 #include <configuration.h>
-
-#include <fstream>
-#include <iterator>
-#include <algorithm>
+#include <openbus.hpp>
 
 // Last argument is assumed to be the path for the private key file argv[argc-1]
 int main(int argc, char** argv)

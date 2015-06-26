@@ -2,16 +2,13 @@
 
 #include "helloC.h"
 #include <util.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <openbus/log.hpp>
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/Connection.hpp>
+#include <openbus.hpp>
+#include <log/output/file_output.h>
 
 #include <tao/PortableServer/PortableServer.h>
+#include <boost/program_options.hpp>
 #include <iostream>
 #include <map>
-#include <log/output/file_output.h>
-#include <boost/program_options.hpp>
 
 const std::string entity("interop_multiplexing_cpp_client");
 struct bus

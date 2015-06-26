@@ -2,10 +2,7 @@
 
 #include "messagesC.h"
 #include <util.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <openbus/log.hpp>
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/Connection.hpp>
+#include <openbus.hpp>
 #include <scs/ComponentContext.h>
 #include <log/output/file_output.h>
 

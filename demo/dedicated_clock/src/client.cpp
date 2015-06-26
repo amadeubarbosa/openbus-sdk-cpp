@@ -2,13 +2,13 @@
 
 #include <dedicated_clockC.h>
 
-#include <openbus/OpenBusContext.hpp>
-#include <iostream>
-#include <boost/program_options.hpp>
+#include <openbus.hpp>
 
+#include <boost/program_options.hpp>
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include <iostream>
 
 namespace offer_registry
  = tecgraf::openbus::core::v2_1::services::offer_registry;

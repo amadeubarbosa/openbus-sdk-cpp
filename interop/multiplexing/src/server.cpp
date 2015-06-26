@@ -2,21 +2,18 @@
 
 #include "helloS.h"
 #include <util.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <openbus/log.hpp>
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/Connection.hpp>
+#include <openbus.hpp>
 #include <scs/ComponentContext.h>
 #include <log/output/file_output.h>
 
-#include <iostream>
-#include <map>
-#include <vector>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
+#include <iostream>
+#include <map>
+#include <vector>
 
 const std::string entity("interop_multiplexing_cpp_server");
 std::string private_key;

@@ -3,10 +3,7 @@
 #include "proxyS.h"
 #include "helloC.h"
 #include <util.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/Connection.hpp>
-#include <openbus/log.hpp>
+#include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
 #include <iostream>

@@ -1,7 +1,8 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "chain_validationC.h"
-#include <openbus/OpenBusContext.hpp>
+#include <openbus.hpp>
+
 #include <boost/program_options.hpp>
 #include <iostream>
 

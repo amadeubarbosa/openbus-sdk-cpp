@@ -2,11 +2,10 @@
 
 #include "helloC.h"
 
-#include <openbus/OpenBusContext.hpp>
-#include <iostream>
+#include <openbus.hpp>
 
 #include <boost/program_options.hpp>
-
+#include <iostream>
 #ifdef _WIN32
 #include <windows.h>
 #endif

@@ -2,15 +2,9 @@
 
 #include "helloS.h"
 #include <util.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/Connection.hpp>
-#include <openbus/log.hpp>
+#include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
-#include <iostream>
-#include <fstream>
-#include <typeinfo>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
@@ -18,6 +12,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
+#include <iostream>
+#include <fstream>
+#include <typeinfo>
 
 const std::string entity("interop_reloggedjoin_cpp_proxy");
 std::string private_key;

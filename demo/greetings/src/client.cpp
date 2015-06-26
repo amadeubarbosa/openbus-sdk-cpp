@@ -1,10 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
+
 #include "greetingsC.h"
+#include <openbus.hpp>
 
-#include <openbus/OpenBusContext.hpp>
-#include <iostream>
 #include <boost/program_options.hpp>
-
+#include <iostream>
 #ifdef _WIN32
 #include <windows.h>
 #endif
