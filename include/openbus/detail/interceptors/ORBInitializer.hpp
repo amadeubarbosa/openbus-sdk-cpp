@@ -1,8 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
-#ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
-#define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_IMPL_H_
 
-#include "openbus/decl.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_INTERCEPTORS_INITIALIZER_HPP
+#define TECGRAF_SDK_OPENBUS_INTERCEPTORS_INITIALIZER_HPP
+
+#include "openbus/detail/decl.hpp"
 #include "openbus_core-2.1C.h"
 
 #include <tao/ORB.h>

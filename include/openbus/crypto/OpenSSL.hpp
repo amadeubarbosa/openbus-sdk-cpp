@@ -1,8 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
-#ifndef TECGRAF_SDK_OPENBUS_OPENSSL_H_
-#define TECGRAF_SDK_OPENBUS_OPENSSL_H_
 
-#include "openbus/decl.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_OPENSSL_HPP
+#define TECGRAF_SDK_OPENBUS_OPENSSL_HPP
+
+#include "openbus/detail/decl.hpp"
 #include <tao/ORB.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>

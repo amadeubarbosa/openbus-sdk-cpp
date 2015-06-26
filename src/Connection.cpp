@@ -1,9 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 #include "openbus/Connection.hpp"
-#include "openbus/interceptors/ServerInterceptor_impl.hpp"
+#include "openbus/detail/interceptors/ServerInterceptor.hpp"
 #include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
-#include "openbus/LoginCache.hpp"
+#include "openbus/detail/LoginCache.hpp"
 #include "openbus/crypto/PublicKey.hpp"
 
 #include <boost/bind.hpp>

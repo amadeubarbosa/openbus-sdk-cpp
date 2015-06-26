@@ -2,9 +2,9 @@
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
-#include "openbus/interceptors/ORBInitializer_impl.hpp"
-#include "openbus/interceptors/ServerInterceptor_impl.hpp"
-#include "openbus/interceptors/ClientInterceptor_impl.hpp"
+#include "openbus/detail/interceptors/ORBInitializer.hpp"
+#include "openbus/detail/interceptors/ServerInterceptor.hpp"
+#include "openbus/detail/interceptors/ClientInterceptor.hpp"
 
 #include <tao/ORBInitializer_Registry.h>
 #ifdef OPENBUS_SDK_MULTITHREAD

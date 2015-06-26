@@ -4,17 +4,17 @@
 * \file openbus/log.h
 */
 
-#ifndef TECGRAF_SDK_OPENBUS_LOG_H_
-#define TECGRAF_SDK_OPENBUS_LOG_H_
+#ifndef TECGRAF_SDK_OPENBUS_LOG_HPP
+#define TECGRAF_SDK_OPENBUS_LOG_HPP
 
-#include "openbus/decl.hpp"
+#include "openbus/detail/decl.hpp"
+
 #include <tao/ORB.h>
 #include <log/output/streambuf_output.h>
 #include <log/logger.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
-
 #include <cstring>
 
 namespace openbus 

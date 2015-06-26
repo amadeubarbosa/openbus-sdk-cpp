@@ -4,19 +4,18 @@
 * \file openbus/OpenBusContext.hpp
 */
 
-#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
-#define TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_H_
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_HPP
+#define TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_HPP
 
-#include "openbus/ORBInitializer.hpp"
-#include "openbus/decl.hpp"
-#include "openbus/Connection.hpp"
 #include "openbus_creden-2.1C.h"
 #include "openbus_access-2.1C.h"
 #include "openbus_offers-2.1C.h"
 #include "openbus_export-2.1C.h"
+#include "openbus/detail/decl.hpp"
+#include "openbus/ORBInitializer.hpp"
+#include "openbus/Connection.hpp"
 
 #include <tao/LocalObject.h>
-
 #include <boost/function.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>

@@ -1,8 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
-#ifndef TECGRAF_SDK_OPENBUS_PUBLIC_KEY_H
-#define TECGRAF_SDK_OPENBUS_PUBLIC_KEY_H
 
-#include "openbus/decl.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_PUBLIC_KEY_HPP
+#define TECGRAF_SDK_OPENBUS_PUBLIC_KEY_HPP
+
+#include "openbus/detail/decl.hpp"
 #include "openbus/crypto/OpenSSL.hpp"
 #include "openbus_core-2.1C.h"
 #ifdef OPENBUS_SDK_MULTITHREAD

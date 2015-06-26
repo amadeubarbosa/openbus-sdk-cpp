@@ -1,8 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
-#ifndef TECGRAF_SDK_OPENBUS_TICKET_HISTORY_H_
-#define TECGRAF_SDK_OPENBUS_TICKET_HISTORY_H_
 
-#include "openbus/decl.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_TICKET_H
+#define TECGRAF_SDK_OPENBUS_TICKET_H
+
+#include "openbus/detail/decl.hpp"
+
 #include <limits.h>
 
 #define TICKETS_SIZE (sizeof(tickets_BitMap) * CHAR_BIT)

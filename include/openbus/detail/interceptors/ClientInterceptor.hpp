@@ -1,17 +1,18 @@
 // -*- coding: iso-8859-1-unix -*-
-#ifndef TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_IMPL_H_
-#define TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_IMPL_H_
 
-#include "openbus/interceptors/ORBInitializer_impl.hpp"
-#include "openbus/decl.hpp"
-#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
-#define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
-#include "openbus/LRUCache_impl.hpp"
-#endif
+#ifndef TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_HPP
+#define TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_HPP
+
 #include "openbus_creden-2.1C.h"
 #include "openbus_access-2.1C.h"
-#include <tao/PI/PI.h>
+#include "openbus/detail/interceptors/ORBInitializer.hpp"
+#include "openbus/detail/decl.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
+#define TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
+#include "openbus/detail/LRUCache.hpp"
+#endif
 
+#include <tao/PI/PI.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif

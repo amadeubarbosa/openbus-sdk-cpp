@@ -1,8 +1,8 @@
 // -*- coding: iso-8859-1-unix -*-
 #include "openbus/OpenBusContext.hpp"
-#include "openbus/LoginCache.hpp"
+#include "openbus/detail/LoginCache.hpp"
 #include "openbus/log.hpp"
-#include "openbus/any.hpp"
+#include "openbus/detail/any.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>

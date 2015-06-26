@@ -6,21 +6,22 @@
 * 
 */
 
-#ifndef TECGRAF_SDK_OPENBUS_CONNECTION_H_
-#define TECGRAF_SDK_OPENBUS_CONNECTION_H_
+#ifndef TECGRAF_SDK_OPENBUS_CONNECTION_HPP
+#define TECGRAF_SDK_OPENBUS_CONNECTION_HPP
 
-#include "openbus/decl.hpp"
 #include "scsC.h"
 #include "openbus_core-2.1C.h"
 #include "openbus_access-2.1C.h"
 #include "openbus_offers-2.1C.h"
-#include "openbus/interceptors/ORBInitializer_impl.hpp"
+#include "openbus/detail/decl.hpp"
+#include "openbus/detail/interceptors/ORBInitializer.hpp"
+#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
+#define TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
+#include "openbus/detail/LRUCache.hpp"
+#endif
+#include "openbus/ORBInitializer.hpp"
 #include "openbus/crypto/PrivateKey.hpp"
 #include "openbus/crypto/PublicKey.hpp"
-#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_H_
-#define TECGRAF_SDK_OPENBUS_LRUCACHE_H_
-#include "openbus/LRUCache_impl.hpp"
-#endif
 
 #include <boost/array.hpp>
 #include <boost/function.hpp>

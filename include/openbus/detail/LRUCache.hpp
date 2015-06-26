@@ -43,7 +43,7 @@
  * @example lru_example.cpp
  */
 
-#include "openbus/decl.hpp"
+#include "openbus/detail/decl.hpp"
 
 #include <map>
 #include <list>

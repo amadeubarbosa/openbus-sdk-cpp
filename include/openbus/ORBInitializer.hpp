@@ -20,10 +20,10 @@
   \file openbus/ORBInitializer.h
 */
 
-#ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_H_
-#define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_H_
+#ifndef TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_HPP
+#define TECGRAF_SDK_OPENBUS_ORB_INITIALIZER_HPP
 
-#include "openbus/decl.hpp"
+#include "openbus/detail/decl.hpp"
 
 #include <tao/ORB.h>
 #include <boost/shared_ptr.hpp>
