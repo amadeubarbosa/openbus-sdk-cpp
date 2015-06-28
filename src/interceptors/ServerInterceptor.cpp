@@ -3,9 +3,9 @@
 #include "openbus/Connection.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/detail/LoginCache.hpp"
-#include "openbus/crypto/PublicKey.hpp"
-#include "openbus/log.hpp"
+#include "openbus/detail/openssl/PublicKey.hpp"
 #include "openbus/detail/any.hpp"
+#include "openbus/log.hpp"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>

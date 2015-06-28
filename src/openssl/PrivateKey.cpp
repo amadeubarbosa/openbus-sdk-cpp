@@ -1,5 +1,5 @@
 // -*- coding: iso-8859-1-unix -*-
-#include "openbus/crypto/PrivateKey.hpp"
+#include "openbus/detail/openssl/PrivateKey.hpp"
 
 #include <fstream>
 
@@ -33,6 +33,22 @@ PrivateKey::PrivateKey()
   buf.deleter(idl::OctetSeq::freebuf);
   unsigned char *p(buf.get());
   size_t len(i2d_PrivateKey(_key.get(), &p));
+  _keySeq = idl::OctetSeq(
+    static_cast<CORBA::ULong>(len),
+    static_cast<CORBA::ULong>(len),
+    buf.release(), true);
+}
+
+PrivateKey::PrivateKey(EVP_PKEY *key)
+{
+  CRYPTO_add(&key->references, 1, CRYPTO_LOCK_EVP_PKEY);
+  _key = openssl::pkey(key);
+  std::size_t buf_size(i2d_PrivateKey(key, 0));
+  openssl::openssl_buffer buf(idl::OctetSeq::allocbuf(
+                                static_cast<CORBA::ULong>(buf_size)));
+  buf.deleter(idl::OctetSeq::freebuf);
+  unsigned char *p(buf.get());
+  size_t len(i2d_PrivateKey(key, &p));
   _keySeq = idl::OctetSeq(
     static_cast<CORBA::ULong>(len),
     static_cast<CORBA::ULong>(len),

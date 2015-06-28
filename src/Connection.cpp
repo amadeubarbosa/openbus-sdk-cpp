@@ -4,7 +4,7 @@
 #include "openbus/log.hpp"
 #include "openbus/OpenBusContext.hpp"
 #include "openbus/detail/LoginCache.hpp"
-#include "openbus/crypto/PublicKey.hpp"
+#include "openbus/detail/openssl/PublicKey.hpp"
 
 #include <boost/bind.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -313,7 +313,7 @@ void Connection::loginByPassword(const std::string &entity,
 }
 
 void Connection::loginByCertificate(const std::string &entity, 
-                                    const PrivateKey &privKey) 
+                                    EVP_PKEY *key) 
 {
   log_scope l(log().general_logger(), info_level, 
               "Connection::loginByCertificate");
@@ -342,6 +342,7 @@ void Connection::loginByCertificate(const std::string &entity,
   }
   
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
+  PrivateKey privKey(key);
   loginAuthenticationInfo.data = privKey.decrypt((unsigned char*) challenge, 
                                                  idl::EncryptedBlockSize);
   

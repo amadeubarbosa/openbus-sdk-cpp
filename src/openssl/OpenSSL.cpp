@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
-#include "openbus/crypto/OpenSSL.hpp"
-#include "openbus/crypto/PrivateKey.hpp"
-#include "openbus/crypto/PublicKey.hpp"
+#include "openbus/detail/openssl/OpenSSL.hpp"
+#include "openbus/detail/openssl/PrivateKey.hpp"
+#include "openbus/detail/openssl/PublicKey.hpp"
 
 #include <cassert>
 #include <cstdlib>

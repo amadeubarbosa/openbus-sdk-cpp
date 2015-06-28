@@ -1,3 +1,5 @@
+// -*- condig: iso-8859-1-unix
+
 #ifndef TECGRAF_TESTS_CONFIGURATION_H_
 #define TECGRAF_TESTS_CONFIGURATION_H_
 

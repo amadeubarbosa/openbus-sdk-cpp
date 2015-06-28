@@ -1,11 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/log.hpp>
-#include <configuration.h>
 
-#include <fstream>
-#include <iterator>
-#include <algorithm>
+#include <configuration.h>
+#include <openbus.hpp>
 
 // Last argument is assumed to be the path for the private key file argv[argc-1]
 int main(int argc, char** argv)
@@ -23,7 +19,7 @@ int main(int argc, char** argv)
   std::auto_ptr<openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn->loginByCertificate(cfg.certificate_user(), 
-                           openbus::PrivateKey(argv[argc-1]));
+                           openbus::PrivateKey(argv[argc-1]).key());
 
   openbus::SharedAuthSecret shared_auth(conn->startSharedAuth());
   {

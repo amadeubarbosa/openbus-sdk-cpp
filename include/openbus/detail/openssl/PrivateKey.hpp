@@ -4,7 +4,7 @@
 #define TECGRAF_SDK_OPENBUS_PRIVATE_KEY_HPP
 
 #include "openbus/detail/decl.hpp"
-#include "openbus/crypto/OpenSSL.hpp"
+#include "openbus/detail/openssl/OpenSSL.hpp"
 #include "openbus_core-2.1C.h"
 
 #include <string>
@@ -30,6 +30,7 @@ class PrivateKey
 {
 public:
   OPENBUS_SDK_DECL PrivateKey();
+  OPENBUS_SDK_DECL PrivateKey(EVP_PKEY *);
   OPENBUS_SDK_DECL PrivateKey(const idl::OctetSeq &key);
   OPENBUS_SDK_DECL PrivateKey(const char *key, std::size_t size);
   OPENBUS_SDK_DECL explicit PrivateKey(const std::string &filename);
@@ -41,6 +42,10 @@ public:
   const idl::OctetSeq &octetSeq() const
   {
     return _keySeq;
+  }
+  EVP_PKEY *key() const
+  {
+    return _key.get();
   }
 private:
   void set_pkey(const idl::OctetSeq &key);

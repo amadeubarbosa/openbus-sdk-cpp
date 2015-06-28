@@ -20,8 +20,7 @@
 #include "openbus/detail/LRUCache.hpp"
 #endif
 #include "openbus/ORBInitializer.hpp"
-#include "openbus/crypto/PrivateKey.hpp"
-#include "openbus/crypto/PublicKey.hpp"
+#include "openbus/detail/openssl/PrivateKey.hpp"
 
 #include <boost/array.hpp>
 #include <boost/function.hpp>
@@ -50,6 +49,7 @@ namespace openbus
 #ifndef OPENBUS_SDK_MULTITHREAD
   class RenewLogin;
 #endif
+  class PublicKey;
 
   namespace interceptors
   {
@@ -225,7 +225,7 @@ public:
   * registrado pelo adminsitrador do barramento.
   * 
   * @param entity Identificador da entidade a ser conectada.
-  * @param privKey Chave privada da entidade utilizada na autenticação.
+  * @param key Chave privada da entidade utilizada na autenticação.
   * 
   * @throw AlreadyLoggedIn A conexão já está autenticada.
   * @throw idl_ac::AccessDenied 
@@ -239,7 +239,7 @@ public:
   *        autenticação da conexão.
   * @throw CORBA::Exception
   */
-  void loginByCertificate(const std::string &entity, const PrivateKey &privKey);
+  void loginByCertificate(const std::string &entity, EVP_PKEY *key);
   
   /**
   * \brief Inicia o processo de login por autenticação compartilhada.

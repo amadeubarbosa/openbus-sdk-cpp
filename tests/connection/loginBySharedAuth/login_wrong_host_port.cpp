@@ -19,7 +19,7 @@ int main(int argc, char** argv)
   std::auto_ptr<openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn->loginByCertificate(cfg.certificate_user(), 
-                           openbus::PrivateKey(argv[argc-1]));
+                           openbus::PrivateKey(argv[argc-1]).key());
 
   openbus::SharedAuthSecret shared_auth(conn->startSharedAuth());
   {
