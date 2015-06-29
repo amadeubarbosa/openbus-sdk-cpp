@@ -2,6 +2,7 @@
 
 #include "chain_validationS.h"
 #include <openbus.hpp>
+#include <demo/openssl.hpp>
 #include <scs/ComponentContext.h>
 
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
     PortableServer::POAManager_var poa_mgr(poa->the_POAManager());
     poa_mgr->activate();
 
-    boost::optional<openbus::PrivateKey> private_key;
+    EVP_PKEY *priv_key(0);
     unsigned short bus_port(2089);
     std::string bus_host("localhost");
     {
@@ -84,8 +85,13 @@ int main(int argc, char** argv)
         std::cout << desc << std::endl;
         return 0;
       }
-      std::string private_key_filename = vm["private-key"].as<std::string>();
-      private_key = openbus::PrivateKey(private_key_filename);
+      std::string priv_key_filename = vm["private-key"].as<std::string>();
+      priv_key = openbus::demo::openssl::read_priv_key(priv_key_filename);
+      if (!priv_key)
+      {
+        std::cout << "Chave privada inválida." << std::endl;
+        return 1;
+      }
 
       if(vm.count("bus-host"))
         bus_host = vm["bus-host"].as<std::string>();
@@ -105,7 +111,7 @@ int main(int argc, char** argv)
       bus_ctx->connectByAddress(bus_host, bus_port));
     try
     {
-      conn->loginByCertificate("executive", *private_key);
+      conn->loginByCertificate("executive", priv_key);
     }
     catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
     {

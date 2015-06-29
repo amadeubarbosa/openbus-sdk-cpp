@@ -1,13 +1,13 @@
 // -*- condig: iso-8859-1-unix
 
-#ifndef TECGRAF_SDK_OPENBUS_TESTS_OPENSSL_HPP
-#define TECGRAF_SDK_OPENBUS_TESTS_OPENSSL_HPP
+#ifndef TECGRAF_SDK_OPENBUS_DEMO_OPENSSL_HPP
+#define TECGRAF_SDK_OPENBUS_DEMO_OPENSSL_HPP
 
 #include <openssl/evp.h>
 #include <fstream>
 #include <string>
 
-namespace openssl {
+namespace openbus { namespace demo { namespace openssl {
 
 EVP_PKEY * read_priv_key(const std::string &filename)
 {
@@ -25,6 +25,6 @@ EVP_PKEY * read_priv_key(const std::string &filename)
   return d2i_AutoPrivateKey(0, &cbuf, static_cast<long>(size));
 }
 
-}
+}}}
 
 #endif

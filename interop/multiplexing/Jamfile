@@ -1,6 +1,6 @@
 project openbus/interop/multiplexing
   : requirements
-    <include>../
+    <include>../ <include>../../
   ;
 
 path-constant here : . ;

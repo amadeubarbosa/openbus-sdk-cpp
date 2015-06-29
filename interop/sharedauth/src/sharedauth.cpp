@@ -2,6 +2,7 @@
 
 #include "helloC.h"
 #include <util.hpp>
+#include <demo/openssl.hpp>
 #include "encodingC.h"
 #include <openbus.hpp>
 
@@ -16,7 +17,7 @@
 namespace sharedauth = tecgraf::openbus::interop::sharedauth;
 
 const std::string entity("interop_sharedauth_cpp_sharedauth");
-std::string private_key;
+std::string priv_key_filename;
 std::string bus_host;
 unsigned short bus_port;
 
@@ -52,7 +53,7 @@ void load_options(int argc, char **argv)
   }
   if (vm.count("private-key"))
   {
-    private_key = vm["private-key"].as<std::string>();
+    priv_key_filename = vm["private-key"].as<std::string>();
   }
 }
 
@@ -68,14 +69,14 @@ int main(int argc, char** argv) {
       (bus_ctx->connectByAddress(bus_host, bus_port));
 
     bus_ctx->setDefaultConnection(conn.get());
-    try 
+    EVP_PKEY *priv_key(
+      openbus::demo::openssl::read_priv_key(priv_key_filename));
+    if (!priv_key)
     {
-      conn->loginByCertificate(entity, openbus::PrivateKey(private_key));
+      std::cerr << "Chave privada inválida." << std::endl;
+      std::abort();
     }
-    catch(const openbus::InvalidPrivateKey &e)
-    {
-      std::cout << e.what() << std::endl;
-    }
+    conn->loginByCertificate(entity, priv_key);
     
     openbus::SharedAuthSecret secret(conn->startSharedAuth());
     CORBA::OctetSeq secret_seq(bus_ctx->encodeSharedAuthSecret(secret));

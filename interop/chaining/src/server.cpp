@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "helloS.h"
+#include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
@@ -12,7 +13,7 @@
 #include <boost/program_options.hpp>
 
 const std::string entity("interop_chaining_cpp_server");
-std::string private_key;
+std::string priv_key_filename;
 std::string bus_host;
 unsigned short bus_port;
 
@@ -47,7 +48,7 @@ void load_options(int argc, char **argv)
   }
   if (vm.count("private-key"))
   {
-    private_key = vm["private-key"].as<std::string>();
+    priv_key_filename = vm["private-key"].as<std::string>();
   }
 }
 
@@ -79,14 +80,14 @@ void login_register(
   const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp,
   const openbus::idl_or::ServicePropertySeq &props, openbus::Connection &conn)
 {
-  try 
+  EVP_PKEY *priv_key(
+    openbus::demo::openssl::read_priv_key(priv_key_filename));
+  if (!priv_key)
   {
-    conn.loginByCertificate(entity, openbus::PrivateKey(private_key));
+    std::cout << "Chave privada inválida." << std::endl;
+    return;
   }
-  catch(const openbus::InvalidPrivateKey &e)
-  {
-    std::cout << e.what() << std::endl;
-  }
+  conn.loginByCertificate(entity, priv_key); 
   ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
 }
 

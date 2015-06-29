@@ -2,6 +2,7 @@
 
 #include "helloS.h"
 #include <util.hpp>
+#include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 #include <log/output/file_output.h>
@@ -16,7 +17,7 @@
 #include <vector>
 
 const std::string entity("interop_multiplexing_cpp_server");
-std::string private_key;
+std::string priv_key_filename;
 struct bus
 {
   std::string host;
@@ -44,7 +45,7 @@ void load_options(int argc, char **argv)
   po::notify(vm);
   if (vm.count("private-key"))
   {
-    private_key = vm["private-key"].as<std::string>();
+    priv_key_filename = vm["private-key"].as<std::string>();
   }
   if (vm.count("help")) 
   {
@@ -189,17 +190,17 @@ int main(int argc, char **argv) {
     HelloImpl srv(*bus_ctx);
     ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", &srv);
     
-    try 
+    EVP_PKEY *priv_key(
+      openbus::demo::openssl::read_priv_key(priv_key_filename));
+    if (!priv_key)
     {
-      conn1BusA->loginByCertificate(entity, openbus::PrivateKey(private_key));
-      conn2BusA->loginByCertificate(entity, openbus::PrivateKey(private_key));
-      conn3BusA->loginByCertificate(entity, openbus::PrivateKey(private_key));
-      connBusB->loginByCertificate(entity, openbus::PrivateKey(private_key));
+      std::cout << "Chave privada inválida." << std::endl;
+      return -1;
     }
-    catch(const openbus::InvalidPrivateKey &e)
-    {
-      std::cout << e.what() << std::endl;
-    }
+    conn1BusA->loginByCertificate(entity, priv_key);
+    conn2BusA->loginByCertificate(entity, priv_key);
+    conn3BusA->loginByCertificate(entity, priv_key);
+    connBusB->loginByCertificate(entity, priv_key);
     
     bus_ctx->onCallDispatch(CallDispatchCallback(*conn1BusA, *connBusB));
 

@@ -21,6 +21,7 @@ local test-requirements =
   <target-os>windows:<library>/scs//scs-stub
   <target-os>linux,<link>static:<source>/dl//dl
   <include>.
+  <include>..
   <define>OPENBUS_SDK_TEST #Dangerous!
   <library>/openbus//openbus
   <library>/scs//scs

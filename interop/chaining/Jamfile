@@ -1,5 +1,5 @@
 project openbus/interop
-  : requirements <include>../
+  : requirements <include>../ <include>../../
   ;
 
 path-constant here : . ;

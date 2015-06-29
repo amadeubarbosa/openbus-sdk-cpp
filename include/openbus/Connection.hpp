@@ -225,7 +225,8 @@ public:
   * registrado pelo adminsitrador do barramento.
   * 
   * @param entity Identificador da entidade a ser conectada.
-  * @param key Chave privada da entidade utilizada na autenticação.
+  * @param key Chave privada da entidade utilizada na autenticação. 
+  *            É uma precondição um EVP_PKEY válido e não nulo.
   * 
   * @throw AlreadyLoggedIn A conexão já está autenticada.
   * @throw idl_ac::AccessDenied 

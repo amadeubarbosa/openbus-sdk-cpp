@@ -32,6 +32,7 @@ local rule demo-exe ( name : src : deps * )
       <dependency>hello-stub
       <implicit-dependency>hello-stub
       <link>static,<target-os>linux:<source>/dl//dl
+      <include>../../
     ;
   explicit $(name) ;
 }

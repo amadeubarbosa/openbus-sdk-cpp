@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include <configuration.h>
-#include <openssl.hpp>
+#include <demo/openssl.hpp>
 #include <openbus.hpp>
 
 // Last argument is assumed to be the path for the private key file argv[argc-1]
@@ -21,8 +21,13 @@ int main(int argc, char** argv)
     conn (bus_ctx->connectByAddress(cfg.host(), cfg.wrong_port()));
   try
   {
-    conn->loginByCertificate(cfg.certificate_user(),
-                             openssl::read_priv_key(argv[argc-1]));
+    EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(argv[argc-1]));
+    if (!priv_key)
+    {
+      std::cerr << "Chave privada inválida." << std::endl;
+      std::abort();
+    }
+    conn->loginByCertificate(cfg.certificate_user(), priv_key);
     std::cout << "No exception was thrown, exception CORBA::SystemException was expected"
               << std::endl;
     std::abort();

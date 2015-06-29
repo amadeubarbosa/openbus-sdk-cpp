@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "greetingsS.h"
+#include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
     PortableServer::POAManager_var poa_manager = poa->the_POAManager();
     poa_manager->activate();
 
-    boost::optional<openbus::PrivateKey> private_key;
+    EVP_PKEY *priv_key(0);
     unsigned short bus_port = 2089;
     std::string bus_host = "localhost";
     {
@@ -85,8 +86,13 @@ int main(int argc, char** argv)
         std::cout << desc << std::endl;
         return 0;
       }
-      std::string private_key_filename = vm["private-key"].as<std::string>();
-      private_key = openbus::PrivateKey(private_key_filename);
+      std::string priv_key_filename = vm["private-key"].as<std::string>();
+      priv_key = openbus::demo::openssl::read_priv_key(priv_key_filename);
+      if (!priv_key)
+      {
+        std::cout << "Chave privada inválida." << std::endl;
+        return 1;
+      }
    
       if(vm.count("bus-host"))
         bus_host = vm["bus-host"].as<std::string>();
@@ -107,9 +113,9 @@ int main(int argc, char** argv)
     std::auto_ptr <openbus::Connection> conn3 (openbusContext->connectByAddress(bus_host, bus_port));
     try
     {
-      conn1->loginByCertificate("demo1", *private_key);
-      conn2->loginByCertificate("demo2", *private_key);
-      conn3->loginByCertificate("demo3", *private_key);
+      conn1->loginByCertificate("demo1", priv_key);
+      conn2->loginByCertificate("demo2", priv_key);
+      conn3->loginByCertificate("demo3", priv_key);
     }
     catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
     {

@@ -5,7 +5,7 @@
 #include "openbus/detail/interceptors/ServerInterceptor.hpp"
 #include "openbus/log.hpp"
 
-#include "openbus/crypto/OpenSSL.hpp"
+#include "openbus/detail/openssl/OpenSSL.hpp"
 
 namespace openbus 
 {

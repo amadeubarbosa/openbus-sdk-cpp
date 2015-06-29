@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 #include "dedicated_clockS.h"
-
+#include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
@@ -44,13 +44,13 @@ struct onReloginCallback
 {
   typedef void result_type;
   result_type operator()(openbus::Connection& c, access_control::LoginInfo info
-                         , openbus::PrivateKey private_key) const
+                         , EVP_PKEY * priv_key) const
   {
     do
     {
       try
       {
-        c.loginByCertificate("demo", private_key);
+        c.loginByCertificate("demo", priv_key);
         break;
       }
       catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
   poa_manager->activate();
 
-  boost::optional<openbus::PrivateKey> private_key;
+  EVP_PKEY *priv_key(0);
   unsigned short bus_port = 2089;
   std::string bus_host = "localhost";
   {
@@ -120,8 +120,13 @@ int main(int argc, char** argv)
       std::cout << desc << std::endl;
       return 0;
     }
-    std::string private_key_filename = vm["private-key"].as<std::string>();
-    private_key = openbus::PrivateKey(private_key_filename);
+    std::string priv_key_filename = vm["private-key"].as<std::string>();
+    priv_key = openbus::demo::openssl::read_priv_key(priv_key_filename);
+    if (!priv_key)
+    {
+      std::cout << "Chave privada inválida." << std::endl;
+      return 1;
+    }
 
     if(vm.count("bus-host"))
       bus_host = vm["bus-host"].as<std::string>();
@@ -142,8 +147,8 @@ int main(int argc, char** argv)
     try
     {
       conn = bus_ctx->connectByAddress(bus_host, bus_port);
-      conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, *private_key) );
-      conn->loginByCertificate("demo", *private_key);
+      conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, priv_key) );
+      conn->loginByCertificate("demo", priv_key);
       bus_ctx->setDefaultConnection(conn.get());
       break;
     }
