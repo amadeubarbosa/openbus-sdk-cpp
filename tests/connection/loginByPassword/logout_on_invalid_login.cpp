@@ -1,10 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
-#include <openbus/log.hpp>
-#include <configuration.h>
 
-bool ok = false;
+#include <configuration.h>
+#include <openbus.hpp>
+
+bool ok(false);
 
 struct relogin_callback
 {

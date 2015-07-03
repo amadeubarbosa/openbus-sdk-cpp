@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <openbus/OpenBusContext.hpp>
 #include <configuration.h>
+#include <openbus.hpp>
 
 int main(int argc, char *argv[])
 {

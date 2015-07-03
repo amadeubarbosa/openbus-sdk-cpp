@@ -250,7 +250,14 @@ alias run-tests
     [ run connect/host_port/connect_to_wrong_host_and_port.cpp : : : $(test-requirements) ]
     [ run connect/host_port/connect_with_invalid_host.cpp : : : $(test-requirements) ]
     [ run connect/reference/connect_with_valid_reference.cpp : : : $(test-requirements) ]
-    # [ run openbus_context/getting_orb_with_bus_ctx.cpp : : : $(test-requirements) ]
+    [ run openbus_context/getting_orb_with_bus_ctx.cpp : : : $(test-requirements) ]
+    [ run openbus_context/get_bus_ctx.cpp : : : $(test-requirements) ]
+    # [ run openbus_context/rcv_call_def_conn.cpp : :
+    #   : $(test-requirements)
+    #     <library>test-hello-stub
+    # 	<library>test-hello-skeleton
+    # 	<dependency>test-hello-skeleton
+    # 	<implicit-dependency>test-hello-skeleton ]
     # [ run connection/caller_chain/enc_and_dec_chain_AB.cpp : : : $(test-requirements) ]
     # [ run connection/caller_chain/enc_and_dec_chain_ABC.cpp : : : $(test-requirements) ]
     # [ run connection/caller_chain/enc_and_dec_legacy_chain_AB.cpp : : : $(test-requirements) ]
@@ -264,33 +271,23 @@ alias run-tests
     [ run connection/loginBySharedAuth/login_invalid_host.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginBySharedAuth/login_valid_ref.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginBySharedAuth/login_wrong_host_port.cpp : : admin/TestCppHello.key : $(test-requirements) ]
-    # [ run connection/loginBySharedAuth/try_login_after_cancel.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connection/loginBySharedAuth/try_login_after_cancel.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     # [ run connection/loginBySharedAuth/enc_and_dec_secret.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByCertificate/entity_pkey_ok.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByCertificate/entity_pkey_ok_wrong_host_port.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByCertificate/entity_pkey_ok_invalid_host.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByCertificate/entity_pkey_ok_valid_ref.cpp : : admin/TestCppHello.key : $(test-requirements) ]
-    # [ run connection/loginByPassword/after_logout.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/after_logout.cpp : : : $(test-requirements) ]
     [ run connection/loginByPassword/entity_id_and_password_ok.cpp : : : $(test-requirements) ]
-    [ run connection/loginByPassword/entity_id_and_password_ok_valid_ref.cpp : : : $(test-requirements) ]
     [ run connection/loginByPassword/entity_id_and_password_ok_invalid_host.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/entity_id_and_password_ok_valid_ref.cpp : : : $(test-requirements) ]
     [ run connection/loginByPassword/entity_id_and_password_ok_wrong_host_port.cpp : : : $(test-requirements) ]
-    # [ run connection/loginByPassword/login_when_already_logged.cpp : : : $(test-requirements) ]
-    # [ run connection/loginByPassword/wrong_password.cpp : : : $(test-requirements) ]
-    # [ run connection/loginByPassword/on_invalid_login.cpp : : : $(test-requirements) ]
-    # [ run connection/loginByPassword/logout_on_invalid_login.cpp : : : $(test-requirements) ]
-    # [ run connection/login/login_info_after_login.cpp : : : $(test-requirements) ]
-    # [ run openbus_context/create_connection_to_accessible_bus.cpp : : : $(test-requirements) ]
-    # [ run openbus_context/conn_inaccessible_bus.cpp : : : $(test-requirements) ]
-    # [ run openbus_context/create_connection_to_invalid_host.cpp : : : $(test-requirements) ]
-    # [ run openbus_context/get_manager.cpp : : : $(test-requirements) ]
-    # [ run fail_user_created_orb.cpp : : : $(test-requirements) ]
-    # [ run openbus_context/rcv_call_def_conn.cpp : :
-    #   : $(test-requirements)
-    #     <library>test-hello-stub
-    # 	<library>test-hello-skeleton
-    # 	<dependency>test-hello-skeleton
-    # 	<implicit-dependency>test-hello-skeleton ]
+    [ run connection/loginByPassword/login_when_already_logged.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/logout_on_invalid_login.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/on_invalid_login.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/wrong_password.cpp : : : $(test-requirements) ]
+    [ run connection/login/login_info_after_login.cpp : : : $(test-requirements) ]
+    [ run fail_user_created_orb.cpp : : : $(test-requirements) ]
     # [ run get_offer.cpp : :
     #   : $(test-requirements)
     #     <library>test-hello-stub

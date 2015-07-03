@@ -1,11 +1,12 @@
 // -*- coding: iso-8859-1-unix -*-
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
+
 #include <configuration.h>
+#include <openbus.hpp>
 
 int main(int argc, char** argv)
 {
   openbus::configuration cfg(argc, argv);
+  openbus::log().set_level(openbus::debug_level);
   boost::shared_ptr<openbus::orb_ctx>
     orb_ctx(openbus::ORBInitializer(argc, argv));
   CORBA::Object_var
@@ -15,8 +16,8 @@ int main(int argc, char** argv)
 
   std::auto_ptr <openbus::Connection>
     conn(bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
+  conn->loginByPassword(cfg.user(), cfg.password());
   conn->logout();
-  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
+  conn->loginByPassword(cfg.user(), cfg.password());
   return 0; //MSVC
 }
