@@ -2,8 +2,8 @@
 
 #include "helloS.h"
 #include <demo/openssl.hpp>
-#include <openbus.hpp>
 #include <scs/ComponentContext.h>
+#include <openbus.hpp>
 
 #include <iostream>
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -23,8 +23,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -133,7 +132,7 @@ int main(int argc, char **argv)
   try
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
+    openbus::log().set_level(openbus::debug_level);
 
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));

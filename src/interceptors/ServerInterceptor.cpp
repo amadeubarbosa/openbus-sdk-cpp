@@ -152,6 +152,42 @@ Connection &ServerInterceptor::get_dispatcher_connection(
   save_dispatcher_connection(*conn, r, ctx);
   return *conn;
 }
+
+bool ServerInterceptor::validate_chain(
+  credential& cred,
+  boost::shared_ptr<Login> caller,  
+  Connection &conn)
+{
+  if (!cred.data.chain.encoded.length())
+  {
+    return false;
+  }
+  idl::HashValue hashChain;
+  SHA256(cred.data.chain.encoded.get_buffer(),
+         cred.data.chain.encoded.length(), hashChain);
+
+  if (!conn._buskey->verify(cred.data.chain.signature, 
+                            idl::EncryptedBlockSize, hashChain, 
+                            idl::HashValueSize))
+  {
+    return false;
+  }
+  else
+  {
+    CORBA::OctetSeq o(cred.data.chain.encoded.maximum(),
+                      cred.data.chain.encoded.length(),
+                      cred.data.chain.encoded.get_buffer());
+    CORBA::Any_var any(
+      _orb_init->codec->decode_value(o, idl_ac::_tc_CallChain));
+
+    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+    if (std::strcmp(chain.caller.id, caller->loginInfo->id)) 
+    {
+      return false;
+    }
+  }
+  return true;
+}
     
 void ServerInterceptor::receive_request_service_contexts(
   PI::ServerRequestInfo_ptr r)
@@ -220,44 +256,15 @@ void ServerInterceptor::receive_request_service_contexts(
     send_credential_reset(conn, caller, *r);
   }
   l.level_vlog(debug_level, "credential is valid");
-  if (!credential_.data.chain.encoded.length())
+  if (validate_chain(credential_, caller, conn))
   {
-    throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
-  }
-  idl::HashValue hashChain;
-  SHA256(credential_.data.chain.encoded.get_buffer(),
-         credential_.data.chain.encoded.length(), hashChain);
-
-  if (!conn._buskey->verify(credential_.data.chain.signature, 
-                            idl::EncryptedBlockSize, hashChain, 
-                            idl::HashValueSize))
-  {
-    throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
+    CORBA::Any any;
+    any <<= credential_.data.chain;
+    r->set_slot(_orb_init->signed_call_chain, any);
   }
   else
   {
-    CORBA::OctetSeq o(credential_.data.chain.encoded.maximum(),
-                      credential_.data.chain.encoded.length(),
-                      credential_.data.chain.encoded.get_buffer());
-    CORBA::Any_var any(
-      _orb_init->codec->decode_value(o, idl_ac::_tc_CallChain));
-
-    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-    if (std::strcmp(chain.target, conn._login()->entity)) 
-    { 
-      send_credential_reset(conn, caller, *r);
-    }
-    else if (std::strcmp(chain.caller.id, caller->loginInfo->id)) 
-    {
-      throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode,
-                                 CORBA::COMPLETED_NO);
-    }
-    else 
-    {
-      CORBA::Any any;
-      any <<= credential_.data.chain;
-      r->set_slot(_orb_init->signed_call_chain, any);
-    }
+    throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
   }
 }
 

@@ -106,15 +106,6 @@ explicit test-hello-skeleton ;
 # exe-test connection_caller_chain_make_chain_for_joined_legacy_chain_with_delegate
 #   : connection/caller_chain/make_chain_for_joined_legacy_chain_with_delegate.cpp
 #   ;
-# exe-test connection_caller_chain_receive_call_with_default_connection_get_caller_chain
-#   : connection/caller_chain/receive_call_with_default_connection_get_caller_chain.cpp
-#   : test-hello-stub
-#     test-hello-skeleton
-#   : <dependency>test-hello-stub
-#     <implicit-dependency>test-hello-stub
-#     <dependency>test-hello-skeleton
-#     <implicit-dependency>test-hello-skeleton
-#   ;
 # exe-test connection_loginBySharedAuth_login
 #   : connection/loginBySharedAuth/login.cpp
 #   ;
@@ -199,13 +190,6 @@ explicit test-hello-skeleton ;
 #     <dependency>test-hello-skeleton
 #     <implicit-dependency>test-hello-skeleton
 #   ;
-# exe-test register_service
-#   : register_service.cpp
-#   : test-hello-stub
-#   : <dependency>test-hello-stub
-#     <implicit-dependency>test-hello-stub
-#   ;
-
 # alias tests
 #   : connect_host_port_connect_to_right_host_and_port
 #     connect_host_port_connect_to_wrong_host_and_port
@@ -241,7 +225,6 @@ explicit test-hello-skeleton ;
 #     connection_manager_receive_call_with_default_connection
 #     fail_user_created_orb
 #     get_offer
-#     register_service
 #   ;
 # explicit tests ;
 
@@ -250,29 +233,42 @@ alias run-tests
     [ run connect/host_port/connect_to_wrong_host_and_port.cpp : : : $(test-requirements) ]
     [ run connect/host_port/connect_with_invalid_host.cpp : : : $(test-requirements) ]
     [ run connect/reference/connect_with_valid_reference.cpp : : : $(test-requirements) ]
+    [ run openbus_context/orb_is_same.cpp : : : $(test-requirements) ]
     [ run openbus_context/getting_orb_with_bus_ctx.cpp : : : $(test-requirements) ]
     [ run openbus_context/get_bus_ctx.cpp : : : $(test-requirements) ]
-    # [ run openbus_context/rcv_call_def_conn.cpp : :
-    #   : $(test-requirements)
-    #     <library>test-hello-stub
-    # 	<library>test-hello-skeleton
-    # 	<dependency>test-hello-skeleton
-    # 	<implicit-dependency>test-hello-skeleton ]
-    # [ run connection/caller_chain/enc_and_dec_chain_AB.cpp : : : $(test-requirements) ]
-    # [ run connection/caller_chain/enc_and_dec_chain_ABC.cpp : : : $(test-requirements) ]
+    [ run openbus_context/rcv_call_def_conn.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
+    [ run openbus_context/on_call_dispatch.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
+    [ run openbus_context/on_call_dispatch_null_return.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
+    [ run connection/caller_chain/enc_and_dec_chain_AB.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/enc_and_dec_chain_ABC.cpp : : : $(test-requirements) ]
     # [ run connection/caller_chain/enc_and_dec_legacy_chain_AB.cpp : : : $(test-requirements) ]
     # [ run connection/caller_chain/enc_and_dec_legacy_chain_ABC.cpp : : : $(test-requirements) ]
-    # [ run connection/caller_chain/dec_incompat_version_chain.cpp : : : $(test-requirements) ]
-    # [ run connection/caller_chain/dec_incompat_type_chain.cpp : : : $(test-requirements) ]
-    # [ run connection/caller_chain/make_chain_for_invalid_login.cpp : : : $(test-requirements) ]
-    # [ run connection/caller_chain/make_chain_for_valid_login.cpp : : : $(test-requirements) ]
-    # [ run connection/caller_chain/make_chain_for_joined_chain.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/dec_incompat_version_chain.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/dec_incompat_type_chain.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/make_chain_for_unknow_entity.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/make_chain_for_know_entity.cpp : : : $(test-requirements) ]
+    [ run connection/caller_chain/make_chain_for_joined_chain.cpp : : : $(test-requirements) ]
     [ run connection/loginBySharedAuth/login.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginBySharedAuth/login_invalid_host.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginBySharedAuth/login_valid_ref.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginBySharedAuth/login_wrong_host_port.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginBySharedAuth/try_login_after_cancel.cpp : : admin/TestCppHello.key : $(test-requirements) ]
-    # [ run connection/loginBySharedAuth/enc_and_dec_secret.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connection/loginBySharedAuth/enc_and_dec_secret.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByCertificate/entity_pkey_ok.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByCertificate/entity_pkey_ok_wrong_host_port.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connection/loginByCertificate/entity_pkey_ok_invalid_host.cpp : : admin/TestCppHello.key : $(test-requirements) ]
@@ -287,12 +283,13 @@ alias run-tests
     [ run connection/loginByPassword/on_invalid_login.cpp : : : $(test-requirements) ]
     [ run connection/loginByPassword/wrong_password.cpp : : : $(test-requirements) ]
     [ run connection/login/login_info_after_login.cpp : : : $(test-requirements) ]
+    [ run connection/logout/logout_twice.cpp : : : $(test-requirements) ]
     [ run fail_user_created_orb.cpp : : : $(test-requirements) ]
-    # [ run get_offer.cpp : :
-    #   : $(test-requirements)
-    #     <library>test-hello-stub
-    # 	<library>test-hello-skeleton
-    # 	<dependency>test-hello-skeleton
-    # 	<implicit-dependency>test-hello-skeleton ]
+    [ run get_offer.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
   ;
 explicit run-tests ;

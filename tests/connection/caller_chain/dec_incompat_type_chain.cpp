@@ -1,12 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "iop_codec.hpp"
-
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
+#include <check.hpp>
 #include <configuration.h>
-#include <cstdlib>
-#include <iostream>
+#include <openbus.hpp>
 
 int main(int argc, char **argv)
 {
@@ -29,7 +26,7 @@ int main(int argc, char **argv)
   bus_ctx->setDefaultConnection(conn_A.get());
   
   openbus::CallerChain chain(
-    bus_ctx->makeChainFor(conn_B->login()->id.in()));
+    bus_ctx->makeChainFor(conn_B->login()->entity.in()));
 
   CORBA::OctetSeq encoded_chain(bus_ctx->encodeChain(chain));
 

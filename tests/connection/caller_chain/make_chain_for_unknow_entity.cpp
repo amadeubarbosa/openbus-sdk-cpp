@@ -1,9 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/log.hpp>
 #include <configuration.h>
-#include <cstdlib>
+#include <openbus.hpp>
 
 int main(int argc, char** argv)
 {
@@ -20,17 +18,6 @@ int main(int argc, char** argv)
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   bus_ctx->setDefaultConnection(conn.get());
   conn->loginByPassword(cfg.user(), cfg.password());
-  try
-  {
-    bus_ctx->makeChainFor("");
-  }
-  catch (const openbus::idl_ac::InvalidLogins &e)
-  {
-    if (std::string(e.loginIds[0]) == "")
-    {
-      return 0;
-    }
-  }
-  std::abort();
+  bus_ctx->makeChainFor("unknow_entity");
   return 0; //MSVC
 }

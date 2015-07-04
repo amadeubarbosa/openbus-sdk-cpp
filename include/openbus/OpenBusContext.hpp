@@ -505,18 +505,15 @@ public:
   CallerChain getJoinedChain() const;
 
   /**
-   * \brief Cria uma cadeia de chamadas para a entidade com o identificador de
-   *        login especificado.
+   * \brief Cria uma cadeia de chamadas para a entidade especificada.
    * 
-   * Cria uma nova cadeia de chamadas para a entidade especificada,
-   * onde o dono da cadeia é a conexão corrente
-   * \ref getCurrentConnection() e utiliza-se a cadeia
-   * atual \ref getJoinedChain() como a cadeia que se
-   * deseja dar seguimento ao encadeamento. O identificador de login
-   * especificado deve ser um login atualmente válido para que a
-   * operação tenha sucesso. Caso o contexto corrente não tenha nenhuma
-   * cadeia associada, essa operação devolve uma cadeia 'vazia'
-   * 'default-constructed'.
+   * O dono da cadeia é a conexão corrente \ref getCurrentConnection()
+   * e utiliza-se a cadeia atual \ref getJoinedChain() como a cadeia
+   * que se deseja dar seguimento ao encadeamento. É permitido
+   * especificar qualquer nome de entidade, tendo ela um login ativo
+   * no momento ou não.  A cadeia resultante só conseguirá ser
+   * utilizada \ref joinChain() com sucesso por uma conexão que possua
+   * a mesma identidade da entidade especificada.
    *
    * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
    * \code
@@ -526,14 +523,12 @@ public:
    * else
    *   // chain é inválido
    * \endcode
-   * \param loginId identificador de login da entidade para a qual deseja-se
-   *        enviar a cadeia.
+   * \param entity nome da entidade para a qual deseja-se enviar a
+   *        cadeia.
    * \return a cadeia gerada para ser utilizada pela entidade com o login
    *         especificado.
-   * 
-   * \exception invalid_logins Caso o login especificado seja inválido.
    */
-  CallerChain makeChainFor(const std::string &loginId) const;
+  CallerChain makeChainFor(const std::string &entity) const;
 
   /**
    * \brief Codifica uma cadeia de chamadas (CallerChain) para um stream de

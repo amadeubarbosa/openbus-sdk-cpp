@@ -1,10 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
 #include "helloS.h"
+
 #include <scs/ComponentContext.h>
 #include <configuration.h>
+#include <openbus.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>

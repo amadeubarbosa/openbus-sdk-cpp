@@ -5,10 +5,31 @@
 #include <configuration.h>
 #include <scs/ComponentContext.h>
 #include <openbus.hpp>
+
+#include <string>
 #ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #endif
+
+bool call_dispatch(false);
+
+struct dispatcher
+{
+  typedef openbus::Connection* result_type;
+  result_type r;
+  dispatcher(result_type r) : r(r) {}
+
+  result_type operator()(
+    openbus::OpenBusContext &context,
+    const std::string busId,
+    const std::string loginId,
+    const std::string operation) const
+  {
+    call_dispatch = true;
+    return r;
+  }  
+};
 
 struct hello_impl : public POA_Hello
 {
@@ -35,7 +56,7 @@ void call_orb(CORBA::ORB_var orb)
 }
 #endif
 
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
   openbus::configuration cfg(argc, argv);
   openbus::log().set_level(openbus::debug_level);
@@ -51,11 +72,11 @@ int main(int argc, char** argv)
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
-  std::auto_ptr <openbus::Connection> conn(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  bus_ctx->setDefaultConnection(conn.get());
-  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
-
+  std::auto_ptr<openbus::Connection>
+    conn(bus_ctx->connectByAddress(cfg.host(), cfg.port()));
+  conn->loginByPassword(cfg.user(), cfg.password());
+  bus_ctx->onCallDispatch(dispatcher(conn.get()));
+  
   scs::core::ComponentId componentId;
   componentId.name = "Hello";
   componentId.major_version = '1';
@@ -86,6 +107,7 @@ int main(int argc, char** argv)
   offer_id_prop.name = "offer.id";
   offer_id_prop.value = conn->login()->id.in();
   props[1] = offer_id_prop;
+  bus_ctx->setCurrentConnection(conn.get());
   bus_ctx->getOfferRegistry()->registerService(ctx.getIComponent(), props);
 
   props.length(4);
@@ -99,48 +121,24 @@ int main(int argc, char** argv)
   props[3].value = conn->login()->id.in();
   openbus::idl_or::ServiceOfferDescSeq_var offers(
     bus_ctx->getOfferRegistry()->findServices(props));
-  if (offers->length() < 1)
+
+  if(offers->length() == 1)
   {
-    std::cerr << "offers->length() < 1" << std::endl;      
+    CORBA::Object_var
+      hello_obj((*offers)[0u].service_ref->getFacetByName("hello"));
+    ::Hello_var hello = ::Hello::_narrow(hello_obj);
+    hello->sayHello();
+  }
+  else
+  {    
+    std::cerr << "offers->length() == "
+              << offers->length() << std::endl;      
     std::abort();
   }
-  bool found(false);
-  for (CORBA::ULong o(0); o < offers->length(); ++o)
+  if (!call_dispatch)
   {
-    for (CORBA::ULong p(0); p < offers[o].properties.length(); ++p)
-    {
-      if (offers[o].properties[p].name.in()
-          == std::string("offer.id"))
-      {
-        if (offers[o].properties[p].value.in()
-            == std::string(conn->login()->id.in()))
-        {
-          found = true;
-        }
-      }
-    }
-  }
-  if (!found)
-  {
-    std::cerr << "Nenhuma oferta encontrada com a propriedade 'offer.id' == '"
-              << conn->login()->id.in() << "'."
-              << std::endl;
+    std::cerr << "call_dispatch == false" << std::endl;
     std::abort();
   }
-  CORBA::Object_var o = (*offers)[0u].service_ref->getFacetByName("hello");
-  Hello* hello = Hello::_narrow(o);
-
-  assert(!servant_called);
-
-  hello->sayHello();
-  assert(servant_called);
-
-  conn->logout();
-  conn.reset();
-
-#ifdef OPENBUS_SDK_MULTITHREAD
-  orb_ctx->orb()->shutdown(true);
-  orb_thread.join();
-#endif
   return 0; //MSVC
 }

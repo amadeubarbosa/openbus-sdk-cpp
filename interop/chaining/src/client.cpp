@@ -27,7 +27,6 @@ void load_options(int argc, char **argv)
      "Port to OpenBus");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::store(po::parse_config_file<char>("test.properties", desc), vm);
   po::notify(vm);
   if (vm.count("help")) 
   {
@@ -49,7 +48,7 @@ int main(int argc, char **argv)
   try
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
+    openbus::log().set_level(openbus::debug_level);
 
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
@@ -90,17 +89,17 @@ int main(int argc, char **argv)
       tecgraf::openbus::interop::chaining::HelloProxy *helloProxy = 
         tecgraf::openbus::interop::chaining::HelloProxy::_narrow(o);
       openbus::idl_or::ServicePropertySeq properties = offers[idx].properties;
-      const char *loginId(0);
+      const char *offer_entity(0);
       for (CORBA::ULong idx = 0; idx != properties.length(); ++idx)
       {
         if (std::string(properties[idx].name) == "openbus.offer.login")
         {
-          loginId = properties[idx].value.in();
+          offer_entity = properties[idx].value.in();
           break;
         }
       }
-      assert(loginId != 0);
-      openbus::CallerChain chain = bus_ctx->makeChainFor(loginId);
+      assert(offer_entity != 0);
+      openbus::CallerChain chain = bus_ctx->makeChainFor(offer_entity);
       CORBA::OctetSeq encodedChain = bus_ctx->encodeChain(chain);
       const char *msg = helloProxy->fetchHello(
         tecgraf::openbus::interop::chaining::OctetSeq(

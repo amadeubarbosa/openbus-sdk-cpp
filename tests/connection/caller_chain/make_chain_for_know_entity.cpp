@@ -1,10 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
 #include <configuration.h>
-#include <cstdlib>
-#include <iostream>
+#include <openbus.hpp>
 
 int main(int argc, char** argv)
 {
@@ -26,7 +23,7 @@ int main(int argc, char** argv)
 
   bus_ctx->setDefaultConnection(conn_A.get());
 
-  openbus::CallerChain chain(bus_ctx->makeChainFor(conn_B->login()->id.in()));
+  openbus::CallerChain chain(bus_ctx->makeChainFor(conn_B->login()->entity.in()));
   if ("B" != chain.target())
   {
     std::cerr << "'B' != chain.target()" << std::endl;

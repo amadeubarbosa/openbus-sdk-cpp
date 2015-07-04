@@ -80,6 +80,11 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
 
   credential get_credential(PI::ServerRequestInfo &) const;
 
+  bool validate_chain(
+    credential& cred,
+    boost::shared_ptr<Login> caller,  
+    Connection &conn);
+
   void send_credential_reset(
     Connection &, 
     boost::shared_ptr<Login>, 

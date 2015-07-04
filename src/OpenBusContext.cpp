@@ -205,7 +205,7 @@ CallerChain OpenBusContext::getJoinedChain() const
     chain.caller, signed_chain);
 }
 
-CallerChain OpenBusContext::makeChainFor(const std::string &loginId) const
+CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::makeChainFor");
@@ -216,7 +216,7 @@ CallerChain OpenBusContext::makeChainFor(const std::string &loginId) const
   }
   CallerChain joined_chain(getJoinedChain());
   idl_cr::SignedData_var signed_chain(
-    conn->access_control()->signChainFor(loginId.c_str()));
+    conn->access_control()->signChainFor(entity.c_str()));
   CORBA::Any_var any(_orb_init->codec->decode_value(
                        CORBA::OctetSeq(signed_chain->encoded.maximum(),
                                        signed_chain->encoded.length(),
