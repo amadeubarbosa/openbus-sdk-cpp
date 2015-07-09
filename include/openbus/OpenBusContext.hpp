@@ -318,14 +318,14 @@ public:
 	 * deve ser utilizada ao invés da 'connectByAddress' para permitir o
 	 * uso de SSL nas comunicações com o núcleo do barramento.
 	 * 
-	 * \param reference Referência CORBA a um componente SCS que representa os
+	 * @param[in] reference Referência CORBA a um componente SCS que representa os
 	 *        serviços núcleo do barramento.
-   * \param props Lista opcional de propriedades da conexão 
+   * @param[in] props Lista opcional de propriedades da conexão 
    *        (\ref Connection::ConnectionProperties).
 	 *
-	 * \return Conexão criada.
+	 * @return Conexão criada.
 	 *
-	 * \exception InvalidPropertyValue O valor de uma propriedade não é válido.
+	 * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
 	 */
   std::auto_ptr<Connection> connectByReference(
     CORBA::Object_ptr ref,
@@ -344,14 +344,13 @@ public:
    *            barramento estão executando.
    * @param[in] port Porta onde os serviços núcleo do barramento estão 
    *            executando.
-   * @param[in] props Lista opcional de propriedades que definem algumas
-   *        configurações sobre a forma que as chamadas realizadas ou validadas
-   *        com essa conexão são feitas. 
+   * @param[in] props Lista opcional de propriedades da conexão 
+   *            (\ref Connection::ConnectionProperties).
    *   
-   * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
-   * @throw CORBA::Exception
-   *
    * @return Conexão criada.
+   *
+	 * @throw InvalidBusAddress Os parâmetros 'host' e 'port' não são válidos.
+	 * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
    */
   std::auto_ptr<Connection> connectByAddress(
     const std::string &host, unsigned short port, 
@@ -370,14 +369,13 @@ public:
    *            barramento estão executando.
    * @param[in] port Porta onde os serviços núcleo do barramento estão 
    *            executando.
-   * @param[in] props Lista opcional de propriedades que definem algumas
-   *        configurações sobre a forma que as chamadas realizadas ou validadas
-   *        com essa conexão são feitas. 
+   * @param[in] props Lista opcional de propriedades da conexão 
+   *            (\ref Connection::ConnectionProperties).
    *   
-   * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
-   * @throw CORBA::Exception
-   *
    * @return Conexão criada.
+   *
+	 * @throw InvalidBusAddress Os parâmetros 'host' e 'port' não são válidos.
+   * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
    */
   std::auto_ptr<Connection> createConnection(
     const std::string &host, unsigned short port, 

@@ -105,6 +105,14 @@ struct OPENBUS_SDK_DECL InvalidPropertyValue : public std::exception
   const std::string value;
 };
 
+struct OPENBUS_SDK_DECL InvalidBusAddress : public std::exception 
+{
+  const char *what() const throw()
+  { 
+    return "openbus::InvalidBusAddress"; 
+  }
+};
+
 class Connection;
   
 /**

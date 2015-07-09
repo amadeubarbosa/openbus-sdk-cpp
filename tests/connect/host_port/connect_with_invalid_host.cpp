@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     std::auto_ptr<openbus::Connection>
       conn(bus_ctx->connectByAddress("$invalid_host$", cfg.port()));
   }
-  catch (const CORBA::TRANSIENT &)
+  catch (const openbus::InvalidBusAddress &)
   {
     std::cout << "CORBA::TRANSIENT was thrown." << std::endl;
     std::abort();

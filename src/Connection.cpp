@@ -179,7 +179,13 @@ Connection::Connection(
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
-  _component_ref = _orb->string_to_object(corbaloc.str().c_str());
+  try
+  {
+    _component_ref = _orb->string_to_object(corbaloc.str().c_str());
+  } catch (const CORBA::Exception &)
+  {
+    throw InvalidBusAddress();
+  }
 }
 
 Connection::~Connection() 

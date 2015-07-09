@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     std::auto_ptr<openbus::Connection>
       conn(bus_ctx->connectByAddress(cfg.host(), cfg.wrong_port()));
   }
-  catch (const CORBA::SystemException &)
+  catch (const openbus::InvalidBusAddress &)
   {
     std::cout << "CORBA::SystemException was thrown." << std::endl;
     std::abort();
