@@ -141,8 +141,10 @@ Connection::Connection(
   CORBA::ORB_ptr orb, 
   interceptors::ORBInitializer *orb_init,
   OpenBusContext &m, 
-  const ConnectionProperties &props)
-  : _component_ref(ref),
+  EVP_PKEY *access_key,
+  bool legacy_support)
+  : _key(access_key),
+    _component_ref(ref),
     _iComponent(scs::core::IComponent::_nil()),
     _port(0),
     _orb_init(orb_init),
@@ -162,8 +164,10 @@ Connection::Connection(
   const unsigned short port, CORBA::ORB_ptr orb, 
   interceptors::ORBInitializer *orb_init,
   OpenBusContext &m, 
-  const ConnectionProperties &props) 
-  : _iComponent(scs::core::IComponent::_nil()),
+  EVP_PKEY *access_key,
+  bool legacy_support)
+  : _key(access_key),
+    _iComponent(scs::core::IComponent::_nil()),
     _host(host),
     _port(port),
     _orb_init(orb_init),

@@ -356,7 +356,8 @@ private:
              CORBA::ORB_ptr, 
              interceptors::ORBInitializer *,
              OpenBusContext &, 
-             const ConnectionProperties &props);
+             EVP_PKEY *access_key,
+             bool legacy_support);
 
   /**
   * Connection deve ser adquirido atraves de: OpenBusContext::connectByAddress()
@@ -366,7 +367,8 @@ private:
              CORBA::ORB_ptr, 
              interceptors::ORBInitializer *,
              OpenBusContext &, 
-             const ConnectionProperties &props);
+             EVP_PKEY *access_key,
+             bool legacy_support);
 
   Connection(const Connection &);
   Connection &operator=(const Connection &);

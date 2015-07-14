@@ -49,6 +49,7 @@ public:
   }
 private:
   void set_pkey(const idl::OctetSeq &key);
+  EVP_PKEY *new_key();
   openssl::pkey _key;
   idl::OctetSeq _keySeq;
 #ifdef OPENBUS_SDK_MULTITHREAD

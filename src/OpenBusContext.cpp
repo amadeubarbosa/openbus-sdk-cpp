@@ -33,36 +33,45 @@ OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb,
               "OpenBusContext::OpenBusContext");
 }
 
-std::auto_ptr<Connection> OpenBusContext::connectByReference(
-  CORBA::Object_ptr ref,
-  const Connection::ConnectionProperties &props)
-{
-  log_scope l(log().general_logger(), debug_level, 
-              "OpenBusContext::connectByReference");
-  std::auto_ptr<Connection> conn(
-    new Connection(ref, _orb, _orb_init, *this, props));
-  l.vlog("connection: %p", conn.get());
-  return conn;
-}
-  
-std::auto_ptr<Connection> OpenBusContext::connectByAddress(
-  const std::string &host, unsigned short port, 
-  const Connection::ConnectionProperties &props)
+std::auto_ptr<Connection> OpenBusContext::connect_by_address_impl(
+  const std::string &host,
+  unsigned short port,
+  EVP_PKEY *access_key,
+  bool legacy_support)
+
 {
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::connectByAddress");
   l.vlog("connectByAddress para host %s:%hi", host.c_str(), port);
   std::auto_ptr<Connection> conn(
-    new Connection(host, port, _orb, _orb_init, *this, props));
+    new Connection(host, port, _orb, _orb_init, *this, access_key,
+                   legacy_support));
   l.vlog("connection: %p", conn.get());
   return conn;
 }
 
-std::auto_ptr<Connection> OpenBusContext::createConnection(
-  const std::string &host, unsigned short port, 
-  const Connection::ConnectionProperties &props)
+
+std::auto_ptr<Connection> OpenBusContext::connect_by_reference_impl(
+  CORBA::Object_ptr ref,
+  EVP_PKEY *access_key,
+  bool legacy_support)
 {
-  return connectByAddress(host, port, props);
+  log_scope l(log().general_logger(), debug_level, 
+              "OpenBusContext::connectByReference");
+  std::auto_ptr<Connection> conn(
+    new Connection(ref, _orb, _orb_init, *this, access_key, legacy_support));
+  l.vlog("connection: %p", conn.get());
+  return conn;
+} 
+
+std::auto_ptr<Connection> OpenBusContext::create_connection_impl(
+  const std::string &host,
+  unsigned short port,
+  EVP_PKEY *access_key,
+  bool legacy_support)
+
+{
+  return connect_by_address_impl(host, port, access_key, legacy_support);
 }
 
 Connection *OpenBusContext::setDefaultConnection(Connection *conn)

@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   std::auto_ptr<openbus::Connection>
-    conn(bus_ctx->connectByAddress(openbus::_host=cfg.host(),
-                                   openbus::_port=cfg.port()));
+    conn(bus_ctx->connectByAddress(cfg.host(), cfg.port(),
+                                   openbus::_legacy_support=true));
   return 0; //MSVC
 }

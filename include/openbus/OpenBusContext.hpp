@@ -16,11 +16,13 @@
 #include "openbus/Connection.hpp"
 
 #include <tao/LocalObject.h>
+#include <openssl/evp.h>
 #include <boost/function.hpp>
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
 #include <boost/shared_ptr.hpp>
+#include <boost/parameter.hpp>
 #include <string>
 
 namespace openbus 
@@ -221,6 +223,11 @@ inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs)
   return !(lhs == rhs);
 }
 
+BOOST_PARAMETER_NAME(host)
+BOOST_PARAMETER_NAME(port)
+BOOST_PARAMETER_NAME(access_key)
+BOOST_PARAMETER_NAME(legacy_support)
+BOOST_PARAMETER_NAME(reference)
 
 /**
  * \class OpenBusContext
@@ -309,28 +316,66 @@ public:
    */
   CallDispatchCallback onCallDispatch() const;
 
-	/**
+  /**
 	 * \brief Cria uma conexão para um barramento indicado por uma referência
 	 *        CORBA.
-	 * 
+   * 
 	 * O barramento é indicado por uma referência CORBA a um componente
 	 * SCS que representa os serviços núcleo do barramento. Essa função
 	 * deve ser utilizada ao invés da 'connectByAddress' para permitir o
 	 * uso de SSL nas comunicações com o núcleo do barramento.
-	 * 
-	 * @param[in] reference Referência CORBA a um componente SCS que representa os
+   * 
+	 * @param[in] _reference Referência CORBA a um componente SCS que representa os
 	 *        serviços núcleo do barramento.
-   * @param[in] props Lista opcional de propriedades da conexão 
-   *        (\ref Connection::ConnectionProperties).
-	 *
-	 * @return Conexão criada.
-	 *
-	 * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
-	 */
-  std::auto_ptr<Connection> connectByReference(
-    CORBA::Object_ptr ref,
-    const Connection::ConnectionProperties &props = 
-    Connection::ConnectionProperties());
+   * @param[in] _port Porta onde os serviços núcleo do barramento estão 
+   *            executando.
+   * @param[in] _access_key (opcional) chave de acesso a ser utilizada
+   *            internamente para a geração de credenciais que identificam 
+   *            as chamadas através do barramento. A chave deve ser uma 
+   *            chave privada RSA de 2048 bits (256 bytes). O parâmetro é
+   *            do tipo EVP_PKEY* e na sua ausência uma chave de acesso é
+   *            gerada automaticamente.
+   *            
+   * @param[in] _legacy_support (opcional) boleano que desabilita o suporte
+   *            a chamadas usando o protocolo OpenBus 2.0. Por padrão o suporte
+   *            está habilitado
+   *
+   * Exemplo de chamadas sem os parâmetros opcionais:
+   * \code
+   * std::stringstream corbaloc;
+   * corbaloc << "corbaloc::" << "localhost" << ":" << 2089
+              << "/" << tecgraf::openbus::core::v2_1::BusObjectKey;
+   * CORBA::Object_var
+   *   ref(orb_ctx->orb()->string_to_object(corbaloc.str().c_str()));
+   * connectByReference(ref.in());
+   * \endcode
+   *
+   * Exemplo de chamada com os parâmetros opcionais:
+   * \code
+   * std::stringstream corbaloc;
+   * corbaloc << "corbaloc::" << "localhost" << ":" << 2089
+              << "/" << tecgraf::openbus::core::v2_1::BusObjectKey;
+   * CORBA::Object_var
+   *   ref(orb_ctx->orb()->string_to_object(corbaloc.str().c_str()));
+   * connectByReference(ref.in(),
+   *                    _access_key=privake_key, 
+   *                    _legacy_support=false);
+   * \endcode
+   * @return Conexão criada.
+   *
+   */
+  BOOST_PARAMETER_MEMBER_FUNCTION(
+    (std::auto_ptr<Connection>), connectByReference, tag,
+    (required
+     (reference, (CORBA::Object_ptr)))
+    (optional
+     (access_key, (EVP_PKEY*), (EVP_PKEY*)0)
+     (legacy_support, (bool), true))
+  )
+  {
+    return connect_by_reference_impl(
+      reference, access_key, legacy_support);
+  }
 
   /**
    * \brief Cria uma conexão para um barramento indicado por um nome 
@@ -338,49 +383,107 @@ public:
    * 
    * O barramento é indicado por um nome ou endereço de rede e um
    * número de porta, onde os serviços núcleo daquele barramento estão
-   * executando.
+   * executando. Este método aceita argumentos no formato Boost Parameter.
    * 
-   * @param[in] host Endereço ou nome de rede onde os serviços núcleo do 
+   * @param[in] _host Endereço ou nome de rede onde os serviços núcleo do 
    *            barramento estão executando.
-   * @param[in] port Porta onde os serviços núcleo do barramento estão 
+   * @param[in] _port Porta onde os serviços núcleo do barramento estão 
    *            executando.
-   * @param[in] props Lista opcional de propriedades da conexão 
-   *            (\ref Connection::ConnectionProperties).
-   *   
+   * @param[in] _access_key (opcional) chave de acesso a ser utilizada
+   *            internamente para a geração de credenciais que identificam 
+   *            as chamadas através do barramento. A chave deve ser uma 
+   *            chave privada RSA de 2048 bits (256 bytes). O parâmetro é
+   *            do tipo EVP_PKEY* e na sua ausência uma chave de acesso é
+   *            gerada automaticamente.
+   *            
+   * @param[in] _legacy_support (opcional) boleano que desabilita o suporte
+   *            a chamadas usando o protocolo OpenBus 2.0. Por padrão o suporte
+   *            está habilitado
+   *
+   * Exemplo de chamadas sem os parâmetros opcionais:
+   * \code
+   * connectByAddress("localhost", 2089);
+   * connectByAddress(openbus::_host="localhost", openbus::_port=2089);
+   * \endcode
+   *
+   * Exemplo de chamadas com os parâmetros opcionais:
+   * \code
+   * connectByAddress("localhost", 2089, 
+   *                  _access_key=privake_key, _legacy_support=false);
+   * connectByAddress("localhost", 2089, 
+   *                  _legacy_support=true, _access_key=privake_key);
+   * \endcode
+	 * @throw InvalidBusAddress Os parâmetros '_host' e '_port' não são válidos.
    * @return Conexão criada.
    *
-	 * @throw InvalidBusAddress Os parâmetros 'host' e 'port' não são válidos.
-	 * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
    */
-  std::auto_ptr<Connection> connectByAddress(
-    const std::string &host, unsigned short port, 
-    const Connection::ConnectionProperties &props = 
-    Connection::ConnectionProperties());
-   
+  BOOST_PARAMETER_MEMBER_FUNCTION(
+    (std::auto_ptr<Connection>), connectByAddress, tag,
+    (required
+     (host, (const std::string&))
+     (port, (unsigned short)))
+    (optional
+     (access_key, (EVP_PKEY*), (EVP_PKEY*)0)
+     (legacy_support, (bool), true))
+  )
+  {
+    return connect_by_address_impl(
+      host, port, access_key, legacy_support);
+  }
+    
   /**
    * \brief Cria uma conexão para um barramento indicado por um nome 
    *        ou endereço de rede (deprecado).
    * 
    * \deprecated O barramento é indicado por um nome ou endereço de rede e um
    * número de porta, onde os serviços núcleo daquele barramento estão
-   * executando.
+   * executando. Este método aceita argumentos no formato Boost Parameter.
    * 
-   * @param[in] host Endereço ou nome de rede onde os serviços núcleo do 
+   * @param[in] _host Endereço ou nome de rede onde os serviços núcleo do 
    *            barramento estão executando.
-   * @param[in] port Porta onde os serviços núcleo do barramento estão 
+   * @param[in] _port Porta onde os serviços núcleo do barramento estão 
    *            executando.
-   * @param[in] props Lista opcional de propriedades da conexão 
-   *            (\ref Connection::ConnectionProperties).
-   *   
+   * @param[in] _access_key (opcional) chave de acesso a ser utilizada
+   *            internamente para a geração de credenciais que identificam 
+   *            as chamadas através do barramento. A chave deve ser uma 
+   *            chave privada RSA de 2048 bits (256 bytes). O parâmetro é
+   *            do tipo EVP_PKEY* e na sua ausência uma chave de acesso é
+   *            gerada automaticamente.
+   *            
+   * @param[in] _legacy_support (opcional) boleano que desabilita o suporte
+   *            a chamadas usando o protocolo OpenBus 2.0. Por padrão o suporte
+   *            está habilitado
+   *
+   * Exemplo de chamadas sem os parâmetros opcionais:
+   * \code
+   * createConnection("localhost", 2089);
+   * createConnection(openbus::_host="localhost", openbus::_port=2089);
+   * \endcode
+   *
+   * Exemplo de chamadas com os parâmetros opcionais:
+   * \code
+   * createConnection("localhost", 2089, 
+   *                  _access_key=privake_key, _legacy_support=false);
+   * createConnection("localhost", 2089, 
+   *                  _legacy_support=true, _access_key=privake_key);
+   * \endcode
+	 * @throw InvalidBusAddress Os parâmetros '_host' e '_port' não são válidos.
    * @return Conexão criada.
    *
-	 * @throw InvalidBusAddress Os parâmetros 'host' e 'port' não são válidos.
-   * @throw InvalidPropertyValue O valor de uma propriedade não é válido.
    */
-  std::auto_ptr<Connection> createConnection(
-    const std::string &host, unsigned short port, 
-    const Connection::ConnectionProperties &props = 
-    Connection::ConnectionProperties());
+  BOOST_PARAMETER_MEMBER_FUNCTION(
+    (std::auto_ptr<Connection>), createConnection, tag,
+    (required
+     (host, (const std::string&))
+     (port, (unsigned short)))
+    (optional
+     (access_key, (EVP_PKEY*), (EVP_PKEY*)0)
+     (legacy_support, (bool), true))
+  )
+  {
+    return connect_by_address_impl(
+      host, port, access_key, legacy_support);
+  }
 
   /**
    * \brief Define a conexão padrão a ser usada nas chamadas.
@@ -625,6 +728,23 @@ private:
   std::string decode_exported_versions(
     const CORBA::OctetSeq &stream,
     idl_data_export::VersionedDataSeq_out exported_version_seq) const;
+
+  std::auto_ptr<Connection> connect_by_address_impl(
+    const std::string &host,
+    unsigned short port,
+    EVP_PKEY *access_key,
+    bool legacy_support);
+
+  std::auto_ptr<Connection> connect_by_reference_impl(
+    CORBA::Object_ptr,
+    EVP_PKEY *access_key,
+    bool legacy_support);
+
+  std::auto_ptr<Connection> create_connection_impl(
+    const std::string &host,
+    unsigned short port,
+    EVP_PKEY *access_key,
+    bool legacy_support);
 
   typedef std::map<std::string, Connection *> BusidConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD

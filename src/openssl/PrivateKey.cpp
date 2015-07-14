@@ -15,7 +15,7 @@ void PrivateKey::set_pkey(const idl::OctetSeq &key)
   assert(_key.get());
 }  
 
-PrivateKey::PrivateKey()
+EVP_PKEY * PrivateKey::new_key()
 {
   openssl::pkey_ctx ctx (EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, 0));
   assert(ctx.get());
@@ -26,7 +26,12 @@ PrivateKey::PrivateKey()
   EVP_PKEY *key = 0;
   r = EVP_PKEY_keygen(ctx.get(), &key);
   assert((r == 1) && key);
-  _key = openssl::pkey(key);
+  return key;
+}
+
+PrivateKey::PrivateKey()
+{
+  _key = openssl::pkey(new_key());
   std::size_t buf_size(i2d_PrivateKey(_key.get(), 0));
   openssl::openssl_buffer buf(idl::OctetSeq::allocbuf(
                                 static_cast<CORBA::ULong>(buf_size)));
@@ -41,6 +46,11 @@ PrivateKey::PrivateKey()
 
 PrivateKey::PrivateKey(EVP_PKEY *key)
 {
+  std::cout << "key: " << key << std::endl;
+  if (key == 0)
+  {
+    key = new_key();
+  }
   CRYPTO_add(&key->references, 1, CRYPTO_LOCK_EVP_PKEY);
   _key = openssl::pkey(key);
   std::size_t buf_size(i2d_PrivateKey(key, 0));

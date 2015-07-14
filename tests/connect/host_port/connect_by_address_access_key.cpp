@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include <configuration.h>
+#include <demo/openssl.hpp>
 #include <openbus.hpp>
 
 int main(int argc, char* argv[])
@@ -13,8 +14,16 @@ int main(int argc, char* argv[])
     obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+
+  EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(argv[argc-1]));
+  if (!priv_key)
+  {
+    std::cerr << "Chave privada inválida." << std::endl;
+    std::abort();
+  }
+
   std::auto_ptr<openbus::Connection>
-    conn(bus_ctx->connectByAddress(openbus::_host=cfg.host(),
-                                   openbus::_port=cfg.port()));
+    conn(bus_ctx->connectByAddress(cfg.host(), cfg.port(),
+                                   openbus::_access_key=priv_key));
   return 0; //MSVC
 }

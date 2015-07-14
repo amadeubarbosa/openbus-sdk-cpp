@@ -230,9 +230,15 @@ explicit test-hello-skeleton ;
 
 alias run-tests
   : [ run connect/host_port/connect_to_right_host_and_port.cpp : : : $(test-requirements) ]
+    [ run connect/host_port/connect_by_address_legacy_on.cpp : : : $(test-requirements) ]
+    [ run connect/host_port/connect_by_address_access_key.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connect/host_port/connect_by_address_access_key_legacy_on.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run connect/host_port/connect_to_wrong_host_and_port.cpp : : : $(test-requirements) ]
     [ run connect/host_port/connect_with_invalid_host.cpp : : : $(test-requirements) ]
     [ run connect/reference/connect_with_valid_reference.cpp : : : $(test-requirements) ]
+    [ run connect/reference/connect_by_reference_access_key.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connect/reference/connect_by_reference_access_key_legacy_on.cpp : : admin/TestCppHello.key : $(test-requirements) ]
+    [ run connect/reference/connect_by_reference_legacy_on.cpp : : admin/TestCppHello.key : $(test-requirements) ]
     [ run openbus_context/orb_is_same.cpp : : : $(test-requirements) ]
     [ run openbus_context/getting_orb_with_bus_ctx.cpp : : : $(test-requirements) ]
     [ run openbus_context/get_bus_ctx.cpp : : : $(test-requirements) ]
