@@ -92,7 +92,7 @@ int main(int argc, char **argv)
       const char *offer_entity(0);
       for (CORBA::ULong idx = 0; idx != properties.length(); ++idx)
       {
-        if (std::string(properties[idx].name) == "openbus.offer.login")
+        if (std::string(properties[idx].name) == "openbus.offer.entity")
         {
           offer_entity = properties[idx].value.in();
           break;

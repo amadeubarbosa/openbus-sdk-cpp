@@ -46,7 +46,6 @@ PrivateKey::PrivateKey()
 
 PrivateKey::PrivateKey(EVP_PKEY *key)
 {
-  std::cout << "key: " << key << std::endl;
   if (key == 0)
   {
     key = new_key();

@@ -154,7 +154,7 @@ bool ClientInterceptor::ignore_invalid_login(PortableInterceptor::ClientRequestI
 }
 
 idl_cr::SignedData ClientInterceptor::get_signed_chain(
-  Connection &conn, hash_value &hash, const std::string &remote_id)
+  Connection &conn, hash_value &hash, const std::string &entity)
 {
   log_scope l(log().general_logger(), debug_level, 
               "ClientInterceptor::get_signed_chain");
@@ -170,7 +170,7 @@ idl_cr::SignedData ClientInterceptor::get_signed_chain(
   {
     try
     {
-      chain = *conn.access_control()->signChainFor(remote_id.c_str());
+      chain = *conn.access_control()->signChainFor(entity.c_str());
     }
     catch (const CORBA::SystemException &)
     {
@@ -178,21 +178,6 @@ idl_cr::SignedData ClientInterceptor::get_signed_chain(
              conn.busid().c_str());
       throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
                                  CORBA::COMPLETED_NO);
-    }
-    catch (const idl_ac::InvalidLogins &)
-    {
-      Connection::profile2login_LRUCache::Key_List entries(
-        conn._profile2login.get_all_keys());
-      for (Connection::profile2login_LRUCache::Key_List::iterator it(
-             entries.begin()); it != entries.end(); ++it)
-      {        
-        if (remote_id == conn._profile2login.fetch(*it))
-        {
-          conn._profile2login.remove(*it);
-        }
-      }
-      l.log("throw CORBA::NO_PERMISSION, minor=InvalidTaretCode");
-      throw CORBA::NO_PERMISSION(idl_ac::InvalidTargetCode,CORBA::COMPLETED_NO);
     }
 
     {
@@ -283,7 +268,7 @@ void ClientInterceptor::build_credential(
         }
         SHA256(buf.get(), size, hash.c_array());
       }
-      credential.chain = get_signed_chain(conn, hash, remote_id);
+      credential.chain = get_signed_chain(conn, hash, session->entity);
     } 
   }
       
@@ -417,6 +402,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     Connection::SecretSession session;
     session.id = credential_reset.session;
     session.remote_id = credential_reset.target.in();
+    session.entity = credential_reset.entity.in();
     std::copy(secret.get_buffer(), secret.get_buffer() + secret_size, 
               session.secret.c_array());
     session.ticket = 0;

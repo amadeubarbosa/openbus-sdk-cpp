@@ -460,7 +460,7 @@ private:
       secret.fill(0);
     }
     CORBA::ULong id;
-    std::string remote_id;
+    std::string remote_id, entity;
     boost::array<unsigned char, secret_size> secret;
     CORBA::ULong ticket;
     friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);

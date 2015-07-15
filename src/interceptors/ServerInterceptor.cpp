@@ -53,6 +53,7 @@ void ServerInterceptor::send_credential_reset(
                                      boost::uuids::uuid::static_size());
   }
   credentialReset.target = conn._login()->id;
+  credentialReset.entity = conn._login()->entity;
   std::memcpy(credentialReset.challenge, secret.get_buffer(), 
               idl::EncryptedBlockSize);
   CORBA::Any any;
