@@ -223,6 +223,8 @@ public:
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
 	* @throw idl_ac::UnknownDomain O domínio de autenticação não é conhecido.
+  * @throw idl_ac::WrongEncoding A autenticação falhou, pois a senha não foi
+  *        codificada corretamente com a chave pública do barramento.
   * @throw CORBA::Exception
   */
   void loginByPassword(
@@ -247,6 +249,8 @@ public:
   * @throw idl_ac::MissingCertificate 
   *        Não há certificado para essa entidade registrado no barramento
   *        indicado.
+  * @throw idl_ac::WrongEncoding A autenticação falhou, pois a senha não foi
+  *        codificada corretamente com a chave pública do barramento.
   * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
@@ -290,6 +294,8 @@ public:
   * @throw AlreadyLoggedIn A conexão já está autenticada.
   * @throw AccessDenied O segredo fornecido não corresponde ao esperado
   *        pelo barramento.
+  * @throw idl_ac::WrongEncoding A autenticação falhou, pois a senha não foi
+  *        codificada corretamente com a chave pública do barramento.
   * @throw ServiceFailure Ocorreu uma falha interna nos serviços do
   *        barramento que impediu a autenticação da conexão.
   * @throw CORBA::Exception
