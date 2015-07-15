@@ -222,9 +222,13 @@ public:
   * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
+	* @throw idl_ac::UnknownDomain O domínio de autenticação não é conhecido.
   * @throw CORBA::Exception
   */
-  void loginByPassword(const std::string &entity, const std::string &password);
+  void loginByPassword(
+    const std::string &entity,
+    const std::string &password,
+    const std::string &domain = "");
   
  /**
   * \brief Efetua login de uma entidade usando autenticação por certificado.

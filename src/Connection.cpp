@@ -265,7 +265,8 @@ void Connection::login(idl_ac::LoginInfo &loginInfo,
 }
 
 void Connection::loginByPassword(const std::string &entity, 
-                                 const std::string &password) 
+                                 const std::string &password,
+                                 const std::string &domain) 
 {
   log_scope l(log().general_logger(), info_level, 
               "Connection::loginByPassword");
@@ -311,8 +312,12 @@ void Connection::loginByPassword(const std::string &entity,
   idl_ac::LoginInfo *loginInfo(0);
   try 
   {
-    loginInfo = _access_control->loginByPassword(entity.c_str(), "", _key.pubKey(), 
-                                                 encryptedBlock, validityTime);
+    loginInfo = _access_control->loginByPassword(
+      entity.c_str(),
+      domain.c_str(),
+      _key.pubKey(),
+      encryptedBlock,
+      validityTime);
   } 
   catch (const idl_ac::WrongEncoding &) 
   {
