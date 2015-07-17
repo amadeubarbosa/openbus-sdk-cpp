@@ -153,7 +153,7 @@ CallerChain OpenBusContext::getCallerChain()
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
     
   return CallerChain(
-    conn->busid(), conn->login()->entity.in(), chain.originators, 
+    chain.bus.in(), conn->login()->entity.in(), chain.originators, 
     chain.caller, signed_chain);
 }
 
@@ -210,7 +210,7 @@ CallerChain OpenBusContext::getJoinedChain() const
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
 
   return CallerChain(
-    conn->busid(), conn->login()->entity.in(), chain.originators, 
+    chain.bus.in(), conn->login()->entity.in(), chain.originators, 
     chain.caller, signed_chain);
 }
 
@@ -232,7 +232,7 @@ CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
                                        signed_chain->encoded.get_buffer()),
                        idl_ac::_tc_CallChain));
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-  return CallerChain(conn->busid(), chain.target.in(),
+  return CallerChain(chain.bus.in(), chain.target.in(),
                      chain.originators, chain.caller, *signed_chain);
 }
 

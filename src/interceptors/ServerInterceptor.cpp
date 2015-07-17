@@ -182,7 +182,8 @@ bool ServerInterceptor::validate_chain(
       _orb_init->codec->decode_value(o, idl_ac::_tc_CallChain));
 
     idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-    if (std::strcmp(chain.caller.id, caller->loginInfo->id)) 
+    if (std::strcmp(chain.caller.id, caller->loginInfo->id)
+        || std::strcmp(chain.bus.in(), conn.busid().c_str()))
     {
       return false;
     }

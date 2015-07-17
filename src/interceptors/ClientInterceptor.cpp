@@ -130,10 +130,8 @@ CallerChain ClientInterceptor::get_joined_chain(Connection &conn,
                     const_cast<unsigned char *>
                     (signed_chain.encoded.get_buffer())),
     idl_ac::_tc_CallChain);
-  // any = _orb_init->codec->decode_value(signed_chain.encoded,
-  //                                      idl_ac::_tc_CallChain);
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-  return CallerChain(conn.busid(), chain.target.in(),
+  return CallerChain(chain.bus.in(), chain.target.in(),
                      chain.originators, chain.caller, signed_chain);
 }
 
