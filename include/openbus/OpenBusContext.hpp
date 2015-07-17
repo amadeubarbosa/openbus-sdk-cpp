@@ -631,6 +631,30 @@ public:
    */
   CallerChain makeChainFor(const std::string &entity) const;
 
+	/**
+	 * \brief Cria uma cadeia de chamadas assinada pelo barramento com
+	 *        informações de uma autenticação externa ao barramento.
+	 * 
+	 * A cadeia criada pode ser usada pela entidade do login que faz a chamada.
+	 * O conteúdo da cadeia é dado pelas informações obtidas através do token
+	 * indicado.
+	 * 
+	 * \param token Valor opaco que representa uma informação de autenticação 
+   *        externa.
+	 * \param domain Identificador do domínio de autenticação.
+	 * \return A nova cadeia de chamadas assinada.
+	 *
+	 * \exception idl_ac::InvalidToken O token fornecido não foi reconhecido.
+	 * \exception idl_ac::UnknownDomain O domínio de autenticação não é conhecido.
+	 * \exception idl_ac::WrongEncoding A importação falhou, pois o token não foi
+	 *            codificado corretamente com a chave pública do barramento.
+	 * \exception idl::ServiceFailure Ocorreu uma falha interna nos serviços do 
+   *            barramento que impediu a criação da cadeia.
+	 */
+	CallerChain importChain(
+    const CORBA::OctetSeq &token,
+    const std::string &domain = "") const;
+
   /**
    * \brief Codifica uma cadeia de chamadas (CallerChain) para um stream de
    * bytes.

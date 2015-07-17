@@ -3,6 +3,7 @@
 #include "openbus/detail/LoginCache.hpp"
 #include "openbus/log.hpp"
 #include "openbus/detail/any.hpp"
+#include "openbus/detail/openssl/PublicKey.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
@@ -226,6 +227,34 @@ CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
   CallerChain joined_chain(getJoinedChain());
   idl_cr::SignedData_var signed_chain(
     conn->access_control()->signChainFor(entity.c_str()));
+  CORBA::Any_var any(_orb_init->codec->decode_value(
+                       CORBA::OctetSeq(signed_chain->encoded.maximum(),
+                                       signed_chain->encoded.length(),
+                                       signed_chain->encoded.get_buffer()),
+                       idl_ac::_tc_CallChain));
+  idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+  return CallerChain(chain.bus.in(), chain.target.in(),
+                     chain.originators, chain.caller, *signed_chain);
+}
+
+CallerChain OpenBusContext::importChain(
+  const CORBA::OctetSeq &token,
+  const std::string &domain) const
+{
+  log_scope l(log().general_logger(), info_level, 
+              "OpenBusContext::importChain");
+  Connection *conn(getCurrentConnection());
+  if (!conn)
+  {
+    return CallerChain();
+  }
+  idl::OctetSeq_var o(conn->access_control()->certificate());
+  openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
+  openssl::pkey pub_key(X509_get_pubkey(crt.get()));
+  PublicKey bus_key(pub_key);
+  idl::OctetSeq encrypted(bus_key.encrypt(token.get_buffer(), token.length()));
+  idl_cr::SignedData_var signed_chain(
+    conn->access_control()->signChainByToken(encrypted, domain.c_str()));
   CORBA::Any_var any(_orb_init->codec->decode_value(
                        CORBA::OctetSeq(signed_chain->encoded.maximum(),
                                        signed_chain->encoded.length(),
