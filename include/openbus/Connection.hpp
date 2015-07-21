@@ -61,6 +61,14 @@ namespace openbus
  
 namespace openbus 
 { 
+struct OPENBUS_SDK_DECL WrongBus : public std::exception 
+{ 
+  const char *what() const throw()
+  { 
+    return "openbus::WrongBus";
+  }
+};
+
 struct OPENBUS_SDK_DECL BusChanged : public std::exception 
 { 
   const char *what() const throw()
@@ -288,6 +296,7 @@ public:
   * 
   * @param secret Segredo a ser fornecido na conclusão do processo de login.
   * 
+  * @throw WrongBus O segredo não pertence ao barramento contactado.
   * @throw InvalidLoginProcess A tentativa de login associada ao segredo
   *        informado é inválido, por exemplo depois do segredo ser
   *        cancelado, ter expirado, ou já ter sido utilizado.

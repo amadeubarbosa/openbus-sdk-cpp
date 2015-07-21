@@ -436,7 +436,11 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   {
     throw AlreadyLoggedIn();
   }
-  
+
+  if (secret.busid() != busid())
+  {
+    throw WrongBus();
+  }
   interceptors::ignore_interceptor _i(_orb_init);
   idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret.secret_;
