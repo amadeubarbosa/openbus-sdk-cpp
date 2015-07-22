@@ -292,6 +292,7 @@ alias run-tests
     [ run connection/loginByPassword/on_invalid_login.cpp : : : $(test-requirements) ]
     [ run connection/loginByPassword/wrong_password.cpp : : : $(test-requirements) ]
     [ run connection/loginByPassword/unknown_domain.cpp : : : $(test-requirements) ]
+    [ run connection/loginByPassword/too_many_attempts.cpp : : : $(test-requirements) ]
     [ run connection/login/login_info_after_login.cpp : : : $(test-requirements) ]
     [ run connection/logout/logout_twice.cpp : : : $(test-requirements) ]
     [ run fail_user_created_orb.cpp : : : $(test-requirements) ]

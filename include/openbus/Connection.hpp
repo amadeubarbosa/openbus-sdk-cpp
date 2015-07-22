@@ -227,6 +227,8 @@ public:
   * @throw idl_ac::AccessDenied
   *        Senha fornecida para autenticação da entidade não foi validada pelo 
   *        barramento.
+  * @throw TooManyAttempts A autenticação foi recusada por um número 
+  *        excessivo de tentativas inválidas de login por senha.
   * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
