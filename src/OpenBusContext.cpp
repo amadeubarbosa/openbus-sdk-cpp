@@ -53,7 +53,7 @@ std::auto_ptr<Connection> OpenBusContext::connect_by_address_impl(
 
 
 std::auto_ptr<Connection> OpenBusContext::connect_by_reference_impl(
-  CORBA::Object_ptr ref,
+  CORBA::Object_var ref,
   EVP_PKEY *access_key,
   bool legacy_support)
 {

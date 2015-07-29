@@ -22,6 +22,6 @@ int main(int argc, char* argv[])
     ref(orb_ctx->orb()->string_to_object(corbaloc.str().c_str()));
   
   std::auto_ptr<openbus::Connection>
-    conn(bus_ctx->connectByReference(ref.in()));
+    conn(bus_ctx->connectByReference(ref));
   return 0; //MSVC
 }

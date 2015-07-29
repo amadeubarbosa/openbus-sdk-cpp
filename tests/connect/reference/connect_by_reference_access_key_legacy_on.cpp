@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
   }
 
   std::auto_ptr<openbus::Connection>
-    conn(bus_ctx->connectByReference(ref.in(),
+    conn(bus_ctx->connectByReference(ref,
                                      openbus::_access_key=priv_key,
                                      openbus::_legacy_support=true));
   return 0; //MSVC

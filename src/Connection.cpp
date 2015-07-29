@@ -137,7 +137,7 @@ void SharedAuthSecret::cancel()
 }
 
 Connection::Connection(
-  CORBA::Object_ptr ref,
+  CORBA::Object_var ref,
   CORBA::ORB_ptr orb, 
   interceptors::ORBInitializer *orb_init,
   OpenBusContext &m, 

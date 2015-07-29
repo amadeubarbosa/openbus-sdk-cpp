@@ -367,7 +367,7 @@ public:
   BOOST_PARAMETER_MEMBER_FUNCTION(
     (std::auto_ptr<Connection>), connectByReference, tag,
     (required
-     (reference, (CORBA::Object_ptr)))
+     (reference, (CORBA::Object_var)))
     (optional
      (access_key, (EVP_PKEY*), (EVP_PKEY*)0)
      (legacy_support, (bool), true))
@@ -760,7 +760,7 @@ private:
     bool legacy_support);
 
   std::auto_ptr<Connection> connect_by_reference_impl(
-    CORBA::Object_ptr,
+    CORBA::Object_var,
     EVP_PKEY *access_key,
     bool legacy_support);
 
