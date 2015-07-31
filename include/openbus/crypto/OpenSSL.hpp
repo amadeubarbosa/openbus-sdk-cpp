@@ -15,7 +15,7 @@ namespace openssl
 
 struct pkey_ctx
 {
-  explicit pkey_ctx(EVP_PKEY_CTX *ctx) : ctx(ctx) 
+  explicit pkey_ctx(EVP_PKEY_CTX *_ctx) : ctx(_ctx) 
   {
   }
 
