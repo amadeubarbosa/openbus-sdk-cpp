@@ -498,7 +498,10 @@ bool Connection::_logout(bool local)
   {
   #ifdef OPENBUS_SDK_MULTITHREAD
     _renewLogin.interrupt();
-    _renewLogin.join();
+    if (_renewLogin.get_id() != boost::this_thread::get_id())
+    {
+      _renewLogin.join();
+    }
   #else
     _renewLogin.reset();
   #endif

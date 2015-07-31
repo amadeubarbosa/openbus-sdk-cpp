@@ -159,7 +159,7 @@ int main(int argc, char **argv)
     HelloImpl srv(*bus_ctx);
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
     login_register(*bus_ctx, comp, props, *conn);
-
+    bus_ctx->getLoginRegistry()->invalidateLogin(conn->login()->id.in());
 #ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
 #else

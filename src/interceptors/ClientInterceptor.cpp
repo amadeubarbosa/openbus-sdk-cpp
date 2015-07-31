@@ -432,10 +432,10 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     try
     { 
       interceptors::ignore_invalid_login i(_orb_init);
-      if (_bus_ctx->getLoginRegistry())
+      idl_ac::LoginRegistry_ptr login_registry(_bus_ctx->getLoginRegistry());
+      if (login_registry)
       {
-        validity = _bus_ctx->getLoginRegistry()->getLoginValidity(
-          invalid_login.id);
+        validity = login_registry->getLoginValidity(invalid_login.id);
       }
       else
       {
@@ -445,37 +445,35 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     }
     catch (const CORBA::NO_PERMISSION &e)
     {
-      if (idl_ac::InvalidLoginCode == e.minor())
+      if (idl_ac::InvalidLoginCode != e.minor())
       {
-        idl_ac::LoginInfo curr_login;
+        throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
+                                   CORBA::COMPLETED_NO);
+      }
+      
+      idl_ac::LoginInfo curr_login;
+      {
+#ifdef OPENBUS_SDK_MULTITHREAD
+        boost::lock_guard<boost::mutex> conn_lock(conn->_mutex);
+#endif
+        curr_login = *conn->_loginInfo;
+      }
+      if (std::string(curr_login.id.in())
+          == std::string(invalid_login.id.in())) 
+      {
+        conn->_logout(true);
+        idl_ac::LoginInfo *obj(new idl_ac::LoginInfo);
+        obj->id = invalid_login.id;
+        obj->entity = invalid_login.entity;
         {
 #ifdef OPENBUS_SDK_MULTITHREAD
           boost::lock_guard<boost::mutex> conn_lock(conn->_mutex);
-#endif
-          curr_login = *conn->_loginInfo;
-        }
-        if (std::string(curr_login.id.in())
-            == std::string(invalid_login.id.in()))
-        {
-          conn->_logout(true);
-          idl_ac::LoginInfo *obj(new idl_ac::LoginInfo);
-          obj->id = invalid_login.id;
-          obj->entity = invalid_login.entity;
-          {
-#ifdef OPENBUS_SDK_MULTITHREAD
-            boost::lock_guard<boost::mutex> conn_lock(conn->_mutex);
 #endif            
           conn->_invalid_login.reset(obj);
-          }
         }
-        l.log("Excecao InvalidLogin ao chamar getLoginValidity(). Retransmissa da requisicao.");
-        throw PortableInterceptor::ForwardRequest(r->target());
       }
-      else
-      {
-        throw CORBA::NO_PERMISSION(idl_ac::UnavailableBusCode,
-                                     CORBA::COMPLETED_NO);
-      }
+      l.log("Excecao InvalidLogin ao chamar getLoginValidity(). Retransmissa da requisicao.");
+      throw PortableInterceptor::ForwardRequest(r->target());
     }
     catch (const CORBA::Exception &)
     {
