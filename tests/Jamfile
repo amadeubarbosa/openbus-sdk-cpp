@@ -166,10 +166,10 @@ alias tests
   : connect_host_port_connect_to_right_host_and_port
     connect_host_port_connect_to_wrong_host_and_port
     connect_orb_connect_getting_orb_with_createORB
-    connection_caller_chain_decode_chain_wrong_context_id
-    connection_caller_chain_decode_default_octet_sequence
-    connection_caller_chain_encode_and_decode_chain
-    connection_caller_chain_encode_default_caller_chain
+#    connection_caller_chain_decode_chain_wrong_context_id
+#    connection_caller_chain_decode_default_octet_sequence
+#    connection_caller_chain_encode_and_decode_chain
+#    connection_caller_chain_encode_default_caller_chain
     connection_caller_chain_make_chain_for_invalid_login
     connection_caller_chain_make_chain_for_valid_login
     connection_caller_chain_make_chain_for_joined_chain
