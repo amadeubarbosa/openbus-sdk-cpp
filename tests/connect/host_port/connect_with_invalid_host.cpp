@@ -30,4 +30,5 @@ int main(int argc, char* argv[])
     std::cout << "Unknown exception was thrown" << std::endl;
     std::abort();
   }
+  return 0; //MSVC
 }

@@ -140,5 +140,9 @@ int main(int argc, char* argv[])
     std::cerr << "call_dispatch == false" << std::endl;
     std::abort();
   }
+#ifdef OPENBUS_SDK_MULTITHREAD
+  orb_ctx->orb()->shutdown(true);
+  orb_thread.join();
+#endif
   return 0; //MSVC
 }
