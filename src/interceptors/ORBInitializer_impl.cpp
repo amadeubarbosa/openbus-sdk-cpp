@@ -7,6 +7,8 @@
 
 #include "openbus/crypto/OpenSSL.hpp"
 
+#include <boost/cstdint.hpp>
+
 namespace openbus 
 {
 hash_value hash(std::string operation, CORBA::ULong ticket, 
@@ -23,7 +25,13 @@ hash_value hash(std::string operation, CORBA::ULong ticket,
   pos += sizeof(idl::MinorVersion);
   std::memcpy(buf.get() + pos, secret.data(), secret_size);
   pos += secret_size;
-  std::memcpy(buf.get() + pos, &ticket, sizeof(CORBA::ULong));
+  // ticket must be a little endian 32 bits number (by openbus protocol)
+  boost::uint8_t* ticket_bytes = (boost::uint8_t*) &ticket;
+  CORBA::ULong little_endian_ticket = ticket_bytes[0] << 0  |
+                                      ticket_bytes[1] << 8  |
+                                      ticket_bytes[2] << 16 |
+                                      ticket_bytes[3] << 24;
+  std::memcpy(buf.get() + pos, &little_endian_ticket, sizeof(CORBA::ULong));
   pos += sizeof(CORBA::ULong);
   std::memcpy(buf.get() + pos, operation.c_str(), operation.size());
   hash_value hash;
