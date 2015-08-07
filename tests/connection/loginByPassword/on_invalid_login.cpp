@@ -4,7 +4,7 @@
 #include <openbus/log.hpp>
 #include <configuration.h>
 
-bool ok = false;
+bool on_invalid_login_called(false); 
 
 struct relogin_callback
 {
@@ -20,7 +20,7 @@ struct relogin_callback
       try
       {
         conn.loginByPassword(cfg.user(), cfg.password());
-        ok = true;
+        on_invalid_login_called = true;
         break;
       }
       catch (const CORBA::Exception &)
@@ -52,18 +52,19 @@ int main(int argc, char** argv)
   conn->loginByPassword(cfg.user(), cfg.password());
   relogin_callback callback(cfg);
   conn->onInvalidLogin(callback);
+
+  std::size_t validity(
+    bus_ctx->getLoginRegistry()->getLoginValidity(conn->login()->id.in()));
+
   std::string invalid_login(conn->login()->id.in());
   bus_ctx->getLoginRegistry()->invalidateLogin(conn->login()->id.in());
-  std::size_t validity(
-    bus_ctx->getLoginRegistry()->getLoginValidity(invalid_login.c_str()));
-  if (!ok)
+
+  std::cout << "sleep_for: " << ++validity << "s" << std::endl;
+  boost::this_thread::sleep_for(boost::chrono::seconds(validity));
+
+  if (!on_invalid_login_called)
   {
-    std::cerr << "ok != true" << std::endl;
-    std::abort();
-  }
-  if (validity > 0)
-  {
-    std::cerr << "getLoginValidity() > 0" << std::endl;
+    std::cerr << "on_invalid_login_called != true" << std::endl;
     std::abort();
   }
   return 0; //MSVC

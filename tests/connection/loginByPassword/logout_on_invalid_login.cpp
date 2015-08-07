@@ -4,7 +4,7 @@
 #include <openbus/log.hpp>
 #include <configuration.h>
 
-bool ok = false;
+bool on_invalid_login_called(false);
 
 struct relogin_callback
 {
@@ -20,7 +20,7 @@ struct relogin_callback
       try
       {
         conn.loginByPassword(cfg.user(), cfg.password());
-        ok = true;
+        on_invalid_login_called = true;
         break;
       }
       catch (const CORBA::Exception &)
@@ -53,6 +53,10 @@ int main(int argc, char** argv)
   relogin_callback callback(cfg);
   conn->onInvalidLogin(callback);
   std::string invalid_login(conn->login()->id.in());
+
+  std::size_t validity(
+    bus_ctx->getLoginRegistry()->getLoginValidity(conn->login()->id.in()));
+
   bus_ctx->getLoginRegistry()->invalidateLogin(conn->login()->id.in());
   bool unlogged(conn->logout());
   if (!unlogged)
@@ -60,9 +64,13 @@ int main(int argc, char** argv)
     std::cerr << "unlogged == false: Logout nao foi realizado." << std::endl;
     std::abort();
   }
-  if (ok)
+
+  std::cout << "sleep_for: " << ++validity << "s" << std::endl;
+  boost::this_thread::sleep_for(boost::chrono::seconds(validity));
+
+  if (on_invalid_login_called)
   {
-    std::cerr << "ok == true: Callback onInvalidLogin executada indevidamente."
+    std::cerr << "on_invalid_login_called == true: Callback onInvalidLogin executada indevidamente."
               << std::endl;
     std::abort();
   }
