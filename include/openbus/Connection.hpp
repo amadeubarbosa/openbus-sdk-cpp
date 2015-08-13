@@ -10,6 +10,7 @@
 #define TECGRAF_SDK_OPENBUS_CONNECTION_HPP
 
 #include "scsC.h"
+#include "access_controlC.h"
 #include "openbus_core-2.1C.h"
 #include "openbus_access-2.1C.h"
 #include "openbus_offers-2.1C.h"
@@ -43,7 +44,9 @@ namespace openbus
   namespace idl = tecgraf::openbus::core::v2_1;
   namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
   namespace idl_or = tecgraf::openbus::core::v2_1::services::offer_registry;
-
+  namespace legacy_idl = tecgraf::openbus::core::v2_0;
+  namespace legacy_idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
+  
   class OpenBusContext;
   class LoginCache;
 #ifndef OPENBUS_SDK_MULTITHREAD
@@ -440,7 +443,7 @@ private:
 
   idl_ac::LoginInfo get_login();
 
-  CORBA::Object_var _component_ref;
+  scs::core::IComponent_var _iComponent;
   const std::string _host;
   const unsigned short _port;
   interceptors::ORBInitializer * _orb_init;
@@ -464,15 +467,18 @@ private:
   /* Variaveis que sao modificadas somente no construtor. */
   OpenBusContext &_openbusContext;
   PrivateKey _key;
-  scs::core::IComponent_var _iComponent;
   idl_ac::AccessControl_var _access_control;
   idl_ac::LoginRegistry_var _login_registry;
   idl_or::OfferRegistry_var _offer_registry;
   boost::scoped_ptr<LoginCache> _loginCache;
   std::string _busid;
   boost::scoped_ptr<PublicKey> _buskey;
+  bool _legacy_support;
+  legacy_idl_ac::AccessControl_var _legacy_access_control;
   /**/
     
+  CORBA::Object_var _component_ref;
+
   struct SecretSession 
   {
     SecretSession()

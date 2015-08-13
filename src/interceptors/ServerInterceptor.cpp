@@ -241,8 +241,7 @@ void ServerInterceptor::receive_request_service_contexts(
       boost::array<unsigned char, secret_size> secret;
       std::copy(session->secret.begin(), session->secret.end(), 
                 secret.c_array());
-      hash = ::openbus::hash(r->operation(), 
-                             credential_.data.ticket, secret);
+      hash = ::openbus::hash(r->operation(), credential_.data.ticket, secret);
       remote_id = session->remote_id;
     }
   }

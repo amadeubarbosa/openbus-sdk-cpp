@@ -154,8 +154,7 @@ CallerChain OpenBusContext::getCallerChain()
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
     
   return CallerChain(
-    chain.bus.in(), conn->login()->entity.in(), chain.originators, 
-    chain.caller, signed_chain);
+    chain, chain.bus.in(), conn->login()->entity.in(), signed_chain);
 }
 
 void OpenBusContext::joinChain(CallerChain const &chain) 
@@ -211,8 +210,8 @@ CallerChain OpenBusContext::getJoinedChain() const
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
 
   return CallerChain(
-    chain.bus.in(), conn->login()->entity.in(), chain.originators, 
-    chain.caller, signed_chain);
+    chain, chain.bus.in(), conn->login()->entity.in(), 
+    signed_chain);
 }
 
 CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
@@ -233,8 +232,8 @@ CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
                                        signed_chain->encoded.get_buffer()),
                        idl_ac::_tc_CallChain));
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-  return CallerChain(chain.bus.in(), chain.target.in(),
-                     chain.originators, chain.caller, *signed_chain);
+  return CallerChain(chain, chain.bus.in(), chain.target.in(),
+                     *signed_chain);
 }
 
 CallerChain OpenBusContext::importChain(
@@ -261,8 +260,8 @@ CallerChain OpenBusContext::importChain(
                                        signed_chain->encoded.get_buffer()),
                        idl_ac::_tc_CallChain));
   idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-  return CallerChain(chain.bus.in(), chain.target.in(),
-                     chain.originators, chain.caller, *signed_chain);
+  return CallerChain(chain, chain.bus.in(), chain.target.in(),
+                     *signed_chain);
 }
 
 CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
@@ -337,8 +336,7 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
         idl_ac::CallChain call_chain(
           extract<idl_ac::CallChain>(call_chain_any));
         return CallerChain(
-          call_chain.bus.in(), call_chain.target.in(),
-          call_chain.originators, call_chain.caller,
+          call_chain, call_chain.bus.in(), call_chain.target.in(),
           exported_chain);      
       }
     }

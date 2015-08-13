@@ -18,11 +18,17 @@
 #endif
 #include <boost/shared_ptr.hpp>
 #include <boost/uuid/uuid.hpp>
+#include <boost/mpl/if.hpp>
 #include <map>
+#include "credentialC.h"
+#include "access_controlC.h"
 
 namespace openbus 
 {
+namespace legacy_idl_cr = tecgraf::openbus::core::v2_0::credential;
+namespace legacy_idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
 namespace idl_cr = tecgraf::openbus::core::v2_1::credential;
+namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
 
 class OpenBusContext;
 class Connection;
@@ -46,15 +52,40 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   Connection &get_current_connection(PI::ClientRequestInfo &);
   bool ignore_request(PI::ClientRequestInfo &);
   bool ignore_invalid_login(PI::ClientRequestInfo &);
+
+    idl_cr::SignedData
+      get_signed_chain(
+        Connection &,
+        hash_value &hash, 
+        const std::string &target,
+        idl_cr::CredentialData);
+    
+    legacy_idl_cr::SignedCallChain
+      get_signed_chain(
+        Connection &,
+        hash_value &, 
+        const std::string &target,
+        legacy_idl_cr::CredentialData);
+
+  template <typename C = idl_cr::CredentialData>
+  void build_credential(
+    PI::ClientRequestInfo &,
+    Connection &conn,
+    typename boost::mpl::if_<
+    typename boost::is_same<C, idl_cr::CredentialData>::type,
+    idl_ac::LoginInfo,
+    legacy_idl_ac::LoginInfo>::type &);
+
+  template <typename C = idl_cr::CredentialData>
+  openbus::CallerChain get_joined_chain(
+    Connection &,
+    PI::ClientRequestInfo &);
   
-  idl_cr::SignedData get_signed_chain(Connection &, hash_value &hash, 
-                                           const std::string &remote_id);
-  void build_credential(PI::ClientRequestInfo &, Connection &conn,
-                        const tecgraf::openbus::core::v2_1::services::access_control::LoginInfo &);
-  openbus::CallerChain get_joined_chain(Connection &, PI::ClientRequestInfo &);
+  openbus::CallerChain get_joined_legacy_chain(Connection &, PI::ClientRequestInfo &);
   boost::uuids::uuid get_request_id(PI::ClientRequestInfo_ptr);
   ORBInitializer *_orb_init;
   LRUCache<hash_value, idl_cr::SignedData> _callChainLRUCache;
+  LRUCache<hash_value, legacy_idl_cr::SignedCallChain> _legacy_callChainLRUCache;
   OpenBusContext *_bus_ctx;
   std::map<boost::uuids::uuid, Connection *> _request_id2conn;
 #ifdef OPENBUS_SDK_MULTITHREAD

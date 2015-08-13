@@ -182,16 +182,36 @@ private:
 #else
 public:
 #endif
-  CallerChain(const std::string &busid, 
-              const std::string &target,
-              const idl_ac::LoginInfoSeq &originators, 
-              const idl_ac::LoginInfo &caller,
-              const idl_cr::SignedData &chain) 
-    : _busid(busid), _target(target), _originators(originators), 
-      _caller(caller), _signedCallChain(chain)
+  CallerChain(
+    const idl_ac::CallChain &chain,
+    const std::string &busid,
+    const std::string &target,
+    const idl_cr::SignedData &signed_chain)
+    : _busid(chain.bus.in()),
+    _target(target),
+    _originators(chain.originators), 
+    _caller(chain.caller),
+    _signedCallChain(signed_chain)
   {
   }
-  
+
+  CallerChain(
+    const legacy_idl_ac::CallChain &chain,
+    const std::string &busid,
+    const std::string &target,
+    const legacy_idl_cr::SignedCallChain &signed_chain)
+    : _busid(busid),
+    _target(target),
+    _legacy_signedCallChain(signed_chain)
+  {
+    _originators = idl_ac::LoginInfoSeq(
+      chain.originators.length(),
+      chain.originators.length(),
+      (idl_ac::LoginInfo*)chain.originators.get_buffer());
+    _caller.id = chain.caller.id;
+    _caller.entity = chain.caller.entity;
+  }
+
   CallerChain(const std::string &busid, 
               const std::string &target,
               const idl_ac::LoginInfoSeq &originators, 
@@ -200,13 +220,25 @@ public:
     _caller(caller) 
   {
     std::memset(_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
+    std::memset(_legacy_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
   }
-  
+
+  idl_cr::SignedData signed_chain(idl_cr::CredentialData) const
+  {
+    return _signedCallChain;
+  }
+
+  legacy_idl_cr::SignedCallChain signed_chain(legacy_idl_cr::CredentialData) const
+  {
+    return _legacy_signedCallChain;
+  }
+
   std::string _busid;
   std::string _target;
   idl_ac::LoginInfoSeq _originators;
   idl_ac::LoginInfo _caller;
   idl_cr::SignedData _signedCallChain;
+  legacy_idl_cr::SignedCallChain _legacy_signedCallChain;
   
   friend class OpenBusContext;
   friend struct openbus::interceptors::ClientInterceptor;

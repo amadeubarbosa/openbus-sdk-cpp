@@ -154,6 +154,8 @@ Connection::Connection(
     _onInvalidLogin(0),
     _state(UNLOGGED),
     _openbusContext(m),
+    _legacy_support(legacy_support),
+    _legacy_access_control(legacy_idl_ac::AccessControl::_nil()),
     _profile2login(LRUSize),
     _login2session(LRUSize)
 {
@@ -177,6 +179,8 @@ Connection::Connection(
     _onInvalidLogin(0),
     _state(UNLOGGED),
     _openbusContext(m),
+    _legacy_support(legacy_support),
+    _legacy_access_control(legacy_idl_ac::AccessControl::_nil()),
     _profile2login(LRUSize),
     _login2session(LRUSize)
 {
@@ -220,6 +224,14 @@ void Connection::init()
     CORBA::Object_var obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
     _access_control = idl_ac::AccessControl::_narrow(obj);
     assert(!CORBA::is_nil(_access_control.in()));
+    if (_legacy_support)
+    {
+      obj = _iComponent->getFacetByName("LegacySupport");
+      scs::core::IComponent_var bus_2_0_comp(scs::core::IComponent::_narrow(obj));
+      obj = bus_2_0_comp->getFacet(legacy_idl_ac::_tc_AccessControl->id());
+      _legacy_access_control = legacy_idl_ac::AccessControl::_narrow(obj);
+      assert(!CORBA::is_nil(_legacy_access_control.in()));
+    }
     obj = _iComponent->getFacet(idl_or::_tc_OfferRegistry->id());
     _offer_registry = idl_or::OfferRegistry::_narrow(obj);
     assert(!CORBA::is_nil(_offer_registry.in()));
