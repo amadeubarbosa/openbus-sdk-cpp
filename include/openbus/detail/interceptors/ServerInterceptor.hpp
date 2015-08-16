@@ -4,6 +4,8 @@
 #define TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_HPP
 
 #include "openbus_creden-2.1C.h"
+#include "openbus_access-2.1C.h"
+#include "access_controlC.h"
 #include "openbus/detail/interceptors/ORBInitializer.hpp"
 #include "openbus/detail/decl.hpp"
 
@@ -27,6 +29,8 @@ extern "C"
 
 namespace openbus 
 {
+namespace legacy_idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
+namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
 class OpenBusContext;
 class Connection;
 struct Login;
@@ -43,11 +47,6 @@ struct OPENBUS_SDK_DECL Session
   tickets_History tickets;
   boost::uuids::uuid secret;
   std::string remote_id;
-};
-
-struct credential
-{
-  tecgraf::openbus::core::v2_1::credential::CredentialData data;
 };
 
 struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
@@ -69,26 +68,57 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   OpenBusContext *_bus_ctx;
   void save_dispatcher_connection(
     Connection &,
-    PI::ServerRequestInfo &,
+    PI::ServerRequestInfo_ptr,
     OpenBusContext *);
 
   Connection &get_dispatcher_connection(
     OpenBusContext *, 
     const std::string &busid,
     const std::string &login,
-    PI::ServerRequestInfo &);
+    PI::ServerRequestInfo_ptr);
 
-  credential get_credential(PI::ServerRequestInfo &) const;
+  
+  template <typename C = idl_cr::CredentialData>
+  C get_credential(PI::ServerRequestInfo_ptr) const;
 
-  bool validate_chain(
-    credential& cred,
+  bool check_legacy_chain(
+    legacy_idl_ac::CallChain,
+    boost::shared_ptr<Login> caller,
+    Connection &,
+    PI::ServerRequestInfo_ptr);
+
+  bool check_chain(
+    idl_ac::CallChain,
     boost::shared_ptr<Login> caller,  
-    Connection &conn);
+    Connection &);
 
-  void send_credential_reset(
-    Connection &, 
-    boost::shared_ptr<Login>, 
-    PI::ServerRequestInfo &);
+  template <typename C = idl_cr::CredentialData>
+    bool validate_chain(
+      C &,
+      boost::shared_ptr<Login> caller,  
+      Connection &,
+      PI::ServerRequestInfo_ptr r);
+  
+  CORBA::Any attach_legacy_credential_rst(
+    boost::shared_ptr<Session>,
+    Connection &,
+    idl::OctetSeq &secret);
+  
+  CORBA::Any attach_credential_rst(
+    boost::shared_ptr<Session>,
+    Connection &,
+    idl::OctetSeq &secret);
+    
+  template <typename C = idl_cr::CredentialData>
+    void send_credential_reset(
+      Connection &, 
+      boost::shared_ptr<Login>, 
+      PI::ServerRequestInfo_ptr);
+
+  template <typename C = idl_cr::CredentialData>
+    void handle_credential(
+      C &,
+      PI::ServerRequestInfo_ptr);
 };
 
 }}
