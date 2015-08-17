@@ -26,7 +26,7 @@ namespace legacy_idl_cr = tecgraf::openbus::core::v2_0::credential;
 const size_t secret_size = 16;
 typedef boost::array<CORBA::Octet, idl::HashValueSize> hash_value;
 
-template <typename C = idl_cr::CredentialData>
+template <typename C>
 hash_value hash(std::string operation,
                 CORBA::ULong ticket, 
                 boost::array<unsigned char, secret_size> secret)

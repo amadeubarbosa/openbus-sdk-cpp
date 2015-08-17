@@ -78,7 +78,7 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
     PI::ServerRequestInfo_ptr);
 
   
-  template <typename C = idl_cr::CredentialData>
+  template <typename C>
   C get_credential(PI::ServerRequestInfo_ptr) const;
 
   bool check_legacy_chain(
@@ -92,7 +92,7 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
     boost::shared_ptr<Login> caller,  
     Connection &);
 
-  template <typename C = idl_cr::CredentialData>
+  template <typename C>
     bool validate_chain(
       C &,
       boost::shared_ptr<Login> caller,  
@@ -109,13 +109,13 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
     Connection &,
     idl::OctetSeq &secret);
     
-  template <typename C = idl_cr::CredentialData>
+  template <typename C>
     void send_credential_reset(
       Connection &, 
       boost::shared_ptr<Login>, 
       PI::ServerRequestInfo_ptr);
 
-  template <typename C = idl_cr::CredentialData>
+  template <typename C>
     void handle_credential(
       C &,
       PI::ServerRequestInfo_ptr);

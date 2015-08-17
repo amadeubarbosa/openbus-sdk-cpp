@@ -353,8 +353,9 @@ void ServerInterceptor::receive_request_service_contexts(
 
   try
   {
-    idl_cr::CredentialData credential(get_credential(r));
-    handle_credential(credential, r);
+    idl_cr::CredentialData credential(
+      get_credential<idl_cr::CredentialData>(r));
+    handle_credential<idl_cr::CredentialData>(credential, r);
   }
   catch(const CORBA::NO_PERMISSION &e)
   {

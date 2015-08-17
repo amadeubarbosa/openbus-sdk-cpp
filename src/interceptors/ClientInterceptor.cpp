@@ -413,7 +413,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
     throw CORBA::NO_PERMISSION(idl_ac::NoLoginCode, CORBA::COMPLETED_NO);
   }
   l.vlog("login: %s", curr_login.id.in());
-  build_credential(*r, conn, curr_login);
+  build_credential<idl_cr::CredentialData>(*r, conn, curr_login);
   if (conn._legacy_support)
   {
     legacy_idl_ac::LoginInfo legacy_login;

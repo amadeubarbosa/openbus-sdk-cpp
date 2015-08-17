@@ -67,7 +67,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
         const std::string &target,
         legacy_idl_cr::CredentialData);
 
-  template <typename C = idl_cr::CredentialData>
+  template <typename C>
   void build_credential(
     PI::ClientRequestInfo &,
     Connection &conn,
@@ -76,7 +76,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
     idl_ac::LoginInfo,
     legacy_idl_ac::LoginInfo>::type &);
 
-  template <typename C = idl_cr::CredentialData>
+  template <typename C>
   openbus::CallerChain get_joined_chain(
     Connection &,
     PI::ClientRequestInfo &);
