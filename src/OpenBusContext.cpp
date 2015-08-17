@@ -126,6 +126,44 @@ Connection *OpenBusContext::getCurrentConnection() const
   return conn;
 }
 
+CallerChain OpenBusContext::extract_call_chain(
+  idl_cr::SignedData signed_chain,
+  Connection *conn)
+{
+  CORBA::Any_var any(
+    _orb_init->codec->decode_value(
+      CORBA::OctetSeq(signed_chain.encoded.maximum(),
+                      signed_chain.encoded.length(),
+                      const_cast<unsigned char *>
+                      (signed_chain.encoded.get_buffer())),
+      idl_ac::_tc_CallChain));
+    idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+  return CallerChain(
+    chain,
+    chain.bus.in(),
+    conn->login()->entity.in(),
+    signed_chain);
+}
+
+CallerChain OpenBusContext::extract_legacy_call_chain(
+  legacy_idl_cr::SignedCallChain signed_chain,
+  Connection *conn)
+{
+  CORBA::Any_var any(
+    _orb_init->codec->decode_value(
+      CORBA::OctetSeq(signed_chain.encoded.maximum(),
+                      signed_chain.encoded.length(),
+                      const_cast<unsigned char *>
+                      (signed_chain.encoded.get_buffer())),
+      legacy_idl_ac::_tc_CallChain));
+    legacy_idl_ac::CallChain chain(extract<legacy_idl_ac::CallChain>(any));
+  return CallerChain(
+    chain,
+    conn->busid(),
+    conn->login()->entity.in(),
+    signed_chain);
+}
+  
 CallerChain OpenBusContext::getCallerChain() 
 {
   log_scope l(log().general_logger(), info_level, 
@@ -141,20 +179,16 @@ CallerChain OpenBusContext::getCallerChain()
     
   idl_cr::SignedData signed_chain(extract<idl_cr::SignedData>(any));
   if (signed_chain.encoded.length() == 0)
-  {
-    return CallerChain();
+  {    
+    legacy_idl_cr::SignedCallChain legacy_signed_chain(
+      extract<legacy_idl_cr::SignedCallChain>(any));
+    if (legacy_signed_chain.encoded.length() != 0)
+      return extract_legacy_call_chain(legacy_signed_chain, conn);
   }
-  any = 
-    _orb_init->codec->decode_value(
-      CORBA::OctetSeq(signed_chain.encoded.maximum(),
-                      signed_chain.encoded.length(),
-                      const_cast<unsigned char *>
-                      (signed_chain.encoded.get_buffer())),
-      idl_ac::_tc_CallChain);
-  idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
-    
-  return CallerChain(
-    chain, chain.bus.in(), conn->login()->entity.in(), signed_chain);
+  else
+    return extract_call_chain(signed_chain, conn);
+
+  return CallerChain();
 }
 
 void OpenBusContext::joinChain(CallerChain const &chain) 

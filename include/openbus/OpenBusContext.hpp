@@ -802,6 +802,14 @@ private:
     EVP_PKEY *access_key,
     bool legacy_support);
 
+  CallerChain extract_call_chain(
+    idl_cr::SignedData,
+    Connection *);
+  
+  CallerChain extract_legacy_call_chain(
+    legacy_idl_cr::SignedCallChain,
+    Connection *);
+
   typedef std::map<std::string, Connection *> BusidConnection;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
