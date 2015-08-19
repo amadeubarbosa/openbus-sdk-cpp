@@ -233,6 +233,11 @@ public:
     return _legacy_signedCallChain;
   }
 
+  bool is_legacy() const
+  {
+    return _legacy_signedCallChain.encoded.length() > 0 ? true : false;
+  }
+
   std::string _busid;
   std::string _target;
   idl_ac::LoginInfoSeq _originators;

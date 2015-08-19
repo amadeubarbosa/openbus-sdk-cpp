@@ -4,6 +4,7 @@
 #include "openbus/log.hpp"
 #include "openbus/detail/any.hpp"
 #include "openbus/detail/openssl/PublicKey.hpp"
+#include "data_exportC.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
@@ -11,6 +12,7 @@
 namespace openbus 
 {  
 const std::size_t magic_tag_size(4);
+namespace legacy_idl_data_export = tecgraf::openbus::core::v2_0::data_export;
   
 InvalidEncodedStream::InvalidEncodedStream()
 {
@@ -200,7 +202,10 @@ void OpenBusContext::joinChain(CallerChain const &chain)
     return;
   }
   CORBA::Any sig_any;
-  sig_any <<= caller_chain._signedCallChain;
+  if (caller_chain._signedCallChain.encoded.length() > 0)
+    sig_any <<= caller_chain._signedCallChain;
+  else
+    sig_any <<= caller_chain._legacy_signedCallChain;    
   _orb_init->pi_current->set_slot(_orb_init->joined_call_chain, sig_any);
 }
 
@@ -373,6 +378,32 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
           call_chain, call_chain.bus.in(), call_chain.target.in(),
           exported_chain);      
       }
+      else if (legacy_idl_data_export::CurrentVersion == seq[i].version)
+      {
+        l.log("Decodificando versao legada.");
+        CORBA::Any_var exported_chain_any(
+          _orb_init->codec->decode_value(
+            CORBA::OctetSeq(seq[i].encoded.maximum(),
+                            seq[i].encoded.length(),
+                            const_cast<unsigned char*>
+                            (seq[i].encoded.get_buffer())),
+            legacy_idl_data_export::_tc_ExportedCallChain));
+        legacy_idl_data_export::ExportedCallChain exported_chain(
+          extract<legacy_idl_data_export::ExportedCallChain>(exported_chain_any));
+        CORBA::Any_var call_chain_any(
+          _orb_init->codec->decode_value(
+            CORBA::OctetSeq(exported_chain.signedChain.encoded.maximum(),
+                            exported_chain.signedChain.encoded.length(),
+                            const_cast<unsigned char *>
+                            (exported_chain.signedChain.encoded.get_buffer())),
+            legacy_idl_ac::_tc_CallChain));
+        legacy_idl_ac::CallChain call_chain(
+          extract<legacy_idl_ac::CallChain>(call_chain_any));
+        return CallerChain(
+          call_chain, exported_chain.bus.in(), call_chain.target.in(),
+          exported_chain.signedChain);      
+      }
+        
     }
     throw InvalidEncodedStream("Versão de cadeia incompatível.");
   }

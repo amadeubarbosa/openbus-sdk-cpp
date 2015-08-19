@@ -11,6 +11,7 @@
 #define TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
 #include "openbus/detail/LRUCache.hpp"
 #endif
+#include "openbus/Connection.hpp"
 
 #include <tao/PI/PI.h>
 #ifdef OPENBUS_SDK_MULTITHREAD
@@ -53,36 +54,47 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   bool ignore_request(PI::ClientRequestInfo &);
   bool ignore_invalid_login(PI::ClientRequestInfo &);
 
-    idl_cr::SignedData
-      get_signed_chain(
-        Connection &,
-        hash_value &hash, 
-        const std::string &target,
-        idl_cr::CredentialData);
+  idl_cr::SignedData
+    get_signed_chain(
+      Connection &,
+      hash_value &hash, 
+      const std::string &target,
+      idl_cr::CredentialData);
     
-    legacy_idl_cr::SignedCallChain
-      get_signed_chain(
-        Connection &,
-        hash_value &, 
-        const std::string &target,
-        legacy_idl_cr::CredentialData);
+  legacy_idl_cr::SignedCallChain
+    get_signed_chain(
+      Connection &,
+      hash_value &, 
+      const std::string &target,
+      legacy_idl_cr::CredentialData);
 
-  template <typename C>
-  void build_credential(
-    PI::ClientRequestInfo &,
-    Connection &conn,
-    typename boost::mpl::if_<
-    typename boost::is_same<C, idl_cr::CredentialData>::type,
-    idl_ac::LoginInfo,
-    legacy_idl_ac::LoginInfo>::type &);
-
-  template <typename C>
   openbus::CallerChain get_joined_chain(
-    Connection &,
-    PI::ClientRequestInfo &);
+    PI::ClientRequestInfo_ptr,
+    Connection &);
   
   openbus::CallerChain get_joined_legacy_chain(Connection &, PI::ClientRequestInfo &);
   boost::uuids::uuid get_request_id(PI::ClientRequestInfo_ptr);
+  
+  Connection::SecretSession * get_session(
+    PI::ClientRequestInfo_ptr,
+    Connection &);
+
+  template <typename C>
+    void fill_credential(
+      PI::ClientRequestInfo_ptr,
+      Connection &,
+      typename boost::mpl::if_<
+      typename boost::is_same<C, idl_cr::CredentialData>::type,
+      idl_ac::LoginInfo,
+      legacy_idl_ac::LoginInfo>::type &,
+      CallerChain &,
+      Connection::SecretSession *);
+
+  void attach_credential(
+    PI::ClientRequestInfo_ptr,
+    Connection &,
+    idl_ac::LoginInfo &);
+  
   ORBInitializer *_orb_init;
   LRUCache<hash_value, idl_cr::SignedData> _callChainLRUCache;
   LRUCache<hash_value, legacy_idl_cr::SignedCallChain> _legacy_callChainLRUCache;

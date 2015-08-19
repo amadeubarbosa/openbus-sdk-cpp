@@ -482,7 +482,9 @@ private:
   struct SecretSession 
   {
     SecretSession()
-      : id(0), ticket(0)
+      : id(0)
+      , ticket(0)
+      , is_legacy(false)
     {
       secret.fill(0);
     }
@@ -490,6 +492,7 @@ private:
     std::string remote_id, entity;
     boost::array<unsigned char, secret_size> secret;
     CORBA::ULong ticket;
+    bool is_legacy;
     friend bool operator==(const SecretSession &lhs, const SecretSession &rhs);
     friend bool operator!=(const SecretSession &lhs, const SecretSession &rhs);
   };
