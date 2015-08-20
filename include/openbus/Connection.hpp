@@ -14,6 +14,7 @@
 #include "openbus_core-2.1C.h"
 #include "openbus_access-2.1C.h"
 #include "openbus_offers-2.1C.h"
+#include "openbus_legacy-2.1C.h"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/interceptors/ORBInitializer.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
@@ -44,6 +45,7 @@ namespace openbus
   namespace idl = tecgraf::openbus::core::v2_1;
   namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
   namespace idl_or = tecgraf::openbus::core::v2_1::services::offer_registry;
+  namespace idl_ls = tecgraf::openbus::core::v2_1::services::legacy_support;
   namespace legacy_idl = tecgraf::openbus::core::v2_0;
   namespace legacy_idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
   
@@ -158,11 +160,16 @@ public:
   }
 private:
   SharedAuthSecret();
-  SharedAuthSecret(const std::string &bus_id, idl_ac::LoginProcess_var,
-                   const idl::OctetSeq &secret,
-                   interceptors::ORBInitializer *);
+  SharedAuthSecret(
+    const std::string &bus_id,
+    idl_ac::LoginProcess_var,
+    legacy_idl_ac::LoginProcess_var,
+    const idl::OctetSeq &secret,
+    interceptors::ORBInitializer *);  
+
   std::string busid_;
   idl_ac::LoginProcess_var login_process_;
+  legacy_idl_ac::LoginProcess_var legacy_login_process_;
   idl::OctetSeq secret_;
   interceptors::ORBInitializer *orb_initializer_;
   friend class OpenBusContext;
@@ -475,6 +482,7 @@ private:
   boost::scoped_ptr<PublicKey> _buskey;
   bool _legacy_support;
   legacy_idl_ac::AccessControl_var _legacy_access_control;
+  idl_ls::LegacyConverter_var _legacy_converter;
   /**/
     
   CORBA::Object_var _component_ref;

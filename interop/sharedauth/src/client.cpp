@@ -13,7 +13,7 @@
 namespace sharedauth = tecgraf::openbus::interop::sharedauth;
 
 const std::string client_entity("interop_sharedauth_cpp_sharedauth");
-std::string bus_host;
+std::string bus_host, tmp;
 unsigned short bus_port;
 
 using namespace boost::interprocess;
@@ -27,7 +27,9 @@ void load_options(int argc, char **argv)
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
     ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus");
+     "Port to OpenBus")
+    ("tmp", po::value<std::string>()->default_value("/tmp"),
+     "Temporary folder");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
@@ -43,6 +45,10 @@ void load_options(int argc, char **argv)
   if (vm.count("bus.host.port"))
   {
     bus_port = vm["bus.host.port"].as<unsigned short>();
+  }
+  if (vm.count("tmp"))
+  {
+    tmp = vm["tmp"].as<std::string>();
   }
 }
 
@@ -100,7 +106,7 @@ int main(int argc, char** argv) {
       file_lock flock;
     };
 
-    const std::string lock_path(".secret.lock");
+    const std::string lock_path(tmp + "/.secret.lock");
     CORBA::OctetSeq secret_seq;
     file_lock flock;
     do
@@ -116,7 +122,7 @@ int main(int argc, char** argv) {
       } 
     } while(true);
     flock.lock();
-    std::fstream file(".secret");
+    std::fstream file(tmp + "/.secret");
     file.seekg(0, std::ios::end);
     secret_seq.length(static_cast<CORBA::ULong>(file.tellg()));
     file.seekg(0, std::ios::beg);

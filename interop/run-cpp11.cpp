@@ -13,6 +13,10 @@ using namespace boost::process;
 using namespace boost::process::initializers;
 using namespace boost::filesystem;
 
+const std::string legacy_sdk_path(
+  current_path().generic_string() + "/../openbus-legacy");
+const std::string current_sdk_path(current_path().generic_string());
+
 const std::string stage_interop("/stage-interop/");
 typedef std::string flavor;
 typedef std::string flavor_tag;
@@ -25,36 +29,39 @@ const std::map<flavor, flavor_tag> flavors =
   {"multithread, release and static", "mt-s"},
 };
 
-void exec(
+child exec(
   const std::string &interop,
   const flavor_tag &flavor_tag,
-  const std::string &type,
   const std::string &process,
-  std::vector<child> &childs)
+  const std::string &sdk_path)
 {
   boost::system::error_code ec;
   boost::iostreams::file_descriptor_sink out_sink(
-    current_path().generic_string() +
+    sdk_path +
     stage_interop + interop + "/" +
     interop + "_" + process + "-" + flavor_tag + ".out");
+  boost::iostreams::file_descriptor_sink err_sink(
+    sdk_path +
+    stage_interop + interop + "/" +
+    interop + "_" + process + "-" + flavor_tag + ".err");
   path rel_path(stage_interop + interop + "/" +
-                                   interop + "_" + process + "-" +
-                                   flavor_tag
+                interop + "_" + process + "-" +
+                flavor_tag
 #ifdef _WIN32
-                                   + ".exe"
+                + ".exe"
 #endif
     );
-  auto exe_path(current_path());
-  exe_path += rel_path;
-  auto start_path(current_path());
-  start_path += path(stage_interop + interop);
-  std::cout << "-->Running " << type << " '" << process << "'." << std::endl;
+  auto exe_path(sdk_path);
+  exe_path += rel_path.generic_string();
+  auto start_path(sdk_path);
+  start_path += path(stage_interop + interop).generic_string();
+  std::cout << "-->Running '" << exe_path << "'." << std::endl;
 #ifndef _WIN32
   std::set<std::string> env;
   env.insert("DYLD_LIBRARY_PATH=" +
-             current_path().generic_string() + "/install/deps");
+             sdk_path + "/install/deps");
   env.insert("LD_LIBRARY_PATH=" +
-             current_path().generic_string() + "/install/deps");
+             sdk_path + "/install/deps");
 #endif
   try
   {
@@ -62,19 +69,86 @@ void exec(
       execute(
         run_exe(exe_path),
         throw_on_error(),
-        start_in_dir(start_path.generic_string()),
-        bind_stdout(out_sink)
+        start_in_dir(start_path),
+        bind_stdout(out_sink),
+        bind_stderr(err_sink)
 #ifdef _WIN32
         ));
 #else
     ,set_env(env)));
 #endif
-    childs.push_back(std::move(child));
+    return std::move(child);
   }
   catch (const boost::system::system_error &e)
   {
     std::cout << exe_path << ":" << e.code().message() << std::endl;
   }
+}
+
+typedef std::string service_name;
+typedef std::string sdk_path;
+typedef std::pair<service_name, sdk_path> service_exec;
+
+void remove_tmp_files(
+  const std::vector<path> &tmp_files)
+{
+  for (auto tmp_file : tmp_files)
+  {
+    remove(tmp_file);
+  }
+}
+
+void run_interop(
+  const flavor_tag &tag,
+  const std::string &interop,
+  std::vector<std::string> services,
+  const std::vector<path> &tmp_files,
+  std::vector<service_exec> execs = {},
+  std::vector<child> service_childs = {})
+{
+  if (!services.empty())
+  {
+    auto service(services.back());
+    services.pop_back();
+    execs.push_back(service_exec(service, current_sdk_path));
+    service_childs.push_back(exec(interop, tag, service, current_sdk_path));
+    run_interop(tag, interop, services, tmp_files, execs, service_childs);
+
+    execs.pop_back();
+
+    for (auto e : execs)
+    {
+      service_childs.push_back(exec(interop, tag, e.first, e.second));
+    }
+    
+    execs.push_back(service_exec(service, legacy_sdk_path));
+    service_childs.push_back(exec(interop, tag, service, legacy_sdk_path));
+    run_interop(tag, interop, services, tmp_files, execs, service_childs);
+    execs.pop_back();
+    return;
+  }
+  std::vector<child> client_childs;
+  wait_for_exit(exec(interop, tag, "client", current_sdk_path));
+  
+  for (auto &child : service_childs)
+  {
+    terminate(child);
+  }
+  service_childs.clear();
+  std::cout << std::endl;
+  remove_tmp_files(tmp_files);
+  for (auto e : execs)
+  {
+    service_childs.push_back(exec(interop, tag, e.first, e.second));
+  }
+  wait_for_exit(exec(interop, tag, "client", current_sdk_path));
+  for (auto &child : service_childs)
+  {
+    terminate(child);
+  }
+  service_childs.clear();
+  std::cout << std::endl;
+  remove_tmp_files(tmp_files);
 }
 
 void run_interop(
@@ -84,38 +158,27 @@ void run_interop(
 {
   for (auto flavor : flavors)
   {    
-    std::cout << "->Running interop '" << interop << "' "
-              << "with flavor " << flavor.first << "." << std::endl;
-    for (auto tmp_file : tmp_files)
-    {
-      remove(tmp_file);
-    }
-    std::vector<child> service_childs;
-    for (auto service : services)
-    {
-      exec(interop, flavor.second, "service", service, service_childs);
-    }
-    std::vector<child> client_childs;
-    exec(interop, flavor.second, "client", "client", client_childs);
-    for (auto &child : client_childs)
-    {
-      wait_for_exit(child);
-    }
-    for (auto &child : service_childs)
-    {
-      terminate(child);
-    }
+    std::cout << std::endl << "->Running interop '"
+              << interop << "' "
+              << "with flavor "
+              << flavor.first << "." << std::endl;
+    remove_tmp_files(tmp_files);
+    run_interop(flavor.second, interop, services, tmp_files);
   }
 }
 
 int main()
 {
-  run_interop("simple", {"server"});
-  run_interop("sharedauth", { "server", "sharedauth" },
-              { "stage-interop/sharedauth/.secret",
-		"stage-interop/sharedauth/.secret.lock" });
+  run_interop("simple", {"server",});
+  run_interop("sharedauth", {"sharedauth", "server"},
+              {"/tmp/.secret", "/tmp/.secret.lock"});
   run_interop("delegation", { "broadcaster", "forwarder", "messenger" });
   run_interop("multiplexing", { "server" });
-  run_interop("reloggedjoin", { "server", "proxy" });
+  run_interop("reloggedjoin", {"server", "proxy"});
   return 0; //MSVC
 }
+
+
+
+
+

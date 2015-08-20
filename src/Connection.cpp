@@ -117,22 +117,28 @@ private:
 #endif
 
 SharedAuthSecret::SharedAuthSecret()
+  : login_process_(idl_ac::LoginProcess::_nil())
+  , legacy_login_process_(legacy_idl_ac::LoginProcess::_nil())
 {
 }
 
 SharedAuthSecret::SharedAuthSecret(
   const std::string &busid,
   idl_ac::LoginProcess_var login_process,
+  legacy_idl_ac::LoginProcess_var legacy_login_process,
   const idl::OctetSeq &secret,
   interceptors::ORBInitializer *init)
-  : busid_(busid), login_process_(login_process), secret_(secret),
-    orb_initializer_(init)
+  : busid_(busid)
+  , login_process_(login_process)
+  , legacy_login_process_(legacy_login_process)
+  , secret_(secret)
+  , orb_initializer_(init)
 {
 }
-  
+
 void SharedAuthSecret::cancel()
 {
-  interceptors::ignore_interceptor i (orb_initializer_);
+  interceptors::ignore_interceptor i(orb_initializer_);
   login_process_->cancel();
 }
 
@@ -156,6 +162,7 @@ Connection::Connection(
     _openbusContext(m),
     _legacy_support(legacy_support),
     _legacy_access_control(legacy_idl_ac::AccessControl::_nil()),
+    _legacy_converter(idl_ls::LegacyConverter::_nil()),
     _profile2login(LRUSize),
     _login2session(LRUSize)
 {
@@ -181,6 +188,7 @@ Connection::Connection(
     _openbusContext(m),
     _legacy_support(legacy_support),
     _legacy_access_control(legacy_idl_ac::AccessControl::_nil()),
+    _legacy_converter(idl_ls::LegacyConverter::_nil()),
     _profile2login(LRUSize),
     _login2session(LRUSize)
 {
@@ -231,6 +239,10 @@ void Connection::init()
       obj = bus_2_0_comp->getFacet(legacy_idl_ac::_tc_AccessControl->id());
       _legacy_access_control = legacy_idl_ac::AccessControl::_narrow(obj);
       assert(!CORBA::is_nil(_legacy_access_control.in()));
+
+      obj = bus_2_0_comp->getFacet(idl_ls::_tc_LegacyConverter->id());
+      _legacy_converter = idl_ls::LegacyConverter::_narrow(obj);
+      assert(!CORBA::is_nil(_legacy_converter.in()));
     }
     obj = _iComponent->getFacet(idl_or::_tc_OfferRegistry->id());
     _offer_registry = idl_or::OfferRegistry::_narrow(obj);
@@ -411,11 +423,16 @@ Connection::startSharedAuth()
   idl::EncryptedBlock challenge;
   Connection *conn(0);
   idl_ac::LoginProcess_ptr login_process;
+  legacy_idl_ac::LoginProcess_ptr legacy_login_process;
   try 
   {
     conn = _openbusContext.getCurrentConnection();
     _openbusContext.setCurrentConnection(this);
     login_process = _access_control->startLoginBySharedAuth(challenge);
+    if (_legacy_support)
+    {
+      legacy_login_process = _legacy_converter->convertSharedAuth(login_process);
+    }
     _openbusContext.setCurrentConnection(conn);
   } 
   catch (...) 
@@ -426,7 +443,7 @@ Connection::startSharedAuth()
     throw;
   }
   idl::OctetSeq secret(_key.decrypt(challenge, idl::EncryptedBlockSize));
-  return SharedAuthSecret(busid(), login_process, secret, _orb_init);
+  return SharedAuthSecret(busid(), login_process, legacy_login_process, secret, _orb_init);
 }
   
 void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
@@ -476,8 +493,23 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   idl_ac::LoginInfo *loginInfo(0);
   try 
   {
-    loginInfo = secret.login_process_->login(_key.pubKey(), encryptedBlock, 
-                                             validityTime);
+    if (CORBA::is_nil(secret.login_process_))
+    {
+      legacy_idl_ac::LoginInfo_var login(
+        secret.legacy_login_process_->login(
+          legacy_idl::OctetSeq(
+            _key.pubKey().maximum(),
+            _key.pubKey().length(),
+            _key.pubKey().get_buffer()),
+          encryptedBlock,
+          validityTime));
+      loginInfo = new idl_ac::LoginInfo;
+      loginInfo->id = login->id;
+      loginInfo->entity = login->entity;
+    }
+    else
+      loginInfo = secret.login_process_->login(_key.pubKey(), encryptedBlock, 
+                                               validityTime);
   } 
   catch (const idl_ac::WrongEncoding &)
   {

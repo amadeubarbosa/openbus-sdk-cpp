@@ -423,7 +423,7 @@ CORBA::OctetSeq OpenBusContext::encodeSharedAuthSecret(
   log_scope l(log().general_logger(), info_level,
               "OpenBusContext::encodeSharedAuth");
   idl_data_export::VersionedDataSeq exported_version_seq;
-  exported_version_seq.length(1);
+  exported_version_seq.length(2);
 
   idl_data_export::ExportedSharedAuth shared_auth;
   shared_auth.bus = secret.busid().c_str();
@@ -443,6 +443,31 @@ CORBA::OctetSeq OpenBusContext::encodeSharedAuthSecret(
     (shared_auth_cdr->get_buffer()));
   
   exported_version_seq[0u] = exported_curr_version;
+
+  {
+    legacy_idl_data_export::ExportedSharedAuth shared_auth;
+    shared_auth.bus = secret.busid().c_str();
+    shared_auth.attempt = secret.legacy_login_process_;
+    shared_auth.secret = legacy_idl::OctetSeq(
+      secret.secret_.maximum(),
+      secret.secret_.length(),
+      const_cast<unsigned char *>
+      (secret.secret_.get_buffer()));
+
+    CORBA::Any any;
+    any <<= shared_auth;
+    CORBA::OctetSeq_var shared_auth_cdr(_orb_init->codec->encode_value(any));  
+  
+    idl_data_export::VersionedData exported_curr_version;
+    exported_curr_version.version = legacy_idl_data_export::CurrentVersion;
+    exported_curr_version.encoded = idl::OctetSeq(
+      shared_auth_cdr->maximum(),
+      shared_auth_cdr->length(),
+      const_cast<unsigned char *>
+      (shared_auth_cdr->get_buffer()));
+  
+    exported_version_seq[1u] = exported_curr_version;
+  }
   
   return encode_exported_versions(exported_version_seq,
                                   idl_data_export::MagicTag_SharedAuth);
@@ -479,6 +504,24 @@ SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
       secret.busid_ = exported_shared_auth.bus.in();
       secret.login_process_ = exported_shared_auth.attempt;
       secret.secret_ = exported_shared_auth.secret;
+      found = true;
+    }
+    else if (legacy_idl_data_export::CurrentVersion == seq[i].version)
+    {
+      CORBA::Any_var any(_orb_init->codec->decode_value(
+                           CORBA::OctetSeq(seq[i].encoded.maximum(),
+                                           seq[i].encoded.length(),
+                                           const_cast<unsigned char*>
+                                           (seq[i].encoded.get_buffer())),
+                           legacy_idl_data_export::_tc_ExportedSharedAuth));
+      legacy_idl_data_export::ExportedSharedAuth exported_shared_auth(
+        extract<legacy_idl_data_export::ExportedSharedAuth>(any));
+      secret.busid_ = exported_shared_auth.bus.in();
+      secret.legacy_login_process_ = exported_shared_auth.attempt;
+      secret.secret_ = idl::OctetSeq(
+        exported_shared_auth.secret.maximum(),
+        exported_shared_auth.secret.length(),
+        exported_shared_auth.secret.get_buffer());
       found = true;
     }
   }

@@ -17,8 +17,7 @@
 namespace sharedauth = tecgraf::openbus::interop::sharedauth;
 
 const std::string entity("interop_sharedauth_cpp_sharedauth");
-std::string priv_key_filename;
-std::string bus_host;
+std::string priv_key_filename, bus_host, tmp;
 unsigned short bus_port;
 
 using namespace boost::interprocess;
@@ -34,7 +33,9 @@ void load_options(int argc, char **argv)
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
     ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus");
+     "Port to OpenBus")
+    ("tmp", po::value<std::string>()->default_value("/tmp"),
+     "Temporary folder");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
@@ -54,6 +55,10 @@ void load_options(int argc, char **argv)
   if (vm.count("private-key"))
   {
     priv_key_filename = vm["private-key"].as<std::string>();
+  }
+  if (vm.count("tmp"))
+  {
+    tmp = vm["tmp"].as<std::string>();
   }
 }
 
@@ -82,8 +87,8 @@ int main(int argc, char** argv) {
     CORBA::OctetSeq secret_seq(bus_ctx->encodeSharedAuthSecret(secret));
 
     {
-      const std::string secret_path(".secret");
-      const std::string lock_path(".secret.lock");
+      const std::string secret_path(tmp + "/.secret");
+      const std::string lock_path(tmp + "/.secret.lock");
       boost::filesystem::remove(secret_path);
       std::ofstream(lock_path.c_str());
       file_lock flock(lock_path.c_str());
