@@ -1,4 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
+
+#include "openbus/idl.hpp"
 #include "openbus/detail/LoginCache.hpp"
 #include "openbus/detail/openssl/PublicKey.hpp"
 
@@ -9,7 +11,7 @@ const std::size_t cacheSize(128);
 
 namespace openbus
 {
-LoginCache::LoginCache(idl_ac::LoginRegistry_var p)
+LoginCache::LoginCache(idl::access::LoginRegistry_var p)
   : _login_registry(p), _loginLRUCache(cacheSize) 
 { 
 }
@@ -31,7 +33,7 @@ boost::shared_ptr<Login> LoginCache::validateLogin(const std::string &id)
       login->loginInfo = _login_registry->getLoginInfo(
         id.c_str(), login->encodedCallerPubKey);
     }
-    catch (const idl_ac::InvalidLogins &)
+    catch (const idl::access::InvalidLogins &)
     {
       return boost::shared_ptr<Login>();
     }

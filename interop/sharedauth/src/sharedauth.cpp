@@ -104,14 +104,14 @@ int main(int argc, char** argv) {
     
     std::cout << "Chamando a faceta Hello por este cliente." << std::endl;
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
     props[static_cast<CORBA::ULong>(0)].name  = "openbus.component.facet";
     props[static_cast<CORBA::ULong>(0)].value = "Hello";
     props[static_cast<CORBA::ULong>(1)].name  = "offer.domain";
     props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers(
+    openbus::idl::offers::ServiceOfferDescSeq_var offers(
       find_offers(bus_ctx, props));
     if (offers->length())
     {

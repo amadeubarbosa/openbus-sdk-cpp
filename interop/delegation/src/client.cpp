@@ -70,14 +70,14 @@ int main(int argc, char** argv) {
     
     conn->loginByPassword(entity, entity);
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
     props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
     props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
     props[static_cast<CORBA::ULong>(1)].name  = "openbus.component.interface";
     props[static_cast<CORBA::ULong>(1)].value = delegation::_tc_Messenger->id();
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
+    openbus::idl::offers::ServiceOfferDescSeq_var offers = 
       find_offers(bus_ctx, props);
     if (offers->length() > 0)
     {

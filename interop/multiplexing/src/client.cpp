@@ -74,7 +74,7 @@ int main(int argc, char **argv)
       bus_ctx->setDefaultConnection(conn.get());
       conn->loginByPassword(entity, entity);
 
-      openbus::idl_or::ServicePropertySeq props;
+      openbus::idl::offers::ServicePropertySeq props;
       props.length(2);
       props[static_cast<CORBA::ULong>(0)].name  = "openbus.component.interface";
       props[static_cast<CORBA::ULong>(0)].value = 
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
       props[static_cast<CORBA::ULong>(1)].name  = "offer.domain";
       props[static_cast<CORBA::ULong>(1)].value = "Interoperability Tests";
 
-      openbus::idl_or::ServiceOfferDescSeq_var offers = 
+      openbus::idl::offers::ServiceOfferDescSeq_var offers = 
         find_offers(bus_ctx, props);
       for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
       {

@@ -4,6 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/thread.hpp>
 #include <iostream>
 #include <map>
 #include <vector>
@@ -137,6 +138,7 @@ void run_interop(
   service_childs.clear();
   std::cout << std::endl;
   remove_tmp_files(tmp_files);
+  boost::this_thread::sleep_for(boost::chrono::seconds(1));
   for (auto e : execs)
   {
     service_childs.push_back(exec(interop, tag, e.first, e.second));
@@ -149,6 +151,7 @@ void run_interop(
   service_childs.clear();
   std::cout << std::endl;
   remove_tmp_files(tmp_files);
+  boost::this_thread::sleep_for(boost::chrono::seconds(1));
 }
 
 void run_interop(

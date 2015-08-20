@@ -84,7 +84,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
       std::string entity(chain.caller().entity);
       std::string msg("Hello " + entity + "!");
 
-      openbus::idl_or::ServicePropertySeq props;
+      openbus::idl::offers::ServicePropertySeq props;
       props.length(2);
       props[0].name  = "offer.domain";
       props[0].value = "Interoperability Tests";
@@ -93,7 +93,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
 
       bus_ctx.joinChain(chain);
 
-      openbus::idl_or::ServiceOfferDescSeq_var offers(
+      openbus::idl::offers::ServiceOfferDescSeq_var offers(
         find_offers(&bus_ctx, props));
       if (offers->length() < 1)
       {
@@ -122,7 +122,7 @@ private:
 
 void loginAndRegister(
   const openbus::OpenBusContext &bus_ctx, scs::core::ComponentContext &comp,
-  const openbus::idl_or::ServicePropertySeq &props, openbus::Connection &conn)
+  const openbus::idl::offers::ServicePropertySeq &props, openbus::Connection &conn)
 {
   EVP_PKEY *priv_key(
     openbus::demo::openssl::read_priv_key(priv_key_filename));
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
     componentId.platform_spec = "c++";
     scs::core::ComponentContext comp(bus_ctx->orb(), componentId);
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
     props[0].name = "offer.domain";
     props[0].value = "Interoperability Tests";

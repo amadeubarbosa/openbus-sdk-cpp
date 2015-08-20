@@ -149,9 +149,9 @@ int main(int argc, char** argv) {
     messenger_component.addFacet(
       "messenger", delegation::_tc_Messenger->id(), &messenger_servant);
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(1);
-    openbus::idl_or::ServiceProperty property;
+    openbus::idl::offers::ServiceProperty property;
     props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
     props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
 

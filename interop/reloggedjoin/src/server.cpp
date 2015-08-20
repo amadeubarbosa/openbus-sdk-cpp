@@ -76,7 +76,7 @@ private:
 
 void login_register(
   const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp,
-  const openbus::idl_or::ServicePropertySeq &props, openbus::Connection &conn)
+  const openbus::idl::offers::ServicePropertySeq &props, openbus::Connection &conn)
 {
   EVP_PKEY *priv_key(
     openbus::demo::openssl::read_priv_key(priv_key_filename));
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     componentId.platform_spec = "c++";
     scs::core::ComponentContext comp(bus_ctx->orb(), componentId);
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
     props[0].name  = "offer.domain";
     props[0].value = "Interoperability Tests";

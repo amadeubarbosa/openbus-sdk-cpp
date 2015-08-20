@@ -74,7 +74,7 @@ private:
 
 void login_register(
   const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp,
-  const openbus::idl_or::ServicePropertySeq &props, openbus::Connection &conn)
+  const openbus::idl::offers::ServicePropertySeq &props, openbus::Connection &conn)
 {
   EVP_PKEY *priv_key(
     openbus::demo::openssl::read_priv_key(priv_key_filename));
@@ -92,13 +92,13 @@ struct on_invalid_login
   typedef void result_type;
   on_invalid_login(
     const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp, 
-    const openbus::idl_or::ServicePropertySeq &props, 
+    const openbus::idl::offers::ServicePropertySeq &props, 
     openbus::Connection  &conn) 
     : ctx(ctx), comp(comp), props(props), conn(conn)
   {
   }
 
-  result_type operator()(openbus::Connection &c, openbus::idl_ac::LoginInfo l) 
+  result_type operator()(openbus::Connection &c, openbus::idl::access::LoginInfo l) 
   {
     try 
     {
@@ -113,7 +113,7 @@ struct on_invalid_login
 private:
   const openbus::OpenBusContext &ctx;
   scs::core::ComponentContext &comp;
-  const openbus::idl_or::ServicePropertySeq &props;
+  const openbus::idl::offers::ServicePropertySeq &props;
   openbus::Connection &conn;
 };
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     componentId.platform_spec = "c++";
     scs::core::ComponentContext comp(bus_ctx->orb(), componentId);
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(1);
     props[0u].name = "offer.domain";
     props[0u].value = "Interoperability Tests";

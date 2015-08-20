@@ -24,8 +24,8 @@ namespace openbus
 class Connection;
 
 #ifdef OPENBUS_SDK_MULTITHREAD
-void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
-                            OpenBusContext &ctx, idl_ac::ValidityTime t)
+void Connection::renewLogin(Connection &conn, idl::access::AccessControl_ptr acs, 
+                            OpenBusContext &ctx, idl::access::ValidityTime t)
 {
   log_scope l(log().general_logger(), info_level, "Connection::renewLogin()");
   ctx.setCurrentConnection(&conn);
@@ -54,8 +54,8 @@ void Connection::renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs,
 class RenewLogin : public CORBA::DispatcherCallback 
 {
 public:
-  RenewLogin(CORBA::ORB_ptr o, Connection &c, idl_ac::AccessControl_ptr a, 
-             OpenBusContext &m, idl_ac::ValidityTime t)
+  RenewLogin(CORBA::ORB_ptr o, Connection &c, idl::access::AccessControl_ptr a, 
+             OpenBusContext &m, idl::access::ValidityTime t)
    : _orb(o), _conn(c), _access_control(a), _openbusContext(m), _validityTime(t)
   { 
     log_scope l(log().general_logger(), info_level, "RenewLogin::RenewLogin");
@@ -87,11 +87,11 @@ public:
     dispatcher->tm_event(this, _validityTime*1000);
   }
 
-  idl_ac::ValidityTime renew(CORBA::Dispatcher *dispatcher) 
+  idl::access::ValidityTime renew(CORBA::Dispatcher *dispatcher) 
   {
     log_scope l(log().general_logger(), info_level, "RenewLogin::renew");
     assert(_access_control);
-    idl_ac::ValidityTime validityTime(_validityTime);
+    idl::access::ValidityTime validityTime(_validityTime);
     Connection *conn(0);
     try 
     {
@@ -110,23 +110,23 @@ public:
 private:
   CORBA::ORB_ptr _orb;
   Connection &_conn;
-  idl_ac::AccessControl_ptr _access_control;
+  idl::access::AccessControl_ptr _access_control;
   OpenBusContext &_openbusContext;
-  idl_ac::ValidityTime _validityTime;
+  idl::access::ValidityTime _validityTime;
 };
 #endif
 
 SharedAuthSecret::SharedAuthSecret()
-  : login_process_(idl_ac::LoginProcess::_nil())
-  , legacy_login_process_(legacy_idl_ac::LoginProcess::_nil())
+  : login_process_(idl::access::LoginProcess::_nil())
+  , legacy_login_process_(idl::legacy::access::LoginProcess::_nil())
 {
 }
 
 SharedAuthSecret::SharedAuthSecret(
   const std::string &busid,
-  idl_ac::LoginProcess_var login_process,
-  legacy_idl_ac::LoginProcess_var legacy_login_process,
-  const idl::OctetSeq &secret,
+  idl::access::LoginProcess_var login_process,
+  idl::legacy::access::LoginProcess_var legacy_login_process,
+  const idl::core::OctetSeq &secret,
   interceptors::ORBInitializer *init)
   : busid_(busid)
   , login_process_(login_process)
@@ -161,8 +161,8 @@ Connection::Connection(
     _state(UNLOGGED),
     _openbusContext(m),
     _legacy_support(legacy_support),
-    _legacy_access_control(legacy_idl_ac::AccessControl::_nil()),
-    _legacy_converter(idl_ls::LegacyConverter::_nil()),
+    _legacy_access_control(idl::legacy::access::AccessControl::_nil()),
+    _legacy_converter(idl::legacy_support::LegacyConverter::_nil()),
     _profile2login(LRUSize),
     _login2session(LRUSize)
 {
@@ -187,14 +187,14 @@ Connection::Connection(
     _state(UNLOGGED),
     _openbusContext(m),
     _legacy_support(legacy_support),
-    _legacy_access_control(legacy_idl_ac::AccessControl::_nil()),
-    _legacy_converter(idl_ls::LegacyConverter::_nil()),
+    _legacy_access_control(idl::legacy::access::AccessControl::_nil()),
+    _legacy_converter(idl::legacy_support::LegacyConverter::_nil()),
     _profile2login(LRUSize),
     _login2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
-  corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::BusObjectKey;
+  corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::core::BusObjectKey;
   try
   {
     _component_ref = _orb->string_to_object(corbaloc.str().c_str());
@@ -229,26 +229,26 @@ void Connection::init()
   {
     interceptors::ignore_interceptor _i(_orb_init);
     _iComponent = scs::core::IComponent::_narrow(_component_ref);
-    CORBA::Object_var obj = _iComponent->getFacet(idl_ac::_tc_AccessControl->id());
-    _access_control = idl_ac::AccessControl::_narrow(obj);
+    CORBA::Object_var obj = _iComponent->getFacet(idl::access::_tc_AccessControl->id());
+    _access_control = idl::access::AccessControl::_narrow(obj);
     assert(!CORBA::is_nil(_access_control.in()));
     if (_legacy_support)
     {
       obj = _iComponent->getFacetByName("LegacySupport");
       scs::core::IComponent_var bus_2_0_comp(scs::core::IComponent::_narrow(obj));
-      obj = bus_2_0_comp->getFacet(legacy_idl_ac::_tc_AccessControl->id());
-      _legacy_access_control = legacy_idl_ac::AccessControl::_narrow(obj);
+      obj = bus_2_0_comp->getFacet(idl::legacy::access::_tc_AccessControl->id());
+      _legacy_access_control = idl::legacy::access::AccessControl::_narrow(obj);
       assert(!CORBA::is_nil(_legacy_access_control.in()));
 
-      obj = bus_2_0_comp->getFacet(idl_ls::_tc_LegacyConverter->id());
-      _legacy_converter = idl_ls::LegacyConverter::_narrow(obj);
+      obj = bus_2_0_comp->getFacet(idl::legacy_support::_tc_LegacyConverter->id());
+      _legacy_converter = idl::legacy_support::LegacyConverter::_narrow(obj);
       assert(!CORBA::is_nil(_legacy_converter.in()));
     }
-    obj = _iComponent->getFacet(idl_or::_tc_OfferRegistry->id());
-    _offer_registry = idl_or::OfferRegistry::_narrow(obj);
+    obj = _iComponent->getFacet(idl::offers::_tc_OfferRegistry->id());
+    _offer_registry = idl::offers::OfferRegistry::_narrow(obj);
     assert(!CORBA::is_nil(_offer_registry.in()));
-    obj = _iComponent->getFacet(idl_ac::_tc_LoginRegistry->id());
-    _login_registry = idl_ac::LoginRegistry::_narrow(obj);
+    obj = _iComponent->getFacet(idl::access::_tc_LoginRegistry->id());
+    _login_registry = idl::access::LoginRegistry::_narrow(obj);
     assert(!CORBA::is_nil(_login_registry.in()));
   }
 	
@@ -256,15 +256,15 @@ void Connection::init()
   {
     interceptors::ignore_interceptor _i(_orb_init);
     _busid = _access_control->busid();
-    idl::OctetSeq_var o(_access_control->certificate());
+    idl::core::OctetSeq_var o(_access_control->certificate());
     openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
     openssl::pkey pub_key(X509_get_pubkey(crt.get()));
     _buskey.reset(new PublicKey(pub_key));
   }
 }
 
-void Connection::login(idl_ac::LoginInfo &loginInfo, 
-                       idl_ac::ValidityTime validityTime)
+void Connection::login(idl::access::LoginInfo &loginInfo, 
+                       idl::access::ValidityTime validityTime)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
@@ -311,7 +311,7 @@ void Connection::loginByPassword(const std::string &entity,
   }
   
   interceptors::ignore_interceptor _i(_orb_init);
-  idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
+  idl::access::LoginAuthenticationInfo loginAuthenticationInfo;
   
   std::size_t password_size(password.size());
   loginAuthenticationInfo.data.length(static_cast<CORBA::ULong>(password_size));
@@ -325,15 +325,15 @@ void Connection::loginByPassword(const std::string &entity,
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_orb_init->codec->encode_value(any));
 
-  idl::OctetSeq encrypted(
+  idl::core::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length()));
 
-  idl::EncryptedBlock encryptedBlock;
-  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
+  idl::core::EncryptedBlock encryptedBlock;
+  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::core::EncryptedBlockSize);
     
-  idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo *loginInfo(0);
+  idl::access::ValidityTime validityTime;
+  idl::access::LoginInfo *loginInfo(0);
   try 
   {
     loginInfo = _access_control->loginByPassword(
@@ -343,7 +343,7 @@ void Connection::loginByPassword(const std::string &entity,
       encryptedBlock,
       validityTime);
   } 
-  catch (const idl_ac::WrongEncoding &) 
+  catch (const idl::access::WrongEncoding &) 
   {
     throw idl::services::ServiceFailure();
   }
@@ -372,18 +372,18 @@ void Connection::loginByCertificate(const std::string &entity,
     throw AlreadyLoggedIn();
   }
   
-  idl::EncryptedBlock challenge;
-  idl_ac::LoginProcess_var loginProcess;
+  idl::core::EncryptedBlock challenge;
+  idl::access::LoginProcess_var loginProcess;
   {
     interceptors::ignore_interceptor _i(_orb_init);
     loginProcess = _access_control->startLoginByCertificate(entity.c_str(),
                                                             challenge);
   }
   
-  idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
+  idl::access::LoginAuthenticationInfo loginAuthenticationInfo;
   PrivateKey privKey(key);
   loginAuthenticationInfo.data = privKey.decrypt((unsigned char*) challenge, 
-                                                 idl::EncryptedBlockSize);
+                                                 idl::core::EncryptedBlockSize);
   
   SHA256(_key.pubKey().get_buffer(), _key.pubKey().length(), 
          loginAuthenticationInfo.hash);
@@ -392,24 +392,24 @@ void Connection::loginByCertificate(const std::string &entity,
   any <<= loginAuthenticationInfo;
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(_orb_init->codec->encode_value(any));
   
-  idl::OctetSeq encrypted(_buskey->encrypt(
+  idl::core::OctetSeq encrypted(_buskey->encrypt(
     encodedLoginAuthenticationInfo->get_buffer(), 
     encodedLoginAuthenticationInfo->length()));
 
-  idl::EncryptedBlock encryptedBlock;
-  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
+  idl::core::EncryptedBlock encryptedBlock;
+  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::core::EncryptedBlockSize);
   
   interceptors::ignore_interceptor _i(_orb_init);
-  idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo *loginInfo(0);
+  idl::access::ValidityTime validityTime;
+  idl::access::LoginInfo *loginInfo(0);
   try 
   {
     loginInfo = loginProcess->login(_key.pubKey(), encryptedBlock, 
                                     validityTime);
   } 
-  catch (const idl_ac::WrongEncoding &) 
+  catch (const idl::access::WrongEncoding &) 
   {
-    throw idl_ac::AccessDenied();
+    throw idl::access::AccessDenied();
   }
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
@@ -420,10 +420,10 @@ Connection::startSharedAuth()
 {
   log_scope l(log().general_logger(), info_level, 
               "Connection::startSharedAuth");
-  idl::EncryptedBlock challenge;
+  idl::core::EncryptedBlock challenge;
   Connection *conn(0);
-  idl_ac::LoginProcess_ptr login_process;
-  legacy_idl_ac::LoginProcess_ptr legacy_login_process;
+  idl::access::LoginProcess_ptr login_process;
+  idl::legacy::access::LoginProcess_ptr legacy_login_process;
   try 
   {
     conn = _openbusContext.getCurrentConnection();
@@ -442,7 +442,7 @@ Connection::startSharedAuth()
     _openbusContext.setCurrentConnection(conn);
     throw;
   }
-  idl::OctetSeq secret(_key.decrypt(challenge, idl::EncryptedBlockSize));
+  idl::core::OctetSeq secret(_key.decrypt(challenge, idl::core::EncryptedBlockSize));
   return SharedAuthSecret(busid(), login_process, legacy_login_process, secret, _orb_init);
 }
   
@@ -471,7 +471,7 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
     throw WrongBus();
   }
   interceptors::ignore_interceptor _i(_orb_init);
-  idl_ac::LoginAuthenticationInfo loginAuthenticationInfo;
+  idl::access::LoginAuthenticationInfo loginAuthenticationInfo;
   loginAuthenticationInfo.data = secret.secret_;
   
   SHA256(_key.pubKey().get_buffer(), _key.pubKey().length(), 
@@ -482,28 +482,28 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   CORBA::OctetSeq_var encodedLoginAuthenticationInfo(
     _orb_init->codec->encode_value(any));
 
-  idl::OctetSeq encrypted(
+  idl::core::OctetSeq encrypted(
     _buskey->encrypt(encodedLoginAuthenticationInfo->get_buffer(), 
                      encodedLoginAuthenticationInfo->length()));
 
-  idl::EncryptedBlock encryptedBlock;
-  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::EncryptedBlockSize);
+  idl::core::EncryptedBlock encryptedBlock;
+  std::memcpy(encryptedBlock, encrypted.get_buffer(), idl::core::EncryptedBlockSize);
 
-  idl_ac::ValidityTime validityTime;
-  idl_ac::LoginInfo *loginInfo(0);
+  idl::access::ValidityTime validityTime;
+  idl::access::LoginInfo *loginInfo(0);
   try 
   {
     if (CORBA::is_nil(secret.login_process_))
     {
-      legacy_idl_ac::LoginInfo_var login(
+      idl::legacy::access::LoginInfo_var login(
         secret.legacy_login_process_->login(
-          legacy_idl::OctetSeq(
+          idl::legacy::core::OctetSeq(
             _key.pubKey().maximum(),
             _key.pubKey().length(),
             _key.pubKey().get_buffer()),
           encryptedBlock,
           validityTime));
-      loginInfo = new idl_ac::LoginInfo;
+      loginInfo = new idl::access::LoginInfo;
       loginInfo->id = login->id;
       loginInfo->entity = login->entity;
     }
@@ -511,9 +511,9 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
       loginInfo = secret.login_process_->login(_key.pubKey(), encryptedBlock, 
                                                validityTime);
   } 
-  catch (const idl_ac::WrongEncoding &)
+  catch (const idl::access::WrongEncoding &)
   {
-    throw idl_ac::AccessDenied();
+    throw idl::access::AccessDenied();
   }
   catch (const CORBA::OBJECT_NOT_EXIST &)
   {
@@ -580,7 +580,7 @@ bool Connection::_logout(bool local)
       }
       catch (const CORBA::NO_PERMISSION &e)
       {
-        if (idl_ac::InvalidLoginCode == e.minor())
+        if (idl::access::InvalidLoginCode == e.minor())
         {
           success = true;
         }
@@ -632,7 +632,7 @@ Connection::InvalidLoginCallback_t Connection::onInvalidLogin() const
   return _onInvalidLogin; 
 }
 
-const idl_ac::LoginInfo *Connection::login() const 
+const idl::access::LoginInfo *Connection::login() const 
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;
@@ -648,17 +648,17 @@ const std::string Connection::busid() const
   return ((_state == INVALID) ? std::string() : _busid);
 }
 
-idl_ac::LoginInfo Connection::get_login()
+idl::access::LoginInfo Connection::get_login()
 {
   log_scope l(log().general_logger(), info_level, "Connection::get_login");
-  idl_ac::LoginInfo login, invalid_login;
+  idl::access::LoginInfo login, invalid_login;
   {
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);;
 #endif
-    login = _loginInfo.get() ? *(_loginInfo.get()) : idl_ac::LoginInfo();
+    login = _loginInfo.get() ? *(_loginInfo.get()) : idl::access::LoginInfo();
     invalid_login = _invalid_login.get() ?
-      *(_invalid_login.get()) : idl_ac::LoginInfo();
+      *(_invalid_login.get()) : idl::access::LoginInfo();
   }
   if (!std::string(login.id.in()).empty())
   {
@@ -686,7 +686,7 @@ idl_ac::LoginInfo Connection::get_login()
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);;
 #endif
-    idl_ac::LoginInfo curr;
+    idl::access::LoginInfo curr;
     if (_invalid_login.get())
     {
       curr = *_invalid_login.get();
@@ -694,7 +694,7 @@ idl_ac::LoginInfo Connection::get_login()
     if (!std::string(curr.id.in()).empty() && curr == invalid_login)
     {
       _invalid_login.reset();
-      invalid_login = idl_ac::LoginInfo();
+      invalid_login = idl::access::LoginInfo();
     }
     else
     {

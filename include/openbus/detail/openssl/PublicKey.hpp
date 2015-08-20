@@ -3,9 +3,9 @@
 #ifndef TECGRAF_SDK_OPENBUS_PUBLIC_KEY_HPP
 #define TECGRAF_SDK_OPENBUS_PUBLIC_KEY_HPP
 
+#include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/openssl/OpenSSL.hpp"
-#include "openbus_core-2.1C.h"
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif
@@ -13,7 +13,6 @@
 
 namespace openbus
 {
-namespace idl = tecgraf::openbus::core::v2_1;
 struct InvalidPublicKey : public std::exception
 { 
   const char *what() const throw() 
@@ -25,20 +24,20 @@ struct InvalidPublicKey : public std::exception
 class PublicKey
 {
 public:
-  PublicKey(const idl::OctetSeq &key);
+  PublicKey(const idl::core::OctetSeq &key);
   PublicKey(const openssl::pkey &key);
   PublicKey(const PublicKey&);
   PublicKey& operator=(const PublicKey &);
-  idl::OctetSeq encrypt(const unsigned char *, std::size_t);
+  idl::core::OctetSeq encrypt(const unsigned char *, std::size_t);
   bool verify(const unsigned char *sig, std::size_t siglen, 
               const unsigned char *tbs, std::size_t tbslen);
-  const idl::OctetSeq &octetSeq() const
+  const idl::core::OctetSeq &octetSeq() const
   {
     return _keySeq;
   }
 private:
   openssl::pkey _pkey;
-  idl::OctetSeq _keySeq;
+  idl::core::OctetSeq _keySeq;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif

@@ -3,11 +3,9 @@
 #ifndef TECGRAF_SDK_OPENBUS_INTERCEPTORS_INITIALIZER_HPP
 #define TECGRAF_SDK_OPENBUS_INTERCEPTORS_INITIALIZER_HPP
 
+#include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/openssl/OpenSSL.hpp"
-#include "openbus_core-2.1C.h"
-#include "openbus_creden-2.1C.h"
-#include "credentialC.h"
 
 #include <tao/ORB.h>
 #include <tao/PI/PI.h>
@@ -19,31 +17,27 @@
 
 namespace openbus 
 {
-namespace idl = tecgraf::openbus::core::v2_1;
-namespace legacy_idl = tecgraf::openbus::core::v2_0;
-namespace idl_cr = tecgraf::openbus::core::v2_1::credential;
-namespace legacy_idl_cr = tecgraf::openbus::core::v2_0::credential;
 const size_t secret_size = 16;
-typedef boost::array<CORBA::Octet, idl::HashValueSize> hash_value;
+typedef boost::array<CORBA::Octet, idl::core::HashValueSize> hash_value;
 
 template <typename C>
 hash_value hash(std::string operation,
                 CORBA::ULong ticket, 
                 boost::array<unsigned char, secret_size> secret)
 {
-  size_t size(sizeof(idl::MajorVersion) + sizeof(idl::MinorVersion) 
+  size_t size(sizeof(idl::core::MajorVersion) + sizeof(idl::core::MinorVersion) 
     + secret_size + sizeof(CORBA::ULong) /* ticket */ 
               + operation.size());
   boost::scoped_array<unsigned char> buf (new unsigned char[size]());
   size_t pos(0);
 
   CORBA::Octet major_version(
-    boost::is_same<C, idl_cr::CredentialData>::value ?
-    idl::MajorVersion : legacy_idl::MajorVersion);
+    boost::is_same<C, idl::creden::CredentialData>::value ?
+    idl::core::MajorVersion : idl::legacy::core::MajorVersion);
 
   CORBA::Octet minor_version(
-    boost::is_same<C, idl_cr::CredentialData>::value ?
-    idl::MinorVersion : legacy_idl::MinorVersion);
+    boost::is_same<C, idl::creden::CredentialData>::value ?
+    idl::core::MinorVersion : idl::legacy::core::MinorVersion);
 
   buf.get()[pos] = major_version;
   pos += sizeof(major_version);

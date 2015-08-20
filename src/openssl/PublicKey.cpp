@@ -4,7 +4,7 @@
 namespace openbus
 {
 
-PublicKey::PublicKey(const idl::OctetSeq &key)
+PublicKey::PublicKey(const idl::core::OctetSeq &key)
   : _keySeq(key)
 {
   _pkey = openssl::byteSeq2PubKey(_keySeq.get_buffer(), _keySeq.length());
@@ -40,7 +40,7 @@ PublicKey& PublicKey::operator=(const PublicKey &o)
 }
 
 
-idl::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
+idl::core::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
 {
 #ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
@@ -52,9 +52,9 @@ idl::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
   assert(r == 1);
   r = EVP_PKEY_encrypt(ctx.get(), 0, &encryptedLen, buf, size);
   assert(r == 1);
-  openssl::openssl_buffer encrypted(idl::OctetSeq::allocbuf(
+  openssl::openssl_buffer encrypted(idl::core::OctetSeq::allocbuf(
                                       static_cast<CORBA::ULong>(encryptedLen)));
-  encrypted.deleter(idl::OctetSeq::freebuf);
+  encrypted.deleter(idl::core::OctetSeq::freebuf);
   if(encrypted.get() == 0)
   if(!encrypted)
   {
@@ -62,7 +62,7 @@ idl::OctetSeq PublicKey::encrypt(const unsigned char *buf, std::size_t size)
   }
   r = EVP_PKEY_encrypt(ctx.get(), encrypted.get(), &encryptedLen, buf, size);
   assert(r == 1);
-  return idl::OctetSeq(
+  return idl::core::OctetSeq(
     static_cast<CORBA::ULong>(encryptedLen),
     static_cast<CORBA::ULong>(encryptedLen),
     encrypted.release(),

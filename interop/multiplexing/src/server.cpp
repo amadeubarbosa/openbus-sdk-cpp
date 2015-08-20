@@ -137,9 +137,9 @@ void registerOffer(openbus::OpenBusContext &ctx, openbus::Connection &conn,
 {
   try 
   {
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(1);
-    openbus::idl_or::ServiceProperty property;
+    openbus::idl::offers::ServiceProperty property;
     property.name = "offer.domain";
     property.value = "Interoperability Tests";
     props[0] = property;

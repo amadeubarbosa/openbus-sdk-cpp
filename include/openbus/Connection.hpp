@@ -10,11 +10,7 @@
 #define TECGRAF_SDK_OPENBUS_CONNECTION_HPP
 
 #include "scsC.h"
-#include "access_controlC.h"
-#include "openbus_core-2.1C.h"
-#include "openbus_access-2.1C.h"
-#include "openbus_offers-2.1C.h"
-#include "openbus_legacy-2.1C.h"
+#include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/interceptors/ORBInitializer.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
@@ -41,14 +37,7 @@
 * \brief openbus
 */
 namespace openbus 
-{
-  namespace idl = tecgraf::openbus::core::v2_1;
-  namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
-  namespace idl_or = tecgraf::openbus::core::v2_1::services::offer_registry;
-  namespace idl_ls = tecgraf::openbus::core::v2_1::services::legacy_support;
-  namespace legacy_idl = tecgraf::openbus::core::v2_0;
-  namespace legacy_idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
-  
+{  
   class OpenBusContext;
   class LoginCache;
 #ifndef OPENBUS_SDK_MULTITHREAD
@@ -162,15 +151,15 @@ private:
   SharedAuthSecret();
   SharedAuthSecret(
     const std::string &bus_id,
-    idl_ac::LoginProcess_var,
-    legacy_idl_ac::LoginProcess_var,
-    const idl::OctetSeq &secret,
+    idl::access::LoginProcess_var,
+    idl::legacy::access::LoginProcess_var,
+    const idl::core::OctetSeq &secret,
     interceptors::ORBInitializer *);  
 
   std::string busid_;
-  idl_ac::LoginProcess_var login_process_;
-  legacy_idl_ac::LoginProcess_var legacy_login_process_;
-  idl::OctetSeq secret_;
+  idl::access::LoginProcess_var login_process_;
+  idl::legacy::access::LoginProcess_var legacy_login_process_;
+  idl::core::OctetSeq secret_;
   interceptors::ORBInitializer *orb_initializer_;
   friend class OpenBusContext;
   friend class Connection;
@@ -221,7 +210,7 @@ public:
    * \param conn Conexão que recebeu a notificação de login inválido.
    * \param login Informações do login que se tornou inválido.
    */
-  typedef boost::function<void (Connection & conn, idl_ac::LoginInfo login)> 
+  typedef boost::function<void (Connection & conn, idl::access::LoginInfo login)> 
     InvalidLoginCallback_t;
   
   /**
@@ -234,16 +223,16 @@ public:
   * @param password Senha de autenticação no barramento da entidade.
   * 
   * @throw AlreadyLoggedIn A conexão já está logada.
-  * @throw idl_ac::AccessDenied
+  * @throw idl::access::AccessDenied
   *        Senha fornecida para autenticação da entidade não foi validada pelo 
   *        barramento.
   * @throw TooManyAttempts A autenticação foi recusada por um número 
   *        excessivo de tentativas inválidas de login por senha.
-  * @throw idl::ServiceFailure 
+  * @throw idl::core::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
-	* @throw idl_ac::UnknownDomain O domínio de autenticação não é conhecido.
-  * @throw idl_ac::WrongEncoding A autenticação falhou, pois a senha não foi
+	* @throw idl::access::UnknownDomain O domínio de autenticação não é conhecido.
+  * @throw idl::access::WrongEncoding A autenticação falhou, pois a senha não foi
   *        codificada corretamente com a chave pública do barramento.
   * @throw CORBA::Exception
   */
@@ -263,15 +252,15 @@ public:
   *            É uma precondição um EVP_PKEY válido e não nulo.
   * 
   * @throw AlreadyLoggedIn A conexão já está autenticada.
-  * @throw idl_ac::AccessDenied 
+  * @throw idl::access::AccessDenied 
   *        A chave privada fornecida não corresponde ao certificado da entidade 
   *        registrado no barramento indicado.
-  * @throw idl_ac::MissingCertificate 
+  * @throw idl::access::MissingCertificate 
   *        Não há certificado para essa entidade registrado no barramento
   *        indicado.
-  * @throw idl_ac::WrongEncoding A autenticação falhou, pois a senha não foi
+  * @throw idl::access::WrongEncoding A autenticação falhou, pois a senha não foi
   *        codificada corretamente com a chave pública do barramento.
-  * @throw idl::ServiceFailure 
+  * @throw idl::core::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
   * @throw CORBA::Exception
@@ -293,7 +282,7 @@ public:
   * 
   * @return Segredo a ser fornecido na conclusão do processo de login.
   *
-  * @throw idl::ServiceFailure 
+  * @throw idl::core::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu 
   *        o estabelecimento da conexão.
   * @throw CORBA::Exception
@@ -315,7 +304,7 @@ public:
   * @throw AlreadyLoggedIn A conexão já está autenticada.
   * @throw AccessDenied O segredo fornecido não corresponde ao esperado
   *        pelo barramento.
-  * @throw idl_ac::WrongEncoding A autenticação falhou, pois a senha não foi
+  * @throw idl::access::WrongEncoding A autenticação falhou, pois a senha não foi
   *        codificada corretamente com a chave pública do barramento.
   * @throw ServiceFailure Ocorreu uma falha interna nos serviços do
   *        barramento que impediu a autenticação da conexão.
@@ -372,7 +361,7 @@ public:
    * \brief Informações do login dessa conexão ou 'null' se a conexão não está
    * autenticada, ou seja, não tem um login válido no barramento.
    */
-  const idl_ac::LoginInfo *login() const;
+  const idl::access::LoginInfo *login() const;
   
   /**
    * Identificador do barramento ao qual essa conexão se refere.
@@ -405,11 +394,11 @@ private:
   Connection &operator=(const Connection &);
 
 #ifdef OPENBUS_SDK_MULTITHREAD  
-  static void renewLogin(Connection &conn, idl_ac::AccessControl_ptr acs, 
-                         OpenBusContext &ctx, idl_ac::ValidityTime t);
+  static void renewLogin(Connection &conn, idl::access::AccessControl_ptr acs, 
+                         OpenBusContext &ctx, idl::access::ValidityTime t);
 #endif
-  void login(idl_ac::LoginInfo &loginInfo, 
-             idl_ac::ValidityTime validityTime);
+  void login(idl::access::LoginInfo &loginInfo, 
+             idl::access::ValidityTime validityTime);
 
   void checkBusid() const;
   bool _logout(bool local = true);
@@ -418,17 +407,17 @@ private:
     return _orb; 
   }
 
-  idl_ac::LoginRegistry_var login_registry() const 
+  idl::access::LoginRegistry_var login_registry() const 
   { 
     return _login_registry; 
   }
 
-  idl_ac::AccessControl_var access_control() const 
+  idl::access::AccessControl_var access_control() const 
   { 
     return _access_control; 
   }
 
-  const idl_ac::LoginInfo *_login() const 
+  const idl::access::LoginInfo *_login() const 
   { 
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);;
@@ -436,19 +425,19 @@ private:
     return _loginInfo.get(); 
   }
 
-  idl_or::OfferRegistry_var getOfferRegistry() const
+  idl::offers::OfferRegistry_var getOfferRegistry() const
   { 
     return _offer_registry;
   }
 
-  idl_ac::LoginRegistry_var getLoginRegistry() const
+  idl::access::LoginRegistry_var getLoginRegistry() const
   {
     return _login_registry;
   }
 
   void init();
 
-  idl_ac::LoginInfo get_login();
+  idl::access::LoginInfo get_login();
 
   scs::core::IComponent_var _iComponent;
   const std::string _host;
@@ -461,7 +450,7 @@ private:
 #else
   boost::scoped_ptr<RenewLogin> _renewLogin;
 #endif
-  boost::scoped_ptr<idl_ac::LoginInfo> _loginInfo, _invalid_login;
+  boost::scoped_ptr<idl::access::LoginInfo> _loginInfo, _invalid_login;
   InvalidLoginCallback_t _onInvalidLogin;
   
   enum State 
@@ -474,15 +463,15 @@ private:
   /* Variaveis que sao modificadas somente no construtor. */
   OpenBusContext &_openbusContext;
   PrivateKey _key;
-  idl_ac::AccessControl_var _access_control;
-  idl_ac::LoginRegistry_var _login_registry;
-  idl_or::OfferRegistry_var _offer_registry;
+  idl::access::AccessControl_var _access_control;
+  idl::access::LoginRegistry_var _login_registry;
+  idl::offers::OfferRegistry_var _offer_registry;
   boost::scoped_ptr<LoginCache> _loginCache;
   std::string _busid;
   boost::scoped_ptr<PublicKey> _buskey;
   bool _legacy_support;
-  legacy_idl_ac::AccessControl_var _legacy_access_control;
-  idl_ls::LegacyConverter_var _legacy_converter;
+  idl::legacy::access::AccessControl_var _legacy_access_control;
+  idl::legacy_support::LegacyConverter_var _legacy_converter;
   /**/
     
   CORBA::Object_var _component_ref;

@@ -7,10 +7,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_HPP
 
-#include "openbus_creden-2.1C.h"
-#include "openbus_access-2.1C.h"
-#include "openbus_offers-2.1C.h"
-#include "openbus_export-2.1C.h"
+#include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/Connection.hpp"
@@ -27,11 +24,6 @@
 
 namespace openbus 
 {
-  namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
-  namespace idl_cr = tecgraf::openbus::core::v2_1::credential;
-  namespace idl_or = tecgraf::openbus::core::v2_1::services::offer_registry;
-  namespace idl_data_export = tecgraf::openbus::core::v2_1::data_export;
-
   namespace interceptors
   {
     struct orb_info;
@@ -39,9 +31,9 @@ namespace openbus
   }
 }
 
-namespace tecgraf 
+namespace tecgraf
 { 
-namespace openbus 
+namespace openbus
 { 
 namespace core 
 { 
@@ -145,7 +137,7 @@ struct OPENBUS_SDK_DECL CallerChain
    * Quando essa lista é vazia isso indica que a  chamada não está inclusa em 
    * outra cadeia de chamadas.
 	 */
-  const idl_ac::LoginInfoSeq &originators() const 
+  const idl::access::LoginInfoSeq &originators() const 
   {
     return _originators;
   }
@@ -154,7 +146,7 @@ struct OPENBUS_SDK_DECL CallerChain
    * \brief Informação de login da entidade que realizou a última chamada da 
    * cadeia.
    */
-  const idl_ac::LoginInfo &caller() const 
+  const idl::access::LoginInfo &caller() const 
   {
     return _caller;
   }
@@ -174,7 +166,7 @@ struct OPENBUS_SDK_DECL CallerChain
    */
   CallerChain() 
   {
-    std::memset(_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
+    std::memset(_signedCallChain.signature, ' ', idl::core::EncryptedBlockSize);
   }
 //private:
 #ifndef OPENBUS_SDK_TEST
@@ -183,10 +175,10 @@ private:
 public:
 #endif
   CallerChain(
-    const idl_ac::CallChain &chain,
+    const idl::access::CallChain &chain,
     const std::string &busid,
     const std::string &target,
-    const idl_cr::SignedData &signed_chain)
+    const idl::creden::SignedData &signed_chain)
     : _busid(chain.bus.in()),
     _target(target),
     _originators(chain.originators), 
@@ -196,39 +188,39 @@ public:
   }
 
   CallerChain(
-    const legacy_idl_ac::CallChain &chain,
+    const idl::legacy::access::CallChain &chain,
     const std::string &busid,
     const std::string &target,
-    const legacy_idl_cr::SignedCallChain &signed_chain)
+    const idl::legacy::creden::SignedCallChain &signed_chain)
     : _busid(busid),
     _target(target),
     _legacy_signedCallChain(signed_chain)
   {
-    _originators = idl_ac::LoginInfoSeq(
+    _originators = idl::access::LoginInfoSeq(
       chain.originators.length(),
       chain.originators.length(),
-      (idl_ac::LoginInfo*)chain.originators.get_buffer());
+      (idl::access::LoginInfo*)chain.originators.get_buffer());
     _caller.id = chain.caller.id;
     _caller.entity = chain.caller.entity;
   }
 
   CallerChain(const std::string &busid, 
               const std::string &target,
-              const idl_ac::LoginInfoSeq &originators, 
-              const idl_ac::LoginInfo &caller) 
+              const idl::access::LoginInfoSeq &originators, 
+              const idl::access::LoginInfo &caller) 
     : _busid(busid), _target(target), _originators(originators), 
     _caller(caller) 
   {
-    std::memset(_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
-    std::memset(_legacy_signedCallChain.signature, ' ', idl::EncryptedBlockSize);
+    std::memset(_signedCallChain.signature, ' ', idl::core::EncryptedBlockSize);
+    std::memset(_legacy_signedCallChain.signature, ' ', idl::core::EncryptedBlockSize);
   }
 
-  idl_cr::SignedData signed_chain(idl_cr::CredentialData) const
+  idl::creden::SignedData signed_chain(idl::creden::CredentialData) const
   {
     return _signedCallChain;
   }
 
-  legacy_idl_cr::SignedCallChain signed_chain(legacy_idl_cr::CredentialData) const
+  idl::legacy::creden::SignedCallChain signed_chain(idl::legacy::creden::CredentialData) const
   {
     return _legacy_signedCallChain;
   }
@@ -240,10 +232,10 @@ public:
 
   std::string _busid;
   std::string _target;
-  idl_ac::LoginInfoSeq _originators;
-  idl_ac::LoginInfo _caller;
-  idl_cr::SignedData _signedCallChain;
-  legacy_idl_cr::SignedCallChain _legacy_signedCallChain;
+  idl::access::LoginInfoSeq _originators;
+  idl::access::LoginInfo _caller;
+  idl::creden::SignedData _signedCallChain;
+  idl::legacy::creden::SignedCallChain _legacy_signedCallChain;
   
   friend class OpenBusContext;
   friend struct openbus::interceptors::ClientInterceptor;
@@ -681,11 +673,11 @@ public:
 	 * \param domain Identificador do domínio de autenticação.
 	 * \return A nova cadeia de chamadas assinada.
 	 *
-	 * \exception idl_ac::InvalidToken O token fornecido não foi reconhecido.
-	 * \exception idl_ac::UnknownDomain O domínio de autenticação não é conhecido.
-	 * \exception idl_ac::WrongEncoding A importação falhou, pois o token não foi
+	 * \exception idl::access::InvalidToken O token fornecido não foi reconhecido.
+	 * \exception idl::access::UnknownDomain O domínio de autenticação não é conhecido.
+	 * \exception idl::access::WrongEncoding A importação falhou, pois o token não foi
 	 *            codificado corretamente com a chave pública do barramento.
-	 * \exception idl::ServiceFailure Ocorreu uma falha interna nos serviços do 
+	 * \exception idl::core::ServiceFailure Ocorreu uma falha interna nos serviços do 
    *            barramento que impediu a criação da cadeia.
 	 */
 	CallerChain importChain(
@@ -766,8 +758,8 @@ public:
     return _orb;
   }
   
-  idl_or::OfferRegistry_ptr getOfferRegistry() const;
-  idl_ac::LoginRegistry_ptr getLoginRegistry() const;
+  idl::offers::OfferRegistry_ptr getOfferRegistry() const;
+  idl::access::LoginRegistry_ptr getLoginRegistry() const;
 private:
   /**
    * OpenBusContext deve ser adquirido atraves de:
@@ -783,12 +775,12 @@ private:
     _orb = o;
   }
 
-  CORBA::OctetSeq encode_exported_versions(idl_data_export::VersionedDataSeq,
+  CORBA::OctetSeq encode_exported_versions(idl::data_export::VersionedDataSeq,
                                            const std::string &tag);
 
   std::string decode_exported_versions(
     const CORBA::OctetSeq &stream,
-    idl_data_export::VersionedDataSeq_out exported_version_seq) const;
+    idl::data_export::VersionedDataSeq_out exported_version_seq) const;
 
   std::auto_ptr<Connection> connect_by_address_impl(
     const std::string &host,
@@ -808,11 +800,11 @@ private:
     bool legacy_support);
 
   CallerChain extract_call_chain(
-    idl_cr::SignedData,
+    idl::creden::SignedData,
     Connection *);
   
   CallerChain extract_legacy_call_chain(
-    legacy_idl_cr::SignedCallChain,
+    idl::legacy::creden::SignedCallChain,
     Connection *);
 
   typedef std::map<std::string, Connection *> BusidConnection;

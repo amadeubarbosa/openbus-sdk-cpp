@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
     }
     conn->loginByCertificate(entity, priv_key); 
 
-    openbus::idl_or::ServicePropertySeq properties;
+    openbus::idl::offers::ServicePropertySeq properties;
     properties.length(2);
     properties[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
     properties[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
       "openbus.component.interface";
     properties[static_cast<CORBA::ULong>(1)].value =
       delegation::_tc_Messenger->id();
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
+    openbus::idl::offers::ServiceOfferDescSeq_var offers = 
       find_offers(bus_ctx, properties);
     
     if (offers->length() > 0)
@@ -161,9 +161,9 @@ int main(int argc, char** argv) {
       broadcaster_component.addFacet(
         "broadcaster", delegation::_tc_Broadcaster->id(), &broadcaster_servant);
     
-      openbus::idl_or::ServicePropertySeq props;
+      openbus::idl::offers::ServicePropertySeq props;
       props.length(1);
-      openbus::idl_or::ServiceProperty property;
+      openbus::idl::offers::ServiceProperty property;
       props[static_cast<CORBA::ULong>(0)].name = "offer.domain";
       props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
 

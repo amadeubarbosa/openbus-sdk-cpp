@@ -137,13 +137,13 @@ int main(int argc, char** argv) {
 
     bus_ctx->setDefaultConnection(conn.get());
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
     props[0].name  = "openbus.component.facet";
     props[0].value = "Hello";
     props[1].name  = "offer.domain";
     props[1].value = "Interoperability Tests";
-    openbus::idl_or::ServiceOfferDescSeq_var offers(
+    openbus::idl::offers::ServiceOfferDescSeq_var offers(
       find_offers(bus_ctx, props));
     
     if (offers->length())

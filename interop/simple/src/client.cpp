@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     bus_ctx->setDefaultConnection(conn.get());
     conn->loginByPassword(entity, entity);
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
     props[0u].name = "offer.domain";
     props[0u].value = "Interoperability Tests";
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     props[1u].value = 
       "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers(
+    openbus::idl::offers::ServiceOfferDescSeq_var offers(
       find_offers(bus_ctx, props));
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {

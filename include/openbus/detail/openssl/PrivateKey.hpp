@@ -3,9 +3,9 @@
 #ifndef TECGRAF_SDK_OPENBUS_PRIVATE_KEY_HPP
 #define TECGRAF_SDK_OPENBUS_PRIVATE_KEY_HPP
 
+#include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/openssl/OpenSSL.hpp"
-#include "openbus_core-2.1C.h"
 
 #include <string>
 #include <exception>
@@ -17,7 +17,6 @@
 
 namespace openbus
 {
-namespace idl = tecgraf::openbus::core::v2_1;
 struct InvalidPrivateKey : public std::exception
 { 
   const char *what() const throw() 
@@ -31,15 +30,15 @@ class PrivateKey
 public:
   OPENBUS_SDK_DECL PrivateKey();
   OPENBUS_SDK_DECL PrivateKey(EVP_PKEY *);
-  OPENBUS_SDK_DECL PrivateKey(const idl::OctetSeq &key);
+  OPENBUS_SDK_DECL PrivateKey(const idl::core::OctetSeq &key);
   OPENBUS_SDK_DECL PrivateKey(const char *key, std::size_t size);
   OPENBUS_SDK_DECL explicit PrivateKey(const std::string &filename);
   OPENBUS_SDK_DECL PrivateKey(const PrivateKey &);
   OPENBUS_SDK_DECL PrivateKey& operator=(const PrivateKey &);
-  OPENBUS_SDK_DECL idl::OctetSeq decrypt(const unsigned char *data,
+  OPENBUS_SDK_DECL idl::core::OctetSeq decrypt(const unsigned char *data,
                                          std::size_t len) const;
-  OPENBUS_SDK_DECL idl::OctetSeq pubKey();
-  const idl::OctetSeq &octetSeq() const
+  OPENBUS_SDK_DECL idl::core::OctetSeq pubKey();
+  const idl::core::OctetSeq &octetSeq() const
   {
     return _keySeq;
   }
@@ -48,10 +47,10 @@ public:
     return _key.get();
   }
 private:
-  void set_pkey(const idl::OctetSeq &key);
+  void set_pkey(const idl::core::OctetSeq &key);
   EVP_PKEY *new_key();
   openssl::pkey _key;
-  idl::OctetSeq _keySeq;
+  idl::core::OctetSeq _keySeq;
 #ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
 #endif

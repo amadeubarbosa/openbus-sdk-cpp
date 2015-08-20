@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     bus_ctx->setDefaultConnection(conn.get());
     conn->loginByPassword(entity, entity);
 
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
     props[static_cast<CORBA::ULong>(0)].name  = "offer.domain";
     props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     props[static_cast<CORBA::ULong>(1)].value = 
       "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
+    openbus::idl::offers::ServiceOfferDescSeq_var offers = 
       bus_ctx->getOfferRegistry()->findServices(props);
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 	o(offers[idx].service_ref->getFacetByName("HelloProxy"));
       tecgraf::openbus::interop::chaining::HelloProxy *helloProxy = 
         tecgraf::openbus::interop::chaining::HelloProxy::_narrow(o);
-      openbus::idl_or::ServicePropertySeq properties = offers[idx].properties;
+      openbus::idl::offers::ServicePropertySeq properties = offers[idx].properties;
       const char *offer_entity(0);
       for (CORBA::ULong idx = 0; idx != properties.length(); ++idx)
       {

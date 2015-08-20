@@ -5,8 +5,6 @@
 #include "openbus/detail/interceptors/ServerInterceptor.hpp"
 #include "openbus/log.hpp"
 
-#include "coreC.h"
-
 namespace openbus { namespace interceptors 
 {
 ignore_interceptor::ignore_interceptor(ORBInitializer * p)

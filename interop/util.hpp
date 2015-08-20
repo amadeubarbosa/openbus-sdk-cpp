@@ -19,15 +19,15 @@ openbus::OpenBusContext * get_bus_ctx(boost::shared_ptr<openbus::orb_ctx> orb_ct
   return bus_ctx;
 }
 
-openbus::idl_or::ServiceOfferDescSeq_var find_offers(
+openbus::idl::offers::ServiceOfferDescSeq_var find_offers(
   const openbus::OpenBusContext *bus_ctx,
-  const openbus::idl_or::ServicePropertySeq &props)
+  const openbus::idl::offers::ServicePropertySeq &props)
 {
-  openbus::idl_or::ServiceOfferDescSeq_var found_offers(
-    new openbus::idl_or::ServiceOfferDescSeq);
+  openbus::idl::offers::ServiceOfferDescSeq_var found_offers(
+    new openbus::idl::offers::ServiceOfferDescSeq);
   do
   {
-    openbus::idl_or::ServiceOfferDescSeq_var offers(
+    openbus::idl::offers::ServiceOfferDescSeq_var offers(
       bus_ctx->getOfferRegistry()->findServices(props));
     for (CORBA::ULong idx(0); idx != offers->length(); ++idx)      
     {

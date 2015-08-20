@@ -3,9 +3,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_HPP
 #define TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_HPP
 
-#include "openbus_creden-2.1C.h"
-#include "openbus_access-2.1C.h"
-#include "access_controlC.h"
+#include "openbus/idl.hpp"
 #include "openbus/detail/interceptors/ORBInitializer.hpp"
 #include "openbus/detail/decl.hpp"
 
@@ -29,8 +27,6 @@ extern "C"
 
 namespace openbus 
 {
-namespace legacy_idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
-namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
 class OpenBusContext;
 class Connection;
 struct Login;
@@ -82,13 +78,13 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   C get_credential(PI::ServerRequestInfo_ptr) const;
 
   bool check_legacy_chain(
-    legacy_idl_ac::CallChain,
+    idl::legacy::access::CallChain,
     boost::shared_ptr<Login> caller,
     Connection &,
     PI::ServerRequestInfo_ptr);
 
   bool check_chain(
-    idl_ac::CallChain,
+    idl::access::CallChain,
     boost::shared_ptr<Login> caller,  
     Connection &);
 
@@ -102,12 +98,12 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   CORBA::Any attach_legacy_credential_rst(
     boost::shared_ptr<Session>,
     Connection &,
-    idl::OctetSeq &secret);
+    idl::core::OctetSeq &secret);
   
   CORBA::Any attach_credential_rst(
     boost::shared_ptr<Session>,
     Connection &,
-    idl::OctetSeq &secret);
+    idl::core::OctetSeq &secret);
     
   template <typename C>
     void send_credential_reset(

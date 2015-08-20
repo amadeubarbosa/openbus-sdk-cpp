@@ -3,8 +3,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_HPP
 #define TECGRAF_SDK_OPENBUS_CLIENT_INTERCEPTOR_HPP
 
-#include "openbus_creden-2.1C.h"
-#include "openbus_access-2.1C.h"
+#include "openbus/idl.hpp"
 #include "openbus/detail/interceptors/ORBInitializer.hpp"
 #include "openbus/detail/decl.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
@@ -21,16 +20,9 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/mpl/if.hpp>
 #include <map>
-#include "credentialC.h"
-#include "access_controlC.h"
 
 namespace openbus 
 {
-namespace legacy_idl_cr = tecgraf::openbus::core::v2_0::credential;
-namespace legacy_idl_ac = tecgraf::openbus::core::v2_0::services::access_control;
-namespace idl_cr = tecgraf::openbus::core::v2_1::credential;
-namespace idl_ac = tecgraf::openbus::core::v2_1::services::access_control;
-
 class OpenBusContext;
 class Connection;
 struct CallerChain;
@@ -54,19 +46,19 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   bool ignore_request(PI::ClientRequestInfo &);
   bool ignore_invalid_login(PI::ClientRequestInfo &);
 
-  idl_cr::SignedData
+  idl::creden::SignedData
     get_signed_chain(
       Connection &,
       hash_value &hash, 
       const std::string &target,
-      idl_cr::CredentialData);
+      idl::creden::CredentialData);
     
-  legacy_idl_cr::SignedCallChain
+  idl::legacy::creden::SignedCallChain
     get_signed_chain(
       Connection &,
       hash_value &, 
       const std::string &target,
-      legacy_idl_cr::CredentialData);
+      idl::legacy::creden::CredentialData);
 
   openbus::CallerChain get_joined_chain(
     PI::ClientRequestInfo_ptr,
@@ -84,20 +76,20 @@ ClientInterceptor : public PI::ClientRequestInterceptor
       PI::ClientRequestInfo_ptr,
       Connection &,
       typename boost::mpl::if_<
-      typename boost::is_same<C, idl_cr::CredentialData>::type,
-      idl_ac::LoginInfo,
-      legacy_idl_ac::LoginInfo>::type &,
+      typename boost::is_same<C, idl::creden::CredentialData>::type,
+      idl::access::LoginInfo,
+      idl::legacy::access::LoginInfo>::type &,
       CallerChain &,
       Connection::SecretSession *);
 
   void attach_credential(
     PI::ClientRequestInfo_ptr,
     Connection &,
-    idl_ac::LoginInfo &);
+    idl::access::LoginInfo &);
   
   ORBInitializer *_orb_init;
-  LRUCache<hash_value, idl_cr::SignedData> _callChainLRUCache;
-  LRUCache<hash_value, legacy_idl_cr::SignedCallChain> _legacy_callChainLRUCache;
+  LRUCache<hash_value, idl::creden::SignedData> _callChainLRUCache;
+  LRUCache<hash_value, idl::legacy::creden::SignedCallChain> _legacy_callChainLRUCache;
   OpenBusContext *_bus_ctx;
   std::map<boost::uuids::uuid, Connection *> _request_id2conn;
 #ifdef OPENBUS_SDK_MULTITHREAD

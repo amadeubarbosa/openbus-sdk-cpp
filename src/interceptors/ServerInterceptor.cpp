@@ -38,12 +38,12 @@ ServerInterceptor::ServerInterceptor(ORBInitializer *orb_init)
 CORBA::Any ServerInterceptor::attach_legacy_credential_rst(
   boost::shared_ptr<Session> session,
   Connection &conn,
-  idl::OctetSeq &secret)
+  idl::core::OctetSeq &secret)
 {
-  legacy_idl_cr::CredentialReset rst;
+  idl::legacy::creden::CredentialReset rst;
   rst.session = session->id;
   rst.target = conn._login()->id;
-  std::memcpy(rst.challenge, secret.get_buffer(), idl::EncryptedBlockSize);
+  std::memcpy(rst.challenge, secret.get_buffer(), idl::core::EncryptedBlockSize);
   CORBA::Any any;
   any <<= rst;
   return any;
@@ -52,13 +52,13 @@ CORBA::Any ServerInterceptor::attach_legacy_credential_rst(
 CORBA::Any ServerInterceptor::attach_credential_rst(
   boost::shared_ptr<Session> session,
   Connection &conn,
-  idl::OctetSeq &secret)
+  idl::core::OctetSeq &secret)
 {
-  idl_cr::CredentialReset rst;
+  idl::creden::CredentialReset rst;
   rst.session = session->id;
   rst.target = conn._login()->id;
   rst.entity = conn._login()->entity;
-  std::memcpy(rst.challenge, secret.get_buffer(), idl::EncryptedBlockSize);
+  std::memcpy(rst.challenge, secret.get_buffer(), idl::core::EncryptedBlockSize);
   CORBA::Any any;
   any <<= rst;
   return any;
@@ -71,7 +71,7 @@ void ServerInterceptor::send_credential_reset(
   PI::ServerRequestInfo_ptr r) 
 {
   CORBA::Any any;
-  idl::OctetSeq secret;
+  idl::core::OctetSeq secret;
   {
 #ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
@@ -82,7 +82,7 @@ void ServerInterceptor::send_credential_reset(
     _sessionLRUCache.insert(session->id, session);
     secret = caller->pubKey->encrypt(session->secret.data, 
                                      boost::uuids::uuid::static_size());
-    if (boost::is_same<C, idl_cr::CredentialData>::value)
+    if (boost::is_same<C, idl::creden::CredentialData>::value)
       any = attach_credential_rst(session, conn, secret);
     else
       any = attach_legacy_credential_rst(session, conn, secret);
@@ -90,12 +90,12 @@ void ServerInterceptor::send_credential_reset(
   CORBA::OctetSeq_var o(_orb_init->codec->encode_value(any));
   IOP::ServiceContext serviceContext;
   serviceContext.context_id =
-    boost::is_same<C, idl_cr::CredentialData>::value ?
-    idl_cr::CredentialContextId : legacy_idl_cr::CredentialContextId;
+    boost::is_same<C, idl::creden::CredentialData>::value ?
+    idl::creden::CredentialContextId : idl::legacy::creden::CredentialContextId;
   CORBA::OctetSeq s(o->length(), o->length(), o->get_buffer(), 0);
   serviceContext.context_data = s;
   r->add_reply_service_context(serviceContext, true);
-  throw CORBA::NO_PERMISSION(idl_ac::InvalidCredentialCode, 
+  throw CORBA::NO_PERMISSION(idl::access::InvalidCredentialCode, 
                              CORBA::COMPLETED_NO);              
 }
 
@@ -107,18 +107,18 @@ C ServerInterceptor::get_credential(PI::ServerRequestInfo_ptr r) const
   {
     IOP::ServiceContext_var sc(
       r->get_request_service_context(
-        boost::is_same<C, idl_cr::CredentialData>::value ?
-        idl_cr::CredentialContextId : legacy_idl_cr::CredentialContextId));
+        boost::is_same<C, idl::creden::CredentialData>::value ?
+        idl::creden::CredentialContextId : idl::legacy::creden::CredentialContextId));
     CORBA::Any_var any(
       _orb_init->codec->decode_value(
         sc->context_data,
-        boost::is_same<C, idl_cr::CredentialData>::value ?
-        idl_cr::_tc_CredentialData : legacy_idl_cr::_tc_CredentialData));
+        boost::is_same<C, idl::creden::CredentialData>::value ?
+        idl::creden::_tc_CredentialData : idl::legacy::creden::_tc_CredentialData));
     credential = extract<C>(any);
   }
   catch (const CORBA::BAD_PARAM &) 
   {    
-    throw CORBA::NO_PERMISSION(idl_ac::NoCredentialCode, 
+    throw CORBA::NO_PERMISSION(idl::access::NoCredentialCode, 
                                CORBA::COMPLETED_NO);
   }
   return credential;
@@ -133,7 +133,7 @@ void ServerInterceptor::save_dispatcher_connection(
   unsigned char buf[bufSize];
   Connection *_c(&conn);
   std::memcpy(buf, &_c, bufSize);
-  idl::OctetSeq connectionAddrOctetSeq(bufSize, bufSize, buf);
+  idl::core::OctetSeq connectionAddrOctetSeq(bufSize, bufSize, buf);
   CORBA::Any connectionAddrAny;
   connectionAddrAny <<= connectionAddrOctetSeq;
   r->set_slot(_orb_init->current_connection, connectionAddrAny);
@@ -156,7 +156,7 @@ Connection &ServerInterceptor::get_dispatcher_connection(
       conn = ctx->onCallDispatch()(*ctx, busid, login, r->operation());
       if (conn && conn->busid() != busid)
       {
-        throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+        throw CORBA::NO_PERMISSION(idl::access::UnknownBusCode, CORBA::COMPLETED_NO);
       }
     }
     catch (const std::exception &e) 
@@ -175,12 +175,12 @@ Connection &ServerInterceptor::get_dispatcher_connection(
   {
     if (!(conn = ctx->getDefaultConnection()))
     {
-      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+      throw CORBA::NO_PERMISSION(idl::access::UnknownBusCode, CORBA::COMPLETED_NO);
     }
   }
   if ( (!conn->login() || (conn->busid() != busid)) )
   {
-    throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+    throw CORBA::NO_PERMISSION(idl::access::UnknownBusCode, CORBA::COMPLETED_NO);
   } 
   assert(conn);
   save_dispatcher_connection(*conn, r, ctx);
@@ -188,14 +188,14 @@ Connection &ServerInterceptor::get_dispatcher_connection(
 }
 
 bool ServerInterceptor::check_legacy_chain(
-  legacy_idl_ac::CallChain chain,
+  idl::legacy::access::CallChain chain,
   boost::shared_ptr<Login> caller,
   Connection &conn,
   PI::ServerRequestInfo_ptr r)
 {
   if (std::strcmp(chain.target, conn._login()->entity)) 
   { 
-    send_credential_reset<legacy_idl_cr::CredentialData>(conn, caller, r);
+    send_credential_reset<idl::legacy::creden::CredentialData>(conn, caller, r);
   }
   else if (std::strcmp(chain.caller.id, caller->loginInfo->id)) 
   {
@@ -205,7 +205,7 @@ bool ServerInterceptor::check_legacy_chain(
 }
 
 bool ServerInterceptor::check_chain(
-  idl_ac::CallChain chain,
+  idl::access::CallChain chain,
   boost::shared_ptr<Login> caller,  
   Connection &conn)
 {
@@ -228,13 +228,13 @@ bool ServerInterceptor::validate_chain(
   {
     return false;
   }
-  idl::HashValue hashChain;
+  idl::core::HashValue hashChain;
   SHA256(cred.chain.encoded.get_buffer(),
          cred.chain.encoded.length(), hashChain);
 
   if (!conn._buskey->verify(cred.chain.signature, 
-                            idl::EncryptedBlockSize, hashChain, 
-                            idl::HashValueSize))
+                            idl::core::EncryptedBlockSize, hashChain, 
+                            idl::core::HashValueSize))
   {
     return false;
   }
@@ -246,17 +246,17 @@ bool ServerInterceptor::validate_chain(
     CORBA::Any_var any(
       _orb_init->codec->decode_value(
         o,
-        boost::is_same<C, idl_cr::CredentialData>::value ?
-        idl_ac::_tc_CallChain : legacy_idl_ac::_tc_CallChain));
+        boost::is_same<C, idl::creden::CredentialData>::value ?
+        idl::access::_tc_CallChain : idl::legacy::access::_tc_CallChain));
 
-    if (boost::is_same<C, idl_cr::CredentialData>::value)
+    if (boost::is_same<C, idl::creden::CredentialData>::value)
     {
-      idl_ac::CallChain chain(extract<idl_ac::CallChain>(any));
+      idl::access::CallChain chain(extract<idl::access::CallChain>(any));
       return check_chain(chain, caller, conn);
     }
     else
     {
-      legacy_idl_ac::CallChain chain(extract<legacy_idl_ac::CallChain>(any));
+      idl::legacy::access::CallChain chain(extract<idl::legacy::access::CallChain>(any));
       return check_legacy_chain(chain, caller, conn, r);
     }
   }
@@ -283,20 +283,20 @@ void ServerInterceptor::handle_credential(
   }
   catch (const CORBA::NO_PERMISSION &e) 
   {
-    if (idl_ac::NoLoginCode == e.minor()) 
+    if (idl::access::NoLoginCode == e.minor()) 
     {
-      throw CORBA::NO_PERMISSION(idl_ac::UnknownBusCode, CORBA::COMPLETED_NO);
+      throw CORBA::NO_PERMISSION(idl::access::UnknownBusCode, CORBA::COMPLETED_NO);
     }
   } 
   catch (const CORBA::Exception &) 
   {
-    throw CORBA::NO_PERMISSION(idl_ac::UnverifiedLoginCode,
+    throw CORBA::NO_PERMISSION(idl::access::UnverifiedLoginCode,
                                CORBA::COMPLETED_NO);
   }
   if (!caller) 
   {
     l.log("Lancando excecao InvalidLoginCode.");
-    throw CORBA::NO_PERMISSION(idl_ac::InvalidLoginCode, CORBA::COMPLETED_NO);
+    throw CORBA::NO_PERMISSION(idl::access::InvalidLoginCode, CORBA::COMPLETED_NO);
   }
   l.log("Login valido.");
   hash_value hash;   
@@ -321,7 +321,7 @@ void ServerInterceptor::handle_credential(
   }
   if (!(session
         && !std::memcmp(hash.data(), credential.hash, 
-                        idl::HashValueSize) 
+                        idl::core::HashValueSize) 
         && !std::strcmp(remote_id.c_str(), credential.login) 
         && tickets_check(&session->tickets, 
                          credential.ticket))) 
@@ -340,7 +340,7 @@ void ServerInterceptor::handle_credential(
   }
   else
   {
-    throw CORBA::NO_PERMISSION(idl_ac::InvalidChainCode, CORBA::COMPLETED_NO);
+    throw CORBA::NO_PERMISSION(idl::access::InvalidChainCode, CORBA::COMPLETED_NO);
   }
 }
     
@@ -353,17 +353,17 @@ void ServerInterceptor::receive_request_service_contexts(
 
   try
   {
-    idl_cr::CredentialData credential(
-      get_credential<idl_cr::CredentialData>(r));
-    handle_credential<idl_cr::CredentialData>(credential, r);
+    idl::creden::CredentialData credential(
+      get_credential<idl::creden::CredentialData>(r));
+    handle_credential<idl::creden::CredentialData>(credential, r);
   }
   catch(const CORBA::NO_PERMISSION &e)
   {
-    if (idl_ac::NoCredentialCode == e.minor())
+    if (idl::access::NoCredentialCode == e.minor())
     {
-      legacy_idl_cr::CredentialData legacy_credential(
-        get_credential<legacy_idl_cr::CredentialData>(r));
-      handle_credential<legacy_idl_cr::CredentialData>(legacy_credential, r);
+      idl::legacy::creden::CredentialData legacy_credential(
+        get_credential<idl::legacy::creden::CredentialData>(r));
+      handle_credential<idl::legacy::creden::CredentialData>(legacy_credential, r);
     }
     else
       throw;
