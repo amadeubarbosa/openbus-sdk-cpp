@@ -4,13 +4,13 @@
 #define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_INTERCEPTORS_CLIENT_INTERCEPTOR_HPP
 
 #include "openbus/idl.hpp"
-#include "openbus/detail/interceptors/ORBInitializer.hpp"
+#include "openbus/detail/interceptors/orb_initializer.hpp"
 #include "openbus/detail/decl.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
-#include "openbus/detail/LRUCache.hpp"
+#include "openbus/detail/lru_cache.hpp"
 #endif
-#include "openbus/Connection.hpp"
+#include "openbus/connection.hpp"
 
 #include <tao/PI/PI.h>
 #ifdef OPENBUS_SDK_MULTITHREAD

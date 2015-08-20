@@ -1,10 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
-#include "openbus/ORBInitializer.hpp"
+#include "openbus/orb_initializer.hpp"
 #include "openbus/log.hpp"
-#include "openbus/OpenBusContext.hpp"
-#include "openbus/detail/interceptors/ORBInitializer.hpp"
-#include "openbus/detail/interceptors/ServerInterceptor.hpp"
-#include "openbus/detail/interceptors/ClientInterceptor.hpp"
+#include "openbus/openbus_context.hpp"
+#include "openbus/detail/interceptors/orb_initializer.hpp"
+#include "openbus/detail/interceptors/server.hpp"
+#include "openbus/detail/interceptors/client.hpp"
 
 #include <tao/ORBInitializer_Registry.h>
 #ifdef OPENBUS_SDK_MULTITHREAD

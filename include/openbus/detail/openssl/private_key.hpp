@@ -5,7 +5,7 @@
 
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
-#include "openbus/detail/openssl/OpenSSL.hpp"
+#include "openbus/detail/openssl/openssl.hpp"
 
 #include <string>
 #include <exception>

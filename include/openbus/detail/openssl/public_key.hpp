@@ -5,7 +5,7 @@
 
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
-#include "openbus/detail/openssl/OpenSSL.hpp"
+#include "openbus/detail/openssl/openssl.hpp"
 #ifdef OPENBUS_SDK_MULTITHREAD
   #include <boost/thread.hpp>
 #endif

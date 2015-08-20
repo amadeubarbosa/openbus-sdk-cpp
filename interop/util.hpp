@@ -3,7 +3,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_INTEROP_UTIL_HPP
 #define TECGRAF_SDK_OPENBUS_INTEROP_UTIL_HPP
 
-#include <openbus/OpenBusContext.hpp>
+#include <openbus/openbus_context.hpp>
 #include <tao/PortableServer/PortableServer.h>
 #include <boost/thread.hpp>
 

@@ -1,5 +1,5 @@
 // -*- coding: iso-8859-1-unix -*-
-#include "openbus/detail/openssl/PublicKey.hpp"
+#include "openbus/detail/openssl/public_key.hpp"
 
 namespace openbus
 {

@@ -4,16 +4,16 @@
 #define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_INTERCEPTORS_SERVER_INTERCEPTOR_HPP
 
 #include "openbus/idl.hpp"
-#include "openbus/detail/interceptors/ORBInitializer.hpp"
+#include "openbus/detail/interceptors/orb_initializer.hpp"
 #include "openbus/detail/decl.hpp"
 
 extern "C" 
 {
-  #include "openbus/detail/Ticket.h"
+  #include "openbus/detail/ticket.h"
 }
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
-  #include "openbus/detail/LRUCache.hpp"
+  #include "openbus/detail/lru_cache.hpp"
 #endif
 
 #include <tao/PI_Server/PI_Server.h>

@@ -1,5 +1,5 @@
 // -*- coding: iso-8859-1-unix -*-
-#include "openbus/detail/openssl/PrivateKey.hpp"
+#include "openbus/detail/openssl/private_key.hpp"
 
 #include <fstream>
 

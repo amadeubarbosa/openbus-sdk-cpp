@@ -7,7 +7,7 @@
 #include "openbus/detail/decl.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
-  #include "openbus/detail/LRUCache.hpp"
+  #include "openbus/detail/lru_cache.hpp"
 #endif
 
 #include <boost/shared_ptr.hpp>

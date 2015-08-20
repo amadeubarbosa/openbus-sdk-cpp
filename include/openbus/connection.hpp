@@ -2,7 +2,7 @@
 
 /**
 * API do OpenBus SDK C++
-* \file openbus/Connection.hpp
+* \file openbus/bconnection.hpp
 * 
 */
 
@@ -12,13 +12,13 @@
 #include "scsC.h"
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
-#include "openbus/detail/interceptors/ORBInitializer.hpp"
+#include "openbus/detail/interceptors/orb_initializer.hpp"
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
-#include "openbus/detail/LRUCache.hpp"
+#include "openbus/detail/lru_cache.hpp"
 #endif
-#include "openbus/ORBInitializer.hpp"
-#include "openbus/detail/openssl/PrivateKey.hpp"
+#include "openbus/orb_initializer.hpp"
+#include "openbus/detail/openssl/private_key.hpp"
 
 #include <boost/array.hpp>
 #include <boost/function.hpp>

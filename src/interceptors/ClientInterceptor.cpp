@@ -1,8 +1,8 @@
 // -*- coding: iso-8859-1-unix -*-
-#include "openbus/detail/interceptors/ClientInterceptor.hpp"
-#include "openbus/detail/interceptors/ORBInitializer.hpp"
+#include "openbus/detail/interceptors/client.hpp"
+#include "openbus/detail/interceptors/orb_initializer.hpp"
 #include "openbus/Connection.hpp"
-#include "openbus/OpenBusContext.hpp"
+#include "openbus/openbus_context.hpp"
 #include "openbus/detail/any.hpp"
 #include "openbus/log.hpp"
 

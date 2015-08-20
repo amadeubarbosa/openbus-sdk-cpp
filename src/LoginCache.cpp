@@ -1,8 +1,8 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "openbus/idl.hpp"
-#include "openbus/detail/LoginCache.hpp"
-#include "openbus/detail/openssl/PublicKey.hpp"
+#include "openbus/detail/login_cache.hpp"
+#include "openbus/detail/openssl/public_key.hpp"
 
 #include <cstddef>
 #include <boost/make_shared.hpp>

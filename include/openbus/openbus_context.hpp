@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 /**
 * API do OpenBus SDK C++
-* \file openbus/OpenBusContext.hpp
+* \file openbus/openbus_context.hpp
 */
 
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONTEXT_HPP
@@ -9,8 +9,8 @@
 
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
-#include "openbus/ORBInitializer.hpp"
-#include "openbus/Connection.hpp"
+#include "openbus/orb_initializer.hpp"
+#include "openbus/connection.hpp"
 
 #include <tao/LocalObject.h>
 #include <openssl/evp.h>
