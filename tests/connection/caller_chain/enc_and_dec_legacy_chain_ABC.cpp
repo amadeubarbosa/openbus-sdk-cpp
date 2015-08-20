@@ -26,14 +26,14 @@ int main(int argc, char **argv)
     
   bus_ctx->setDefaultConnection(conn_B.get());
 
-  openbus::idl_ac::LoginInfoSeq originators;
+  openbus::idl::access::LoginInfoSeq originators;
   originators.length(1);
-  openbus::idl_ac::LoginInfo delegate;
+  openbus::idl::access::LoginInfo delegate;
   delegate.id = "<unknown>";
   delegate.entity = "A";
   originators[static_cast<CORBA::ULong>(0)] = delegate;
   
-  openbus::idl_ac::LoginInfo caller;
+  openbus::idl::access::LoginInfo caller;
   caller.id = conn_B->login()->id;
   caller.entity = conn_B->login()->entity;
   
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     "fake_legacy_chain.originators()[0u].entity",
     "decoded_chain.originators()[0u].entity");;
 
-  const openbus::idl_ac::CallChain *decoded_signed_chain;
+  const openbus::idl::access::CallChain *decoded_signed_chain;
   IOP::Codec_var codec(get_codec(bus_ctx));
   CORBA::Any_var decoded_call_chain_any(
     codec->decode_value(
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
                       decoded_chain._signedCallChain.encoded.length(),
                       const_cast<unsigned char *>
                       (decoded_chain._signedCallChain.encoded.get_buffer())),
-      openbus::idl_ac::_tc_CallChain));
+      openbus::idl::access::_tc_CallChain));
   *decoded_call_chain_any >>= decoded_signed_chain;
 
   openbus::tests::is_equal<std::string>(

@@ -24,7 +24,7 @@ int main(int argc, char** argv)
       conn->loginByPassword(cfg.user(), "invalid_password");
       std::abort();
     }
-    catch (const openbus::idl_ac::AccessDenied &)
+    catch (const openbus::idl::access::AccessDenied &)
     {
     }
   }
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     conn->loginByPassword(cfg.user(), cfg.password());
     std::abort();
   }
-  catch (const openbus::idl_ac::TooManyAttempts &)
+  catch (const openbus::idl::access::TooManyAttempts &)
   {
   }
   boost::this_thread::sleep_for(boost::chrono::seconds(5));

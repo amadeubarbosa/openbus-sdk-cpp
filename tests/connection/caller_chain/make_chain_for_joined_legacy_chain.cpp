@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_C->loginByPassword("C", "C");
 
-  openbus::idl_ac::LoginInfoSeq originators;
+  openbus::idl::access::LoginInfoSeq originators;
 
   openbus::CallerChain fake_legacy_chain(
     build_fake_legacy_chain(

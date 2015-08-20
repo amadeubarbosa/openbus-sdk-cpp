@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_C->loginByPassword("C", "C");
 
-  openbus::idl_ac::LoginInfoSeq originators;
+  openbus::idl::access::LoginInfoSeq originators;
   originators.length(1);
   originators[0u].entity = "someone";
   originators[0u].id = "<unknown>";

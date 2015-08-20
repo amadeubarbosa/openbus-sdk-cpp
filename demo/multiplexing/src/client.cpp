@@ -93,7 +93,7 @@ int main(int argc, char** argv)
     openbusContext->setDefaultConnection(conn.get());
 
     // Recebendo ofertas
-    openbus::idl_or::ServicePropertySeq props;
+    openbus::idl::offers::ServicePropertySeq props;
     props.length(3);
     props[0].name  = "openbus.component.facet";
     props[0].value = "greetings";

@@ -6,6 +6,7 @@
 #include "openbus/Connection.hpp"
 #include "openbus/ORBInitializer.hpp"
 #include "openbus/OpenBusContext.hpp"
+#include "openbus/idl.hpp"
 #include "openbus/log.hpp"
 
 #endif

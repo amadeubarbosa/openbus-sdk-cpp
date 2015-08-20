@@ -6,15 +6,15 @@
 * 
 */
 
-#ifndef TECGRAF_SDK_OPENBUS_CONNECTION_HPP
-#define TECGRAF_SDK_OPENBUS_CONNECTION_HPP
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONNECTION_HPP
+#define TECGRAF_SDK_OPENBUS_OPENBUS_CONNECTION_HPP
 
 #include "scsC.h"
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/interceptors/ORBInitializer.hpp"
-#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
-#define TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
+#define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
 #include "openbus/detail/LRUCache.hpp"
 #endif
 #include "openbus/ORBInitializer.hpp"

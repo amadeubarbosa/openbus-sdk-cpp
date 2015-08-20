@@ -37,10 +37,10 @@ int main(int argc, char **argv)
               seq.length());
   IOP::Codec_var codec(get_codec(bus_ctx));
   CORBA::Any_var any(codec->decode_value(
-                       seq, openbus::idl_data_export::_tc_VersionedDataSeq));
-  const openbus::idl_data_export::VersionedDataSeq *tmp;
+                       seq, openbus::idl::data_export::_tc_VersionedDataSeq));
+  const openbus::idl::data_export::VersionedDataSeq *tmp;
   *any >>= tmp;
-  openbus::idl_data_export::VersionedDataSeq
+  openbus::idl::data_export::VersionedDataSeq
     exported_incompatible_version_seq(*tmp);
     
   CORBA::ULong incompatible_version(0);
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   incompatible_version_chain.length(
     exported_incompatible_version_seq_encoded->length() + magic_tag_size);
   std::memcpy(incompatible_version_chain.get_buffer(),
-              openbus::idl_data_export::MagicTag_CallChain,
+              openbus::idl::data_export::MagicTag_CallChain,
               magic_tag_size);
   std::memcpy(incompatible_version_chain.get_buffer() + magic_tag_size,
               exported_incompatible_version_seq_encoded->get_buffer(),

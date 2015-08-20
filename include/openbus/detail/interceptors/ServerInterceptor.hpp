@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#ifndef TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_HPP
-#define TECGRAF_SDK_OPENBUS_SERVER_INTERCEPTOR_HPP
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_INTERCEPTORS_SERVER_INTERCEPTOR_HPP
+#define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_INTERCEPTORS_SERVER_INTERCEPTOR_HPP
 
 #include "openbus/idl.hpp"
 #include "openbus/detail/interceptors/ORBInitializer.hpp"
@@ -11,8 +11,8 @@ extern "C"
 {
   #include "openbus/detail/Ticket.h"
 }
-#ifndef TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
-#define TECGRAF_SDK_OPENBUS_LRUCACHE_HPP
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
+#define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_LRUCACHE_HPP
   #include "openbus/detail/LRUCache.hpp"
 #endif
 

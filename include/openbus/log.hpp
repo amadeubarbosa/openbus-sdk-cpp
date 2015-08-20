@@ -4,8 +4,8 @@
 * \file openbus/log.h
 */
 
-#ifndef TECGRAF_SDK_OPENBUS_LOG_HPP
-#define TECGRAF_SDK_OPENBUS_LOG_HPP
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_LOG_HPP
+#define TECGRAF_SDK_OPENBUS_OPENBUS_LOG_HPP
 
 #include "openbus/detail/decl.hpp"
 

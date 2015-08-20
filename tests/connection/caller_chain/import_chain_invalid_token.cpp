@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     openbus::CallerChain imported(bus_ctx->importChain(token_seq));
     std::abort();
   }
-  catch (const openbus::idl_ac::InvalidToken&)
+  catch (const openbus::idl::access::InvalidToken&)
   {
   }
   return 0; //MSVC

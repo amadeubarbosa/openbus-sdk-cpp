@@ -12,7 +12,7 @@ struct relogin_callback
   {
   }
   
-  void operator()(openbus::Connection &conn, openbus::idl_ac::LoginInfo info)
+  void operator()(openbus::Connection &conn, openbus::idl::access::LoginInfo info)
   {
     do
     {

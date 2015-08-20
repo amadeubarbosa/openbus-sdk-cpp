@@ -97,13 +97,13 @@ int main(int argc, char* argv[])
 
   ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
 
-  openbus::idl_or::ServicePropertySeq props;
+  openbus::idl::offers::ServicePropertySeq props;
   props.length(2);
-  openbus::idl_or::ServiceProperty property;
+  openbus::idl::offers::ServiceProperty property;
   property.name = "offer.domain";
   property.value = "OpenBus Demos";
   props[0] = property;
-  openbus::idl_or::ServiceProperty offer_id_prop;
+  openbus::idl::offers::ServiceProperty offer_id_prop;
   offer_id_prop.name = "offer.id";
   offer_id_prop.value = conn->login()->id.in();
   props[1] = offer_id_prop;
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
   props[2].value = "OpenBus Demos";
   props[3].name  = "offer.id";
   props[3].value = conn->login()->id.in();
-  openbus::idl_or::ServiceOfferDescSeq_var offers(
+  openbus::idl::offers::ServiceOfferDescSeq_var offers(
     bus_ctx->getOfferRegistry()->findServices(props));
 
   if(offers->length() == 1)

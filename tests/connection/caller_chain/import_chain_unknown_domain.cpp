@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     openbus::CallerChain imported(bus_ctx->importChain(token_seq, "unknown_domain"));
     std::abort();
   }
-  catch (const openbus::idl_ac::UnknownDomain&)
+  catch (const openbus::idl::access::UnknownDomain&)
   {
   }
   return 0; //MSVC

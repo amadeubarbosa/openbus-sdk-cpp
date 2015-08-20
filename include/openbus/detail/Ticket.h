@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#ifndef TECGRAF_SDK_OPENBUS_TICKET_H
-#define TECGRAF_SDK_OPENBUS_TICKET_H
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_TICKET_H
+#define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_TICKET_H
 
 #include "openbus/detail/decl.hpp"
 

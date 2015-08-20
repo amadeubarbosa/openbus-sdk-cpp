@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     conn->loginByPassword(cfg.user(), cfg.password(), "UnknownDomain");
     std::abort();
   }
-  catch (const openbus::idl_ac::UnknownDomain&)
+  catch (const openbus::idl::access::UnknownDomain&)
   {
   }
   return 0; //MSVC

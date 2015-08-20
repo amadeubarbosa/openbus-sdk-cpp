@@ -236,7 +236,7 @@ int main(int argc, char** argv)
   while(true);
 
   // Recebendo ofertas
-  openbus::idl_or::ServicePropertySeq props;
+  openbus::idl::offers::ServicePropertySeq props;
   props.length(2);
   props[0].name  = "openbus.offer.entity";
   props[0].value = "demo";

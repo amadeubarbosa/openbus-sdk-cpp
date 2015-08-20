@@ -73,9 +73,9 @@ int main(int argc, char** argv)
   ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
 
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
-  openbus::idl_or::ServicePropertySeq props;
+  openbus::idl::offers::ServicePropertySeq props;
   props.length(2);
-  openbus::idl_or::ServiceProperty property;
+  openbus::idl::offers::ServiceProperty property;
   property.name = "offer.domain";
   property.value = "OpenBus Demos";
   props[0] = property;
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
   props[3].name  = "uuid";
   props[3].value = boost::uuids::to_string(uuid).c_str();
   
-  openbus::idl_or::ServiceOfferDescSeq_var offers(
+  openbus::idl::offers::ServiceOfferDescSeq_var offers(
     bus_ctx->getOfferRegistry()->findServices(props));
   std::cout << offers->length() << std::endl;
   if (offers->length() != 1)

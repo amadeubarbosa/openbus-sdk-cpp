@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#ifndef TECGRAF_SDK_OPENBUS_PUBLIC_KEY_HPP
-#define TECGRAF_SDK_OPENBUS_PUBLIC_KEY_HPP
+#ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_PUBLIC_KEY_HPP
+#define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_PUBLIC_KEY_HPP
 
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
