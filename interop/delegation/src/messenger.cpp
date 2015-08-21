@@ -9,20 +9,16 @@
 
 #include <iostream>
 #include <map>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void ORBRun(CORBA::ORB_var orb)
 {
   orb->run();
 }
-#endif
 
 struct MessengerImpl : 
   virtual public POA_tecgraf::openbus::interop::delegation::Messenger
@@ -133,9 +129,7 @@ int main(int argc, char** argv) {
       bus_ctx->connectByAddress(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
 
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread orb_run(ORBRun, bus_ctx->orb());
-#endif
 
     scs::core::ComponentId componentId;
     componentId.name = "Messenger";
@@ -168,9 +162,7 @@ int main(int argc, char** argv) {
       messenger_component.getIComponent(), props);
     std::cout << "Messenger no ar" << std::endl;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
-#endif
   } 
   catch(const std::exception &e) 
   {

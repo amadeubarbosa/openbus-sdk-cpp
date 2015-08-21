@@ -179,9 +179,7 @@ idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
   idl::legacy::creden::SignedCallChain chain;
   bool cached(false);
   {
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
     cached = _legacy_callChainLRUCache.fetch(hash, chain);
   }
   if (!cached) 
@@ -214,9 +212,7 @@ idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
     }
 
     {
-#ifdef OPENBUS_SDK_MULTITHREAD
       boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
       _legacy_callChainLRUCache.insert(hash, chain);
     }
   }
@@ -234,9 +230,7 @@ idl::creden::SignedData ClientInterceptor::get_signed_chain(
   idl::creden::SignedData chain;  
   bool cached(false);
   {
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
     cached = _callChainLRUCache.fetch(hash, chain);
   }
   if (!cached) 
@@ -254,9 +248,7 @@ idl::creden::SignedData ClientInterceptor::get_signed_chain(
     }
 
     {
-#ifdef OPENBUS_SDK_MULTITHREAD
       boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
       _callChainLRUCache.insert(hash, chain);
     }
   }
@@ -269,9 +261,7 @@ Connection::SecretSession * ClientInterceptor::get_session(
 {
   Connection::SecretSession *session(0);
   std::string remote_id;
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
   conn._profile2login.fetch(session_key(r), remote_id);
   if (!remote_id.empty())
   {
@@ -452,9 +442,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
   boost::uuids::uuid request_id = boost::uuids::random_generator()();
   any <<= boost::uuids::to_string(request_id);
   {
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> l(_mutex);
-#endif
     _request_id2conn[request_id] = &conn;
   }
   _orb_init->pi_current->set_slot(_orb_init->request_id, any);  
@@ -496,9 +484,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   }
   Connection *conn(0);
   {
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> l(_mutex);
-#endif
     conn = _request_id2conn.find(request_id)->second;
     _request_id2conn.erase(request_id);
   }
@@ -557,9 +543,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     }
         
     {
-#ifdef OPENBUS_SDK_MULTITHREAD
       boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
       conn->_profile2login.insert(session_key(r), session.remote_id);
       conn->_login2session.insert(session.remote_id, session);
     }
@@ -576,9 +560,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     std::size_t validity(0);
     idl::access::LoginInfo invalid_login;
     {
-#ifdef OPENBUS_SDK_MULTITHREAD
       boost::lock_guard<boost::mutex> conn_lock(conn->_mutex);
-#endif
       invalid_login = *conn->_loginInfo;
     }
     try
@@ -605,9 +587,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       
       idl::access::LoginInfo curr_login;
       {
-#ifdef OPENBUS_SDK_MULTITHREAD
         boost::lock_guard<boost::mutex> conn_lock(conn->_mutex);
-#endif
         curr_login = *conn->_loginInfo;
       }
       if (std::string(curr_login.id.in())
@@ -618,9 +598,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
         obj->id = invalid_login.id;
         obj->entity = invalid_login.entity;
         {
-#ifdef OPENBUS_SDK_MULTITHREAD
           boost::lock_guard<boost::mutex> conn_lock(conn->_mutex);
-#endif            
           conn->_invalid_login.reset(obj);
         }
       }

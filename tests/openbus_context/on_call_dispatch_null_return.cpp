@@ -7,10 +7,8 @@
 #include <openbus.hpp>
 
 #include <string>
-#ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-#endif
 
 bool call_dispatch(false);
 
@@ -49,12 +47,10 @@ struct hello_impl : public POA_Hello
   bool& servant_called;
 };
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void call_orb(CORBA::ORB_var orb)
 {
   orb->run();
 }
-#endif
 
 int main(int argc, char* argv[])
 {
@@ -63,9 +59,7 @@ int main(int argc, char* argv[])
   boost::shared_ptr<openbus::orb_ctx>
     orb_ctx(openbus::ORBInitializer(argc, argv));
 
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread orb_thread(boost::bind(&call_orb, orb_ctx->orb()));
-#endif
 
   CORBA::Object_var
     obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
@@ -140,9 +134,7 @@ int main(int argc, char* argv[])
     std::cerr << "call_dispatch == false" << std::endl;
     std::abort();
   }
-#ifdef OPENBUS_SDK_MULTITHREAD
   orb_ctx->orb()->shutdown(true);
   orb_thread.join();
-#endif
   return 0; //MSVC
 }

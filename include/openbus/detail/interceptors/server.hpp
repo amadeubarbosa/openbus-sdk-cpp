@@ -17,9 +17,7 @@ extern "C"
 #endif
 
 #include <tao/PI_Server/PI_Server.h>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <cstddef>
@@ -56,9 +54,7 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   char *name();
   void destroy();
 
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
-#endif
   ORBInitializer *_orb_init;
   LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
   OpenBusContext *_bus_ctx;

@@ -6,9 +6,7 @@
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
@@ -135,12 +133,10 @@ void loginAndRegister(
   bus_ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
 }
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void ORBRun(CORBA::ORB_var orb)
 {
   orb->run();
 }
-#endif
 
 int main(int argc, char **argv) 
 {
@@ -154,9 +150,7 @@ int main(int argc, char **argv)
     std::auto_ptr<openbus::Connection> conn(
       bus_ctx->connectByAddress(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());    
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread orb_run(boost::bind(ORBRun, bus_ctx->orb()));
-#endif
 
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
@@ -177,11 +171,7 @@ int main(int argc, char **argv)
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",&srv);
     loginAndRegister(*bus_ctx, comp, props, *conn);
 
-#ifdef OPENBUS_SDK_MULTITHREAD
     orb_run.join();
-#else
-    bus_ctx->orb()->run();
-#endif
   } 
   catch (const CORBA::Exception &e) 
   {

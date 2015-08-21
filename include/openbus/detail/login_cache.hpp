@@ -11,9 +11,7 @@
 #endif
 
 #include <boost/shared_ptr.hpp>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <string>
 
 namespace openbus 
@@ -39,9 +37,7 @@ public:
 private:
   idl::access::LoginRegistry_var _login_registry;
   LoginLRUCache _loginLRUCache;
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
-#endif
 };
 }
 #endif

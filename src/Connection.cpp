@@ -7,9 +7,7 @@
 #include "openbus/detail/openssl/public_key.hpp"
 
 #include <boost/bind.hpp>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #ifndef _WIN32
   #include <unistd.h>
 #endif
@@ -23,7 +21,6 @@ namespace openbus
 {
 class Connection;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void Connection::renewLogin(Connection &conn, idl::access::AccessControl_ptr acs, 
                             OpenBusContext &ctx, idl::access::ValidityTime t)
 {
@@ -48,73 +45,6 @@ void Connection::renewLogin(Connection &conn, idl::access::AccessControl_ptr acs
     }
   }
 }
-  
-#else
-
-class RenewLogin : public CORBA::DispatcherCallback 
-{
-public:
-  RenewLogin(CORBA::ORB_ptr o, Connection &c, idl::access::AccessControl_ptr a, 
-             OpenBusContext &m, idl::access::ValidityTime t)
-   : _orb(o), _conn(c), _access_control(a), _openbusContext(m), _validityTime(t)
-  { 
-    log_scope l(log().general_logger(), info_level, "RenewLogin::RenewLogin");
-    _orb->dispatcher()->tm_event(this, _validityTime*1000);
-  }
-
-  ~RenewLogin() 
-  {
-    log_scope l(log().general_logger(), info_level, "RenewLogin::~RenewLogin");
-    try
-    {
-      _orb->dispatcher()->remove(this, CORBA::Dispatcher::Timer);    
-    }
-    catch (...)
-    {
-      try
-      {
-        l.log("Exception thrown in ~RenewLogin. Ignoring exception");
-      }
-      catch (...)
-      {
-      }
-    }
-  }
-
-  void callback(CORBA::Dispatcher *dispatcher, Event event) 
-  {
-    _validityTime = renew(dispatcher);
-    dispatcher->tm_event(this, _validityTime*1000);
-  }
-
-  idl::access::ValidityTime renew(CORBA::Dispatcher *dispatcher) 
-  {
-    log_scope l(log().general_logger(), info_level, "RenewLogin::renew");
-    assert(_access_control);
-    idl::access::ValidityTime validityTime(_validityTime);
-    Connection *conn(0);
-    try 
-    {
-      conn = _openbusContext.getCurrentConnection();
-      _openbusContext.setCurrentConnection(&_conn);
-      validityTime = _access_control->renew();
-      _openbusContext.setCurrentConnection(conn);
-    } 
-    catch (..) 
-    {
-      l.level_vlog(warning_level, "Falha na renovacao da credencial.");
-      _openbusContext.setCurrentConnection(conn);
-    }
-    return validityTime;
-  }
-private:
-  CORBA::ORB_ptr _orb;
-  Connection &_conn;
-  idl::access::AccessControl_ptr _access_control;
-  OpenBusContext &_openbusContext;
-  idl::access::ValidityTime _validityTime;
-};
-#endif
 
 SharedAuthSecret::SharedAuthSecret()
   : login_process_(idl::access::LoginProcess::_nil())
@@ -225,50 +155,70 @@ Connection::~Connection()
 
 void Connection::init()
 {
+  scs::core::IComponent_var iComponent;
+  idl::access::AccessControl_var access_control;
+  idl::legacy::access::AccessControl_var legacy_access_control;
+  idl::legacy_support::LegacyConverter_var legacy_converter;
+  idl::offers::OfferRegistry_var offer_registry;
+  idl::access::LoginRegistry_var login_registry;
   log_scope l(log().general_logger(), info_level, "Connection::init");
   {
     interceptors::ignore_interceptor _i(_orb_init);
-    _iComponent = scs::core::IComponent::_narrow(_component_ref);
-    CORBA::Object_var obj = _iComponent->getFacet(idl::access::_tc_AccessControl->id());
-    _access_control = idl::access::AccessControl::_narrow(obj);
-    assert(!CORBA::is_nil(_access_control.in()));
+    iComponent = scs::core::IComponent::_narrow(_component_ref);
+    
+    CORBA::Object_var obj = iComponent->getFacet(idl::access::_tc_AccessControl->id());
+    access_control = idl::access::AccessControl::_narrow(obj);
+    assert(!CORBA::is_nil(access_control.in()));
+    
     if (_legacy_support)
     {
-      obj = _iComponent->getFacetByName("LegacySupport");
+      obj = iComponent->getFacetByName("LegacySupport");
       scs::core::IComponent_var bus_2_0_comp(scs::core::IComponent::_narrow(obj));
       obj = bus_2_0_comp->getFacet(idl::legacy::access::_tc_AccessControl->id());
-      _legacy_access_control = idl::legacy::access::AccessControl::_narrow(obj);
-      assert(!CORBA::is_nil(_legacy_access_control.in()));
+      legacy_access_control = idl::legacy::access::AccessControl::_narrow(obj);
+      assert(!CORBA::is_nil(legacy_access_control.in()));
 
       obj = bus_2_0_comp->getFacet(idl::legacy_support::_tc_LegacyConverter->id());
-      _legacy_converter = idl::legacy_support::LegacyConverter::_narrow(obj);
-      assert(!CORBA::is_nil(_legacy_converter.in()));
+      legacy_converter = idl::legacy_support::LegacyConverter::_narrow(obj);
+      assert(!CORBA::is_nil(legacy_converter.in()));
     }
-    obj = _iComponent->getFacet(idl::offers::_tc_OfferRegistry->id());
-    _offer_registry = idl::offers::OfferRegistry::_narrow(obj);
-    assert(!CORBA::is_nil(_offer_registry.in()));
-    obj = _iComponent->getFacet(idl::access::_tc_LoginRegistry->id());
-    _login_registry = idl::access::LoginRegistry::_narrow(obj);
-    assert(!CORBA::is_nil(_login_registry.in()));
+    
+    obj = iComponent->getFacet(idl::offers::_tc_OfferRegistry->id());
+    offer_registry = idl::offers::OfferRegistry::_narrow(obj);
+    assert(!CORBA::is_nil(offer_registry.in()));
+    
+    obj = iComponent->getFacet(idl::access::_tc_LoginRegistry->id());
+    login_registry = idl::access::LoginRegistry::_narrow(obj);
+    assert(!CORBA::is_nil(login_registry.in()));
+    
   }
 	
-  _loginCache.reset(new LoginCache(_login_registry));
+  std::string busid; 
+  idl::core::OctetSeq_var o;
   {
     interceptors::ignore_interceptor _i(_orb_init);
-    _busid = _access_control->busid();
-    idl::core::OctetSeq_var o(_access_control->certificate());
-    openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
-    openssl::pkey pub_key(X509_get_pubkey(crt.get()));
-    _buskey.reset(new PublicKey(pub_key));
+    busid = access_control->busid();
+    o = access_control->certificate();
   }
+  openssl::pX509 crt(openssl::byteSeq2x509(o->get_buffer(), o->length()));
+  openssl::pkey pub_key(X509_get_pubkey(crt.get()));
+  
+  boost::unique_lock<boost::mutex> m(_mutex);
+  _iComponent = iComponent;
+  _access_control = access_control;
+  _legacy_access_control = legacy_access_control;
+  _legacy_converter = legacy_converter;
+  _offer_registry = offer_registry;
+  _login_registry = login_registry;
+  _busid = busid;
+  _loginCache.reset(new LoginCache(_login_registry));
+  _buskey.reset(new PublicKey(pub_key));
 }
 
 void Connection::login(idl::access::LoginInfo &loginInfo, 
                        idl::access::ValidityTime validityTime)
 {
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
-#endif
   if (_state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -277,15 +227,9 @@ void Connection::login(idl::access::LoginInfo &loginInfo,
   _invalid_login.reset();
   _state = LOGGED;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
   _renewLogin = boost::thread(
     boost::bind(renewLogin, boost::ref(*this), _access_control, 
                 boost::ref(_openbusContext), validityTime));
-#else
-  assert(!_renewLogin.get());
-  _renewLogin.reset(new RenewLogin(_orb, *this, _access_control, 
-                                   _openbusContext, validityTime));
-#endif
 }
 
 void Connection::loginByPassword(const std::string &entity, 
@@ -294,17 +238,16 @@ void Connection::loginByPassword(const std::string &entity,
 {
   log_scope l(log().general_logger(), info_level, 
               "Connection::loginByPassword");
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
-#endif
-  if (CORBA::is_nil(_iComponent))
+  bool initialized(CORBA::is_nil(_iComponent));
+  lock.unlock();
+  if (initialized)
   {
     init();
   }
+  lock.lock();
   State state(_state);
-#ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
-#endif
   if (state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -356,17 +299,16 @@ void Connection::loginByCertificate(const std::string &entity,
 {
   log_scope l(log().general_logger(), info_level, 
               "Connection::loginByCertificate");
-#ifdef OPENBUS_SDK_MULTITHREAD
-  boost::unique_lock<boost::mutex> lock(_mutex);;
-#endif
-  if (CORBA::is_nil(_iComponent))
+  boost::unique_lock<boost::mutex> lock(_mutex);
+  bool initialized(CORBA::is_nil(_iComponent));
+  lock.unlock();
+  if (initialized)
   {
     init();
   }
+  lock.lock();
   State state(_state);
-#ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
-#endif
   if (state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -450,17 +392,16 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
 {
   log_scope l(log().general_logger(), info_level, 
               "Connection::loginBySharedAuth");
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
-#endif
-  if (CORBA::is_nil(_iComponent))
+  bool initialized(CORBA::is_nil(_iComponent));
+  lock.unlock();
+  if (initialized)
   {
     init();
   }
+  lock.lock();
   State state(_state);
-#ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
-#endif
   if (state == LOGGED) 
   {
     throw AlreadyLoggedIn();
@@ -527,28 +468,20 @@ bool Connection::_logout(bool local)
 {
   log_scope l(log().general_logger(), info_level, "Connection::_logout");
   bool success(false);
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
-#endif
   State state(_state);
-#ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
-#endif
   if (state == UNLOGGED)
   {
     return false;
   }
   else if (state == LOGGED) 
   {
-  #ifdef OPENBUS_SDK_MULTITHREAD
     _renewLogin.interrupt();
     if (_renewLogin.get_id() != boost::this_thread::get_id())
     {
       _renewLogin.join();
     }
-  #else
-    _renewLogin.reset();
-  #endif
     if (!local)
     {
       struct save_state
@@ -598,15 +531,11 @@ bool Connection::_logout(bool local)
       }
     }
   }
-#ifdef OPENBUS_SDK_MULTITHREAD
   lock.lock();
-#endif
   _loginInfo.reset();
   _invalid_login.reset();
   _state = UNLOGGED;
-#ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();  
-#endif
   return success;    
 }
 
@@ -618,33 +547,25 @@ bool Connection::logout()
 
 void Connection::onInvalidLogin(Connection::InvalidLoginCallback_t p) 
 { 
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
   _onInvalidLogin = p; 
 }
 
 Connection::InvalidLoginCallback_t Connection::onInvalidLogin() const
 { 
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
   return _onInvalidLogin; 
 }
 
 const idl::access::LoginInfo *Connection::login() const 
 {
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
   return ((_state == INVALID) ? 0 : _loginInfo.get());
 }
 
 const std::string Connection::busid() const
 { 
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
   return ((_state == INVALID) ? std::string() : _busid);
 }
 
@@ -653,9 +574,7 @@ idl::access::LoginInfo Connection::get_login()
   log_scope l(log().general_logger(), info_level, "Connection::get_login");
   idl::access::LoginInfo login, invalid_login;
   {
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
     login = _loginInfo.get() ? *(_loginInfo.get()) : idl::access::LoginInfo();
     invalid_login = _invalid_login.get() ?
       *(_invalid_login.get()) : idl::access::LoginInfo();
@@ -668,9 +587,7 @@ idl::access::LoginInfo Connection::get_login()
   {
     if (!onInvalidLogin()) 
     {
-#ifdef OPENBUS_SDK_MULTITHREAD
       boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
       _invalid_login.reset();
       break;
     }
@@ -683,9 +600,7 @@ idl::access::LoginInfo Connection::get_login()
       l.level_log(warning_level, 
                   "Falha na execucao da callback OnInvalidLogin.");
     }
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
     idl::access::LoginInfo curr;
     if (_invalid_login.get())
     {
@@ -701,9 +616,7 @@ idl::access::LoginInfo Connection::get_login()
       invalid_login = curr;
     }
   }
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
   return *(_loginInfo.get());
 }
 

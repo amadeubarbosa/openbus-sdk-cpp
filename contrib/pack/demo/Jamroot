@@ -22,7 +22,6 @@ project openbus
     <threading>multi
   : usage-requirements
     <link>shared:<define>OPENBUS_SDK_SHARED
-    <define>OPENBUS_SDK_MULTITHREAD
     <include>../include/openbus
 ;
 

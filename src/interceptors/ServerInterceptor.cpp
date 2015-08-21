@@ -73,9 +73,7 @@ void ServerInterceptor::send_credential_reset(
   CORBA::Any any;
   idl::core::OctetSeq secret;
   {
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
     boost::shared_ptr<Session> session(
       boost::shared_ptr<Session>(
         new Session(caller->loginInfo->id.in())));
@@ -303,9 +301,7 @@ void ServerInterceptor::handle_credential(
   boost::shared_ptr<Session> session;
   std::string remote_id;
   {
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
     session = _sessionLRUCache.fetch(credential.session);
     if (session)
     {

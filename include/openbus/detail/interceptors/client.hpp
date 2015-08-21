@@ -13,9 +13,7 @@
 #include "openbus/connection.hpp"
 
 #include <tao/PI/PI.h>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/mpl/if.hpp>
@@ -92,9 +90,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   LRUCache<hash_value, idl::legacy::creden::SignedCallChain> _legacy_callChainLRUCache;
   OpenBusContext *_bus_ctx;
   std::map<boost::uuids::uuid, Connection *> _request_id2conn;
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::mutex _mutex;
-#endif
 };
 
 }}

@@ -304,15 +304,13 @@ lib openbus
     /openssl//openssl
     /TAO//TAO
     idls
-  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
-    <include>include
+  : <include>include
     <threading>multi:<source>/boost//thread
     <dependency>idls
     <implicit-dependency>idls
     <toolset>msvc:<source>/scs//idls
   :
-  : <threading>multi:<define>OPENBUS_SDK_MULTITHREAD
-    <include>include
+  : <include>include
     <dependency>idls
     <implicit-dependency>idls
   ;

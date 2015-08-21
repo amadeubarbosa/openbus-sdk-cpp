@@ -18,16 +18,12 @@ LoginCache::LoginCache(idl::access::LoginRegistry_var p)
 
 boost::shared_ptr<Login> LoginCache::validateLogin(const std::string &id) 
 {
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::unique_lock<boost::mutex> lock(_mutex);
-#endif
   boost::shared_ptr<Login> login(_loginLRUCache.fetch(id));
   if (!login) 
   {
     login = boost::make_shared<Login>();
-#ifdef OPENBUS_SDK_MULTITHREAD
     lock.unlock();
-#endif
     try
     {
       login->loginInfo = _login_registry->getLoginInfo(
@@ -37,9 +33,7 @@ boost::shared_ptr<Login> LoginCache::validateLogin(const std::string &id)
     {
       return boost::shared_ptr<Login>();
     }
-#ifdef OPENBUS_SDK_MULTITHREAD
     lock.lock();
-#endif
     boost::shared_ptr<Login> again(_loginLRUCache.fetch(id));
     if (again)
     {
@@ -53,9 +47,7 @@ boost::shared_ptr<Login> LoginCache::validateLogin(const std::string &id)
       _loginLRUCache.insert(id, login);
     }
   }
-#ifdef OPENBUS_SDK_MULTITHREAD
   lock.unlock();
-#endif
   if (login->time2live > (time(0) - login->timeUpdated)) 
   {
     return login;

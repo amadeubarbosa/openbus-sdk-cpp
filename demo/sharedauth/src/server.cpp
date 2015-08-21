@@ -5,10 +5,8 @@
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-#endif
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/bind.hpp>
@@ -44,12 +42,10 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
   }
 };
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void run_orb(CORBA::ORB_var orb)
 {
   orb->run();
 }
-#endif
 
 struct onReloginCallback
 {
@@ -138,9 +134,7 @@ int main(int argc, char** argv)
       bus_port = vm["bus-port"].as<unsigned int>();
   }
 
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread orb_thread(boost::bind(&run_orb, orb_ctx->orb()));
-#endif
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
@@ -241,11 +235,7 @@ int main(int argc, char** argv)
     }
     while(true);
   
-#ifdef OPENBUS_SDK_MULTITHREAD
     orb_thread.join();
-#else
-    orb_ctx->orb()->run();
-#endif
   }
   catch(offer_registry::InvalidService const&)
   {

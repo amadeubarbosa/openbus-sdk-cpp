@@ -11,9 +11,7 @@
 #include <exception>
 #include <cstring>
 #include <cstddef>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 
 namespace openbus
 {
@@ -51,9 +49,7 @@ private:
   EVP_PKEY *new_key();
   openssl::pkey _key;
   idl::core::OctetSeq _keySeq;
-#ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
-#endif
 };
 }
 #endif

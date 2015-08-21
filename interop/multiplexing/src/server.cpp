@@ -7,9 +7,7 @@
 #include <scs/ComponentContext.h>
 #include <log/output/file_output.h>
 
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
 #include <iostream>
@@ -125,12 +123,10 @@ private:
   openbus::OpenBusContext &_ctx;
 };
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void ORBRun(CORBA::ORB_ptr orb)
 {
   orb->run();
 }
-#endif
 
 void registerOffer(openbus::OpenBusContext &ctx, openbus::Connection &conn, 
                    scs::core::ComponentContext &componentCtx)
@@ -175,9 +171,7 @@ int main(int argc, char **argv) {
     connVec.push_back(conn3BusA.get());
     connVec.push_back(connBusB.get());
     
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread orbRun(ORBRun, bus_ctx->orb());
-#endif
     
     scs::core::ComponentId componentId;
     componentId.name = "Hello";
@@ -210,7 +204,6 @@ int main(int argc, char **argv) {
     connections.push_back(conn3BusA.get());
     connections.push_back(connBusB.get());
 
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread register1(boost::bind(registerOffer, boost::ref(*bus_ctx), 
                                         boost::ref(*conn1BusA), 
                                         boost::ref(ctx)));
@@ -224,13 +217,6 @@ int main(int argc, char **argv) {
                                         boost::ref(*connBusB), 
                                         boost::ref(ctx)));
     orbRun.join();
-#else
-    registerOffer(*bus_ctx, *conn1BusA, ctx);
-    registerOffer(*bus_ctx, *conn2BusA, ctx);
-    registerOffer(*bus_ctx, *conn3BusA, ctx);
-    registerOffer(*bus_ctx, *connBusB, ctx);
-    bus_ctx->orb()->run();
-#endif
   } 
   catch (const std::exception &e) 
   {

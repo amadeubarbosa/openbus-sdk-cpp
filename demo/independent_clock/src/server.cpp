@@ -5,10 +5,6 @@
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
-#ifndef OPENBUS_SDK_MULTITHREAD
-#error This demo requires multithread
-#endif
-
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/optional.hpp>

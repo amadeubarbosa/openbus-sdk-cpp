@@ -23,9 +23,7 @@
 #include <boost/array.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <memory>
 #include <stdexcept>
@@ -40,9 +38,7 @@ namespace openbus
 {  
   class OpenBusContext;
   class LoginCache;
-#ifndef OPENBUS_SDK_MULTITHREAD
   class RenewLogin;
-#endif
   class PublicKey;
 
   namespace interceptors
@@ -393,10 +389,9 @@ private:
   Connection(const Connection &);
   Connection &operator=(const Connection &);
 
-#ifdef OPENBUS_SDK_MULTITHREAD  
   static void renewLogin(Connection &conn, idl::access::AccessControl_ptr acs, 
                          OpenBusContext &ctx, idl::access::ValidityTime t);
-#endif
+
   void login(idl::access::LoginInfo &loginInfo, 
              idl::access::ValidityTime validityTime);
 
@@ -419,9 +414,7 @@ private:
 
   const idl::access::LoginInfo *_login() const 
   { 
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::lock_guard<boost::mutex> lock(_mutex);;
-#endif
     return _loginInfo.get(); 
   }
 
@@ -444,12 +437,8 @@ private:
   const unsigned short _port;
   interceptors::ORBInitializer * _orb_init;
   CORBA::ORB_ptr _orb;
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;
-#else
-  boost::scoped_ptr<RenewLogin> _renewLogin;
-#endif
   boost::scoped_ptr<idl::access::LoginInfo> _loginInfo, _invalid_login;
   InvalidLoginCallback_t _onInvalidLogin;
   

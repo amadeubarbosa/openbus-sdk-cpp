@@ -7,10 +7,8 @@
 #include "openbus/detail/interceptors/client.hpp"
 
 #include <tao/ORBInitializer_Registry.h>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-  #include <boost/thread/once.hpp>
-#endif
+#include <boost/thread.hpp>
+#include <boost/thread/once.hpp>
 #include <boost/make_shared.hpp>
 
 #include <memory>
@@ -52,9 +50,7 @@ OPENBUS_SDK_DECL log_type& log()
 
 PortableInterceptor::ORBInitializer_var orb_initializer;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 boost::mutex _mutex;
-#endif
 
 orb_ctx::orb_ctx(CORBA::ORB_var orb)
   : orb_(orb)
@@ -74,9 +70,7 @@ orb_ctx::~orb_ctx()
 
 boost::shared_ptr<orb_ctx> ORBInitializer(int &argc, char **argv) 
 {
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> lock(_mutex);
-#endif
   log_scope l(log().general_logger(), info_level, "ORBInitializer");
   if (!orb_initializer.in())
   {

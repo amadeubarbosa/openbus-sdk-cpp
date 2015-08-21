@@ -5,13 +5,11 @@
 #include <scs/ComponentContext.h>
 #include <configuration.h>
 #include <openbus.hpp>
-#ifdef OPENBUS_SDK_MULTITHREAD
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#endif
 
 struct hello_impl : public POA_Hello
 {
@@ -27,12 +25,10 @@ struct hello_impl : public POA_Hello
   }  
 };
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void call_orb(CORBA::ORB_var orb)
 {
   orb->run();
 }
-#endif
 
 int main(int argc, char** argv)
 {
@@ -40,9 +36,7 @@ int main(int argc, char** argv)
   boost::shared_ptr<openbus::orb_ctx>
     orb_ctx(openbus::ORBInitializer(argc, argv));
 
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::thread orb_thread(boost::bind(&call_orb, orb_ctx->orb()));
-#endif
 
   CORBA::Object_var
     obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
@@ -108,9 +102,7 @@ int main(int argc, char** argv)
   conn->logout();
   conn.reset();
 
-#ifdef OPENBUS_SDK_MULTITHREAD
   orb_ctx->orb()->shutdown(true);
   orb_thread.join();
-#endif
   return 0; //MSVC
 }

@@ -78,9 +78,7 @@ std::auto_ptr<Connection> OpenBusContext::create_connection_impl(
 
 Connection *OpenBusContext::setDefaultConnection(Connection *conn)
 {
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> l(_mutex);
-#endif
   Connection *old(_defaultConnection);
   _defaultConnection = conn;
   return old;
@@ -88,9 +86,7 @@ Connection *OpenBusContext::setDefaultConnection(Connection *conn)
 
 Connection *OpenBusContext::getDefaultConnection() const 
 {
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> l(_mutex);
-#endif
   return _defaultConnection;
 }
 
@@ -534,17 +530,13 @@ SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
 
 void OpenBusContext::onCallDispatch(CallDispatchCallback c) 
 {
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> l(_mutex);
-#endif
   _callDispatchCallback = c;
 }
 
 OpenBusContext::CallDispatchCallback OpenBusContext::onCallDispatch() const 
 {
-#ifdef OPENBUS_SDK_MULTITHREAD
   boost::lock_guard<boost::mutex> l(_mutex);
-#endif
   return _callDispatchCallback;
 }
 

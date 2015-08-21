@@ -8,20 +8,16 @@
 #include <log/output/file_output.h>
 
 #include <iostream>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void ORBRun(CORBA::ORB_var orb)
 {
  orb->run();
 }
-#endif
 
 struct BroadcasterImpl : 
   virtual public POA_tecgraf::openbus::interop::delegation::Broadcaster
@@ -118,9 +114,7 @@ int main(int argc, char** argv) {
       conn(bus_ctx->connectByAddress(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
     
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread orbRun(ORBRun, bus_ctx->orb());
-#endif
 
     EVP_PKEY *priv_key(
       openbus::demo::openssl::read_priv_key(priv_key_filename));
@@ -171,9 +165,7 @@ int main(int argc, char** argv) {
       broadcaster_component.getIComponent(), props);
       std::cout << "Broadcaster no ar" << std::endl;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
       orbRun.join();
-#endif
     }
     else
     {

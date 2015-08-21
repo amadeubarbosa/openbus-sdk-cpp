@@ -8,21 +8,17 @@
 #include <log/output/file_output.h>
 
 #include <iostream>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
 void ORBRun(CORBA::ORB_ptr orb)
 {
  orb->run();
 }
-#endif
 
 struct forwarding_thread
 {
@@ -204,9 +200,7 @@ int main(int argc, char** argv) {
       conn(bus_ctx->connectByAddress(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
     
-#ifdef OPENBUS_SDK_MULTITHREAD
     boost::thread orb_run(ORBRun, bus_ctx->orb());
-#endif
 
     EVP_PKEY *priv_key(
       openbus::demo::openssl::read_priv_key(priv_key_filename));
@@ -254,9 +248,7 @@ int main(int argc, char** argv) {
         forwarder_component.getIComponent(), props);
       std::cout << "Forwarder no ar" << std::endl;
 
-#ifdef OPENBUS_SDK_MULTITHREAD
       orb_run.join();
-#endif
     }
     else
     {

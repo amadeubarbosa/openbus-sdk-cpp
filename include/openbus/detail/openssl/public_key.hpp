@@ -6,9 +6,7 @@
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/openssl/openssl.hpp"
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <cstddef>
 
 namespace openbus
@@ -38,9 +36,7 @@ public:
 private:
   openssl::pkey _pkey;
   idl::core::OctetSeq _keySeq;
-#ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
-#endif
 };
 
 }

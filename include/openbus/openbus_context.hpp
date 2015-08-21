@@ -15,9 +15,7 @@
 #include <tao/LocalObject.h>
 #include <openssl/evp.h>
 #include <boost/function.hpp>
-#ifdef OPENBUS_SDK_MULTITHREAD
-  #include <boost/thread.hpp>
-#endif
+#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/parameter.hpp>
 #include <string>
@@ -808,9 +806,7 @@ private:
     Connection *);
 
   typedef std::map<std::string, Connection *> BusidConnection;
-#ifdef OPENBUS_SDK_MULTITHREAD
   mutable boost::mutex _mutex;
-#endif
   interceptors::ORBInitializer * _orb_init;
   CORBA::ORB_ptr _orb;
   Connection *_defaultConnection;
