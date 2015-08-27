@@ -1,0 +1,39 @@
+project openbus/interop/protocol
+  : requirements <include>../ <include>../../
+  ;
+
+path-constant here : . ;
+
+obj mock-stub
+  : $(here)/idl/mock.idl
+  ;
+explicit mock-stub ;
+
+obj mock-skeleton
+  : $(here)/idl/mock.idl
+  : <generate>skeleton
+  ;
+explicit mock-skeleton ;
+
+exe protocol_client
+  : src/client.cpp
+    /openbus//openbus
+    /scs//scs
+    /logger//logger
+    /boost//headers
+    /boost//program_options
+    /openssl//openssl
+    /TAO//TAO
+    mock-stub
+  : <threading>multi:<source>/boost//thread
+    <target-os>windows:<library>/openbus//idls
+    <target-os>windows:<library>/scs//scs-stub
+    <dependency>mock-stub
+    <implicit-dependency>mock-stub
+    <link>static,<target-os>linux:<source>/dl//dl
+  ;
+explicit protocol_client ;
+
+alias protocol
+  : protocol_client
+  ;

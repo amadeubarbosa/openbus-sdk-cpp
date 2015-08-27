@@ -1,0 +1,32 @@
+#ifndef __TECGRAF_OPENBUS_INTEROP_PROTOCOL_IDL__
+#define __TECGRAF_OPENBUS_INTEROP_PROTOCOL_IDL__
+
+module tecgraf {
+
+module openbus {
+
+module interop {
+
+module protocol {
+
+interface Server {
+	typedef octet SecretData[16];
+	typedef octet EncryptedData[256];
+	void NonBusCall();
+	void RaiseNoPermission(in unsigned long minor);
+	void ResetCredential(in string target,
+	                     in unsigned long session,
+	                     in SecretData secret);
+	void ResetCredentialWithChallenge(in unsigned long session,
+	                                  in EncryptedData challenge);
+};
+
+}; // protocol
+
+}; // interop
+
+}; // openbus
+
+}; // tecgraf
+
+#endif

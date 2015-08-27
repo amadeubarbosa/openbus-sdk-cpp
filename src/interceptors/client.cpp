@@ -501,8 +501,18 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       CORBA::Any_var any(
         _orb_init->codec->decode_value(sctx->context_data, idl::creden::_tc_CredentialReset));
       credential_reset = extract<idl::creden::CredentialReset>(any);
-      idl::core::OctetSeq secret(conn->_key.decrypt(credential_reset.challenge,
-                                              idl::core::EncryptedBlockSize));
+      idl::core::OctetSeq secret;
+      try
+      {
+        secret = 
+          conn->_key.decrypt(credential_reset.challenge,
+                             idl::core::EncryptedBlockSize);
+      }
+      catch (...)
+      {
+        throw CORBA::NO_PERMISSION(idl::access::InvalidRemoteCode,
+                                   CORBA::COMPLETED_NO);
+      }
 
       session.id = credential_reset.session;
       session.remote_id = credential_reset.target.in();
@@ -511,7 +521,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
                 session.secret.c_array());
       session.ticket = 0;
     }
-    catch (const CORBA::Exception &) 
+    catch (const CORBA::BAD_PARAM &) 
     {
       l.log("Verificando CredentialReset legado");
       idl::legacy::creden::CredentialReset credential_reset;
