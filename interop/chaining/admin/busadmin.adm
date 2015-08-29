@@ -36,7 +36,7 @@ Interface {
 }
 
 Interface {
-  id = "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0"
+  id = "IDL:tecgraf/openbus/interop/chaining/HelloProxy:1.0"
 }
 
 Grant {
@@ -49,7 +49,7 @@ Grant {
 Grant {
   id = "interop_chaining_cpp_proxy",
   interfaces = {
-    "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0",
+    "IDL:tecgraf/openbus/interop/chaining/HelloProxy:1.0",
   }
 }
 

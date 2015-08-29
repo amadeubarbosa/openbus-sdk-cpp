@@ -11,6 +11,7 @@
 #include <map>
 
 const std::string entity("interop_multiplexing_cpp_client");
+std::string domain;
 struct bus
 {
   std::string host;
@@ -31,7 +32,9 @@ void load_options(int argc, char **argv)
     ("bus2.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to second OpenBus")
     ("bus2.host.port", po::value<unsigned short>()->default_value(3089), 
-     "Port to second OpenBus");
+     "Port to second OpenBus")
+    ("user.password.domain", po::value<std::string>()->default_value("testing"),
+     "Password domain");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
@@ -56,6 +59,10 @@ void load_options(int argc, char **argv)
   {
     buses[1].port = vm["bus2.host.port"].as<unsigned short>();
   }
+  if (vm.count("user.password.domain"))
+  {
+    domain = vm["user.password.domain"].as<std::string>();
+  }
 }
 
 int main(int argc, char **argv) 
@@ -72,7 +79,7 @@ int main(int argc, char **argv)
       std::auto_ptr<openbus::Connection> 
         conn(bus_ctx->connectByAddress(buses[busIdx].host, buses[busIdx].port));
       bus_ctx->setDefaultConnection(conn.get());
-      conn->loginByPassword(entity, entity);
+      conn->loginByPassword(entity, entity, domain);
 
       openbus::idl::offers::ServicePropertySeq props;
       props.length(2);

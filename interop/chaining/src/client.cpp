@@ -3,6 +3,7 @@
 #include "proxyS.h"
 #include "helloC.h"
 #include <openbus.hpp>
+#include <util.hpp>
 
 #include <boost/program_options.hpp>
 #include <iostream>
@@ -12,7 +13,7 @@
 #include <cstdlib>
 
 const std::string entity("interop_chaining_cpp_client");
-std::string bus_host;
+std::string bus_host, domain;
 unsigned short bus_port;
 
 void load_options(int argc, char **argv)
@@ -24,7 +25,9 @@ void load_options(int argc, char **argv)
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
     ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus");
+     "Port to OpenBus")
+    ("user.password.domain", po::value<std::string>()->default_value("testing"),
+     "Password domain");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
@@ -40,6 +43,10 @@ void load_options(int argc, char **argv)
   if (vm.count("bus.host.port"))
   {
     bus_port = vm["bus.host.port"].as<unsigned short>();
+  }
+  if (vm.count("user.password.domain"))
+  {
+    domain = vm["user.password.domain"].as<std::string>();
   }
 }
 
@@ -66,7 +73,7 @@ int main(int argc, char **argv)
     std::auto_ptr<openbus::Connection> conn(bus_ctx->connectByAddress(bus_host, 
                                                                   bus_port));
     bus_ctx->setDefaultConnection(conn.get());
-    conn->loginByPassword(entity, entity);
+    conn->loginByPassword(entity, entity, domain);
 
     openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
@@ -74,18 +81,14 @@ int main(int argc, char **argv)
     props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
     props[static_cast<CORBA::ULong>(1)].name  = "openbus.component.interface";
     props[static_cast<CORBA::ULong>(1)].value = 
-      "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0";
+      "IDL:tecgraf/openbus/interop/chaining/HelloProxy:1.0";
 
-    openbus::idl::offers::ServiceOfferDescSeq_var offers = 
-      bus_ctx->getOfferRegistry()->findServices(props);
+    openbus::idl::offers::ServiceOfferDescSeq_var offers(
+      find_offers(bus_ctx, props));
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
-      if (offers[idx].service_ref->_non_existent())
-      {
-        continue;
-      }
-      CORBA::Object_var
-	o(offers[idx].service_ref->getFacetByName("HelloProxy"));
+      CORBA::Object_var	o(
+        offers[idx].service_ref->getFacetByName("HelloProxy"));
       tecgraf::openbus::interop::chaining::HelloProxy *helloProxy = 
         tecgraf::openbus::interop::chaining::HelloProxy::_narrow(o);
       openbus::idl::offers::ServicePropertySeq properties = offers[idx].properties;

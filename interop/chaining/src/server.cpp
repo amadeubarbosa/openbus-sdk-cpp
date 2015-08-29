@@ -9,6 +9,7 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
+#include <boost/regex.hpp>
 
 const std::string entity("interop_chaining_cpp_server");
 std::string priv_key_filename;
@@ -60,7 +61,8 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     openbus::CallerChain chain = ctx.getCallerChain();
     assert(chain != openbus::CallerChain());
     std::string msg;
-    if (std::string(chain.caller().entity) == "interop_chaining_cpp_proxy")
+    if (boost::regex_match(chain.caller().entity.in(),
+                           boost::regex("interop_chaining_.+_proxy")))
     {
        msg = "Hello " + std::string(chain.originators()[0].entity) + "!";
        std::cout << msg << std::endl;

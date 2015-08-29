@@ -12,7 +12,7 @@
 #include <cstdlib>
 
 const std::string entity("interop_rellogedjoin_cpp_client");
-std::string bus_host;
+std::string bus_host, domain;
 unsigned short bus_port;
 
 void load_options(int argc, char **argv)
@@ -24,7 +24,9 @@ void load_options(int argc, char **argv)
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
     ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus");
+     "Port to OpenBus")
+    ("user.password.domain", po::value<std::string>()->default_value("testing"),
+     "Password domain");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
@@ -41,6 +43,10 @@ void load_options(int argc, char **argv)
   {
     bus_port = vm["bus.host.port"].as<unsigned short>();
   }
+  if (vm.count("user.password.domain"))
+  {
+    domain = vm["user.password.domain"].as<std::string>();
+  }
 }
 
 int main(int argc, char **argv) 
@@ -55,7 +61,7 @@ int main(int argc, char **argv)
     std::auto_ptr<openbus::Connection> conn(bus_ctx->connectByAddress(bus_host, 
                                                                   bus_port));
     bus_ctx->setDefaultConnection(conn.get());
-    conn->loginByPassword(entity, entity);
+    conn->loginByPassword(entity, entity, domain);
 
     openbus::idl::offers::ServicePropertySeq props;
     props.length(2);

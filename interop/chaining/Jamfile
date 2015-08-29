@@ -71,6 +71,7 @@ exe chaining_proxy
 exe chaining_server
   : src/server.cpp
     /boost//headers
+    /boost//regex
     /boost//program_options
     /openssl//openssl
     /scs//scs
