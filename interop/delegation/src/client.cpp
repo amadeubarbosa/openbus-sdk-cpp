@@ -12,6 +12,7 @@
 #endif
 #include <iostream>
 #include <boost/program_options.hpp>
+#include <boost/regex.hpp>
 
 void mysleep()
 {
@@ -26,7 +27,7 @@ void mysleep()
 namespace delegation = tecgraf::openbus::interop::delegation;
 
 const std::string entity("interop_delegation_cpp_client");
-std::string bus_host;
+std::string bus_host, domain;
 unsigned short bus_port;
 
 void load_options(int argc, char **argv)
@@ -38,7 +39,9 @@ void load_options(int argc, char **argv)
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
     ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus");
+     "Port to OpenBus")
+    ("user.password.domain", po::value<std::string>()->default_value("testing"),
+     "Password domain");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
@@ -55,6 +58,10 @@ void load_options(int argc, char **argv)
   {
     bus_port = vm["bus.host.port"].as<unsigned short>();
   }
+  if (vm.count("user.password.domain"))
+  {
+    domain = vm["user.password.domain"].as<std::string>();
+  }
 }
 
 int main(int argc, char** argv) {
@@ -68,7 +75,7 @@ int main(int argc, char** argv) {
       bus_ctx->connectByAddress(bus_host, bus_port));
     bus_ctx->setDefaultConnection(conn.get());
     
-    conn->loginByPassword(entity, entity);
+    conn->loginByPassword(entity, entity, domain);
 
     openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
@@ -83,39 +90,39 @@ int main(int argc, char** argv) {
     {
       CORBA::Object_var o(
         offers[static_cast<CORBA::ULong> (0)]
-        .service_ref->getFacetByName("messenger"));
+        .service_ref->getFacet(delegation::_tc_Messenger->id()));
       delegation::Messenger_var m = delegation::Messenger::_narrow(o);
       props[1].value = delegation::_tc_Forwarder->id();
       offers = find_offers(bus_ctx, props);
       if(offers->length() > 0)
       {
         o = offers[static_cast<CORBA::ULong> (0)]
-          .service_ref->getFacetByName("forwarder");
+          .service_ref->getFacet(delegation::_tc_Forwarder->id());
         delegation::Forwarder_var forwarder = delegation::Forwarder::_narrow(o);
         props[1].value = delegation::_tc_Broadcaster->id();
         offers = find_offers(bus_ctx, props);
         if(offers->length() > 0)
         {
           o = offers[static_cast<CORBA::ULong> (0)]
-            .service_ref->getFacetByName("broadcaster");
+            .service_ref->getFacet(delegation::_tc_Broadcaster->id());
           delegation::Broadcaster_var broadcaster(
             delegation::Broadcaster::_narrow(o));
           conn->logout();
 
-          conn->loginByPassword("bill", "bill");
+          conn->loginByPassword("bill", "bill", domain);
           forwarder->setForward("willian");
           broadcaster->subscribe();
           conn->logout();
 
-          conn->loginByPassword("paul", "paul");
+          conn->loginByPassword("paul", "paul", domain);
           broadcaster->subscribe();
           conn->logout();
 
-          conn->loginByPassword("mary", "mary");
+          conn->loginByPassword("mary", "mary", domain);
           broadcaster->subscribe();
           conn->logout();
 
-          conn->loginByPassword("steve", "steve");
+          conn->loginByPassword("steve", "steve", domain);
           broadcaster->subscribe();
           broadcaster->post("Testing the list!");
           conn->logout();
@@ -127,8 +134,13 @@ int main(int argc, char** argv) {
               first != &names[sizeof(names)/sizeof(names[0])];
               ++first)
           {
-            conn->loginByPassword(*first, *first);
+            conn->loginByPassword(*first, *first, domain);
             delegation::PostDescSeq_var posts(m->receivePosts());
+            std::cout << "user "
+                      << std::string(*first)
+                      << " got posts: "
+                      << posts->length()
+                      << std::endl;
             if (std::string(*first) != "bill" && posts->length() != 1)
             {
               std::cerr << "Error: Retrieving messages for '"
@@ -147,19 +159,23 @@ int main(int argc, char** argv) {
             for(CORBA::ULong i(0); i != posts->length(); ++i)
             {
               if (std::string(*first) != "willian"
-                  && (std::string("steve->interop_delegation_cpp_broadcaster")
-                      != posts[i].from.in()))
+                  &&
+                  !boost::regex_match(
+                    posts[i].from.in(),
+                    boost::regex("steve->interop_delegation_.+_broadcaster")))
               {
-                std::cerr << "Error: steve->interop_delegation_cpp_broadcaster"
+                std::cerr << "Error: steve->interop_delegation_*_broadcaster"
                           << " != " << posts[i].from.in()
                           << std::endl;
                 std::abort();
               }
               else if(std::string(*first) == "willian"
-                  && (std::string("interop_delegation_cpp_forwarder")
-                      != posts[i].from.in()))
+                      &&
+                      !boost::regex_match(
+                        posts[i].from.in(),
+                        boost::regex("interop_delegation_.+_forwarder")))
               {
-                std::cerr << "Error: interop_delegation_cpp_forwarder"
+                std::cerr << "Error: interop_delegation_*_forwarder"
                           << " != " << posts[i].from.in()
                           << std::endl;
                 std::abort();
@@ -171,7 +187,7 @@ int main(int argc, char** argv) {
             conn->logout();
           }
 
-          conn->loginByPassword("bill", "bill");
+          conn->loginByPassword("bill", "bill", domain);
           forwarder->cancelForward("willian");
           conn->logout();
         }

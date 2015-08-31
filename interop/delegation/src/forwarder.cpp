@@ -56,9 +56,10 @@ struct forwarding_thread
             std::cout << "Has message" << std::endl;
             std::string msg("forwarded message by ");
             msg += (*posts)[i].from;
-            msg += ':';
+            msg += ": ";
             msg += (*posts)[i].message;
             messenger->post(to.c_str(), msg.c_str());
+            std::cout << "message: " << msg << std::endl;
           }
         }
       }
@@ -223,7 +224,7 @@ int main(int argc, char** argv) {
     if (offers->length() > 0)
     {
       CORBA::Object_var o = offers[static_cast<CORBA::ULong>(0)]
-        .service_ref->getFacetByName("messenger");
+        .service_ref->getFacet(delegation::_tc_Messenger->id());
       delegation::Messenger_var m = delegation::Messenger::_narrow(o);
 
       scs::core::ComponentId componentId;

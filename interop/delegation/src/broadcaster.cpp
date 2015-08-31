@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
     if (offers->length() > 0)
     {
       CORBA::Object_var o = offers[static_cast<CORBA::ULong> (0)]
-        .service_ref->getFacetByName("messenger");
+        .service_ref->getFacet(delegation::_tc_Messenger->id());
       delegation::Messenger_var m = delegation::Messenger::_narrow(o);
 
       scs::core::ComponentId componentId;
