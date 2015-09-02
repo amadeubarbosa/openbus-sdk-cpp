@@ -20,8 +20,8 @@ obj encoding-stub
   ;
 explicit encoding-stub ;
 
-exe sharedauth_client
-  : src/client.cpp 
+exe sharedauth_consuming
+  : src/consuming.cpp 
     /openbus//openbus 
     /scs//scs 
     /logger//logger 
@@ -40,35 +40,10 @@ exe sharedauth_client
     <implicit-dependency>encoding-stub
     <link>static,<target-os>linux:<source>/dl//dl
   ;
-explicit sharedauth_client ;
+explicit sharedauth_consuming ;
 
-exe sharedauth_server
-  : src/server.cpp 
-    /openbus//openbus 
-    /scs//scs 
-    /logger//logger 
-    /boost//headers 
-    /boost//program_options 
-    /openssl//openssl
-    /TAO//TAO
-    hello-stub
-    hello-skeleton
-    encoding-stub
-  : <threading>multi:<source>/boost//thread
-    <target-os>windows:<library>/openbus//idls
-    <target-os>windows:<library>/scs//scs-stub
-    <dependency>hello-stub
-    <implicit-dependency>hello-stub
-    <dependency>hello-skeleton
-    <implicit-dependency>hello-skeleton
-    <dependency>encoding-stub
-    <implicit-dependency>encoding-stub
-    <link>static,<target-os>linux:<source>/dl//dl
-  ;
-explicit sharedauth_server ;
-
-exe sharedauth_sharedauth
-  : src/sharedauth.cpp 
+exe sharedauth_sharing
+  : src/sharing.cpp 
     /openbus//openbus 
     /scs//scs 
     /logger//logger 
@@ -90,12 +65,9 @@ exe sharedauth_sharedauth
     <implicit-dependency>encoding-stub
     <link>static,<target-os>linux:<source>/dl//dl
   ;
-explicit sharedauth_sharedauth ;
+explicit sharedauth_sharing ;
 
 alias sharedauth
-  : sharedauth_client
-    sharedauth_sharedauth
-    sharedauth_server
-    admin/interop_sharedauth_cpp_sharedauth.key
-    admin/interop_sharedauth_cpp_server.key
+  : sharedauth_consuming
+    sharedauth_sharing
   ;
