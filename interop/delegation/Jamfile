@@ -20,6 +20,7 @@ exe delegation_client
   : src/client.cpp
     /openbus//openbus
     /boost//program_options
+    /boost//regex
     /scs//scs
     /boost//headers
     /logger//logger

@@ -27,8 +27,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -82,14 +81,10 @@ struct HelloProxyImpl :
     props[static_cast<CORBA::ULong>(2)].value = 
       "IDL:tecgraf/openbus/interop/simple/Hello:1.0";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      ctx.getOfferRegistry()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers(
+      find_offers(&ctx, props));
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
-      if (offers[idx].service_ref->_non_existent())
-      {
-        continue;
-      }
       CORBA::Object_var o = offers[idx].service_ref->getFacetByName("Hello");
       tecgraf::openbus::interop::simple::Hello *hello = 
         tecgraf::openbus::interop::simple::Hello::_narrow(o);
@@ -190,7 +185,7 @@ int main(int argc, char **argv)
 
     HelloProxyImpl proxy(*bus_ctx);
     comp.addFacet("HelloProxy",
-		  "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0",
+		  "IDL:tecgraf/openbus/interop/chaining/HelloProxy:1.0",
                   &proxy);
     login_register(*bus_ctx, comp, props, *conn);
 #ifdef OPENBUS_SDK_MULTITHREAD

@@ -15,6 +15,7 @@
 #endif
 #include <iostream>
 #include <boost/program_options.hpp>
+#include <boost/regex.hpp>
 
 void mysleep()
 {
@@ -86,21 +87,21 @@ int main(int argc, char** argv) {
     {
       CORBA::Object_var o(
         offers[static_cast<CORBA::ULong> (0)]
-        .service_ref->getFacetByName("messenger"));
+         .service_ref->getFacet(delegation::_tc_Messenger->id()));
       delegation::Messenger_var m = delegation::Messenger::_narrow(o);
       props[1].value = delegation::_tc_Forwarder->id();
       offers = find_offers(bus_ctx, props);
       if(offers->length() > 0)
       {
         o = offers[static_cast<CORBA::ULong> (0)]
-          .service_ref->getFacetByName("forwarder");
+           .service_ref->getFacet(delegation::_tc_Forwarder->id());
         delegation::Forwarder_var forwarder = delegation::Forwarder::_narrow(o);
         props[1].value = delegation::_tc_Broadcaster->id();
         offers = find_offers(bus_ctx, props);
         if(offers->length() > 0)
         {
           o = offers[static_cast<CORBA::ULong> (0)]
-            .service_ref->getFacetByName("broadcaster");
+            .service_ref->getFacet(delegation::_tc_Broadcaster->id());
           delegation::Broadcaster_var broadcaster(
             delegation::Broadcaster::_narrow(o));
           conn->logout();
@@ -150,8 +151,10 @@ int main(int argc, char** argv) {
             for(CORBA::ULong i(0); i != posts->length(); ++i)
             {
               if (std::string(*first) != "willian"
-                  && (std::string("steve->interop_delegation_cpp_broadcaster")
-                      != posts[i].from.in()))
+                  &&
+                  !boost::regex_match(
+                    posts[i].from.in(),
+                    boost::regex("steve->interop_delegation_.+_broadcaster")))
               {
                 std::cerr << "Error: steve->interop_delegation_cpp_broadcaster"
                           << " != " << posts[i].from.in()
@@ -159,8 +162,10 @@ int main(int argc, char** argv) {
                 std::abort();
               }
               else if(std::string(*first) == "willian"
-                  && (std::string("interop_delegation_cpp_forwarder")
-                      != posts[i].from.in()))
+                      &&
+                      !boost::regex_match(
+                        posts[i].from.in(),
+                        boost::regex("interop_delegation_.+_forwarder")))
               {
                 std::cerr << "Error: interop_delegation_cpp_forwarder"
                           << " != " << posts[i].from.in()

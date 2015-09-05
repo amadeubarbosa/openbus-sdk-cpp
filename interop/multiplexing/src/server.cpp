@@ -164,13 +164,13 @@ int main(int argc, char **argv) {
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
     std::auto_ptr <openbus::Connection> connBusB
-      (bus_ctx->createConnection(buses[0].host, buses[0].port));
+      (bus_ctx->createConnection(buses[1].host, buses[1].port));
     std::auto_ptr <openbus::Connection> conn1BusA
-      (bus_ctx->createConnection(buses[1].host, buses[1].port));
+      (bus_ctx->createConnection(buses[0].host, buses[0].port));
     std::auto_ptr <openbus::Connection> conn2BusA
-      (bus_ctx->createConnection(buses[1].host, buses[1].port));
+      (bus_ctx->createConnection(buses[0].host, buses[0].port));
     std::auto_ptr <openbus::Connection> conn3BusA
-      (bus_ctx->createConnection(buses[1].host, buses[1].port));
+      (bus_ctx->createConnection(buses[0].host, buses[0].port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());

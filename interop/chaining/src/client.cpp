@@ -2,6 +2,7 @@
 
 #include "proxyS.h"
 #include "helloC.h"
+#include <util.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/Connection.hpp>
@@ -30,7 +31,6 @@ void load_options(int argc, char **argv)
      "Port to OpenBus");
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::store(po::parse_config_file<char>("test.properties", desc), vm);
   po::notify(vm);
   if (vm.count("help")) 
   {
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
   try
   {
     load_options(argc, argv);
-    // openbus::log().set_level(openbus::debug_level);
+    openbus::log().set_level(openbus::debug_level);
 
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
@@ -78,18 +78,13 @@ int main(int argc, char **argv)
     props[static_cast<CORBA::ULong>(0)].value = "Interoperability Tests";
     props[static_cast<CORBA::ULong>(1)].name  = "openbus.component.interface";
     props[static_cast<CORBA::ULong>(1)].value = 
-      "IDL:tecgraf/openbus/interop/simple/HelloProxy:1.0";
+      "IDL:tecgraf/openbus/interop/chaining/HelloProxy:1.0";
 
-    openbus::idl_or::ServiceOfferDescSeq_var offers = 
-      bus_ctx->getOfferRegistry()->findServices(props);
+    openbus::idl_or::ServiceOfferDescSeq_var offers(
+      find_offers(bus_ctx, props));
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
-      if (offers[idx].service_ref->_non_existent())
-      {
-        continue;
-      }
-      CORBA::Object_var
-	o(offers[idx].service_ref->getFacetByName("HelloProxy"));
+      CORBA::Object_var	o(offers[idx].service_ref->getFacetByName("HelloProxy"));
       tecgraf::openbus::interop::chaining::HelloProxy *helloProxy = 
         tecgraf::openbus::interop::chaining::HelloProxy::_narrow(o);
       openbus::idl_or::ServicePropertySeq properties = offers[idx].properties;

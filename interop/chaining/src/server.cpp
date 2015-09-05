@@ -13,6 +13,7 @@
 #endif
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
+#include <boost/regex.hpp>
 
 const std::string entity("interop_chaining_cpp_server");
 std::string private_key;
@@ -25,8 +26,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
-    ("private-key", po::value<std::string>()->default_value("admin/" + entity
-                                                            + ".key"),
+    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
@@ -65,7 +65,8 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     openbus::CallerChain chain = ctx.getCallerChain();
     assert(chain != openbus::CallerChain());
     std::string msg;
-    if (std::string(chain.caller().entity) == "interop_chaining_cpp_proxy")
+    if (boost::regex_match(chain.caller().entity.in(),
+                           boost::regex("interop_chaining_.+_proxy")))
     {
        msg = "Hello " + std::string(chain.originators()[0].entity) + "!";
        std::cout << msg << std::endl;
