@@ -21,6 +21,6 @@ int main(int argc, char** argv)
   
   std::auto_ptr<openbus::Connection>
     conn(bus_ctx->connectByReference(ref));
-  conn->loginByPassword(cfg.user(), cfg.password());
+  conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
   return 0; //MSVC
 }

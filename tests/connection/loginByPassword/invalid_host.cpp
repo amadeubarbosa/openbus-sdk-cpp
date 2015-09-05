@@ -17,7 +17,7 @@ int main(int argc, char** argv)
     conn(bus_ctx->connectByAddress("$invalid_host$", cfg.port()));
   try
   {
-    conn->loginByPassword(cfg.user(), cfg.password());
+    conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
     std::cout << "No exception was thrown, exception CORBA::TRANSIENT was expected"
               << std::endl;
     std::abort();

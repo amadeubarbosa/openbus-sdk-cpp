@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));  
   std::auto_ptr <openbus::Connection>
     conn(bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn->loginByPassword("demo", "demo");
+  conn->loginByPassword("demo", "demo", cfg.domain());
   if(!conn->logout())
   {
     std::cerr << "conn->logout() == false" << std::endl;

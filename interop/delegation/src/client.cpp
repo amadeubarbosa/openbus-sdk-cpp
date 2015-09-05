@@ -29,6 +29,7 @@ namespace delegation = tecgraf::openbus::interop::delegation;
 const std::string entity("interop_delegation_cpp_client");
 std::string bus_host, domain;
 unsigned short bus_port;
+bool debug;
 
 void load_options(int argc, char **argv)
 {
@@ -36,6 +37,7 @@ void load_options(int argc, char **argv)
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
+    ("debug", po::value<bool>()->default_value(true) , "yes|no")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
      "Host to OpenBus")
     ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
@@ -49,6 +51,10 @@ void load_options(int argc, char **argv)
   {
     std::cout << desc << std::endl;
     std::exit(1);
+  }
+  if (vm.count("debug"))
+  {
+    debug = vm["debug"].as<bool>();
   }
   if (vm.count("bus.host.name"))
   {
@@ -67,7 +73,10 @@ void load_options(int argc, char **argv)
 int main(int argc, char** argv) {
   try {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    if (debug)
+    {
+      openbus::log().set_level(openbus::debug_level);
+    }
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));

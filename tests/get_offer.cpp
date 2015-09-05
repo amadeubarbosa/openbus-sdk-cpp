@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   std::auto_ptr <openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   bus_ctx->setDefaultConnection(conn.get());
-  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str());
+  conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str(), cfg.domain());
 
   scs::core::ComponentId componentId;
   componentId.name = "Hello";

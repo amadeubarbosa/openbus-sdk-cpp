@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 
   std::auto_ptr<openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn->loginByPassword(cfg.user(), cfg.password());
+  conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
 
   bus_ctx->setDefaultConnection(conn.get());
 
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
   CORBA::OctetSeq token_seq(
     token.size(), token.size(), (CORBA::Octet*)token.c_str());
     
-  openbus::CallerChain imported(bus_ctx->importChain(token_seq));
+  openbus::CallerChain imported(bus_ctx->importChain(token_seq, cfg.domain()));
 
   if (conn->busid() != imported.busid())
   {

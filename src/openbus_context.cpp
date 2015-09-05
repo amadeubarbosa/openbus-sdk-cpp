@@ -260,14 +260,26 @@ CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
   CallerChain joined_chain(getJoinedChain());
   idl::creden::SignedData_var signed_chain(
     conn->access_control()->signChainFor(entity.c_str()));
+
+  idl::legacy::creden::SignedCallChain_var legacy_chain;   
+  if (conn->_legacy_support)
+  {
+    legacy_chain = conn->_legacy_converter->signChainFor(entity.c_str());
+  }
+  
   CORBA::Any_var any(_orb_init->codec->decode_value(
                        CORBA::OctetSeq(signed_chain->encoded.maximum(),
                                        signed_chain->encoded.length(),
                                        signed_chain->encoded.get_buffer()),
                        idl::access::_tc_CallChain));
   idl::access::CallChain chain(extract<idl::access::CallChain>(any));
-  return CallerChain(chain, chain.bus.in(), chain.target.in(),
-                     *signed_chain);
+  CallerChain caller_chain(chain, chain.bus.in(), chain.target.in(),
+                           *signed_chain);
+  if (conn->_legacy_support)
+  {
+    caller_chain._legacy_signedCallChain = *legacy_chain;
+  }
+  return caller_chain;
 }
 
 CallerChain OpenBusContext::importChain(
@@ -306,6 +318,24 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
   idl::data_export::VersionedDataSeq exported_version_seq;
   exported_version_seq.length(1);
   
+  idl::legacy::data_export::ExportedCallChain exported_chain;
+  exported_chain.bus = chain.busid().c_str();
+  exported_chain.signedChain =
+    chain.signed_chain(idl::legacy::creden::CredentialData());
+  CORBA::Any any;
+  any <<= exported_chain;
+  CORBA::OctetSeq_var exported_chain_cdr(_orb_init->codec->encode_value(any));
+  
+  idl::data_export::VersionedData exported_version;
+  exported_version.version = idl::legacy::data_export::CurrentVersion;
+  exported_version.encoded = idl::core::OctetSeq(
+    exported_chain_cdr->maximum(),
+    exported_chain_cdr->length(),
+    const_cast<unsigned char *>
+    (exported_chain_cdr->get_buffer()));
+    
+  exported_version_seq[static_cast<CORBA::ULong>(0)] = exported_version;
+
   {
     exported_version_seq.length(2);
 
@@ -323,7 +353,7 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
       const_cast<unsigned char *>
       (exported_chain_cdr->get_buffer()));
     
-    exported_version_seq[static_cast<CORBA::ULong>(0)] = exported_version;
+    exported_version_seq[static_cast<CORBA::ULong>(1)] = exported_version;
   }
   return encode_exported_versions(exported_version_seq,
                                   idl::data_export::MagicTag_CallChain);

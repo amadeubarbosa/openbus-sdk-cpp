@@ -82,13 +82,13 @@ if ! $(scs-idl-path)
 openbus-idl-path = [ os.environ OPENBUS_IDL_PATH ] ;
 if ! $(openbus-idl-path)
 {
-  openbus-idl-path = $(here)/../openbus-idl ;
+  openbus-idl-path = $(here)/idl/current ;
 }
 
 openbus-legacy-idl-path = [ os.environ OPENBUS_LEGACY_IDL_PATH ] ;
 if ! $(openbus-legacy-idl-path)
 {
-  openbus-legacy-idl-path = $(here)/../openbus-legacy-idl ;
+  openbus-legacy-idl-path = $(here)/idl/legacy ;
 }
 
 # To add requirements for version >= or < than determinate version for specific toolset
@@ -454,6 +454,7 @@ install stage-deps
     /boost//program_options
     /boost//date_time
     /boost//filesystem
+    /boost//regex
   : <location>install/deps
     <install-dependencies>on
     <install-type>LIB

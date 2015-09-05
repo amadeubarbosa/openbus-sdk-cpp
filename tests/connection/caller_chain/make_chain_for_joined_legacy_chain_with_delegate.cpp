@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 
   std::auto_ptr<openbus::Connection> conn_A(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_A->loginByPassword("A", "A");
+  conn_A->loginByPassword("A", "A", cfg.domain());
 
   std::auto_ptr<openbus::Connection> conn_B(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 
   std::auto_ptr<openbus::Connection> conn_C(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_C->loginByPassword("C", "C");
+  conn_C->loginByPassword("C", "C", cfg.domain());
 
   openbus::idl::access::LoginInfoSeq originators;
   originators.length(1);

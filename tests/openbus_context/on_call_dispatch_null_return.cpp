@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 
   std::auto_ptr<openbus::Connection>
     conn(bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn->loginByPassword(cfg.user(), cfg.password());
+  conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
   bus_ctx->onCallDispatch(dispatcher(conn.get()));
   
   scs::core::ComponentId componentId;

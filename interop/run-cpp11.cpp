@@ -173,8 +173,8 @@ void run_interop(
 int main()
 {
   run_interop("simple", {"server",});
-  run_interop("sharedauth", {"sharedauth", "server"},
-              {"/tmp/.secret", "/tmp/.secret.lock"});
+  // run_interop("sharedauth", {"sharedauth", "server"},
+  //             {"/tmp/.secret", "/tmp/.secret.lock"});
   run_interop("multiplexing", { "server" });
   run_interop("reloggedjoin", {"server", "proxy"});
   run_interop("delegation", { "broadcaster", "forwarder", "messenger" });

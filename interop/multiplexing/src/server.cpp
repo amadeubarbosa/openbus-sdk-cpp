@@ -22,12 +22,15 @@ struct bus
   unsigned short port;
 };
 std::map<std::size_t, bus> buses;
+bool debug;
+
 void load_options(int argc, char **argv)
 {
   namespace po = boost::program_options;
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help", "Help")
+    ("debug", po::value<bool>()->default_value(true) , "yes|no")
     ("private-key", po::value<std::string>()->default_value(entity + ".key"),
      "Path to private key")
     ("bus.host.name", po::value<std::string>()->default_value("localhost"),
@@ -49,6 +52,10 @@ void load_options(int argc, char **argv)
   {
     std::cout << desc << std::endl;
     std::exit(1);
+  }
+  if (vm.count("debug"))
+  {
+    debug = vm["debug"].as<bool>();
   }
   if (vm.count("bus.host.name"))
   {
@@ -86,7 +93,6 @@ public:
     for (std::vector<openbus::Connection *>::const_iterator it = 
            _vconn.begin(); it != _vconn.end(); ++it) 
     {
-      std::cout << busId << " # " << (*it)->busid() << std::endl;
       if (busId == (*it)->busid()) 
       {
         return *it;
@@ -154,7 +160,10 @@ int main(int argc, char **argv) {
   try 
   {
     load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    if (debug)
+    {
+      openbus::log().set_level(openbus::debug_level);
+    }
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));

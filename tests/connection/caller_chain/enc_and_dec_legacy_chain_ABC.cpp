@@ -22,7 +22,7 @@ int main(int argc, char **argv)
   
   std::auto_ptr<openbus::Connection> conn_B(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_B->loginByPassword("B", "B");
+  conn_B->loginByPassword("B", "B", cfg.domain());
     
   bus_ctx->setDefaultConnection(conn_B.get());
 

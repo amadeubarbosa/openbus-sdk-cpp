@@ -18,7 +18,7 @@ struct relogin_callback
     {
       try
       {
-        conn.loginByPassword(cfg.user(), cfg.password());
+        conn.loginByPassword(cfg.user(), cfg.password(), cfg.domain());
         on_invalid_login_called = true;
         break;
       }
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   std::auto_ptr <openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   bus_ctx->setDefaultConnection(conn.get());
-  conn->loginByPassword(cfg.user(), cfg.password());
+  conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
   relogin_callback callback(cfg);
   conn->onInvalidLogin(callback);
   std::string invalid_login(conn->login()->id.in());

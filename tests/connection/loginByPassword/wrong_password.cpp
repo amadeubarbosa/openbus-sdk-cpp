@@ -18,7 +18,7 @@ int main(int argc, char** argv)
     conn(bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   try
   {
-    conn->loginByPassword(cfg.user(), cfg.password() + "WRONG");
+    conn->loginByPassword(cfg.user(), cfg.password() + "WRONG", cfg.domain());
     std::abort();
   }
   catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)

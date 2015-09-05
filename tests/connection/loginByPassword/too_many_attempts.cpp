@@ -21,7 +21,7 @@ int main(int argc, char** argv)
   {
     try
     {
-      conn->loginByPassword(cfg.user(), "invalid_password");
+      conn->loginByPassword(cfg.user(), "invalid_password", cfg.domain());
       std::abort();
     }
     catch (const openbus::idl::access::AccessDenied &)
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
   }
   try
   {
-    conn->loginByPassword(cfg.user(), cfg.password());
+    conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
     std::abort();
   }
   catch (const openbus::idl::access::TooManyAttempts &)

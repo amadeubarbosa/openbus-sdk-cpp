@@ -14,6 +14,7 @@ struct configuration
   configuration(int argc, char** argv)
     : port_(2089), host_("localhost"), user_("test")
     , password_("test"), certificate_user_("TestCppHello")
+    , domain_("testing")
   {
     assert(argc >= 1);
     int i = 1;
@@ -147,10 +148,14 @@ struct configuration
   {
     return key_;
   }
+  std::string domain() const
+  {
+    return domain_;
+  }
 
 private:
   unsigned short port_, wrong_port_;
-  std::string host_, user_, password_, certificate_user_, key_;
+  std::string host_, user_, password_, certificate_user_, key_, domain_;
 };
 
 }
