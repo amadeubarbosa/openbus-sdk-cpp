@@ -4,6 +4,7 @@
 #define TECGRAF_SDK_OPENBUS_OPENBUS_HPP
 
 #include "openbus/connection.hpp"
+#include "openbus/caller_chain.hpp"
 #include "openbus/orb_initializer.hpp"
 #include "openbus/openbus_context.hpp"
 #include "openbus/idl.hpp"

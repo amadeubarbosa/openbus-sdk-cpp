@@ -7,12 +7,14 @@ path-constant here : . ;
 
 obj messages-stub
   : $(here)/idl/messages.idl
+  : <warnings>off
   ;
 explicit messages-stub ;
 
 obj messages-skeleton
   : $(here)/idl/messages.idl
   : <generate>skeleton
+  <warnings>off
   ;
 explicit messages-skeleton ;
 

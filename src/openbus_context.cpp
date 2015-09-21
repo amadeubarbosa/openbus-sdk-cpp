@@ -6,9 +6,13 @@
 #include "openbus/log.hpp"
 #include "openbus/detail/any.hpp"
 #include "openbus/detail/openssl/public_key.hpp"
+#include "openbus/detail/interceptors/server.hpp"
+#include "openbus/detail/interceptors/client.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace openbus 
 {  
@@ -26,16 +30,27 @@ InvalidEncodedStream::~InvalidEncodedStream() throw()
 {
 }
 
-OpenBusContext::OpenBusContext(CORBA::ORB_ptr orb, 
-                               interceptors::ORBInitializer *orb_init)
-  : _orb_init(orb_init), _orb(orb), _defaultConnection(0),
-    _callDispatchCallback(0)
+OpenBusContext::OpenBusContext(
+  CORBA::ORB_ptr orb,
+  interceptors::ORBInitializer *orb_init)
+  : _orb_init(orb_init)
+  , _orb(orb)
+  , _call_dispatch_cbk(0)
 {
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::OpenBusContext");
+  interceptors::ClientInterceptor *cln_int(
+    dynamic_cast<interceptors::ClientInterceptor *>(
+      _orb_init->cln_interceptor.in()));
+  cln_int->_bus_ctx = this;
+    
+  interceptors::ServerInterceptor *srv_int(
+    dynamic_cast<interceptors::ServerInterceptor *>(
+      _orb_init->srv_interceptor.in()));
+  srv_int->_bus_ctx = this;
 }
 
-std::auto_ptr<Connection> OpenBusContext::connect_by_address_impl(
+boost::shared_ptr<Connection> OpenBusContext::connect_by_address_impl(
   const std::string &host,
   unsigned short port,
   EVP_PKEY *access_key,
@@ -45,28 +60,30 @@ std::auto_ptr<Connection> OpenBusContext::connect_by_address_impl(
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::connectByAddress");
   l.vlog("connectByAddress para host %s:%hi", host.c_str(), port);
-  std::auto_ptr<Connection> conn(
+  boost::shared_ptr<Connection> conn(
     new Connection(host, port, _orb, _orb_init, *this, access_key,
                    legacy_support));
+  connections.insert(conn);
   l.vlog("connection: %p", conn.get());
   return conn;
 }
 
 
-std::auto_ptr<Connection> OpenBusContext::connect_by_reference_impl(
+boost::shared_ptr<Connection> OpenBusContext::connect_by_reference_impl(
   CORBA::Object_var ref,
   EVP_PKEY *access_key,
   bool legacy_support)
 {
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::connectByReference");
-  std::auto_ptr<Connection> conn(
+  boost::shared_ptr<Connection> conn(
     new Connection(ref, _orb, _orb_init, *this, access_key, legacy_support));
+  connections.insert(conn);
   l.vlog("connection: %p", conn.get());
   return conn;
 } 
 
-std::auto_ptr<Connection> OpenBusContext::create_connection_impl(
+boost::shared_ptr<Connection> OpenBusContext::create_connection_impl(
   const std::string &host,
   unsigned short port,
   EVP_PKEY *access_key,
@@ -76,56 +93,90 @@ std::auto_ptr<Connection> OpenBusContext::create_connection_impl(
   return connect_by_address_impl(host, port, access_key, legacy_support);
 }
 
-Connection *OpenBusContext::setDefaultConnection(Connection *conn)
-{
-  boost::lock_guard<boost::mutex> l(_mutex);
-  Connection *old(_defaultConnection);
-  _defaultConnection = conn;
-  return old;
-}
-
-Connection *OpenBusContext::getDefaultConnection() const 
-{
-  boost::lock_guard<boost::mutex> l(_mutex);
-  return _defaultConnection;
-}
-
-Connection *OpenBusContext::setCurrentConnection(Connection *conn) 
+boost::shared_ptr<Connection>
+OpenBusContext::setDefaultConnection(const boost::shared_ptr<Connection> &conn)
 {
   log_scope l(log().general_logger(), info_level, 
-              "OpenBusContext::setCurrentConnection");
-  l.vlog("connection:%p", conn); 
-  unsigned char buf[sizeof(Connection *)];
-  memcpy(buf, &conn, sizeof(Connection *));
-  idl::core::OctetSeq seq(sizeof(Connection *), sizeof(Connection *), buf);
-  CORBA::Any any;
-  any <<= seq;
-  Connection *old(getCurrentConnection());
-  _orb_init->pi_current->set_slot(_orb_init->current_connection, any);
+              "OpenBusContext::setDefaultConnection");  
+  boost::lock_guard<boost::mutex> lg(_mutex);
+  boost::shared_ptr<Connection> old(_def_conn.lock());
+  l.vlog("Connection: %p", conn.get());
+  _def_conn = conn;
   return old;
 }
 
-Connection *OpenBusContext::getCurrentConnection() const 
+boost::shared_ptr<Connection>
+OpenBusContext::getDefaultConnection() const 
+{
+  log_scope l(log().general_logger(), info_level, 
+              "OpenBusContext::getDefaultConnection");  
+  boost::lock_guard<boost::mutex> lg(_mutex);
+  boost::shared_ptr<Connection> def_conn(_def_conn.lock());
+  l.vlog("Connection: %p", def_conn.get());
+  return def_conn;
+}
+
+boost::shared_ptr<Connection>
+OpenBusContext::setCurrentConnection(const boost::shared_ptr<Connection> &conn) 
+{
+  log_scope l(log().general_logger(), info_level, 
+              "OpenBusContext::setCurrentConnection");  
+  l.vlog("Connection: %p", conn.get());
+  boost::lock_guard<boost::mutex> lg(_mutex);
+  
+  CORBA::Any_var any(
+    _orb_init->pi_current->get_slot(_orb_init->current_connection));
+  boost::shared_ptr<Connection> previous;
+  const char *conn_id_str;  
+  if (*any >>= conn_id_str)
+  {
+    boost::uuids::string_generator gen;
+    boost::uuids::uuid conn_id = gen(conn_id_str);
+    previous = id2conn[gen(conn_id_str)].lock();
+    id2conn.erase(conn_id);
+  }
+  
+  if (!conn)
+    return previous;
+  
+  boost::uuids::uuid conn_id = boost::uuids::random_generator()();
+  id2conn[conn_id] = conn;
+  {
+    CORBA::Any any;
+    any <<= boost::uuids::to_string(conn_id).c_str();
+    _orb_init->pi_current->set_slot(_orb_init->current_connection, any);
+  }
+
+  return previous;
+}
+
+boost::shared_ptr<Connection>
+OpenBusContext::getCurrentConnection() const
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCurrentConnection");
+  boost::shared_ptr<Connection> def_conn(getDefaultConnection());
+  boost::lock_guard<boost::mutex> lg(_mutex);
+  
   CORBA::Any_var any(
     _orb_init->pi_current->get_slot(_orb_init->current_connection));
   
-  Connection *conn(0);
-  idl::core::OctetSeq seq(extract<idl::core::OctetSeq>(any));  
-  if (seq.length() == 0)
-  {
-    return getDefaultConnection();
-  }
-  assert(seq.length() == sizeof(Connection *));
-  std::memcpy(&conn, seq.get_buffer(), sizeof(Connection *));
-  return conn;
+  const char *conn_id;  
+  if (!(*any >>= conn_id))
+    return def_conn;
+  
+  boost::uuids::string_generator gen;
+  std::map<boost::uuids::uuid, boost::weak_ptr<Connection> >::const_iterator it
+    = id2conn.find(gen(conn_id));
+  if (it != id2conn.end())
+    return it->second.lock();
+
+  return boost::shared_ptr<Connection>();
 }
 
 CallerChain OpenBusContext::extract_call_chain(
   idl::creden::SignedData signed_chain,
-  Connection *conn)
+  const boost::shared_ptr<Connection> &conn)
 {
   CORBA::Any_var any(
     _orb_init->codec->decode_value(
@@ -144,7 +195,7 @@ CallerChain OpenBusContext::extract_call_chain(
 
 CallerChain OpenBusContext::extract_legacy_call_chain(
   idl::legacy::creden::SignedCallChain signed_chain,
-  Connection *conn)
+  const boost::shared_ptr<Connection> &conn)
 {
   CORBA::Any_var any(
     _orb_init->codec->decode_value(
@@ -153,7 +204,8 @@ CallerChain OpenBusContext::extract_legacy_call_chain(
                       const_cast<unsigned char *>
                       (signed_chain.encoded.get_buffer())),
       idl::legacy::access::_tc_CallChain));
-    idl::legacy::access::CallChain chain(extract<idl::legacy::access::CallChain>(any));
+    idl::legacy::access::CallChain chain
+      (extract<idl::legacy::access::CallChain>(any));
   return CallerChain(
     chain,
     conn->busid(),
@@ -165,7 +217,7 @@ CallerChain OpenBusContext::getCallerChain()
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::getCallerChain");
-  Connection *conn(getCurrentConnection());
+  const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (!conn)
   {
     return CallerChain();
@@ -197,10 +249,10 @@ void OpenBusContext::joinChain(CallerChain const &chain)
     return;
   }
   CORBA::Any sig_any;
-  if (caller_chain._signedCallChain.encoded.length() > 0)
-    sig_any <<= caller_chain._signedCallChain;
+  if (caller_chain._signed_chain.encoded.length() > 0)
+    sig_any <<= caller_chain._signed_chain;
   else
-    sig_any <<= caller_chain._legacy_signedCallChain;    
+    sig_any <<= caller_chain._legacy_signed_chain;    
   _orb_init->pi_current->set_slot(_orb_init->joined_call_chain, sig_any);
 }
 
@@ -215,7 +267,7 @@ CallerChain OpenBusContext::getJoinedChain() const
 {
   log_scope l(log().general_logger(), debug_level, 
               "OpenBusContext::getJoinedChain");
-  Connection *conn(getCurrentConnection());
+  const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (!conn)
   {
     return CallerChain();
@@ -252,7 +304,7 @@ CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::makeChainFor");
-  Connection *conn(getCurrentConnection());
+  const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (!conn)
   {
     return CallerChain();
@@ -277,7 +329,7 @@ CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
                            *signed_chain);
   if (conn->_legacy_support)
   {
-    caller_chain._legacy_signedCallChain = *legacy_chain;
+    caller_chain._legacy_signed_chain = *legacy_chain;
   }
   return caller_chain;
 }
@@ -288,7 +340,7 @@ CallerChain OpenBusContext::importChain(
 {
   log_scope l(log().general_logger(), info_level, 
               "OpenBusContext::importChain");
-  Connection *conn(getCurrentConnection());
+  const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (!conn)
   {
     return CallerChain();
@@ -339,7 +391,7 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
   {
     exported_version_seq.length(2);
 
-    idl::data_export::ExportedCallChain exported_chain = chain._signedCallChain;
+    idl::data_export::ExportedCallChain exported_chain = chain._signed_chain;
 
     CORBA::Any any;
     any <<= exported_chain;
@@ -371,9 +423,9 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
 
     if (idl::data_export::MagicTag_CallChain != tag)
     {
-      l.log("InvalidEncodedStream: Stream de bytes não corresponde ao tipo de dado esperado.");
+      l.log("InvalidEncodedStream: Stream de bytes nao corresponde ao tipo de dado esperado.");
       throw InvalidEncodedStream(
-        "Stream de bytes não corresponde ao tipo de dado esperado.");
+        "Stream de bytes nao corresponde ao tipo de dado esperado.");
     }
 
     for (CORBA::ULong i(0); i < seq->length(); ++i)
@@ -430,13 +482,13 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
       }
         
     }
-    throw InvalidEncodedStream("Versão de cadeia incompatível.");
+    throw InvalidEncodedStream("Versao de cadeia incompativel.");
   }
   catch (const CORBA::SystemException &e)
   {
     throw InvalidEncodedStream(
       boost::str(boost::format("Falha inesperada ao decodificar a cadeia. \
-                               Exceção recebida '%1%' com minor code '%2'")
+                               Excecao recebida '%1%' com minor code '%2'")
                                % e._rep_id() % e.minor()));
   }
   return CallerChain();
@@ -509,7 +561,7 @@ SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
   if (idl::data_export::MagicTag_SharedAuth != tag)
   {
     throw InvalidEncodedStream(
-      "Stream de bytes não corresponde ao tipo de dado esperado.");
+      "Stream de bytes nao corresponde ao tipo de dado esperado.");
   }
   
   SharedAuthSecret secret;
@@ -553,7 +605,7 @@ SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
   if (!found)
   {
     throw InvalidEncodedStream(
-      "Stream de bytes não corresponde ao tipo de dado esperado.");
+      "Stream de bytes nao corresponde ao tipo de dado esperado.");
   }
   return secret;
 }
@@ -561,19 +613,19 @@ SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
 void OpenBusContext::onCallDispatch(CallDispatchCallback c) 
 {
   boost::lock_guard<boost::mutex> l(_mutex);
-  _callDispatchCallback = c;
+  _call_dispatch_cbk = c;
 }
 
 OpenBusContext::CallDispatchCallback OpenBusContext::onCallDispatch() const 
 {
   boost::lock_guard<boost::mutex> l(_mutex);
-  return _callDispatchCallback;
+  return _call_dispatch_cbk;
 }
 
 idl::offers::OfferRegistry_ptr OpenBusContext::getOfferRegistry() const
 {
   idl::offers::OfferRegistry_var ret;
-  Connection *conn(getCurrentConnection());
+  const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (conn)
   {
     ret = conn->getOfferRegistry();
@@ -584,7 +636,7 @@ idl::offers::OfferRegistry_ptr OpenBusContext::getOfferRegistry() const
 idl::access::LoginRegistry_ptr OpenBusContext::getLoginRegistry() const
 {
   idl::access::LoginRegistry_var ret;
-  Connection *conn(getCurrentConnection());
+  const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if(conn)
   {
     ret = conn->getLoginRegistry();
@@ -644,9 +696,31 @@ std::string OpenBusContext::decode_exported_versions(
   {
     throw InvalidEncodedStream(
       boost::str(
-        boost::format("Falha ao extrair VersionedDataSeq. Exceção lançada: \
+        boost::format("Falha ao extrair VersionedDataSeq. Excecao lancada: \
         '%1%' com minor code '%2%'.") % e._rep_id() % e.minor()));
   }
   return tag;
+}
+
+OpenBusContext::~OpenBusContext()
+{
+  log_scope l(log().general_logger(), debug_level, 
+              "OpenBusContext::~OpenBusContext");
+  try
+  {
+    for (std::set<boost::weak_ptr<Connection> >::iterator it
+           = connections.begin();
+         it != connections.end(); ++it)
+    {
+      boost::shared_ptr<Connection> conn((*it).lock());
+      if (conn)
+      {
+        l.vlog("Logout for connection{%p}", conn.get());
+        conn->_logout();
+      }
+    }
+  } catch (...)
+  {
+  }
 }
 }

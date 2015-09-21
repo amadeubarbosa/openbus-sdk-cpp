@@ -4,12 +4,14 @@ path-constant here : . ;
 
 obj independent_clock-stub
   : $(here)/idl/independent_clock.idl
+  : <warnings>off
   ;
 explicit independent_clock-stub ;
 
 obj independent_clock-skeleton
   : $(here)/idl/independent_clock.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit independent_clock-skeleton ;
 

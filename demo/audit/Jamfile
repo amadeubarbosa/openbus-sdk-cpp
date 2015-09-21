@@ -5,12 +5,14 @@ path-constant demo-hello : ../hello ;
 
 obj hello-stub
   : $(demo-hello)/idl/hello.idl
+  : <warnings>off
   ;
 explicit hello-stub ;
 
 obj hello-skeleton
   : $(demo-hello)/idl/hello.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit hello-skeleton ;
 

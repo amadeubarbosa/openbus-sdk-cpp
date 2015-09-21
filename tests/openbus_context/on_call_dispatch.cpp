@@ -1,6 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "helloS.h"
+#pragma clang diagnostic pop
 
 #include <configuration.h>
 #include <scs/ComponentContext.h>
@@ -14,7 +17,7 @@ bool call_dispatch(false);
 
 struct dispatcher
 {
-  typedef openbus::Connection* result_type;
+  typedef boost::shared_ptr<openbus::Connection> result_type;
   result_type r;
   dispatcher(result_type r) : r(r) {}
 
@@ -31,9 +34,9 @@ struct dispatcher
 
 struct hello_impl : public POA_Hello
 {
-  openbus::Connection& conn;
+  boost::shared_ptr<openbus::Connection> conn;
 
-  hello_impl(openbus::Connection& conn
+  hello_impl(boost::shared_ptr<openbus::Connection> conn
              , bool& servant_called)
     : conn(conn), servant_called(servant_called)
   {}
@@ -66,10 +69,10 @@ int main(int argc, char* argv[])
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
-  std::auto_ptr<openbus::Connection>
+  boost::shared_ptr<openbus::Connection>
     conn(bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
-  bus_ctx->onCallDispatch(dispatcher(conn.get()));
+  bus_ctx->onCallDispatch(dispatcher(conn));
   
   scs::core::ComponentId componentId;
   componentId.name = "Hello";
@@ -87,7 +90,7 @@ int main(int argc, char* argv[])
   scs::core::ComponentContext ctx(bus_ctx->orb(), componentId);
 
   bool servant_called(false);
-  hello_impl hello_servant(*conn, servant_called);
+  hello_impl hello_servant(conn, servant_called);
 
   ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
 
@@ -101,7 +104,7 @@ int main(int argc, char* argv[])
   offer_id_prop.name = "offer.id";
   offer_id_prop.value = conn->login()->id.in();
   props[1] = offer_id_prop;
-  bus_ctx->setCurrentConnection(conn.get());
+  bus_ctx->setCurrentConnection(conn);
   bus_ctx->getOfferRegistry()->registerService(ctx.getIComponent(), props);
 
   props.length(4);

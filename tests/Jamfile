@@ -49,12 +49,14 @@ local test-requirements =
 
 obj test-hello-stub
   : $(here)/idl/hello.idl
+  : <warnings>off
   ;
 explicit test-hello-stub ;
 
 obj test-hello-skeleton
   : $(here)/idl/hello.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit test-hello-skeleton ;
 
@@ -295,6 +297,8 @@ alias run-tests
     # [ run connection/loginByPassword/too_many_attempts.cpp : : : $(test-requirements) ]
     [ run connection/login/login_info_after_login.cpp : : : $(test-requirements) ]
     [ run connection/logout/logout_twice.cpp : : : $(test-requirements) ]
+    [ run connection/lifecycle/create_conn.cpp : : : $(test-requirements) ]
+    [ run connection/lifecycle/set_def_conn.cpp : : : $(test-requirements) ]
     [ run fail_user_created_orb.cpp : : : $(test-requirements) ]
     [ run get_offer.cpp : :
       : $(test-requirements)

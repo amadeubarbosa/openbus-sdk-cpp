@@ -19,7 +19,7 @@ int main(int argc, char** argv)
   CORBA::Object_var
     ref(orb_ctx->orb()->string_to_object(corbaloc.str().c_str()));
   
-  std::auto_ptr<openbus::Connection>
+  boost::shared_ptr<openbus::Connection>
     conn(bus_ctx->connectByReference(ref));
   conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
   return 0; //MSVC

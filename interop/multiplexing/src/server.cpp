@@ -1,6 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "helloS.h"
+#pragma clang diagnostic pop
 #include <util.hpp>
 #include <demo/openssl.hpp>
 #include <openbus.hpp>
@@ -78,11 +81,13 @@ void load_options(int argc, char **argv)
 class CallDispatchCallback 
 {
 public:
-  typedef openbus::Connection *result_type;
-  CallDispatchCallback(openbus::Connection &c1, openbus::Connection &c2) 
+  typedef boost::shared_ptr<openbus::Connection>result_type;
+  CallDispatchCallback(
+    boost::shared_ptr<openbus::Connection> c1,
+    boost::shared_ptr<openbus::Connection> c2) 
   {
-    _vconn.push_back(&c1);
-    _vconn.push_back(&c2);
+    _vconn.push_back(c1);
+    _vconn.push_back(c2);
   }
 
   result_type operator()(openbus::OpenBusContext &context, 
@@ -90,7 +95,7 @@ public:
                          const std::string loginId,
                          const std::string operation)
   {
-    for (std::vector<openbus::Connection *>::const_iterator it = 
+    for (std::vector<boost::shared_ptr<openbus::Connection> >::const_iterator it = 
            _vconn.begin(); it != _vconn.end(); ++it) 
     {
       if (busId == (*it)->busid()) 
@@ -99,10 +104,10 @@ public:
       }
     }
     std::cerr << "Conexao de despacho nao encontrada." << std::endl;
-    return 0;
+    return boost::shared_ptr<openbus::Connection>();
   }
 private:
-  std::vector<openbus::Connection *> _vconn;
+  std::vector<boost::shared_ptr<openbus::Connection> > _vconn;
 };
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello 
@@ -135,7 +140,7 @@ void ORBRun(CORBA::ORB_ptr orb)
   orb->run();
 }
 
-void registerOffer(openbus::OpenBusContext &ctx, openbus::Connection &conn, 
+void registerOffer(openbus::OpenBusContext &ctx, boost::shared_ptr<openbus::Connection> conn, 
                    scs::core::ComponentContext &componentCtx)
 {
   try 
@@ -146,7 +151,7 @@ void registerOffer(openbus::OpenBusContext &ctx, openbus::Connection &conn,
     property.name = "offer.domain";
     property.value = "Interoperability Tests";
     props[0] = property;
-    ctx.setCurrentConnection(&conn);
+    ctx.setCurrentConnection(conn);
     ctx.getOfferRegistry()->registerService(componentCtx.getIComponent(), 
                                             props);
   } 
@@ -167,13 +172,13 @@ int main(int argc, char **argv) {
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
-    std::auto_ptr <openbus::Connection> connBusB
+    boost::shared_ptr<openbus::Connection> connBusB
       (bus_ctx->connectByAddress(buses[1].host, buses[1].port));
-    std::auto_ptr <openbus::Connection> conn1BusA
+    boost::shared_ptr<openbus::Connection> conn1BusA
       (bus_ctx->connectByAddress(buses[0].host, buses[0].port));
-    std::auto_ptr <openbus::Connection> conn2BusA
+    boost::shared_ptr<openbus::Connection> conn2BusA
       (bus_ctx->connectByAddress(buses[0].host, buses[0].port));
-    std::auto_ptr <openbus::Connection> conn3BusA
+    boost::shared_ptr<openbus::Connection> conn3BusA
       (bus_ctx->connectByAddress(buses[0].host, buses[0].port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
@@ -198,7 +203,7 @@ int main(int argc, char **argv) {
       openbus::demo::openssl::read_priv_key(priv_key_filename));
     if (!priv_key)
     {
-      std::cout << "Chave privada inválida." << std::endl;
+      std::cout << "Chave privada invalida." << std::endl;
       return -1;
     }
     conn1BusA->loginByCertificate(entity, priv_key);
@@ -206,25 +211,25 @@ int main(int argc, char **argv) {
     conn3BusA->loginByCertificate(entity, priv_key);
     connBusB->loginByCertificate(entity, priv_key);
     
-    bus_ctx->onCallDispatch(CallDispatchCallback(*conn1BusA, *connBusB));
+    bus_ctx->onCallDispatch(CallDispatchCallback(conn1BusA, connBusB));
 
-    std::vector<openbus::Connection *> connections;
-    connections.push_back(conn1BusA.get());
-    connections.push_back(conn2BusA.get());
-    connections.push_back(conn3BusA.get());
-    connections.push_back(connBusB.get());
+    std::vector<boost::shared_ptr<openbus::Connection> > connections;
+    connections.push_back(conn1BusA);
+    connections.push_back(conn2BusA);
+    connections.push_back(conn3BusA);
+    connections.push_back(connBusB);
 
     boost::thread register1(boost::bind(registerOffer, boost::ref(*bus_ctx), 
-                                        boost::ref(*conn1BusA), 
+                                        conn1BusA, 
                                         boost::ref(ctx)));
     boost::thread register2(boost::bind(registerOffer, boost::ref(*bus_ctx), 
-                                        boost::ref(*conn2BusA), 
+                                        conn2BusA, 
                                         boost::ref(ctx)));
     boost::thread register3(boost::bind(registerOffer, boost::ref(*bus_ctx), 
-                                        boost::ref(*conn3BusA), 
+                                        conn3BusA, 
                                         boost::ref(ctx)));
     boost::thread register4(boost::bind(registerOffer, boost::ref(*bus_ctx), 
-                                        boost::ref(*connBusB), 
+                                        connBusB, 
                                         boost::ref(ctx)));
     orbRun.join();
   } 

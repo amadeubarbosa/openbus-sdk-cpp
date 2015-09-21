@@ -9,7 +9,10 @@
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_CONNECTION_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_CONNECTION_HPP
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "scsC.h"
+#pragma clang diagnostic pop
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/interceptors/orb_initializer.hpp"
@@ -24,7 +27,8 @@
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -186,7 +190,8 @@ private:
  * servants de um ORB. As conexões que são efetivamente usadas nas chamadas do
  * ORB são definidas através do OpenBusContext associado ao ORB.
  */
-class OPENBUS_SDK_DECL Connection 
+class OPENBUS_SDK_DECL Connection
+  : public boost::enable_shared_from_this<Connection>
 {
 public:
   typedef std::vector<std::pair<std::string, std::string> > 
@@ -389,8 +394,11 @@ private:
   Connection(const Connection &);
   Connection &operator=(const Connection &);
 
-  static void renewLogin(Connection &conn, idl::access::AccessControl_ptr acs, 
-                         OpenBusContext &ctx, idl::access::ValidityTime t);
+  static void renewLogin(
+    boost::weak_ptr<Connection> conn,
+    idl::access::AccessControl_ptr acs, 
+    OpenBusContext &ctx,
+    idl::access::ValidityTime t);
 
   void login(idl::access::LoginInfo &loginInfo, 
              idl::access::ValidityTime validityTime);
@@ -432,6 +440,21 @@ private:
 
   idl::access::LoginInfo get_login();
 
+  /* Variaveis que sao modificadas somente no construtor. */
+  OpenBusContext &_openbusContext;
+  PrivateKey _key;
+  idl::access::AccessControl_var _access_control;
+  idl::access::LoginRegistry_var _login_registry;
+  idl::offers::OfferRegistry_var _offer_registry;
+  boost::scoped_ptr<LoginCache> _loginCache;
+  std::string _busid;
+  boost::scoped_ptr<PublicKey> _buskey;
+  bool _legacy_support;
+  idl::legacy::access::AccessControl_var _legacy_access_control;
+  idl::legacy_support::LegacyConverter_var _legacy_converter;
+  /**/
+
+  CORBA::Object_var _component_ref;
   scs::core::IComponent_var _iComponent;
   const std::string _host;
   const unsigned short _port;
@@ -449,22 +472,7 @@ private:
     INVALID
   } _state;
   
-  /* Variaveis que sao modificadas somente no construtor. */
-  OpenBusContext &_openbusContext;
-  PrivateKey _key;
-  idl::access::AccessControl_var _access_control;
-  idl::access::LoginRegistry_var _login_registry;
-  idl::offers::OfferRegistry_var _offer_registry;
-  boost::scoped_ptr<LoginCache> _loginCache;
-  std::string _busid;
-  boost::scoped_ptr<PublicKey> _buskey;
-  bool _legacy_support;
-  idl::legacy::access::AccessControl_var _legacy_access_control;
-  idl::legacy_support::LegacyConverter_var _legacy_converter;
-  /**/
     
-  CORBA::Object_var _component_ref;
-
   struct SecretSession 
   {
     SecretSession()

@@ -6,23 +6,27 @@ path-constant here : . ;
 
 obj hello-stub
   : $(here)/idl/hello/hello.idl
+  : <warnings>off
   ;
 explicit hello-stub ;
 
 obj hello-skeleton
   : $(here)/idl/hello/hello.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit hello-skeleton ;
 
 obj proxy-stub
   : $(here)/idl/proxy/proxy.idl
+  : <warnings>off
   ;
 explicit proxy-stub ;
 
 obj proxy-skeleton
   : $(here)/idl/proxy/proxy.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit proxy-skeleton ;
 

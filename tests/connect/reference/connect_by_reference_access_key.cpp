@@ -25,11 +25,11 @@ int main(int argc, char* argv[])
   EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(argv[argc-1]));
   if (!priv_key)
   {
-    std::cerr << "Chave privada inválida." << std::endl;
+    std::cerr << "Chave privada invalida." << std::endl;
     std::abort();
   }
 
-  std::auto_ptr<openbus::Connection>
+  boost::shared_ptr<openbus::Connection>
     conn(bus_ctx->connectByReference(ref,
                                      openbus::_access_key=priv_key));
   return 0; //MSVC

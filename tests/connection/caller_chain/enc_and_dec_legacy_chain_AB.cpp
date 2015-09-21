@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   
-  std::auto_ptr<openbus::Connection> conn_A(
+  boost::shared_ptr<openbus::Connection> conn_A(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_A->loginByPassword("A", "A", cfg.domain());
   

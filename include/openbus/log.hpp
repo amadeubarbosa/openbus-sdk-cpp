@@ -9,7 +9,10 @@
 
 #include "openbus/detail/decl.hpp"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <tao/ORB.h>
+#pragma clang diagnostic pop
 #include <log/output/streambuf_output.h>
 #include <log/logger.h>
 #include <boost/thread.hpp>

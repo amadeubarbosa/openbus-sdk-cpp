@@ -4,12 +4,14 @@ path-constant here : . ;
 
 obj dedicated_clock-stub
   : $(here)/idl/dedicated_clock.idl
+  : <warnings>off
   ;
 explicit dedicated_clock-stub ;
 
 obj dedicated_clock-skeleton
   : $(here)/idl/dedicated_clock.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit dedicated_clock-skeleton ;
 

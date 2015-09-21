@@ -4,7 +4,10 @@
 #define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_OPENSSL_HPP
 
 #include "openbus/detail/decl.hpp"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <tao/ORB.h>
+#pragma clang diagnostic pop
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <boost/shared_ptr.hpp>

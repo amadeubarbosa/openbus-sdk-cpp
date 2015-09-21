@@ -5,12 +5,14 @@ path-constant here : . ;
 
 obj chain_validation-stub
   : $(here)/idl/chain_validation.idl
+  : <warnings>off
   ;
 explicit chain_validation-stub ;
 
 obj chain_validation-skeleton
   : $(here)/idl/chain_validation.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit chain_validation-skeleton ;
 

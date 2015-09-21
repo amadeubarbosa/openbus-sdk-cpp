@@ -89,19 +89,23 @@ hash_value session_key(PortableInterceptor::ClientRequestInfo_ptr r)
   return profile_data_hash;
 }
 
-Connection &ClientInterceptor::get_current_connection(PortableInterceptor::ClientRequestInfo &r)
+boost::shared_ptr<Connection>
+ClientInterceptor::get_current_connection(
+  PortableInterceptor::ClientRequestInfo &r)
 {
   log_scope l(log().general_logger(),info_level,
               "ClientInterceptor::get_current_connection");
-  Connection *conn(0);
-  CORBA::Any_var any(r.get_slot(_orb_init->current_connection));
-  idl::core::OctetSeq seq(extract<idl::core::OctetSeq>(any));
-  if (seq.length() > 0)
+  boost::shared_ptr<Connection> conn;
   {
-    assert(seq.length() == sizeof(conn));
-    std::memcpy(&conn, seq.get_buffer(), sizeof(conn));
+    boost::lock_guard<boost::mutex> l(_bus_ctx->_mutex);
+    CORBA::Any_var any(r.get_slot(_orb_init->current_connection));
+    const char *conn_id;
+    if (*any >>= conn_id)
+    {
+      boost::uuids::string_generator gen;
+      conn = _bus_ctx->id2conn[gen(std::string(conn_id))].lock();
+    }
   }
-  assert(_bus_ctx);
   if(!conn) 
   {
     if (!(conn = _bus_ctx->getDefaultConnection())) 
@@ -110,14 +114,13 @@ Connection &ClientInterceptor::get_current_connection(PortableInterceptor::Clien
       throw CORBA::NO_PERMISSION(idl::access::NoLoginCode, CORBA::COMPLETED_NO);
     }
   }
-  assert(conn);
-  l.vlog("connection:%p", conn);
-  return *conn;
+  l.vlog("Connection: %p", conn.get());
+  return conn;
 }
 
 CallerChain ClientInterceptor::get_joined_chain(
   PortableInterceptor::ClientRequestInfo_ptr r,
-  Connection &conn)
+  const boost::shared_ptr<Connection> &conn)
 {
   CORBA::Any_var any(r->get_slot(_orb_init->joined_call_chain));
 
@@ -146,7 +149,7 @@ CallerChain ClientInterceptor::get_joined_chain(
                         (legacy_signed_chain.encoded.get_buffer())),
         idl::legacy::access::_tc_CallChain);
       idl::legacy::access::CallChain chain(extract<idl::legacy::access::CallChain>(any));
-      return CallerChain(chain, conn.busid(), chain.target.in(), legacy_signed_chain);
+      return CallerChain(chain, conn->busid(), chain.target.in(), legacy_signed_chain);
     }
   }
   return CallerChain();
@@ -169,7 +172,7 @@ bool ClientInterceptor::ignore_invalid_login(PortableInterceptor::ClientRequestI
 }
 
 idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   hash_value &hash,
   const std::string &target,
   idl::legacy::creden::CredentialData type)
@@ -186,25 +189,25 @@ idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
   {
     try
     {
-      chain = *conn._legacy_access_control->signChainFor(target.c_str());
+      chain = *conn->_legacy_access_control->signChainFor(target.c_str());
     }
     catch (const CORBA::SystemException &)
     {
       l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
-             conn.busid().c_str());
+             conn->busid().c_str());
       throw CORBA::NO_PERMISSION(idl::legacy::access::UnavailableBusCode,
                                  CORBA::COMPLETED_NO);
     }
     catch (const idl::legacy::access::InvalidLogins &)
     {
       Connection::profile2login_LRUCache::Key_List entries(
-        conn._profile2login.get_all_keys());
+        conn->_profile2login.get_all_keys());
       for (Connection::profile2login_LRUCache::Key_List::iterator it(
              entries.begin()); it != entries.end(); ++it)
       {        
-        if (target == conn._profile2login.fetch(*it))
+        if (target == conn->_profile2login.fetch(*it))
         {
-          conn._profile2login.remove(*it);
+          conn->_profile2login.remove(*it);
         }
       }
       l.log("throw CORBA::NO_PERMISSION, minor=InvalidTaretCode");
@@ -220,7 +223,7 @@ idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
 }
 
 idl::creden::SignedData ClientInterceptor::get_signed_chain(
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   hash_value &hash,
   const std::string &target,
   idl::creden::CredentialData type)
@@ -237,12 +240,12 @@ idl::creden::SignedData ClientInterceptor::get_signed_chain(
   {
     try
     {
-      chain = *conn.access_control()->signChainFor(target.c_str());
+      chain = *conn->access_control()->signChainFor(target.c_str());
     }
     catch (const CORBA::SystemException &)
     {
       l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
-             conn.busid().c_str());
+             conn->busid().c_str());
       throw CORBA::NO_PERMISSION(idl::access::UnavailableBusCode,
                                  CORBA::COMPLETED_NO);
     }
@@ -257,15 +260,15 @@ idl::creden::SignedData ClientInterceptor::get_signed_chain(
 
 Connection::SecretSession * ClientInterceptor::get_session(
   PI::ClientRequestInfo_ptr r,
-  Connection &conn)
+  const boost::shared_ptr<Connection> &conn)
 {
   Connection::SecretSession *session(0);
   std::string remote_id;
   boost::lock_guard<boost::mutex> lock(_mutex);
-  conn._profile2login.fetch(session_key(r), remote_id);
+  conn->_profile2login.fetch(session_key(r), remote_id);
   if (!remote_id.empty())
   {
-    session = conn._login2session.fetch_ptr(remote_id);
+    session = conn->_login2session.fetch_ptr(remote_id);
   }
   return session;
 }
@@ -273,7 +276,7 @@ Connection::SecretSession * ClientInterceptor::get_session(
 template <typename C>
 void ClientInterceptor::fill_credential(
   PI::ClientRequestInfo_ptr r,
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   typename boost::mpl::if_<
   typename boost::is_same<C, idl::creden::CredentialData>::type,
   idl::access::LoginInfo,
@@ -282,7 +285,7 @@ void ClientInterceptor::fill_credential(
   Connection::SecretSession *session)
 {
   C credential;
-  credential.bus = conn._busid.c_str();
+  credential.bus = conn->_busid.c_str();
   credential.login = login.id;
   if (session == 0)
   {
@@ -367,7 +370,7 @@ void ClientInterceptor::fill_credential(
   
 void ClientInterceptor::attach_credential(
   PI::ClientRequestInfo_ptr r,
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   idl::access::LoginInfo &login)
 {
   idl::legacy::access::LoginInfo legacy_login;
@@ -427,8 +430,9 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
   {
     return;
   }
-  Connection &conn(get_current_connection(*r));
-  idl::access::LoginInfo curr_login(conn.get_login());
+
+  boost::shared_ptr<Connection> conn(get_current_connection(*r));
+  idl::access::LoginInfo curr_login(conn->get_login());
   if (std::string(curr_login.id.in()).empty())
   {
     l.log("throw NoLoginCode");
@@ -443,7 +447,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
   any <<= boost::uuids::to_string(request_id);
   {
     boost::lock_guard<boost::mutex> l(_mutex);
-    _request_id2conn[request_id] = &conn;
+    _request_id2conn[request_id] = conn;
   }
   _orb_init->pi_current->set_slot(_orb_init->request_id, any);  
 }
@@ -458,6 +462,18 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   if (ignore_request(*r))
   {
     throw;
+  }
+
+  boost::uuids::uuid request_id(get_request_id(r));
+  if (request_id.is_nil())
+  {
+    throw;
+  }
+  boost::shared_ptr<Connection> conn;
+  {
+    boost::lock_guard<boost::mutex> l(_mutex);
+    conn = _request_id2conn.find(request_id)->second;
+    _request_id2conn.erase(request_id);
   }
 
   CORBA::Any_var any = r->received_exception();
@@ -477,17 +493,6 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
   }
 
   l.level_vlog(debug_level, "minor: %d", ex->minor());
-  boost::uuids::uuid request_id(get_request_id(r));
-  if (request_id.is_nil())
-  {
-    throw;
-  }
-  Connection *conn(0);
-  {
-    boost::lock_guard<boost::mutex> l(_mutex);
-    conn = _request_id2conn.find(request_id)->second;
-    _request_id2conn.erase(request_id);
-  }
   if (ex->minor() == idl::access::InvalidCredentialCode) 
   {
     l.level_vlog(debug_level, "creating credential session");

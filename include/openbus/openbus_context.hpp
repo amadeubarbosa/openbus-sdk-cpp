@@ -11,14 +11,19 @@
 #include "openbus/detail/decl.hpp"
 #include "openbus/orb_initializer.hpp"
 #include "openbus/connection.hpp"
+#include "openbus/caller_chain.hpp"
 
 #include <tao/LocalObject.h>
 #include <openssl/evp.h>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/parameter.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <string>
+#include <map>
+#include <set>
 
 namespace openbus 
 {
@@ -28,53 +33,6 @@ namespace openbus
     struct ClientInterceptor;
   }
 }
-
-namespace tecgraf
-{ 
-namespace openbus
-{ 
-namespace core 
-{ 
-namespace v2_1 
-{ 
-namespace services 
-{ 
-namespace access_control 
-{
-
-inline bool operator==(const LoginInfo &lhs, const LoginInfo &rhs)
-{
-  return lhs.id.in() == rhs.id.in() 
-    || (lhs.id.in() && rhs.id.in() && !std::strcmp(lhs.id.in(), rhs.id.in()));
-}
-
-inline bool operator!=(const LoginInfo &lhs, const LoginInfo &rhs)
-{
-  return !(lhs == rhs);
-}
-
-inline bool operator==(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
-{
-  if (lhs.length() != rhs.length())
-  {
-    return false;
-  }
-  for (CORBA::ULong i(0); i < rhs.length(); ++i)
-  {
-    if (lhs[i] != rhs[i])
-    {
-      return false;
-    }
-  }
-  return true;
-}
-
-inline bool operator!=(const LoginInfoSeq &lhs, const LoginInfoSeq &rhs)
-{
-  return !(lhs == rhs);
-}
-
-}}}}}}
 
 /**
 * \brief openbus
@@ -93,162 +51,7 @@ struct OPENBUS_SDK_DECL InvalidEncodedStream : public std::exception
   }
 private:
   std::string msg_;
-};
-  
-/**
- * \brief Cadeia de chamadas oriundas de um barramento.
- * 
- * Coleção de informações dos logins que originaram chamadas em cadeia
- * através de um barramento. Cadeias de chamadas representam chamadas
- * aninhadas dentro do barramento e são úteis para que os sistemas que
- * recebam essas chamadas possam identificar se a chamada foi
- * originada por entidades autorizadas ou não.
- */
-struct OPENBUS_SDK_DECL CallerChain 
-{
-  /**
-  * \brief Barramento através do qual as chamadas foram originadas.
-  */
-  const std::string busid() const 
-  {
-    return _busid;
-  }
-
-	/**
-   * \brief Entidade para a qual a chamada estava destinada. 
-   *
-   * Só é possível fazer 
-   * chamadas dentro dessa cadeia através do método 
-   * \ref OpenBusContext::joinChain se a entidade da conexão 
-   * corrente for a mesmo do target.
-   *
-   */
-  const std::string target() const
-  {
-    return _target;
-  }
-  
-	/**
-	 * \brief Lista de informações de login de todas as entidades que originaram as
-	 * chamadas nessa cadeia. 
-   *
-   * Quando essa lista é vazia isso indica que a  chamada não está inclusa em 
-   * outra cadeia de chamadas.
-	 */
-  const idl::access::LoginInfoSeq &originators() const 
-  {
-    return _originators;
-  }
-  
-  /**
-   * \brief Informação de login da entidade que realizou a última chamada da 
-   * cadeia.
-   */
-  const idl::access::LoginInfo &caller() const 
-  {
-    return _caller;
-  }
-
-  /**
-   * \brief Construtor default que indica há ausência de uma cadeia.
-   *
-   * O valor de um CallerChain default-constructed pode ser usado para
-   * verificar a ausência de uma cadeia da seguinte forma:
-   * \code
-   * CallerChain chain(openbusContext.getCallerChain());
-   * if(chain != CallerChain())
-   *   // Possui CallerChain
-   * else
-   *   // Nao possui CallerChain
-   * \endcode
-   */
-  CallerChain() 
-  {
-    std::memset(_signedCallChain.signature, ' ', idl::core::EncryptedBlockSize);
-  }
-//private:
-#ifndef OPENBUS_SDK_TEST
-private:
-#else
-public:
-#endif
-  CallerChain(
-    const idl::access::CallChain &chain,
-    const std::string &busid,
-    const std::string &target,
-    const idl::creden::SignedData &signed_chain)
-    : _busid(chain.bus.in()),
-    _target(target),
-    _originators(chain.originators), 
-    _caller(chain.caller),
-    _signedCallChain(signed_chain)
-  {
-  }
-
-  CallerChain(
-    const idl::legacy::access::CallChain &chain,
-    const std::string &busid,
-    const std::string &target,
-    const idl::legacy::creden::SignedCallChain &signed_chain)
-    : _busid(busid),
-    _target(target),
-    _legacy_signedCallChain(signed_chain)
-  {
-    _originators = idl::access::LoginInfoSeq(
-      chain.originators.length(),
-      chain.originators.length(),
-      (idl::access::LoginInfo*)chain.originators.get_buffer());
-    _caller.id = chain.caller.id;
-    _caller.entity = chain.caller.entity;
-  }
-
-  CallerChain(const std::string &busid, 
-              const std::string &target,
-              const idl::access::LoginInfoSeq &originators, 
-              const idl::access::LoginInfo &caller) 
-    : _busid(busid), _target(target), _originators(originators), 
-    _caller(caller) 
-  {
-    std::memset(_signedCallChain.signature, ' ', idl::core::EncryptedBlockSize);
-    std::memset(_legacy_signedCallChain.signature, ' ', idl::core::EncryptedBlockSize);
-  }
-
-  idl::creden::SignedData signed_chain(idl::creden::CredentialData) const
-  {
-    return _signedCallChain;
-  }
-
-  idl::legacy::creden::SignedCallChain signed_chain(idl::legacy::creden::CredentialData) const
-  {
-    return _legacy_signedCallChain;
-  }
-
-  bool is_legacy() const
-  {
-    return _legacy_signedCallChain.encoded.length() > 0 ? true : false;
-  }
-
-  std::string _busid;
-  std::string _target;
-  idl::access::LoginInfoSeq _originators;
-  idl::access::LoginInfo _caller;
-  idl::creden::SignedData _signedCallChain;
-  idl::legacy::creden::SignedCallChain _legacy_signedCallChain;
-  
-  friend class OpenBusContext;
-  friend struct openbus::interceptors::ClientInterceptor;
-  friend inline bool operator==(CallerChain const &lhs, 
-                                CallerChain const &rhs) 
-  {
-    return lhs._busid == rhs._busid && lhs._originators == rhs._originators
-      && lhs._caller == rhs._caller;
-  }
-};
-
-inline bool operator!=(CallerChain const &lhs, CallerChain const &rhs) 
-{
-  return !(lhs == rhs);
-}
+};  
 
 BOOST_PARAMETER_NAME(host)
 BOOST_PARAMETER_NAME(port)
@@ -311,10 +114,11 @@ public:
 	 * @return Conexão a ser utilizada para receber a chamada.
 	 */
   typedef boost::function<
-    Connection* (OpenBusContext &context,
-                 const std::string busId, 
-                 const std::string loginId,
-                 const std::string operation)>
+    boost::shared_ptr<Connection> (
+      OpenBusContext &context,
+      const std::string busId, 
+      const std::string loginId,
+      const std::string operation)>
     CallDispatchCallback;
 
   /**
@@ -392,7 +196,7 @@ public:
    *
    */
   BOOST_PARAMETER_MEMBER_FUNCTION(
-    (std::auto_ptr<Connection>), connectByReference, tag,
+    (boost::shared_ptr<Connection>), connectByReference, tag,
     (required
      (reference, (CORBA::Object_var)))
     (optional
@@ -445,7 +249,7 @@ public:
    *
    */
   BOOST_PARAMETER_MEMBER_FUNCTION(
-    (std::auto_ptr<Connection>), connectByAddress, tag,
+    (boost::shared_ptr<Connection>), connectByAddress, tag,
     (required
      (host, (const std::string&))
      (port, (unsigned short)))
@@ -499,7 +303,7 @@ public:
    *
    */
   BOOST_PARAMETER_MEMBER_FUNCTION(
-    (std::auto_ptr<Connection>), createConnection, tag,
+    (boost::shared_ptr<Connection>), createConnection, tag,
     (required
      (host, (const std::string&))
      (port, (unsigned short)))
@@ -524,41 +328,48 @@ public:
    * da conexão não é transferida para o \ref OpenBusContext, e a conexão 
    * deve ser removida do \ref OpenBusContext antes de destruida
    */
-  Connection *setDefaultConnection(Connection *);
+  boost::shared_ptr<Connection>
+    setDefaultConnection(const boost::shared_ptr<Connection> &);
    
   /**
    * \brief Devolve a conexão padrão.
    * 
-   * Veja operação 'setDefaultConnection'.
+   * Veja operação \ref setDefaultConnection.
    * 
-   * \return Conexão definida como conexão padrão. OpenBusContext não
-   * possui ownership dessa conexão e o mesmo não é transferido para o
-   * código de usuário na execução desta função
+   * \return Conexão definida como conexão padrão. \ref OpenBusContext não
+   * possui propriedade(ownership) dessa conexão e a mesma não é transferida
+   * para o código do usuário na execução desta função.
    */
-  Connection *getDefaultConnection() const;
+  boost::shared_ptr<Connection>
+    getDefaultConnection() const;
    
   /**
-   * \brief Define a conexão "Requester" do contexto corrente.
+   * \brief Define a conexão associada ao contexto corrente.
    * 
-   * Define a conexão "Requester" a ser utilizada em todas as chamadas
-   * feitas no contexto atual. Quando 'conn' é 'null' o contexto passa
-   * a ficar sem nenhuma conexão associada.
+   * Define a conexão a ser utilizada em todas as chamadas
+   * feitas no contexto atual. 
    * 
-   * @param[in] conn Conexão a ser associada ao contexto corrente. O
-   * 'ownership' da conexão não é transferida para o OpenBusContext, e
-   * a conexão deve ser removida do OpenBusContext antes de destruida
+   * @param[in] conn Conexão a ser associada ao contexto corrente. 
+   * Um valor nulo significa nenhuma conexão definida. A propriedade(ownership) 
+   * da conexão não é transferida para o \ref OpenBusContext,
+   * e a conexão deve ser removida do \ref OpenBusContext antes de ser 
+   * destruída.
    */
-  Connection *setCurrentConnection(Connection *);
+  boost::shared_ptr<Connection>
+    setCurrentConnection(const boost::shared_ptr<Connection> &);
    
   /**
    * \brief Devolve a conexão associada ao contexto corrente.
    * 
-   * @return Conexão ao barramento associada a thread
-   * corrente. \ref OpenBusContext não possui ownership dessa conexão e o
-   * mesmo não é transferido para o código de usuário na execução
-   * desta função
+   * @return Conexão ao barramento associada ao contexto
+   * corrente, que pode ter sido definida usando a operação 
+   * \ref setCurrentConnection ou \ref setDefaultConnection. 
+   * \ref OpenBusContext não possui propriedade(ownership) 
+   * dessa conexão e a mesma não é transferida para o código do usuário 
+   * na execução desta função.
    */
-  Connection *getCurrentConnection() const;
+  boost::shared_ptr<Connection>
+    getCurrentConnection() const;
        
   /**
    * \brief Devolve a cadeia de chamadas à qual a execução corrente pertence.
@@ -672,11 +483,12 @@ public:
 	 * \return A nova cadeia de chamadas assinada.
 	 *
 	 * \exception idl::access::InvalidToken O token fornecido não foi reconhecido.
-	 * \exception idl::access::UnknownDomain O domínio de autenticação não é conhecido.
-	 * \exception idl::access::WrongEncoding A importação falhou, pois o token não foi
-	 *            codificado corretamente com a chave pública do barramento.
-	 * \exception idl::core::ServiceFailure Ocorreu uma falha interna nos serviços do 
-   *            barramento que impediu a criação da cadeia.
+	 * \exception idl::access::UnknownDomain O domínio de autenticação não é 
+   *            conhecido.
+	 * \exception idl::access::WrongEncoding A importação falhou, pois o token não 
+   *            foi codificado corretamente com a chave pública do barramento.
+	 * \exception idl::core::ServiceFailure Ocorreu uma falha interna nos serviços 
+   *            do barramento que impediu a criação da cadeia.
 	 */
 	CallerChain importChain(
     const CORBA::OctetSeq &token,
@@ -758,6 +570,7 @@ public:
   
   idl::offers::OfferRegistry_ptr getOfferRegistry() const;
   idl::access::LoginRegistry_ptr getLoginRegistry() const;
+  ~OpenBusContext();
 private:
   /**
    * OpenBusContext deve ser adquirido atraves de:
@@ -780,18 +593,18 @@ private:
     const CORBA::OctetSeq &stream,
     idl::data_export::VersionedDataSeq_out exported_version_seq) const;
 
-  std::auto_ptr<Connection> connect_by_address_impl(
+  boost::shared_ptr<Connection> connect_by_address_impl(
     const std::string &host,
     unsigned short port,
     EVP_PKEY *access_key,
     bool legacy_support);
 
-  std::auto_ptr<Connection> connect_by_reference_impl(
+  boost::shared_ptr<Connection> connect_by_reference_impl(
     CORBA::Object_var,
     EVP_PKEY *access_key,
     bool legacy_support);
 
-  std::auto_ptr<Connection> create_connection_impl(
+  boost::shared_ptr<Connection> create_connection_impl(
     const std::string &host,
     unsigned short port,
     EVP_PKEY *access_key,
@@ -799,22 +612,24 @@ private:
 
   CallerChain extract_call_chain(
     idl::creden::SignedData,
-    Connection *);
+    const boost::shared_ptr<Connection> &);
   
   CallerChain extract_legacy_call_chain(
     idl::legacy::creden::SignedCallChain,
-    Connection *);
+    const boost::shared_ptr<Connection> &);
 
-  typedef std::map<std::string, Connection *> BusidConnection;
   mutable boost::mutex _mutex;
   interceptors::ORBInitializer * _orb_init;
   CORBA::ORB_ptr _orb;
-  Connection *_defaultConnection;
-  BusidConnection _busidConnection;
-  CallDispatchCallback _callDispatchCallback;
+  boost::weak_ptr<Connection> _def_conn;
+  CallDispatchCallback _call_dispatch_cbk;
+  std::map<boost::uuids::uuid, boost::weak_ptr<Connection> > id2conn;
+  std::set<boost::weak_ptr<Connection> > connections;
 
   friend boost::shared_ptr<orb_ctx> openbus::ORBInitializer(
     int &argc, char **argv);
+  friend struct interceptors::ServerInterceptor;
+  friend struct interceptors::ClientInterceptor;
 };
 }
 

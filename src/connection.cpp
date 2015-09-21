@@ -21,11 +21,20 @@ namespace openbus
 {
 class Connection;
 
-void Connection::renewLogin(Connection &conn, idl::access::AccessControl_ptr acs, 
-                            OpenBusContext &ctx, idl::access::ValidityTime t)
+void Connection::renewLogin(
+  boost::weak_ptr<Connection> conn,
+  idl::access::AccessControl_ptr acs, 
+  OpenBusContext &ctx,
+  idl::access::ValidityTime t)
 {
   log_scope l(log().general_logger(), info_level, "Connection::renewLogin()");
-  ctx.setCurrentConnection(&conn);
+  {
+    boost::shared_ptr<Connection> conn_ = conn.lock();
+    ctx.setCurrentConnection(conn_);
+    if (conn_.unique())
+      return;
+  }
+      
   while (true)
   {
     try
@@ -79,22 +88,22 @@ Connection::Connection(
   OpenBusContext &m, 
   EVP_PKEY *access_key,
   bool legacy_support)
-  : _key(access_key),
-    _component_ref(ref),
-    _iComponent(scs::core::IComponent::_nil()),
-    _port(0),
-    _orb_init(orb_init),
-    _orb(orb),
-    _loginInfo(0),
-    _invalid_login(0),
-    _onInvalidLogin(0),
-    _state(UNLOGGED),
-    _openbusContext(m),
-    _legacy_support(legacy_support),
-    _legacy_access_control(idl::legacy::access::AccessControl::_nil()),
-    _legacy_converter(idl::legacy_support::LegacyConverter::_nil()),
-    _profile2login(LRUSize),
-    _login2session(LRUSize)
+  : _openbusContext(m)
+  , _key(access_key)
+  , _legacy_support(legacy_support)
+  , _legacy_access_control(idl::legacy::access::AccessControl::_nil())
+  , _legacy_converter(idl::legacy_support::LegacyConverter::_nil())
+  , _component_ref(ref)
+  , _iComponent(scs::core::IComponent::_nil())
+  , _port(0)
+  , _orb_init(orb_init)
+  , _orb(orb)
+  , _loginInfo(0)    
+  , _invalid_login(0)
+  , _onInvalidLogin(0)
+  , _state(UNLOGGED)
+  , _profile2login(LRUSize)
+  , _login2session(LRUSize)
 {
 }
 
@@ -105,22 +114,22 @@ Connection::Connection(
   OpenBusContext &m, 
   EVP_PKEY *access_key,
   bool legacy_support)
-  : _key(access_key),
-    _iComponent(scs::core::IComponent::_nil()),
-    _host(host),
-    _port(port),
-    _orb_init(orb_init),
-    _orb(orb),
-    _loginInfo(0),
-    _invalid_login(0),
-    _onInvalidLogin(0),
-    _state(UNLOGGED),
-    _openbusContext(m),
-    _legacy_support(legacy_support),
-    _legacy_access_control(idl::legacy::access::AccessControl::_nil()),
-    _legacy_converter(idl::legacy_support::LegacyConverter::_nil()),
-    _profile2login(LRUSize),
-    _login2session(LRUSize)
+  : _openbusContext(m)
+  , _key(access_key)
+  , _legacy_support(legacy_support)
+  , _legacy_access_control(idl::legacy::access::AccessControl::_nil())
+  , _legacy_converter(idl::legacy_support::LegacyConverter::_nil())
+  , _iComponent(scs::core::IComponent::_nil())
+  , _host(host)
+  , _port(port)
+  , _orb_init(orb_init)
+  , _orb(orb)
+  , _loginInfo(0)
+  , _invalid_login(0)
+  , _onInvalidLogin(0)
+  , _state(UNLOGGED)
+  , _profile2login(LRUSize)
+  , _login2session(LRUSize)
 {
   log_scope l(log().general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
@@ -226,9 +235,10 @@ void Connection::login(idl::access::LoginInfo &loginInfo,
   _loginInfo.reset(&loginInfo);
   _invalid_login.reset();
   _state = LOGGED;
-
   _renewLogin = boost::thread(
-    boost::bind(renewLogin, boost::ref(*this), _access_control, 
+    boost::bind(renewLogin,
+                boost::weak_ptr<Connection>(shared_from_this()),
+                _access_control, 
                 boost::ref(_openbusContext), validityTime));
 }
 
@@ -363,13 +373,14 @@ Connection::startSharedAuth()
   log_scope l(log().general_logger(), info_level, 
               "Connection::startSharedAuth");
   idl::core::EncryptedBlock challenge;
-  Connection *conn(0);
+  boost::shared_ptr<Connection> conn;
   idl::access::LoginProcess_ptr login_process;
-  idl::legacy::access::LoginProcess_ptr legacy_login_process;
+  idl::legacy::access::LoginProcess_ptr legacy_login_process(
+    idl::legacy::access::LoginProcess::_nil());
   try 
   {
     conn = _openbusContext.getCurrentConnection();
-    _openbusContext.setCurrentConnection(this);
+    _openbusContext.setCurrentConnection(shared_from_this());
     login_process = _access_control->startLoginBySharedAuth(challenge);
     if (_legacy_support)
     {
@@ -486,9 +497,11 @@ bool Connection::_logout(bool local)
     {
       struct save_state
       {
-        save_state(OpenBusContext &context, Connection *self)
-          : context(context), previous_conn(context.getCurrentConnection()),
-            previous_chain(context.getJoinedChain())
+        save_state(OpenBusContext &context,
+                   boost::shared_ptr<Connection> self)
+          : context(context)
+          , previous_conn(context.getCurrentConnection())
+          , previous_chain(context.getJoinedChain())
         {
           context.exitChain();
           context.setCurrentConnection(self);
@@ -500,9 +513,9 @@ bool Connection::_logout(bool local)
         }
 
         OpenBusContext &context;
-        Connection *previous_conn;
+        boost::shared_ptr<Connection> previous_conn;
         CallerChain previous_chain;
-      } save_state_(_openbusContext, this);
+      } save_state_(_openbusContext, shared_from_this());
 
       static_cast<void>(save_state_); // avoid warnings
       try
@@ -519,14 +532,14 @@ bool Connection::_logout(bool local)
         }
         else
         {
-          l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::NO_PERMISSION with rep_id '%s' and minor '%s'", e._rep_id(), e.minor());
+          l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::NO_PERMISSION with rep_id '%s' and minor '%d'", e._rep_id(), e.minor());
           success = false;
         }
       }
       catch (const CORBA::SystemException &e)
       {
         //Mico does not implement CORBA::Exception_rep_id()
-        l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::SystemException with rep_id '%s' and minor '%s'", e._rep_id(), e.minor());
+        l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::SystemException with rep_id '%s' and minor '%d'", e._rep_id(), e.minor());
         success = false;
       }
     }

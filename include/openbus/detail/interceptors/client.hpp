@@ -40,39 +40,38 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   void receive_other(PI::ClientRequestInfo_ptr);
   char *name();
   void destroy();
-  Connection &get_current_connection(PI::ClientRequestInfo &);
+  boost::shared_ptr<Connection> get_current_connection(PI::ClientRequestInfo &);
   bool ignore_request(PI::ClientRequestInfo &);
   bool ignore_invalid_login(PI::ClientRequestInfo &);
 
   idl::creden::SignedData
     get_signed_chain(
-      Connection &,
+      const boost::shared_ptr<Connection> &,
       hash_value &hash, 
       const std::string &target,
       idl::creden::CredentialData);
     
   idl::legacy::creden::SignedCallChain
     get_signed_chain(
-      Connection &,
+      const boost::shared_ptr<Connection> &,
       hash_value &, 
       const std::string &target,
       idl::legacy::creden::CredentialData);
 
   openbus::CallerChain get_joined_chain(
     PI::ClientRequestInfo_ptr,
-    Connection &);
+    const boost::shared_ptr<Connection> &);
   
-  openbus::CallerChain get_joined_legacy_chain(Connection &, PI::ClientRequestInfo &);
   boost::uuids::uuid get_request_id(PI::ClientRequestInfo_ptr);
   
   Connection::SecretSession * get_session(
     PI::ClientRequestInfo_ptr,
-    Connection &);
+    const boost::shared_ptr<Connection> &);
 
   template <typename C>
     void fill_credential(
       PI::ClientRequestInfo_ptr,
-      Connection &,
+      const boost::shared_ptr<Connection> &,
       typename boost::mpl::if_<
       typename boost::is_same<C, idl::creden::CredentialData>::type,
       idl::access::LoginInfo,
@@ -82,14 +81,15 @@ ClientInterceptor : public PI::ClientRequestInterceptor
 
   void attach_credential(
     PI::ClientRequestInfo_ptr,
-    Connection &,
+    const boost::shared_ptr<Connection> &,
     idl::access::LoginInfo &);
   
   ORBInitializer *_orb_init;
   LRUCache<hash_value, idl::creden::SignedData> _callChainLRUCache;
-  LRUCache<hash_value, idl::legacy::creden::SignedCallChain> _legacy_callChainLRUCache;
+  LRUCache<hash_value, idl::legacy::creden::SignedCallChain>
+    _legacy_callChainLRUCache;
   OpenBusContext *_bus_ctx;
-  std::map<boost::uuids::uuid, Connection *> _request_id2conn;
+  std::map<boost::uuids::uuid, boost::shared_ptr<Connection> > _request_id2conn;
   boost::mutex _mutex;
 };
 

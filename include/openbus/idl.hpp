@@ -3,6 +3,8 @@
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_IDL_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_IDL_HPP
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "openbus_core-2.1C.h"
 #include "openbus_access-2.1C.h"
 #include "openbus_creden-2.1C.h"
@@ -15,6 +17,7 @@
 #include "credentialC.h"
 #include "data_exportC.h"
 #include "offer_registryC.h"
+#pragma clang diagnostic pop
 
 namespace openbus {
   namespace idl {

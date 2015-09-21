@@ -1,6 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "helloC.h"
+#pragma clang diagnostic pop
 #include <util.hpp>
 #include <openbus.hpp>
 #include <log/output/file_output.h>
@@ -85,9 +88,9 @@ int main(int argc, char **argv)
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
     for (std::size_t busIdx = 0; busIdx != 2; ++busIdx)
     {
-      std::auto_ptr<openbus::Connection> 
+      boost::shared_ptr<openbus::Connection> 
         conn(bus_ctx->connectByAddress(buses[busIdx].host, buses[busIdx].port));
-      bus_ctx->setDefaultConnection(conn.get());
+      bus_ctx->setDefaultConnection(conn);
       conn->loginByPassword(entity, entity, domain);
 
       openbus::idl::offers::ServicePropertySeq props;
@@ -109,7 +112,7 @@ int main(int argc, char **argv)
         std::string msg("Hello " + entity + "@" + conn->busid() + "!");
         if (msg != std::string(ret.in()))
         {
-          std::cerr << "sayHello() não retornou a string '"
+          std::cerr << "sayHello() nao retornou a string '"
             + msg + "'." << std::endl;
           std::abort();
         }          

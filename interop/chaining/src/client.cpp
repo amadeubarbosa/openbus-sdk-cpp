@@ -1,7 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "proxyS.h"
 #include "helloC.h"
+#pragma clang diagnostic pop
 #include <openbus.hpp>
 #include <util.hpp>
 
@@ -78,9 +81,9 @@ int main(int argc, char **argv)
     openbus::OpenBusContext
       *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
-    std::auto_ptr<openbus::Connection> conn(bus_ctx->connectByAddress(bus_host, 
+    boost::shared_ptr<openbus::Connection> conn(bus_ctx->connectByAddress(bus_host, 
                                                                   bus_port));
-    bus_ctx->setDefaultConnection(conn.get());
+    bus_ctx->setDefaultConnection(conn);
     conn->loginByPassword(entity, entity, domain);
 
     openbus::idl::offers::ServicePropertySeq props;

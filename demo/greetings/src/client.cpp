@@ -1,6 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "greetingsC.h"
+#pragma clang diagnostic pop
 #include <openbus.hpp>
 
 #include <boost/program_options.hpp>
@@ -100,11 +103,11 @@ struct onReloginCallback
       catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
-          "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
+          "a entidade ja esta com o login realizado. Esta falha sera ignorada." << std::endl;
       }
       catch (services::ServiceFailure e)
       {
-        std::cout << "Falha no serviço remoto. Causa: " << std::endl;
+        std::cout << "Falha no servico remoto. Causa: " << std::endl;
       }
       catch (CORBA::TRANSIENT const&)
       {
@@ -181,11 +184,11 @@ int main(int argc, char** argv)
     catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: "
-        "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
+        "a entidade ja esta com o login realizado. Esta falha sera ignorada." << std::endl;
     }
     catch (services::ServiceFailure e)
     {
-      std::cout << "Falha no serviço remoto. Causa: " << std::endl;
+      std::cout << "Falha no servico remoto. Causa: " << std::endl;
     }
     catch (CORBA::TRANSIENT const&)
     {
@@ -237,7 +240,7 @@ int main(int argc, char** argv)
       }
       catch (services::ServiceFailure e)
       {
-        std::cout << "Falha no serviço remoto. Causa: " << std::endl;
+        std::cout << "Falha no servico remoto. Causa: " << std::endl;
       }
       catch (CORBA::TRANSIENT const&)
       {

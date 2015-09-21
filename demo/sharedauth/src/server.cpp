@@ -1,6 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "helloS.h"
+#pragma clang diagnostic pop
 #include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
@@ -63,11 +66,11 @@ struct onReloginCallback
       catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
-          "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
+          "a entidade ja esta com o login realizado. Esta falha sera ignorada." << std::endl;
       }
       catch (services::ServiceFailure e)
       {
-        std::cout << "Falha no serviço remoto. Causa: " << std::endl;
+        std::cout << "Falha no servico remoto. Causa: " << std::endl;
       }
       catch (CORBA::TRANSIENT const&)
       {
@@ -124,7 +127,7 @@ int main(int argc, char** argv)
     priv_key = openbus::demo::openssl::read_priv_key(priv_key_filename);
     if (!priv_key)
     {
-      std::cout << "Chave privada inválida." << std::endl;
+      std::cout << "Chave privada invalida." << std::endl;
       return 1;
     }
 
@@ -154,11 +157,11 @@ int main(int argc, char** argv)
     catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
     {
       std::cout << "Falha ao tentar realizar o login por senha no barramento: "
-        "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
+        "a entidade ja esta com o login realizado. Esta falha sera ignorada." << std::endl;
     }
     catch (services::ServiceFailure e)
     {
-      std::cout << "Falha no serviço remoto. Causa: " << std::endl;
+      std::cout << "Falha no servico remoto. Causa: " << std::endl;
     }
     catch (CORBA::TRANSIENT const&)
     {
@@ -207,7 +210,7 @@ int main(int argc, char** argv)
       catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
       {
         std::cout << "Falha ao tentar realizar o login por senha no barramento: "
-          "a entidade já está com o login realizado. Esta falha será ignorada." << std::endl;
+          "a entidade ja esta com o login realizado. Esta falha sera ignorada." << std::endl;
       }
       catch (services::ServiceFailure const&)
       {

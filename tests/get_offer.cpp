@@ -1,6 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "helloS.h"
+#pragma clang diagnostic pop
 
 #include <configuration.h>
 #include <scs/ComponentContext.h>
@@ -45,9 +48,9 @@ int main(int argc, char** argv)
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
-  std::auto_ptr <openbus::Connection> conn(
+  boost::shared_ptr<openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  bus_ctx->setDefaultConnection(conn.get());
+  bus_ctx->setDefaultConnection(conn);
   conn->loginByPassword(cfg.user().c_str(), cfg.password().c_str(), cfg.domain());
 
   scs::core::ComponentId componentId;

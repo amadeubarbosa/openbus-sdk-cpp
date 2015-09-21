@@ -6,12 +6,14 @@ path-constant here : . ;
 
 obj mock-stub
   : $(here)/idl/mock.idl
+  : <warnings>off
   ;
 explicit mock-stub ;
 
 obj mock-skeleton
   : $(here)/idl/mock.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit mock-skeleton ;
 

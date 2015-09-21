@@ -9,6 +9,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -37,12 +38,12 @@ ServerInterceptor::ServerInterceptor(ORBInitializer *orb_init)
 
 CORBA::Any ServerInterceptor::attach_legacy_credential_rst(
   boost::shared_ptr<Session> session,
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   idl::core::OctetSeq &secret)
 {
   idl::legacy::creden::CredentialReset rst;
   rst.session = session->id;
-  rst.target = conn._login()->id;
+  rst.target = conn->_login()->id;
   std::memcpy(rst.challenge, secret.get_buffer(), idl::core::EncryptedBlockSize);
   CORBA::Any any;
   any <<= rst;
@@ -51,13 +52,13 @@ CORBA::Any ServerInterceptor::attach_legacy_credential_rst(
 
 CORBA::Any ServerInterceptor::attach_credential_rst(
   boost::shared_ptr<Session> session,
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   idl::core::OctetSeq &secret)
 {
   idl::creden::CredentialReset rst;
   rst.session = session->id;
-  rst.target = conn._login()->id;
-  rst.entity = conn._login()->entity;
+  rst.target = conn->_login()->id;
+  rst.entity = conn->_login()->entity;
   std::memcpy(rst.challenge, secret.get_buffer(), idl::core::EncryptedBlockSize);
   CORBA::Any any;
   any <<= rst;
@@ -66,7 +67,7 @@ CORBA::Any ServerInterceptor::attach_credential_rst(
   
 template <typename C>
 void ServerInterceptor::send_credential_reset(
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   boost::shared_ptr<Login> caller,
   PI::ServerRequestInfo_ptr r) 
 {
@@ -123,28 +124,28 @@ C ServerInterceptor::get_credential(PI::ServerRequestInfo_ptr r) const
 }
 
 void ServerInterceptor::save_dispatcher_connection(
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   PI::ServerRequestInfo_ptr r,
   OpenBusContext *ctx)
 {
-  size_t const bufSize(sizeof(Connection *));
-  unsigned char buf[bufSize];
-  Connection *_c(&conn);
-  std::memcpy(buf, &_c, bufSize);
-  idl::core::OctetSeq connectionAddrOctetSeq(bufSize, bufSize, buf);
-  CORBA::Any connectionAddrAny;
-  connectionAddrAny <<= connectionAddrOctetSeq;
-  r->set_slot(_orb_init->current_connection, connectionAddrAny);
-  ctx->setCurrentConnection(&conn);
+  {
+  boost::lock_guard<boost::mutex> lg(_bus_ctx->_mutex);
+  boost::uuids::uuid uuid = boost::uuids::random_generator()();
+  ctx->id2conn[uuid] = conn;
+  CORBA::Any any;
+  any <<= boost::uuids::to_string(uuid);
+  r->set_slot(_orb_init->current_connection, any);
+  }
+  ctx->setCurrentConnection(conn);
 }
 
-Connection &ServerInterceptor::get_dispatcher_connection(
+boost::shared_ptr<Connection> ServerInterceptor::get_dispatcher_connection(
   OpenBusContext *ctx,
   const std::string &busid, 
   const std::string &login,
   PI::ServerRequestInfo_ptr r)
 {
-  Connection *conn(0);
+  boost::shared_ptr<Connection> conn;
   log_scope l(log().general_logger(), debug_level, 
               "ServerInterceptor::get_dispatcher");
   if (ctx->onCallDispatch())
@@ -180,18 +181,17 @@ Connection &ServerInterceptor::get_dispatcher_connection(
   {
     throw CORBA::NO_PERMISSION(idl::access::UnknownBusCode, CORBA::COMPLETED_NO);
   } 
-  assert(conn);
-  save_dispatcher_connection(*conn, r, ctx);
-  return *conn;
+  save_dispatcher_connection(conn, r, ctx);
+  return conn;
 }
 
 bool ServerInterceptor::check_legacy_chain(
   idl::legacy::access::CallChain chain,
   boost::shared_ptr<Login> caller,
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   PI::ServerRequestInfo_ptr r)
 {
-  if (std::strcmp(chain.target, conn._login()->entity)) 
+  if (std::strcmp(chain.target, conn->_login()->entity)) 
   { 
     send_credential_reset<idl::legacy::creden::CredentialData>(conn, caller, r);
   }
@@ -205,10 +205,10 @@ bool ServerInterceptor::check_legacy_chain(
 bool ServerInterceptor::check_chain(
   idl::access::CallChain chain,
   boost::shared_ptr<Login> caller,  
-  Connection &conn)
+  const boost::shared_ptr<Connection> &conn)
 {
   if (std::strcmp(chain.caller.id, caller->loginInfo->id)
-      || std::strcmp(chain.bus.in(), conn.busid().c_str()))
+      || std::strcmp(chain.bus.in(), conn->busid().c_str()))
   {
     return false;
   }
@@ -219,7 +219,7 @@ template <typename C>
 bool ServerInterceptor::validate_chain(
   C& cred,
   boost::shared_ptr<Login> caller,  
-  Connection &conn,
+  const boost::shared_ptr<Connection> &conn,
   PI::ServerRequestInfo_ptr r)
 {
   if (!cred.chain.encoded.length())
@@ -230,7 +230,7 @@ bool ServerInterceptor::validate_chain(
   SHA256(cred.chain.encoded.get_buffer(),
          cred.chain.encoded.length(), hashChain);
 
-  if (!conn._buskey->verify(cred.chain.signature, 
+  if (!conn->_buskey->verify(cred.chain.signature, 
                             idl::core::EncryptedBlockSize, hashChain, 
                             idl::core::HashValueSize))
   {
@@ -269,7 +269,7 @@ void ServerInterceptor::handle_credential(
   log_scope l(log().general_logger(), debug_level,
               "ServerInterceptor::handle_credential");
   
-  Connection &conn(
+  boost::shared_ptr<Connection> conn(
     get_dispatcher_connection(_bus_ctx, std::string(credential.bus),
                               std::string(credential.login), r));
 
@@ -277,7 +277,7 @@ void ServerInterceptor::handle_credential(
   try 
   {
     l.vlog("Validando login: %s", credential.login.in());
-    caller = conn._loginCache->validateLogin(credential.login.in());
+    caller = conn->_loginCache->validateLogin(credential.login.in());
   }
   catch (const CORBA::NO_PERMISSION &e) 
   {

@@ -4,12 +4,14 @@ path-constant here : . ;
 
 obj greetings-stub
   : $(here)/idl/greetings.idl
+  : <warnings>off
   ;
 explicit greetings-stub ;
 
 obj greetings-skeleton
   : $(here)/idl/greetings.idl
   : <generate>skeleton
+    <warnings>off
   ;
 explicit greetings-skeleton ;
 

@@ -15,15 +15,15 @@ int main(int argc, char **argv)
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   
-  std::auto_ptr<openbus::Connection> conn_A(
+  boost::shared_ptr<openbus::Connection> conn_A(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_A->loginByPassword("A", "A", cfg.domain());
   
-  std::auto_ptr<openbus::Connection> conn_B(
+  boost::shared_ptr<openbus::Connection> conn_B(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn_B->loginByPassword("B", "B", cfg.domain());
   
-  bus_ctx->setDefaultConnection(conn_A.get());
+  bus_ctx->setDefaultConnection(conn_A);
   
   openbus::CallerChain chain(
     bus_ctx->makeChainFor(conn_B->login()->entity.in()));
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
   }
   catch (const openbus::InvalidEncodedStream &e)
   {
-    if (std::string("Stream de bytes não corresponde ao tipo de dado esperado.")
+    if (std::string("Stream de bytes nao corresponde ao tipo de dado esperado.")
         != e.what()) std::abort();
     return 0;
   }

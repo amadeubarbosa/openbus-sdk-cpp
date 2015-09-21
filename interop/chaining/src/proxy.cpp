@@ -1,7 +1,10 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "proxyS.h"
 #include "helloC.h"
+#pragma clang diagnostic pop
 #include <demo/openssl.hpp>
 #include <util.hpp>
 #include <openbus.hpp>
@@ -107,7 +110,7 @@ void login_register(
   EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(priv_key_filename));
   if (!priv_key)
   {
-    std::cout << "Chave privada inválida." << std::endl;
+    std::cout << "Chave privada invalida." << std::endl;
     return;
   }
   conn.loginByCertificate(entity, priv_key);
@@ -161,9 +164,9 @@ int main(int argc, char **argv)
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
-    std::auto_ptr<openbus::Connection>
+    boost::shared_ptr<openbus::Connection>
       conn(bus_ctx->connectByAddress(bus_host, bus_port));
-    bus_ctx->setDefaultConnection(conn.get());
+    bus_ctx->setDefaultConnection(conn);
 
     boost::thread orb_run(boost::bind(ORBRun, bus_ctx->orb()));
 

@@ -23,12 +23,12 @@ int main(int argc, char** argv)
   CORBA::Object_var
     ref(orb_ctx->orb()->string_to_object(corbaloc.str().c_str()));
   
-  std::auto_ptr<openbus::Connection>
+  boost::shared_ptr<openbus::Connection>
     conn(bus_ctx->connectByReference(ref));
   EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(argv[argc-1]));
   if (!priv_key)
   {
-    std::cerr << "Chave privada inválida." << std::endl;
+    std::cerr << "Chave privada invalida." << std::endl;
     std::abort();
   }
   conn->loginByCertificate(cfg.certificate_user(), priv_key);

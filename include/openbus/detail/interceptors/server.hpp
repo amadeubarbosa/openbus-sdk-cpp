@@ -59,11 +59,11 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;
   OpenBusContext *_bus_ctx;
   void save_dispatcher_connection(
-    Connection &,
+    const boost::shared_ptr<Connection> &,
     PI::ServerRequestInfo_ptr,
     OpenBusContext *);
 
-  Connection &get_dispatcher_connection(
+  boost::shared_ptr<Connection> get_dispatcher_connection(
     OpenBusContext *, 
     const std::string &busid,
     const std::string &login,
@@ -76,34 +76,34 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   bool check_legacy_chain(
     idl::legacy::access::CallChain,
     boost::shared_ptr<Login> caller,
-    Connection &,
+    const boost::shared_ptr<Connection> &,
     PI::ServerRequestInfo_ptr);
 
   bool check_chain(
     idl::access::CallChain,
     boost::shared_ptr<Login> caller,  
-    Connection &);
+    const boost::shared_ptr<Connection> &);
 
   template <typename C>
     bool validate_chain(
       C &,
       boost::shared_ptr<Login> caller,  
-      Connection &,
+      const boost::shared_ptr<Connection> &,
       PI::ServerRequestInfo_ptr r);
   
   CORBA::Any attach_legacy_credential_rst(
     boost::shared_ptr<Session>,
-    Connection &,
+    const boost::shared_ptr<Connection> &,
     idl::core::OctetSeq &secret);
   
   CORBA::Any attach_credential_rst(
     boost::shared_ptr<Session>,
-    Connection &,
+    const boost::shared_ptr<Connection> &,
     idl::core::OctetSeq &secret);
     
   template <typename C>
     void send_credential_reset(
-      Connection &, 
+      const boost::shared_ptr<Connection> &,
       boost::shared_ptr<Login>, 
       PI::ServerRequestInfo_ptr);
 

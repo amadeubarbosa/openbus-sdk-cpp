@@ -25,7 +25,10 @@
 
 #include "openbus/detail/decl.hpp"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <tao/ORB.h>
+#pragma clang diagnostic pop
 #include <boost/shared_ptr.hpp>
 
 /**
@@ -97,21 +100,22 @@ private:
  *    "Requester" com login válido está associada ao contexto atual, ou
  *     seja, a conexão "Requester" corrente está desautenticada.  
  *  - CORBA::NO_PERMISSION{InvalidChain}: A cadeia de chamadas associada
- *     ao contexto atual não é compatível com o login da conexão
- *     "Requester" desse mesmo contexto. Isso ocorre pois não é possível
- *     fazer chamadas dentro de uma cadeia recebida por uma conexão com um
- *     login diferente.  - CORBA::NO_PERMISSION{UnknownBus}: O ORB remoto
- *     que recebeu a chamada indicou que não possui uma conexão com login
- *     válido no barramento através do qual a chamada foi realizada,
- *     portanto não é capaz de validar a chamada para que esta seja
- *     processada.  
+ *    ao contexto atual não é compatível com o login da conexão
+ *    "Requester" desse mesmo contexto. Isso ocorre pois não é possível
+ *    fazer chamadas dentro de uma cadeia recebida por uma conexão com um
+ *    login diferente.  
+ *  - CORBA::NO_PERMISSION{UnknownBus}: O ORB remoto
+ *    que recebeu a chamada indicou que não possui uma conexão com login
+ *    válido no barramento através do qual a chamada foi realizada,
+ *    portanto não é capaz de validar a chamada para que esta seja
+ *    processada.  
  *  - CORBA::NO_PERMISSION{UnverifiedLogin}: O ORB remoto
  *    que recebeu a chamada indicou que não é capaz de validar a chamada
  *    para que esta seja processada. Isso indica que o lado remoto tem
  *    problemas de acesso aos serviços núcleo do barramento.  
  *  - CORBA::NO_PERMISSION{InvalidRemote}: O ORB remoto que recebeu a
  *    chamada não está se comportando de acordo com o protocolo OpenBus
- *    2.0, o que indica que está mal implementado e tipicamente
+ *    2.1, o que indica que está mal implementado e tipicamente
  *    representa um bug no servidor sendo chamado ou um erro de
  *    implantação do barramento.
  * 

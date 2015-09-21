@@ -17,14 +17,14 @@ int main(int argc, char** argv)
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
-  std::auto_ptr <openbus::Connection> 
+  boost::shared_ptr<openbus::Connection> 
     conn(bus_ctx->connectByAddress("$invalid_host$", cfg.port()));
   try
   {
     EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(argv[argc-1]));
     if (!priv_key)
     {
-      std::cerr << "Chave privada inválida." << std::endl;
+      std::cerr << "Chave privada invalida." << std::endl;
       std::abort();
     }
     conn->loginByCertificate(cfg.certificate_user(), priv_key);

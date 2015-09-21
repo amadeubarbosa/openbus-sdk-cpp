@@ -15,11 +15,11 @@ int main(int argc, char** argv)
   openbus::OpenBusContext
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
-  std::auto_ptr<openbus::Connection> conn(
+  boost::shared_ptr<openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg.host(), cfg.port()));
   conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
 
-  bus_ctx->setDefaultConnection(conn.get());
+  bus_ctx->setDefaultConnection(conn);
 
   std::string token(
     std::string(conn->login()->entity.in()) + "@" +
