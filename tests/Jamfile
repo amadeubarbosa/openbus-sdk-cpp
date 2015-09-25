@@ -298,7 +298,9 @@ alias run-tests
     [ run connection/login/login_info_after_login.cpp : : : $(test-requirements) ]
     [ run connection/logout/logout_twice.cpp : : : $(test-requirements) ]
     [ run connection/lifecycle/create_conn.cpp : : : $(test-requirements) ]
+    [ run connection/lifecycle/set_curr_conn.cpp : : : $(test-requirements) ]
     [ run connection/lifecycle/set_def_conn.cpp : : : $(test-requirements) ]
+    [ run connection/lifecycle/bus_ctx.cpp : : : $(test-requirements) ]
     [ run fail_user_created_orb.cpp : : : $(test-requirements) ]
     [ run get_offer.cpp : :
       : $(test-requirements)

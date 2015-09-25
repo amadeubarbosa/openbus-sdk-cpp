@@ -5,6 +5,8 @@
 
 #include <openbus/openbus_context.hpp>
 
+#include <tao/PI/PI.h>
+
 IOP::Codec_var get_codec(openbus::OpenBusContext *bus_ctx)
 {
   CORBA::Object_var codec_factory_obj(

@@ -36,7 +36,7 @@ void call_orb(CORBA::ORB_var orb)
 int main(int argc, char** argv)
 {
   openbus::configuration cfg(argc, argv);
-  boost::shared_ptr<openbus::orb_ctx>
+  std::auto_ptr<openbus::orb_ctx>
     orb_ctx(openbus::ORBInitializer(argc, argv));
 
   boost::thread orb_thread(boost::bind(&call_orb, orb_ctx->orb()));

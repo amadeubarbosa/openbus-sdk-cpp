@@ -90,10 +90,9 @@ struct OPENBUS_SDK_DECL CallerChain
 	/**
    * \brief Entidade para a qual a chamada estava destinada. 
    *
-   * Só é possível fazer 
-   * chamadas dentro dessa cadeia através do método 
-   * \ref OpenBusContext::joinChain se a entidade da conexão 
-   * corrente for a mesmo do target.
+   * Só é possível fazer chamadas dentro dessa cadeia através do
+   * método \ref OpenBusContext::joinChain se a entidade da conexão
+   * corrente for a mesma do target.
    *
    */
   const std::string target() const
@@ -103,7 +102,7 @@ struct OPENBUS_SDK_DECL CallerChain
   
 	/**
 	 * \brief Lista de informações de login de todas as entidades que originaram as
-	 * chamadas nessa cadeia. 
+	 *        chamadas nessa cadeia. 
    *
    * Quando essa lista é vazia isso indica que a  chamada não está inclusa em 
    * outra cadeia de chamadas.
@@ -115,7 +114,7 @@ struct OPENBUS_SDK_DECL CallerChain
   
   /**
    * \brief Informação de login da entidade que realizou a última chamada da 
-   * cadeia.
+   *        cadeia.
    */
   const idl::access::LoginInfo &caller() const 
   {
@@ -123,7 +122,7 @@ struct OPENBUS_SDK_DECL CallerChain
   }
 
   /**
-   * \brief Construtor default que indica há ausência de uma cadeia.
+   * \brief Construtor default que indica ausência de uma cadeia.
    *
    * O valor de um CallerChain default-constructed pode ser usado para
    * verificar a ausência de uma cadeia da seguinte forma:

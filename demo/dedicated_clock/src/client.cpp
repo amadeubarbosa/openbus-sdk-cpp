@@ -6,7 +6,10 @@
 #pragma clang diagnostic pop
 #include <openbus.hpp>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -99,7 +102,7 @@ struct onReloginCallback
 
 int main(int argc, char** argv)
 {
-  boost::shared_ptr<openbus::orb_ctx> 
+  std::auto_ptr<openbus::orb_ctx> 
     orb_ctx(openbus::ORBInitializer(argc, argv));
 
   unsigned short bus_port = 2089;
@@ -134,7 +137,7 @@ int main(int argc, char** argv)
     dynamic_cast<openbus::OpenBusContext*>
     (orb_ctx->orb()->resolve_initial_references("OpenBusContext")));
   assert(bus_ctx != 0);
-  std::auto_ptr <openbus::Connection> conn;
+  boost::shared_ptr<openbus::Connection> conn;
 
   do
   {
@@ -143,7 +146,7 @@ int main(int argc, char** argv)
       conn = bus_ctx->connectByAddress(bus_host, bus_port);
       conn->onInvalidLogin( ::onReloginCallback());
       conn->loginByPassword("demo", "demo");
-      bus_ctx->setDefaultConnection(conn.get());
+      bus_ctx->setDefaultConnection(conn);
       break;
     }
     catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)

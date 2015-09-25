@@ -6,7 +6,12 @@
 #pragma clang diagnostic pop
 #include <openbus.hpp>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
+
+
 #include <fstream>
 #include <iterator>
 #include <iostream>
@@ -177,14 +182,14 @@ int main(int argc, char** argv)
   }
 
   // Inicializando CORBA e ativando o RootPOA
-  boost::shared_ptr<openbus::orb_ctx> 
+  std::auto_ptr<openbus::orb_ctx> 
     orb_ctx(openbus::ORBInitializer(argc, argv));
 
   // Construindo e logando conexao
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
     (orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
-  std::auto_ptr <openbus::Connection> conn;
+  boost::shared_ptr<openbus::Connection> conn;
 
   do
   {
@@ -195,7 +200,7 @@ int main(int argc, char** argv)
       conn->onInvalidLogin( ::onReloginCallback());
 
       conn->loginByPassword("demo", "demo");
-      openbusContext->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(conn);
       break;
     }
     catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const& e)

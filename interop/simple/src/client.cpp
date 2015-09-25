@@ -7,7 +7,10 @@
 #include <util.hpp>
 #include <openbus.hpp>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
 #include <iostream>
 #include <string>
 #include <algorithm>

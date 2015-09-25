@@ -1,7 +1,8 @@
 // -*- coding: iso-8859-1-unix -*-
+
 /**
 * API do OpenBus SDK C++
-* \file openbus/log.h
+* \file openbus/log.hpp
 */
 
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_LOG_HPP
@@ -13,7 +14,10 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <tao/ORB.h>
 #pragma clang diagnostic pop
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <log/output/streambuf_output.h>
+#pragma clang diagnostic pop
 #include <log/logger.h>
 #include <boost/thread.hpp>
 #include <cstring>

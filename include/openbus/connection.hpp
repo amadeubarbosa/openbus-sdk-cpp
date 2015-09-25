@@ -2,7 +2,7 @@
 
 /**
 * API do OpenBus SDK C++
-* \file openbus/bconnection.hpp
+* \file openbus/connection.hpp
 * 
 */
 
@@ -22,6 +22,7 @@
 #endif
 #include "openbus/orb_initializer.hpp"
 #include "openbus/detail/openssl/private_key.hpp"
+#include "openbus/shared_auth_secret.hpp"
 
 #include <boost/array.hpp>
 #include <boost/function.hpp>
@@ -115,56 +116,6 @@ struct OPENBUS_SDK_DECL InvalidBusAddress : public std::exception
   }
 };
 
-class Connection;
-  
-/**
- * \brief Segredo para compartilhamento de autenticação.
- *
- * Objeto que representa uma tentativa de compartilhamento de
- * autenticação através do compartilhamento de um segredo, que pode
- * ser utilizado para realizar uma autenticação junto ao barramento em
- * nome da mesma entidade que gerou e compartilhou o segredo.
- *
- * Cada segredo de autenticação compartilhada pertence a um único barramento e
- * só pode ser utilizado em uma única autenticação.
- *
- */
-class OPENBUS_SDK_DECL SharedAuthSecret
-{
-public:
-   /**
-    * \brief Cancela o segredo caso esse ainda esteja ativo, de forma
-    * que ele não poderá ser mais utilizado.  
-    *
-    */
-   void cancel();
-  
-  /**
-   * \brief Retorna o identificador do barramento em que o segredo
-   * pode ser utilizado.
-   */
-  std::string busid() const
-  {
-    return busid_;
-  }
-private:
-  SharedAuthSecret();
-  SharedAuthSecret(
-    const std::string &bus_id,
-    idl::access::LoginProcess_var,
-    idl::legacy::access::LoginProcess_var,
-    const idl::core::OctetSeq &secret,
-    interceptors::ORBInitializer *);  
-
-  std::string busid_;
-  idl::access::LoginProcess_var login_process_;
-  idl::legacy::access::LoginProcess_var legacy_login_process_;
-  idl::core::OctetSeq secret_;
-  interceptors::ORBInitializer *orb_initializer_;
-  friend class OpenBusContext;
-  friend class Connection;
-};
-
 /**
  * \brief Conexão para acesso identificado a um barramento.
  *
@@ -194,8 +145,6 @@ class OPENBUS_SDK_DECL Connection
   : public boost::enable_shared_from_this<Connection>
 {
 public:
-  typedef std::vector<std::pair<std::string, std::string> > 
-    ConnectionProperties;
   /**
    * \brief Callback de login inválido.
    * 
@@ -204,15 +153,16 @@ public:
    * ocorra durante a execução do método e não seja tratada, o erro será
    * capturado pelo interceptador e registrado no log.
    * 
-   * O tipo InvalidLoginCallback_t é um typedef de boost::function. Para
+   * O tipo InvalidLoginCallback é um typedef de boost::function. Para
    * documentação dessa biblioteca acesse
    * http://www.boost.org/doc/libs/1_47_0/doc/html/function.html
    *
    * \param conn Conexão que recebeu a notificação de login inválido.
    * \param login Informações do login que se tornou inválido.
    */
-  typedef boost::function<void (Connection & conn, idl::access::LoginInfo login)> 
-    InvalidLoginCallback_t;
+  typedef boost::function<void (Connection &conn,
+                                idl::access::LoginInfo login)> 
+    InvalidLoginCallback;
   
   /**
   * Efetua login no barramento como uma entidade usando autenticação por senha.
@@ -220,22 +170,21 @@ public:
   * A autenticação por senha é validada usando um dos validadores de senha
   * definidos pelo adminsitrador do barramento.
   *
-  * @param entity Identificador da entidade a ser autenticada.
-  * @param password Senha de autenticação no barramento da entidade.
+  * \param entity Identificador da entidade a ser autenticada.
+  * \param password Senha de autenticação no barramento da entidade.
+	* \param domain Identificador do domínio de autenticação.
   * 
-  * @throw AlreadyLoggedIn A conexão já está logada.
-  * @throw idl::access::AccessDenied
-  *        Senha fornecida para autenticação da entidade não foi validada pelo 
-  *        barramento.
-  * @throw TooManyAttempts A autenticação foi recusada por um número 
+  * \throw AlreadyLoggedIn A conexão já está logada.
+  * \throw idl::access::AccessDenied Senha fornecida para autenticação da 
+  *        entidade não foi validada pelo barramento.
+  * \throw TooManyAttempts A autenticação foi recusada por um número 
   *        excessivo de tentativas inválidas de login por senha.
-  * @throw idl::core::ServiceFailure 
-  *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
-  *        autenticação da conexão.
-	* @throw idl::access::UnknownDomain O domínio de autenticação não é conhecido.
-  * @throw idl::access::WrongEncoding A autenticação falhou, pois a senha não foi
-  *        codificada corretamente com a chave pública do barramento.
-  * @throw CORBA::Exception
+  * \throw idl::core::ServiceFailure Ocorreu uma falha interna nos serviços 
+  *        do barramento que impediu a autenticação da conexão.
+	* \throw idl::access::UnknownDomain O domínio de autenticação não é conhecido.
+  * \throw idl::access::WrongEncoding A autenticação falhou, pois a senha não 
+  *        foi codificada corretamente com a chave pública do barramento.
+  * \throw CORBA::Exception
   */
   void loginByPassword(
     const std::string &entity,
@@ -246,27 +195,26 @@ public:
   * \brief Efetua login de uma entidade usando autenticação por certificado.
   * 
   * A autenticação por certificado é validada usando um certificado de login
-  * registrado pelo adminsitrador do barramento.
+  * registrado pelo administrador do barramento.
   * 
-  * @param entity Identificador da entidade a ser conectada.
-  * @param key Chave privada da entidade utilizada na autenticação. 
+  * \param entity Identificador da entidade a ser conectada.
+  * \param key Chave privada da entidade utilizada na autenticação. 
   *            É uma precondição um EVP_PKEY válido e não nulo.
   * 
-  * @throw AlreadyLoggedIn A conexão já está autenticada.
-  * @throw idl::access::AccessDenied 
-  *        A chave privada fornecida não corresponde ao certificado da entidade 
-  *        registrado no barramento indicado.
-  * @throw idl::access::MissingCertificate 
-  *        Não há certificado para essa entidade registrado no barramento
-  *        indicado.
-  * @throw idl::access::WrongEncoding A autenticação falhou, pois a senha não foi
-  *        codificada corretamente com a chave pública do barramento.
-  * @throw idl::core::ServiceFailure 
-  *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
-  *        autenticação da conexão.
-  * @throw CORBA::Exception
+  * \throw AlreadyLoggedIn A conexão já está autenticada.
+  * \throw idl::access::AccessDenied A chave privada fornecida não corresponde 
+  &        ao certificado da entidade registrado no barramento indicado.
+  * \throw idl::access::MissingCertificate Não há certificado para essa 
+  *        entidade registrado no barramento indicado.
+  * \throw idl::access::WrongEncoding A autenticação falhou, pois a senha não 
+  *        foi codificada corretamente com a chave pública do barramento.
+  * \throw idl::core::ServiceFailure Ocorreu uma falha interna nos serviços 
+  *        do barramento que impediu a autenticação da conexão.
+  * \throw CORBA::Exception
   */
-  void loginByCertificate(const std::string &entity, EVP_PKEY *key);
+  void loginByCertificate(
+    const std::string &entity,
+    EVP_PKEY *key);
   
   /**
   * \brief Inicia o processo de login por autenticação compartilhada.
@@ -276,17 +224,17 @@ public:
   * ser chamada enquanto a conexão estiver autenticada, caso contrário a exceção
   * de sistema CORBA::NO_PERMISSION{NoLogin} é lançada. As informações
   * fornecidas por essa operação devem ser passadas para a operação
-  * 'loginBySharedAuth' para conclusão do processo de login por autenticação
+  * \ref loginBySharedAuth para conclusão do processo de login por autenticação
   * compartilhada. Isso deve ser feito dentro do tempo de lease definido pelo
   * administrador do barramento. Caso contrário essas informações se tornam
   * inválidas e não podem mais ser utilizadas para criar um login.
   * 
-  * @return Segredo a ser fornecido na conclusão do processo de login.
+  * \return Segredo a ser fornecido na conclusão do processo de login.
   *
-  * @throw idl::core::ServiceFailure 
+  * \throw idl::core::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu 
   *        o estabelecimento da conexão.
-  * @throw CORBA::Exception
+  * \throw CORBA::Exception
   */
   SharedAuthSecret startSharedAuth();
   
@@ -296,20 +244,20 @@ public:
   * A autenticação compartilhada é feita a partir de um segredo obtido
   * através da operação 'startSharedAuth' de uma conexão autenticada.
   * 
-  * @param secret Segredo a ser fornecido na conclusão do processo de login.
+  * \param secret Segredo a ser fornecido na conclusão do processo de login.
   * 
-  * @throw WrongBus O segredo não pertence ao barramento contactado.
-  * @throw InvalidLoginProcess A tentativa de login associada ao segredo
+  * \throw WrongBus O segredo não pertence ao barramento contactado.
+  * \throw InvalidLoginProcess A tentativa de login associada ao segredo
   *        informado é inválido, por exemplo depois do segredo ser
   *        cancelado, ter expirado, ou já ter sido utilizado.
-  * @throw AlreadyLoggedIn A conexão já está autenticada.
-  * @throw AccessDenied O segredo fornecido não corresponde ao esperado
+  * \throw AlreadyLoggedIn A conexão já está autenticada.
+  * \throw AccessDenied O segredo fornecido não corresponde ao esperado
   *        pelo barramento.
-  * @throw idl::access::WrongEncoding A autenticação falhou, pois a senha não foi
-  *        codificada corretamente com a chave pública do barramento.
-  * @throw ServiceFailure Ocorreu uma falha interna nos serviços do
+  * \throw idl::access::WrongEncoding A autenticação falhou, pois a senha 
+  *        não foi codificada corretamente com a chave pública do barramento.
+  * \throw ServiceFailure Ocorreu uma falha interna nos serviços do
   *        barramento que impediu a autenticação da conexão.
-  * @throw CORBA::Exception
+  * \throw CORBA::Exception
   */
   void loginBySharedAuth(const SharedAuthSecret &secret);
   
@@ -323,7 +271,7 @@ public:
 	 * 'CORBA::NO_PERMISSION{UnknownBus}' indicando que não foi possível
 	 * validar a chamada pois a conexão está temporariamente desautenticada.
 	 * 
-	 * @return Verdadeiro se o processo de logout for concluído com êxito e 
+	 * \return Verdadeiro se o processo de logout for concluído com êxito e 
 	 *         falso se não for possível invalidar o login atual.
 	 */
   bool logout();
@@ -338,7 +286,7 @@ public:
    * barramento usando essa conexão. Um login pode se tornar inválido caso o
    * administrador explicitamente o torne inválido ou caso a thread interna de
    * renovação de login não seja capaz de renovar o lease do login a tempo. Caso
-   * esse atributo seja um InvalidLoginCallback_t 'default-constructed', nenhum
+   * esse atributo seja um InvalidLoginCallback 'default-constructed', nenhum
    * objeto de callback é chamado na ocorrência desse evento.
    *
    * Durante a execução dessa callback um novo login pode ser restabelecido.
@@ -346,32 +294,34 @@ public:
    * inválido é refeita usando o novo login, caso contrário, a chamada original
    * lança a exceção de de sistema 'CORBA::NO_PERMISSION{NoLogin}'.
    * 
-   * O tipo InvalidLoginCallback_t é um typedef de boost::function. Para
+   * O tipo InvalidLoginCallback é um typedef de boost::function. Para
    * documentação dessa biblioteca acesse
    * http://www.boost.org/doc/libs/1_47_0/doc/html/function.html
    */
-  void onInvalidLogin(InvalidLoginCallback_t p);
+  void onInvalidLogin(InvalidLoginCallback p);
   
   /**
    * \brief Retorna a callback configurada para ser chamada quando o login atual
    * se torna inválido.
    */
-  InvalidLoginCallback_t onInvalidLogin() const;
+  InvalidLoginCallback onInvalidLogin() const;
   
   /**
-   * \brief Informações do login dessa conexão ou 'null' se a conexão não está
+   * \brief Informações do login dessa conexão ou nulo se a conexão não está
    * autenticada, ou seja, não tem um login válido no barramento.
    */
   const idl::access::LoginInfo *login() const;
   
   /**
-   * Identificador do barramento ao qual essa conexão se refere.
+   * \brief Identificador do barramento ao qual essa conexão se refere.
    */
   const std::string busid() const;
+  
   ~Connection();  
 private:
   /**
-  * Connection deve ser adquirido atraves de: OpenBusContext::connectByReference()
+  * Connection deve ser adquirido atraves de 
+  * OpenBusContext::connectByReference ou OpenBusContext::connectByReference.
   */
   Connection(CORBA::Object_var,
              CORBA::ORB_ptr, 
@@ -381,7 +331,8 @@ private:
              bool legacy_support);
 
   /**
-  * Connection deve ser adquirido atraves de: OpenBusContext::connectByAddress()
+  * Connection deve ser adquirido atraves de
+  * OpenBusContext::connectByAddress ou OpenBusContext::connectByReference.
   */
   Connection(const std::string host,
              const unsigned short port,
@@ -463,7 +414,7 @@ private:
   boost::thread _renewLogin;
   mutable boost::mutex _mutex;
   boost::scoped_ptr<idl::access::LoginInfo> _loginInfo, _invalid_login;
-  InvalidLoginCallback_t _onInvalidLogin;
+  InvalidLoginCallback _onInvalidLogin;
   
   enum State 
   {

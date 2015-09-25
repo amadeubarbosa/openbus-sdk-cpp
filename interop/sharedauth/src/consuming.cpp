@@ -4,7 +4,10 @@
 #include "encodingC.h"
 #include <openbus.hpp>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <iostream>
 #include <fstream>

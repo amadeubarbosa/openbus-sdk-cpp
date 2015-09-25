@@ -11,7 +11,12 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/optional.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
+
+
 #include <boost/bind.hpp>
 #include <fstream>
 #include <iostream>
@@ -151,7 +156,7 @@ bool registerService(scs::core::IComponent_var component, offer_registry::Servic
 int main(int argc, char** argv)
 {
   // Inicializando CORBA e ativando o RootPOA
-  boost::shared_ptr<openbus::orb_ctx> 
+  std::auto_ptr<openbus::orb_ctx> 
     orb_ctx(openbus::ORBInitializer(argc, argv));
   CORBA::Object_var o = orb_ctx->orb()->resolve_initial_references("RootPOA");
   PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
@@ -200,7 +205,7 @@ int main(int argc, char** argv)
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
     (orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
-  std::auto_ptr <openbus::Connection> conn;
+  boost::shared_ptr<openbus::Connection> conn;
   do
   {
     try
@@ -208,7 +213,7 @@ int main(int argc, char** argv)
       conn = openbusContext->connectByAddress(bus_host, bus_port);
       conn->onInvalidLogin( boost::bind(::onReloginCallback(), _1, _2, priv_key));
       conn->loginByCertificate("demo", priv_key);
-      openbusContext->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(conn);
       break;
     }
     catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)

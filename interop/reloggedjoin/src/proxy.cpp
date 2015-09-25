@@ -11,9 +11,12 @@
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
+#pragma clang diagnostic pop
 #include <iostream>
 #include <fstream>
 #include <typeinfo>

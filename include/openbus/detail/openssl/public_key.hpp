@@ -6,7 +6,10 @@
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/openssl/openssl.hpp"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/thread.hpp>
+#pragma clang diagnostic pop
 #include <cstddef>
 
 namespace openbus

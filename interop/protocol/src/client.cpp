@@ -6,8 +6,11 @@
 #pragma clang diagnostic pop
 #include <openbus.hpp>
 #include <util.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
 #include <boost/tuple/tuple.hpp>
+#pragma clang diagnostic pop
 
 const std::string entity("interop_protocol_cpp_client");
 std::string bus_host;

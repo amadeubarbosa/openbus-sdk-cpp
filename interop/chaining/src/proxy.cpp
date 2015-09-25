@@ -13,7 +13,10 @@
 #include <iostream>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
 
 const std::string entity("interop_chaining_cpp_proxy");
 std::string priv_key_filename;

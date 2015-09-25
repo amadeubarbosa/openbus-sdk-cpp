@@ -11,7 +11,10 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/optional.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
 #include <iostream>
 #include <fstream>
 
@@ -95,7 +98,7 @@ int main(int argc, char** argv)
 {
   try
   {
-    boost::shared_ptr<openbus::orb_ctx> 
+    std::auto_ptr<openbus::orb_ctx> 
       orb_ctx(openbus::ORBInitializer(argc, argv));
     CORBA::Object_var o(orb_ctx->orb()->resolve_initial_references("RootPOA"));
     PortableServer::POA_var poa(PortableServer::POA::_narrow(o));
@@ -145,7 +148,7 @@ int main(int argc, char** argv)
     dynamic_cast<openbus::OpenBusContext*>(
       orb_ctx->orb()->resolve_initial_references("OpenBusContext")));
     assert(bus_ctx != 0);
-    std::auto_ptr <openbus::Connection> conn(
+    boost::shared_ptr<openbus::Connection> conn(
       bus_ctx->connectByAddress(bus_host, bus_port));
     try
     {
@@ -157,7 +160,7 @@ int main(int argc, char** argv)
         "a entidade ja esta com o login realizado. Esta falha sera ignorada." << std::endl;
       return 1;
     }
-    bus_ctx->setDefaultConnection(conn.get());
+    bus_ctx->setDefaultConnection(conn);
 
     openbus::idl::offers::ServicePropertySeq props;
     props.length(2);

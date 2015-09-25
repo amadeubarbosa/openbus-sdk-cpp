@@ -1,7 +1,11 @@
 // -*- coding: iso-8859-1-unix -*-
-#include "openbus/Connection.hpp"
+
+#include "openbus/connection.hpp"
 #include "openbus/detail/interceptors/server.hpp"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include "openbus/log.hpp"
+#pragma clang diagnostic pop
 #include "openbus/openbus_context.hpp"
 #include "openbus/detail/login_cache.hpp"
 #include "openbus/detail/openssl/public_key.hpp"
@@ -53,32 +57,6 @@ void Connection::renewLogin(
       l.level_log(warning_level, "Falha na renovacao da credencial.");
     }
   }
-}
-
-SharedAuthSecret::SharedAuthSecret()
-  : login_process_(idl::access::LoginProcess::_nil())
-  , legacy_login_process_(idl::legacy::access::LoginProcess::_nil())
-{
-}
-
-SharedAuthSecret::SharedAuthSecret(
-  const std::string &busid,
-  idl::access::LoginProcess_var login_process,
-  idl::legacy::access::LoginProcess_var legacy_login_process,
-  const idl::core::OctetSeq &secret,
-  interceptors::ORBInitializer *init)
-  : busid_(busid)
-  , login_process_(login_process)
-  , legacy_login_process_(legacy_login_process)
-  , secret_(secret)
-  , orb_initializer_(init)
-{
-}
-
-void SharedAuthSecret::cancel()
-{
-  interceptors::ignore_interceptor i(orb_initializer_);
-  login_process_->cancel();
 }
 
 Connection::Connection(
@@ -287,19 +265,12 @@ void Connection::loginByPassword(const std::string &entity,
     
   idl::access::ValidityTime validityTime;
   idl::access::LoginInfo *loginInfo(0);
-  try 
-  {
-    loginInfo = _access_control->loginByPassword(
-      entity.c_str(),
-      domain.c_str(),
-      _key.pubKey(),
-      encryptedBlock,
-      validityTime);
-  } 
-  catch (const idl::access::WrongEncoding &) 
-  {
-    throw idl::services::ServiceFailure();
-  }
+  loginInfo = _access_control->loginByPassword(
+    entity.c_str(),
+    domain.c_str(),
+    _key.pubKey(),
+    encryptedBlock,
+    validityTime);
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -354,15 +325,8 @@ void Connection::loginByCertificate(const std::string &entity,
   interceptors::ignore_interceptor _i(_orb_init);
   idl::access::ValidityTime validityTime;
   idl::access::LoginInfo *loginInfo(0);
-  try 
-  {
-    loginInfo = loginProcess->login(_key.pubKey(), encryptedBlock, 
-                                    validityTime);
-  } 
-  catch (const idl::access::WrongEncoding &) 
-  {
-    throw idl::access::AccessDenied();
-  }
+  loginInfo = loginProcess->login(_key.pubKey(), encryptedBlock, 
+                                  validityTime);
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -558,13 +522,13 @@ bool Connection::logout()
   return _logout(false); 
 }
 
-void Connection::onInvalidLogin(Connection::InvalidLoginCallback_t p) 
+void Connection::onInvalidLogin(Connection::InvalidLoginCallback p) 
 { 
   boost::lock_guard<boost::mutex> lock(_mutex);;
   _onInvalidLogin = p; 
 }
 
-Connection::InvalidLoginCallback_t Connection::onInvalidLogin() const
+Connection::InvalidLoginCallback Connection::onInvalidLogin() const
 { 
   boost::lock_guard<boost::mutex> lock(_mutex);;
   return _onInvalidLogin; 

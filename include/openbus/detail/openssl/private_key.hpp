@@ -11,7 +11,10 @@
 #include <exception>
 #include <cstring>
 #include <cstddef>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/thread.hpp>
+#pragma clang diagnostic pop
 
 namespace openbus
 {

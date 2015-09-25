@@ -22,7 +22,7 @@ int main(int argc, char** argv)
       bus_ctx->connectByAddress(cfg.host(), cfg.port()));
     weak_conn = conn;
 
-    bus_ctx->setDefaultConnection(conn);
+    bus_ctx->setCurrentConnection(conn);
     
     if (weak_conn.use_count() != 1)
     {
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
       (bus_ctx->getLoginRegistry());
 
     boost::shared_ptr<openbus::Connection> previous_conn(
-      bus_ctx->setDefaultConnection(boost::shared_ptr<openbus::Connection>()));
+      bus_ctx->setCurrentConnection(boost::shared_ptr<openbus::Connection>()));
 
     if (previous_conn != conn)
     {
@@ -58,19 +58,19 @@ int main(int argc, char** argv)
       }
     }
 
-    bus_ctx->setDefaultConnection(conn);
+    bus_ctx->setCurrentConnection(conn);
         
     boost::shared_ptr<openbus::Connection> conn2(
       bus_ctx->connectByAddress(cfg.host(), cfg.port()));
     conn2->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
     weak_conn2 = conn2;
-    bus_ctx->setDefaultConnection(conn2);
+    bus_ctx->setCurrentConnection(conn2);
 
     login_registry->getLoginValidity(conn2->login()->id);
 
-    if (bus_ctx->getDefaultConnection() != conn2)
+    if (bus_ctx->getCurrentConnection() != conn2)
     {
-      std::cerr << "bus_ctx->getDefaultConnection() != conn2" << std::endl;
+      std::cerr << "bus_ctx->getCurrentConnection() != conn2" << std::endl;
       std::abort();
     }
 
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         bus_ctx->connectByAddress(cfg.host(), cfg.port()));
       conn3->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
       weak_conn3 = conn3;
-      bus_ctx->setDefaultConnection(conn3);
+      bus_ctx->setCurrentConnection(conn3);
     }
 
     try

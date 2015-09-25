@@ -11,7 +11,10 @@
 #endif
 
 #include <boost/shared_ptr.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/thread.hpp>
+#pragma clang diagnostic pop
 #include <string>
 
 namespace openbus 

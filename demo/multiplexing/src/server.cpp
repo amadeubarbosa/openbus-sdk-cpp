@@ -11,7 +11,12 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/optional.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
+
+
 #include <boost/bind.hpp>
 #include <fstream>
 #include <iostream>
@@ -38,12 +43,12 @@ void run_orb(CORBA::ORB_var orb)
 
 struct call_dispatcher
 {
-  openbus::Connection* c;
+  boost::shared_ptr<openbus::Connection> c;
 
-  call_dispatcher(openbus::Connection* c)
+  call_dispatcher(boost::shared_ptr<openbus::Connection> c)
     : c(c) {}
 
-  typedef openbus::Connection* result_type;
+  typedef boost::shared_ptr<openbus::Connection> result_type;
   result_type operator()(openbus::OpenBusContext& context, const std::string bus_id
                          , const std::string login_id, const std::string operation) const
   {
@@ -56,7 +61,7 @@ int main(int argc, char** argv)
   try
   {
     // Inicializando CORBA e ativando o RootPOA
-    boost::shared_ptr<openbus::orb_ctx> 
+    std::auto_ptr<openbus::orb_ctx> 
       orb_ctx(openbus::ORBInitializer(argc, argv));
     CORBA::Object_var o = orb_ctx->orb()->resolve_initial_references("RootPOA");
     PortableServer::POA_var poa = PortableServer::POA::_narrow(o);
@@ -105,9 +110,9 @@ int main(int argc, char** argv)
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
     assert(openbusContext != 0);
-    std::auto_ptr <openbus::Connection> conn1 (openbusContext->connectByAddress(bus_host, bus_port));
-    std::auto_ptr <openbus::Connection> conn2 (openbusContext->connectByAddress(bus_host, bus_port));
-    std::auto_ptr <openbus::Connection> conn3 (openbusContext->connectByAddress(bus_host, bus_port));
+    boost::shared_ptr<openbus::Connection> conn1 (openbusContext->connectByAddress(bus_host, bus_port));
+    boost::shared_ptr<openbus::Connection> conn2 (openbusContext->connectByAddress(bus_host, bus_port));
+    boost::shared_ptr<openbus::Connection> conn3 (openbusContext->connectByAddress(bus_host, bus_port));
     try
     {
       conn1->loginByCertificate("demo1", priv_key);
@@ -120,7 +125,7 @@ int main(int argc, char** argv)
         "a entidade ja esta com o login realizado. Esta falha sera ignorada." << std::endl;
       return 1;
     }
-    openbusContext->onCallDispatch(call_dispatcher(conn2.get()));
+    openbusContext->onCallDispatch(call_dispatcher(conn2));
 
     scs::core::ComponentId componentId = { "Greetings", '1', '0', '0', "" };
     scs::core::ComponentContext english_greetings_component(orb_ctx->orb(), componentId);
@@ -138,7 +143,7 @@ int main(int argc, char** argv)
     german_greetings_component.addFacet
       ("greetings", _tc_Greetings->id(), &german_greetings_servant);
     
-    openbusContext->setCurrentConnection(conn1.get());
+    openbusContext->setCurrentConnection(conn1);
     offer_registry::ServicePropertySeq properties;
     properties.length(2);
     properties[0].name = "offer.domain";
@@ -147,12 +152,12 @@ int main(int argc, char** argv)
     properties[1].value = "english";
     openbusContext->getOfferRegistry()->registerService(english_greetings_component.getIComponent(), properties);
 
-    openbusContext->setCurrentConnection(conn2.get());
+    openbusContext->setCurrentConnection(conn2);
     properties[1].name = "language";
     properties[1].value = "portuguese";
     openbusContext->getOfferRegistry()->registerService(portuguese_greetings_component.getIComponent(), properties);
 
-    openbusContext->setCurrentConnection(conn3.get());
+    openbusContext->setCurrentConnection(conn3);
     properties[1].name = "language";
     properties[1].value = "german";
     openbusContext->getOfferRegistry()->registerService(german_greetings_component.getIComponent(), properties);

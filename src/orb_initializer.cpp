@@ -1,6 +1,9 @@
 // -*- coding: iso-8859-1-unix -*-
 #include "openbus/orb_initializer.hpp"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include "openbus/log.hpp"
+#pragma clang diagnostic pop
 #include "openbus/openbus_context.hpp"
 #include "openbus/detail/interceptors/orb_initializer.hpp"
 
@@ -16,19 +19,19 @@ namespace openbus
 // Para GCC compilando com C++11, nós fazemos uso de magic statics (thread-safe local statics)
 // usando o mesmo código para singlethread. MSVC, mesmo na versão 11 ainda não suporta
 // magic statics, então usamos call_once para initialização segura.
-#if defined(OPENBUS_SDK_THREAD) && !(defined(__GNUC__) && __cplusplus == 201103L)
+#if !(defined(__GNUC__) && __cplusplus == 201103L)
 namespace {
 
 log_type& get_log()
 {
-  log_type l;
+  static log_type l;
   return l;
 }
 
 inline void init_log()
 {
-  static BOOST_ONCE_FLAG f;
-  boost::call_once(&get_log, f);
+  static boost::once_flag once = BOOST_ONCE_INIT;
+  boost::call_once<log_type &(*)()>(once, &get_log);
 }
 
 }
@@ -66,7 +69,8 @@ orb_ctx::~orb_ctx()
   }  
 }
 
-boost::shared_ptr<orb_ctx> ORBInitializer(int &argc, char **argv) 
+std::auto_ptr<orb_ctx>
+ORBInitializer(int &argc, char **argv) 
 {
   boost::lock_guard<boost::mutex> lock(_mutex);
   log_scope l(log().general_logger(), info_level, "ORBInitializer");
@@ -92,6 +96,6 @@ boost::shared_ptr<orb_ctx> ORBInitializer(int &argc, char **argv)
       new OpenBusContext(orb, _orb_initializer));
     orb->register_initial_reference("OpenBusContext", bus_ctx_obj);
   }
-  return boost::make_shared<orb_ctx>(orb);
+  return std::auto_ptr<orb_ctx>(new orb_ctx(orb));
 }
 }

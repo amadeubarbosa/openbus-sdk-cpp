@@ -13,8 +13,11 @@
 #include <iostream>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
+#pragma clang diagnostic pop
 
 namespace delegation = tecgraf::openbus::interop::delegation;
 

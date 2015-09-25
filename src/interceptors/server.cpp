@@ -5,7 +5,10 @@
 #include "openbus/detail/login_cache.hpp"
 #include "openbus/detail/openssl/public_key.hpp"
 #include "openbus/detail/any.hpp"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include "openbus/log.hpp"
+#pragma clang diagnostic pop
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>

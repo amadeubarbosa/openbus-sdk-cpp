@@ -9,7 +9,10 @@
 #include "openbus/detail/interceptors/server.hpp"
 #include "openbus/detail/interceptors/client.hpp"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/lexical_cast.hpp>
+#pragma clang diagnostic pop
 #include <boost/format.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -719,7 +722,8 @@ OpenBusContext::~OpenBusContext()
         conn->_logout();
       }
     }
-  } catch (...)
+  }
+  catch (...)
   {
   }
 }

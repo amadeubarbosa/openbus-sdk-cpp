@@ -11,7 +11,10 @@
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
 #include <iostream>
 
 const std::string entity("interop_simple_cpp_server");

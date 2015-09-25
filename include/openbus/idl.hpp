@@ -1,5 +1,11 @@
 // -*- coding: iso-8859-1-unix -*-
 
+/**
+* API do OpenBus SDK C++
+* \file idl.hpp
+* 
+*/
+
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_IDL_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_IDL_HPP
 
@@ -20,6 +26,13 @@
 #pragma clang diagnostic pop
 
 namespace openbus {
+  /**
+   * \brief Namespace que agrupa nomes curtos para os namespaces
+   * longos que são definidos pelas IDLs do OpenBus.
+   * Os nomes definidos neste namespace podem ser utilizados pelo
+   * usuário como uma conveniência quando é necessário manipular tipos
+   * definidos pelas IDLs.
+   */
   namespace idl {
     namespace core = tecgraf::openbus::core::v2_1;
     namespace services = core::services;

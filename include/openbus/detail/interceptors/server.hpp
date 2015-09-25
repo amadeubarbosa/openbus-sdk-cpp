@@ -17,7 +17,10 @@ extern "C"
 #endif
 
 #include <tao/PI_Server/PI_Server.h>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/thread.hpp>
+#pragma clang diagnostic pop
 #include <boost/shared_ptr.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <cstddef>

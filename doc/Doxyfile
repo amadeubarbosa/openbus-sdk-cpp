@@ -31,7 +31,7 @@ PROJECT_NAME           = "OpenBus SDK C++ TAO"
 # This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER         = 2.1.0.0 RC
+PROJECT_NUMBER         = 2.1.0.0
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
 # base path where the generated documentation will be put.
@@ -350,7 +350,7 @@ HIDE_UNDOC_CLASSES     = YES
 # If set to NO (the default) these declarations will be included in the
 # documentation.
 
-HIDE_FRIEND_COMPOUNDS  = NO
+HIDE_FRIEND_COMPOUNDS  = YES
 
 # If the HIDE_IN_BODY_DOCS tag is set to YES, Doxygen will hide any
 # documentation blocks found inside the body of a function.
@@ -574,7 +574,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = ../include/openbus/Connection.hpp ../include/openbus/ORBInitializer.hpp ../include/openbus/OpenBusContext.hpp ../include/openbus/log.hpp ../include/openbus/crypto/OpenSSl.hpp ../include/openbus/PrivateKey.hpp ../include/openbus/PublicKey.hpp
+INPUT                  = ../include/openbus.hpp ../include/openbus/caller_chain.hpp ../include/openbus/connection.hpp ../include/openbus/idl.hpp ../include/openbus/log.hpp ../include/openbus/openbus_context.hpp ../include/openbus/orb_initializer.hpp ../include/openbus/shared_auth_secret.hpp
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is

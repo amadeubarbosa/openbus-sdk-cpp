@@ -10,13 +10,16 @@
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/orb_initializer.hpp"
-#include "openbus/connection.hpp"
+#include "openbus/shared_auth_secret.hpp"
 #include "openbus/caller_chain.hpp"
 
 #include <tao/LocalObject.h>
 #include <openssl/evp.h>
 #include <boost/function.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/thread.hpp>
+#pragma clang diagnostic pop
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/parameter.hpp>
@@ -27,9 +30,10 @@
 
 namespace openbus 
 {
+  class Connection;
   namespace interceptors
   {
-    struct orb_info;
+    struct ServerInterceptor;
     struct ClientInterceptor;
   }
 }
@@ -67,7 +71,7 @@ BOOST_PARAMETER_NAME(reference)
  * O contexto de uma chamada pode ser definido pela linha de execução atual
  * do programa em que executa uma chamada, o que pode ser a thread em execução
  * ou mais comumente o 'CORBA::PICurrent' do padrão CORBA. As informações
- * acessíveis através do 'OpenBusContext' se referem basicamente à
+ * acessíveis através do OpenBusContext se referem basicamente à
  * identificação da origem das chamadas, ou seja, nome das entidades que
  * autenticaram os acessos ao barramento que originaram as chamadas.
  * 
@@ -82,9 +86,9 @@ BOOST_PARAMETER_NAME(reference)
  *   recebida também deve vir através de uma conexão logada, que deve ser o
  *   mesmo login com que chamadas aninhadas a essa chamada original devem ser
  *   feitas.
- * - CallChain: Representa a identicação de todos os acessos ao barramento que
+ * - CallerChain: Representa a identicação de todos os acessos ao barramento que
  *   originaram uma chamada recebida. Sempre que uma chamada é recebida e
- *   executada, é possível obter um CallChain através do qual é possível
+ *   executada, é possível obter um CallerChain através do qual é possível
  *   inspecionar as informações de acesso que originaram a chamada recebida.
  */
 class OPENBUS_SDK_DECL OpenBusContext : public CORBA::LocalObject 
@@ -105,25 +109,25 @@ public:
 	 * ocorra durante a execução do método e não seja tratada, o erro será
 	 * capturado pelo interceptador e registrado no log.
 	 * 
-	 * @param[in] context Gerenciador de contexto do ORB que recebeu a chamada.
-	 * @param[in] busid Identificação do barramento através do qual a chamada foi
+	 * \param bus_ctx Gerenciador de contexto do ORB que recebeu a chamada.
+	 * \param bus_id Identificação do barramento através do qual a chamada foi
 	 *                  feita.
-	 * @param[in] loginId Informações do login do cliente da chamada.
-	 * @param[in] operation Nome da operação sendo chamada.
+	 * \param login_id Informações do login do cliente da chamada.
+	 * \param operation Nome da operação sendo chamada.
 	 *
-	 * @return Conexão a ser utilizada para receber a chamada.
+	 * \return Conexão a ser utilizada para receber a chamada.
 	 */
   typedef boost::function<
     boost::shared_ptr<Connection> (
-      OpenBusContext &context,
-      const std::string busId, 
-      const std::string loginId,
+      OpenBusContext &bus_ctx,
+      const std::string bus_id, 
+      const std::string login_id,
       const std::string operation)>
     CallDispatchCallback;
 
   /**
-	 * \brief Define a callback a ser chamada para determinar a conexão
-	 *        a ser utilizada para receber cada chamada.
+	 * \brief Callback a ser chamada para determinar a conexão a ser utilizada
+	 *        para receber cada chamada.
 	 *
 	 * Definição de um objeto que implementa uma interface de callback a
 	 * ser chamada sempre que a conexão receber uma chamada do
@@ -131,19 +135,22 @@ public:
 	 * para receber a chamada. A conexão utilizada para receber a
 	 * chamada será a única conexão através da qual novas chamadas
 	 * aninhadas à chamada recebida poderão ser feitas (veja a operação
-	 * 'joinChain').
+	 * \ref joinChain).
 	 *
-	 * Se o objeto de callback for definido como 'null' ou devolver 'null', a
+	 * Se o objeto de callback for definido como nulo ou devolver nulo, a
 	 * conexão padrão é utilizada para receber a chamada, caso esta esteja
 	 * definida.
 	 *
-	 * Caso esse atributo seja 'null', nenhum objeto de callback é chamado.
+	 * Caso esse atributo seja nulo, nenhum objeto de callback é chamado.
 	 */
-  void onCallDispatch(CallDispatchCallback c);
+  void onCallDispatch(CallDispatchCallback);
 
   /**
    * \brief Retorna a callback a ser chamada para determinar a conexão
    *        a ser utilizada para receber cada chamada
+   *
+   * Veja a operação \ref onCallDispatch e o tipo \ref CallDispatchCallback 
+   * para maiores informações.  
    */
   CallDispatchCallback onCallDispatch() const;
 
@@ -153,29 +160,28 @@ public:
    * 
 	 * O barramento é indicado por uma referência CORBA a um componente
 	 * SCS que representa os serviços núcleo do barramento. Essa função
-	 * deve ser utilizada ao invés da 'connectByAddress' para permitir o
+	 * deve ser utilizada ao invés da connectByAddress para permitir o
 	 * uso de SSL nas comunicações com o núcleo do barramento.
-   * 
-	 * @param[in] _reference Referência CORBA a um componente SCS que representa os
-	 *        serviços núcleo do barramento.
-   * @param[in] _port Porta onde os serviços núcleo do barramento estão 
-   *            executando.
-   * @param[in] _access_key (opcional) chave de acesso a ser utilizada
+   * Este método aceita argumentos no formato Boost Parameter.
+   *
+	 * \param _reference Referência CORBA a um componente SCS que representa os
+	 *            serviços núcleo do barramento.
+   * \param _access_key (opcional) chave de acesso a ser utilizada
    *            internamente para a geração de credenciais que identificam 
    *            as chamadas através do barramento. A chave deve ser uma 
    *            chave privada RSA de 2048 bits (256 bytes). O parâmetro é
    *            do tipo EVP_PKEY* e na sua ausência uma chave de acesso é
    *            gerada automaticamente.
-   *            
-   * @param[in] _legacy_support (opcional) boleano que desabilita o suporte
+   * \param _legacy_support (opcional) boleano que desabilita o suporte
    *            a chamadas usando o protocolo OpenBus 2.0. Por padrão o suporte
    *            está habilitado
    *
    * Exemplo de chamadas sem os parâmetros opcionais:
    * \code
    * std::stringstream corbaloc;
-   * corbaloc << "corbaloc::" << "localhost" << ":" << 2089
-              << "/" << tecgraf::openbus::core::v2_1::BusObjectKey;
+   * corbaloc << "corbaloc::" 
+   *          << "localhost" << ":" << 2089
+   *          << "/" << tecgraf::openbus::core::v2_1::BusObjectKey;
    * CORBA::Object_var
    *   ref(orb_ctx->orb()->string_to_object(corbaloc.str().c_str()));
    * connectByReference(ref.in());
@@ -192,11 +198,15 @@ public:
    *                    _access_key=privake_key, 
    *                    _legacy_support=false);
    * \endcode
-   * @return Conexão criada.
+   * \return Conexão criada. A propriedade(ownership) da conexão é do usuário.
+   *         A biblioteca não armazena internamente e de forma 
+   *         permanente uma referência forte para a conexão.
    *
    */
   BOOST_PARAMETER_MEMBER_FUNCTION(
-    (boost::shared_ptr<Connection>), connectByReference, tag,
+    (boost::shared_ptr<Connection>),
+    connectByReference,
+    tag,
     (required
      (reference, (CORBA::Object_var)))
     (optional
@@ -216,40 +226,46 @@ public:
    * número de porta, onde os serviços núcleo daquele barramento estão
    * executando. Este método aceita argumentos no formato Boost Parameter.
    * 
-   * @param[in] _host Endereço ou nome de rede onde os serviços núcleo do 
+   * \param _host Endereço ou nome de rede onde os serviços núcleo do 
    *            barramento estão executando.
-   * @param[in] _port Porta onde os serviços núcleo do barramento estão 
+   * \param _port Porta onde os serviços núcleo do barramento estão 
    *            executando.
-   * @param[in] _access_key (opcional) chave de acesso a ser utilizada
+   * \param _access_key (opcional) chave de acesso a ser utilizada
    *            internamente para a geração de credenciais que identificam 
    *            as chamadas através do barramento. A chave deve ser uma 
    *            chave privada RSA de 2048 bits (256 bytes). O parâmetro é
    *            do tipo EVP_PKEY* e na sua ausência uma chave de acesso é
    *            gerada automaticamente.
-   *            
-   * @param[in] _legacy_support (opcional) boleano que desabilita o suporte
+   * \param _legacy_support (opcional) boleano que desabilita o suporte
    *            a chamadas usando o protocolo OpenBus 2.0. Por padrão o suporte
    *            está habilitado
    *
    * Exemplo de chamadas sem os parâmetros opcionais:
    * \code
    * connectByAddress("localhost", 2089);
-   * connectByAddress(openbus::_host="localhost", openbus::_port=2089);
+   * connectByAddress(_host="localhost", _port=2089);
    * \endcode
    *
    * Exemplo de chamadas com os parâmetros opcionais:
    * \code
    * connectByAddress("localhost", 2089, 
-   *                  _access_key=privake_key, _legacy_support=false);
+   *                  _access_key=privake_key, 
+   *                  _legacy_support=false);
+   *
    * connectByAddress("localhost", 2089, 
-   *                  _legacy_support=true, _access_key=privake_key);
+   *                  _legacy_support=true, 
+   *                  _access_key=privake_key);
    * \endcode
-	 * @throw InvalidBusAddress Os parâmetros '_host' e '_port' não são válidos.
-   * @return Conexão criada.
+	 * \throw InvalidBusAddress Os parâmetros '_host' e '_port' não são válidos.
+   * \return Conexão criada. A propriedade(ownership) da conexão é do usuário.
+   *         A biblioteca não armazena internamente e de forma 
+   *         permanente uma referência forte para a conexão.
    *
    */
   BOOST_PARAMETER_MEMBER_FUNCTION(
-    (boost::shared_ptr<Connection>), connectByAddress, tag,
+    (boost::shared_ptr<Connection>),
+    connectByAddress,
+    tag,
     (required
      (host, (const std::string&))
      (port, (unsigned short)))
@@ -266,40 +282,7 @@ public:
    * \brief Cria uma conexão para um barramento indicado por um nome 
    *        ou endereço de rede (deprecado).
    * 
-   * \deprecated O barramento é indicado por um nome ou endereço de rede e um
-   * número de porta, onde os serviços núcleo daquele barramento estão
-   * executando. Este método aceita argumentos no formato Boost Parameter.
-   * 
-   * @param[in] _host Endereço ou nome de rede onde os serviços núcleo do 
-   *            barramento estão executando.
-   * @param[in] _port Porta onde os serviços núcleo do barramento estão 
-   *            executando.
-   * @param[in] _access_key (opcional) chave de acesso a ser utilizada
-   *            internamente para a geração de credenciais que identificam 
-   *            as chamadas através do barramento. A chave deve ser uma 
-   *            chave privada RSA de 2048 bits (256 bytes). O parâmetro é
-   *            do tipo EVP_PKEY* e na sua ausência uma chave de acesso é
-   *            gerada automaticamente.
-   *            
-   * @param[in] _legacy_support (opcional) boleano que desabilita o suporte
-   *            a chamadas usando o protocolo OpenBus 2.0. Por padrão o suporte
-   *            está habilitado
-   *
-   * Exemplo de chamadas sem os parâmetros opcionais:
-   * \code
-   * createConnection("localhost", 2089);
-   * createConnection(openbus::_host="localhost", openbus::_port=2089);
-   * \endcode
-   *
-   * Exemplo de chamadas com os parâmetros opcionais:
-   * \code
-   * createConnection("localhost", 2089, 
-   *                  _access_key=privake_key, _legacy_support=false);
-   * createConnection("localhost", 2089, 
-   *                  _legacy_support=true, _access_key=privake_key);
-   * \endcode
-	 * @throw InvalidBusAddress Os parâmetros '_host' e '_port' não são válidos.
-   * @return Conexão criada.
+   * \deprecated Ver \ref o método \ref connectByAddress.
    *
    */
   BOOST_PARAMETER_MEMBER_FUNCTION(
@@ -323,10 +306,11 @@ public:
 	 * conexão específica definida no contexto atual, como é feito através da
 	 * operação \ref setCurrentConnection. 
    * 
-   * @param[in] conn Conexão a ser definida como conexão padrão. Um valor nulo 
-   * significa nenhuma conexão definida como padrão. A propriedade(ownership) 
-   * da conexão não é transferida para o \ref OpenBusContext, e a conexão 
-   * deve ser removida do \ref OpenBusContext antes de destruida
+   * \param conn Conexão a ser definida como conexão padrão. Um valor nulo 
+   * significa nenhuma conexão definida como padrão. OpenBusContext não
+   * compartilha a propriedade sobre a conexão. Internamente referências fortes
+   * podem ser obtidas para essa conexão temporariamente durante o envio ou 
+   * recebimento de chamadas remotas.
    */
   boost::shared_ptr<Connection>
     setDefaultConnection(const boost::shared_ptr<Connection> &);
@@ -337,8 +321,9 @@ public:
    * Veja operação \ref setDefaultConnection.
    * 
    * \return Conexão definida como conexão padrão. \ref OpenBusContext não
-   * possui propriedade(ownership) dessa conexão e a mesma não é transferida
-   * para o código do usuário na execução desta função.
+   * compartilha a propriedade sobre a conexão. Internamente referências fortes
+   * podem ser obtidas para essa conexão temporariamente durante o envio ou 
+   * recebimento de chamadas remotas.
    */
   boost::shared_ptr<Connection>
     getDefaultConnection() const;
@@ -347,13 +332,13 @@ public:
    * \brief Define a conexão associada ao contexto corrente.
    * 
    * Define a conexão a ser utilizada em todas as chamadas
-   * feitas no contexto atual. 
+   * feitas no contexto atual, i.e., por exemplo uma thread de execução.
    * 
-   * @param[in] conn Conexão a ser associada ao contexto corrente. 
-   * Um valor nulo significa nenhuma conexão definida. A propriedade(ownership) 
-   * da conexão não é transferida para o \ref OpenBusContext,
-   * e a conexão deve ser removida do \ref OpenBusContext antes de ser 
-   * destruída.
+   * \param conn Conexão a ser associada ao contexto corrente. 
+   * Um valor nulo significa nenhuma conexão definida. 
+   * Internamente referências fortes
+   * podem ser obtidas para essa conexão temporariamente durante o envio ou 
+   * recebimento de chamadas remotas.
    */
   boost::shared_ptr<Connection>
     setCurrentConnection(const boost::shared_ptr<Connection> &);
@@ -361,12 +346,12 @@ public:
   /**
    * \brief Devolve a conexão associada ao contexto corrente.
    * 
-   * @return Conexão ao barramento associada ao contexto
+   * \return Conexão ao barramento associada ao contexto
    * corrente, que pode ter sido definida usando a operação 
    * \ref setCurrentConnection ou \ref setDefaultConnection. 
-   * \ref OpenBusContext não possui propriedade(ownership) 
-   * dessa conexão e a mesma não é transferida para o código do usuário 
-   * na execução desta função.
+   * Internamente referências fortes
+   * podem ser obtidas para essa conexão temporariamente durante o envio ou 
+   * recebimento de chamadas remotas.
    */
   boost::shared_ptr<Connection>
     getCurrentConnection() const;
@@ -385,7 +370,7 @@ public:
    * é usado:
    *
    * \code
-   * CallerChain chain(connection.getCallerChain())
+   * CallerChain chain(context.getCallerChain())
    * if(chain != CallerChain())
    *   // chain é válido
    * else
@@ -431,7 +416,7 @@ public:
    * 
    * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
    * \code
-   * CallerChain chain(openbusContext.getCallerChain())
+   * CallerChain chain(context.getCallerChain())
    * if(chain != CallerChain())
    *   // chain é válido
    * else
@@ -456,7 +441,7 @@ public:
    *
    * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
    * \code
-   * CallerChain chain(openbusContext.makeChainFor(loginId));
+   * CallerChain chain(context.makeChainFor(loginId));
    * if(chain != CallerChain())
    *   // chain é válido
    * else
@@ -464,6 +449,7 @@ public:
    * \endcode
    * \param entity nome da entidade para a qual deseja-se enviar a
    *        cadeia.
+   * \throw CORBA::Exception
    * \return a cadeia gerada para ser utilizada pela entidade com o login
    *         especificado.
    */
@@ -499,10 +485,7 @@ public:
    * bytes.
    * 
    * Codifica uma cadeia de chamadas em um stream de bytes para permitir a
-   * persistência ou transferência da informação. A codificação é realizada em
-   * CDR e possui um identificador de versão concatenado com as informações da
-   * cadeia. Sendo assim, a stream só será decodificada com sucesso por alguém
-   * que entenda esta mesma codificação.
+   * persistência ou transferência da informação. 
    * 
    * \param chain A cadeia a ser codificada.
    * \return A cadeia codificada em um stream de bytes.
@@ -513,27 +496,10 @@ public:
    * \brief Decodifica um stream de bytes de uma cadeia para o formato
    * CallerChain.
    * 
-   * Espera-se que a stream de bytes esteja codificada em CDR e seja formada por
-   * um identificador de versão concatenado com as informações da cadeia. Caso
-   * não seja possível decodificar a sequência de octetos passada, essa operação
-   * devolve uma cadeia 'vazia' 'default-constructed'.
-   *
-   * Para verificar se a cadeia retornada é válida, o seguinte idioma é usado:
-   *
-   * \code
-   * CallerChain chain(openbusContext.decodeChain(encoded)); 
-   * if(chain != CallerChain())
-   *   // chain é válido
-   * else
-   *   // chain é inválido
-   *
-   * \endcode
-   * 
    * \param encoded O stream de bytes que representa a cadeia.
-   * \return A cadeia de chamadas no formato CallerChain.
-   * 
    * \throw InvalidEncodedStream Caso o stream de bytes não seja do
-   * formato esperado.
+   *        formato esperado.
+   * \return A cadeia de chamadas no formato CallerChain.
    */
   CallerChain decodeChain(const CORBA::OctetSeq &encoded) const;
   
@@ -541,8 +507,7 @@ public:
 	 * \brief Codifica um segredo de autenticação compartilhada
    *        SharedAuthSecret para um stream de bytes.
    * 
-   * Codifica um segredo de autenticação compartilhada em um stream de bytes
-   * para permitir a persistência ou transferência da informação.
+   * A codificação permite a persistência ou transferência da informação.
    * 
    * \param secret Segredo de autenticação compartilhada a ser codificado.
    * \return Cadeia codificada em um stream de bytes.
@@ -554,22 +519,32 @@ public:
    *				SharedAuthSecret a partir de um stream de bytes.
    * 
    * \param encoded Stream de bytes contendo a codificação do segredo.
-   * \return Segredo de autenticação compartilhada decodificado.
-   * \exception InvalidEncodedStream Caso a stream de bytes não seja do formato
+   * \throw InvalidEncodedStream Caso a stream de bytes não seja do formato
    *						 esperado.
+   * \return Segredo de autenticação compartilhada decodificado.
    */
   SharedAuthSecret decodeSharedAuthSecret(const CORBA::OctetSeq &encoded);
 
   /** 
-   * ORB utilizado pela conexão. 
+   * \brief Referência ao ORB controlado pelo contexto.
    */
   CORBA::ORB_ptr orb() const 
   {
     return _orb;
   }
   
+	/**
+	 * \brief Referência ao serviço núcleo de registro de ofertas do barramento
+	 *        referenciado no contexto atual.
+	 */
   idl::offers::OfferRegistry_ptr getOfferRegistry() const;
+  
+	/**
+	 * \brief Referência ao serviço núcleo de registro de logins do barramento
+	 *        referenciado no contexto atual.
+	 */
   idl::access::LoginRegistry_ptr getLoginRegistry() const;
+  
   ~OpenBusContext();
 private:
   /**
@@ -626,7 +601,7 @@ private:
   std::map<boost::uuids::uuid, boost::weak_ptr<Connection> > id2conn;
   std::set<boost::weak_ptr<Connection> > connections;
 
-  friend boost::shared_ptr<orb_ctx> openbus::ORBInitializer(
+  friend std::auto_ptr<orb_ctx> openbus::ORBInitializer(
     int &argc, char **argv);
   friend struct interceptors::ServerInterceptor;
   friend struct interceptors::ClientInterceptor;

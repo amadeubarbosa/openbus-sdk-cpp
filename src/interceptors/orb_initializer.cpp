@@ -3,7 +3,10 @@
 #include "openbus/detail/interceptors/orb_initializer.hpp"
 #include "openbus/detail/interceptors/client.hpp"
 #include "openbus/detail/interceptors/server.hpp"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include "openbus/log.hpp"
+#pragma clang diagnostic pop
 
 namespace openbus { namespace interceptors 
 {

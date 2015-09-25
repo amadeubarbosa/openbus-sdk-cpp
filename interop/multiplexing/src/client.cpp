@@ -9,7 +9,10 @@
 #include <log/output/file_output.h>
 
 #include <tao/PortableServer/PortableServer.h>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
 #include <iostream>
 #include <map>
 

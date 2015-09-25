@@ -5,8 +5,11 @@
 #include <openbus.hpp>
 
 #include <tao/PortableServer/PortableServer.h>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
+#pragma clang diagnostic pop
 #include <boost/filesystem.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <iostream>

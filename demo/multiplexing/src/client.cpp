@@ -6,7 +6,12 @@
 #pragma clang diagnostic pop
 #include <openbus.hpp>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
+
+
 #include <iostream>
 
 namespace offer_registry
@@ -50,7 +55,7 @@ int main(int argc, char** argv)
   try
   {
     // Inicializando CORBA e ativando o RootPOA
-    boost::shared_ptr<openbus::orb_ctx> 
+    std::auto_ptr<openbus::orb_ctx> 
       orb_ctx(openbus::ORBInitializer(argc, argv));
 
     unsigned short bus_port = 2089;
@@ -83,7 +88,7 @@ int main(int argc, char** argv)
     openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
       (orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
     assert(openbusContext != 0);
-    std::auto_ptr <openbus::Connection> conn (openbusContext->connectByAddress(bus_host, bus_port));
+    boost::shared_ptr<openbus::Connection> conn (openbusContext->connectByAddress(bus_host, bus_port));
     try
     {
       conn->loginByPassword("demo", "demo");
@@ -93,7 +98,7 @@ int main(int argc, char** argv)
       std::cout << "Falha ao tentar realizar o login por senha no barramento: a entidade ja esta com o login realizado. Esta falha sera ignorada." << std::endl;
       return 1;
     }
-    openbusContext->setDefaultConnection(conn.get());
+    openbusContext->setDefaultConnection(conn);
 
     // Recebendo ofertas
     openbus::idl::offers::ServicePropertySeq props;

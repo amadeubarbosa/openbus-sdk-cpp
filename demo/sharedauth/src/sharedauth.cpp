@@ -6,7 +6,12 @@
 #pragma clang diagnostic push
 #include <openbus.hpp>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
+#pragma clang diagnostic pop
+
+
 #include <iostream>
 #include <fstream>
 #include <iterator>
@@ -155,7 +160,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  boost::shared_ptr<openbus::orb_ctx> 
+  std::auto_ptr<openbus::orb_ctx> 
     orb_ctx(openbus::ORBInitializer(argc, argv));
 
   unsigned short bus_port = 2089;
@@ -188,7 +193,7 @@ int main(int argc, char** argv)
   openbus::OpenBusContext* openbusContext = dynamic_cast<openbus::OpenBusContext*>
     (orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
   assert(openbusContext != 0);
-  std::auto_ptr <openbus::Connection> conn;
+  boost::shared_ptr<openbus::Connection> conn;
 
   do
   {
@@ -207,7 +212,7 @@ int main(int argc, char** argv)
 
       openbus::SharedAuthSecret secret(openbusContext->decodeSharedAuthSecret(secret_seq));
       conn->loginBySharedAuth(secret);
-      openbusContext->setDefaultConnection(conn.get());
+      openbusContext->setDefaultConnection(conn);
       break;
     }
     catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)

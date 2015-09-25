@@ -11,7 +11,7 @@ int main(int argc, char** argv)
   boost::weak_ptr<openbus::Connection> weak_conn;
   
   {
-    boost::shared_ptr<openbus::orb_ctx>    
+    std::auto_ptr<openbus::orb_ctx>    
       orb_ctx(openbus::ORBInitializer(argc, argv));
     CORBA::Object_var
       obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));

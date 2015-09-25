@@ -3,7 +3,10 @@
 #ifndef TECGRAF_TESTS_CONFIGURATION_H_
 #define TECGRAF_TESTS_CONFIGURATION_H_
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/lexical_cast.hpp>
+#pragma clang diagnostic pop
 
 #include <openbus/log.hpp>
 

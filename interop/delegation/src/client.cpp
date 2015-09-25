@@ -14,8 +14,11 @@
 #include <windows.h>
 #endif
 #include <iostream>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
+#pragma clang diagnostic pop
 
 void mysleep()
 {
