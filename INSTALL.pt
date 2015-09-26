@@ -151,7 +151,11 @@
 
    4.2. ACE+TAO (Seguir para 4.3 se o ACE+TAO já estiver disponível)
      4.2.1. Extrair o pacote obtido através do link da seção 1.3.
-     4.2.2. Compilar seguindo as instruções abaixo conforme o sistema operacional:
+     4.2.2. Aplicar o patch disponível em: http://webserver2.tecgraf.puc-rio.br/ftp_pub/openbus/tao_tecgraf_v1.patch
+      Linux
+      1) Copiar o patch para o diretório do pacote e executar:
+      $> patch -p0 -i tao_tecgraf_v1.patch
+     4.2.3. Compilar seguindo as instruções abaixo conforme o sistema operacional:
 
        Linux
        1) Definir a variável de ambiente ACE_ROOT com o caminho que aponta
