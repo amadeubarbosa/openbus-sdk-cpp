@@ -78,8 +78,8 @@ int main(int argc, char** argv) {
     boost::shared_ptr<openbus::Connection> conn
       (bus_ctx->connectByAddress(bus_host, bus_port));
 
-    CORBA::OctetSeq secret_seq;
-    std::fstream file(tmp + "/.secret");
+    CORBA::OctetSeq secret_seq;  
+    std::fstream file(std::string(tmp + "/.secret").c_str());
     file.seekg(0, std::ios::end);
     secret_seq.length(static_cast<CORBA::ULong>(file.tellg()));
     file.seekg(0, std::ios::beg);

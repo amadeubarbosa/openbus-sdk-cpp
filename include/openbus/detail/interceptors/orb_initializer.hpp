@@ -13,8 +13,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/array.hpp>
 #include <boost/scoped_array.hpp>
-#include <memory>
 #include <boost/cstdint.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <memory>
 
 namespace openbus 
 {

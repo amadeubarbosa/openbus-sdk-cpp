@@ -1,5 +1,5 @@
 // -*- coding: iso-8859-1 -*-
-#include "openbus/detail/Ticket.h"
+#include "openbus/detail/ticket.h"
 
 #define FLAG(B, I) (B & (1UL << I))
 #define SET(B, I) (B |= (1UL << I))
