@@ -11,6 +11,7 @@
 #include <boost/program_options.hpp>
 #include <boost/tuple/tuple.hpp>
 #pragma clang diagnostic pop
+#include <boost/array.hpp>
 
 const std::string entity("interop_protocol_cpp_client");
 std::string bus_host;
@@ -53,9 +54,10 @@ void load_options(int argc, char **argv)
 }
 
 typedef CORBA::ULong session;
-typedef protocol::Server::EncryptedData &challenge;
+typedef boost::array<CORBA::Octet, 256> challenge;
 typedef CORBA::ULong expected;
-typedef boost::tuple<session, challenge, expected> credential_reset_case;
+typedef boost::tuple<session, challenge, expected>
+credential_reset_case;
 std::vector<credential_reset_case> credential_reset_cases;
 
 typedef CORBA::ULong raised;
@@ -85,8 +87,8 @@ int main(int argc, char **argv)
   props[1u].name = "openbus.component.interface";
   props[1u].value = "IDL:tecgraf/openbus/interop/protocol/Server:1.0";
 
-  protocol::Server::EncryptedData encrypted_data;
-  std::memset(encrypted_data, '\171', 256);
+  challenge encrypted_data;
+  encrypted_data.assign('\171');
   credential_reset_cases.push_back(
     credential_reset_case(
       4294967295, encrypted_data, openbus::idl::access::InvalidRemoteCode));
@@ -150,7 +152,8 @@ int main(int argc, char **argv)
     {
       try
       {
-        server->ResetCredentialWithChallenge((*it).get<0>(), (*it).get<1>());
+        server->ResetCredentialWithChallenge((*it).get<0>(),
+                                             (*it).get<1>().data());
         std::abort();
       }
       catch (const CORBA::NO_PERMISSION &e)
