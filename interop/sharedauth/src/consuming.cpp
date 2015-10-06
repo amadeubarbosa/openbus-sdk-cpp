@@ -10,6 +10,7 @@
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <iostream>
 #include <fstream>
+#include <string>
 
 const std::string client_entity("interop_sharedauth_cpp_client");
 std::string bus_host, tmp;
@@ -63,7 +64,7 @@ int main(int argc, char** argv) {
       (bus_ctx->createConnection(bus_host, bus_port));
 
     CORBA::OctetSeq secret_seq;
-    std::fstream file(tmp + "/.secret");
+    std::fstream file(std::string(tmp + "/.secret").c_str());
     file.seekg(0, std::ios::end);
     secret_seq.length(static_cast<CORBA::ULong>(file.tellg()));
     file.seekg(0, std::ios::beg);
