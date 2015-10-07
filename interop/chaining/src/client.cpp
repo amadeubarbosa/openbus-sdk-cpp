@@ -2,8 +2,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#include "proxyS.h"
-#include "helloC.h"
+#include "proxyC.h"
 #pragma clang diagnostic pop
 #include <openbus.hpp>
 #include <util.hpp>
