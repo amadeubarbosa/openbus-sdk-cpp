@@ -4,6 +4,8 @@
 #ifndef __TECGRAF_OPENBUS_CORE_V21_IDL__
 #define __TECGRAF_OPENBUS_CORE_V21_IDL__
 
+#include <tao/orb.idl>
+
 /** \brief Módulo dos sistemas e aplicações do Tecgraf. */
 module tecgraf {
 
