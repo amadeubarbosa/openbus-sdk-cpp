@@ -24,8 +24,8 @@ typedef std::string flavor_tag;
 
 const std::map<flavor, flavor_tag> flavors = 
 {
-  {"multithread, debug and shared", "mt-d"},
-  {"multithread, release and shared", "mt"},
+  // {"multithread, debug and shared", "mt-d"},
+  // {"multithread, release and shared", "mt"},
   {"multithread, debug and static", "mt-s-d"},
   {"multithread, release and static", "mt-s"},
 };
@@ -104,8 +104,8 @@ void run_interop(
   const std::string &interop,
   std::vector<std::string> services,
   const std::vector<path> &tmp_files,
-  std::vector<service_exec> execs = {},
-  std::vector<child> service_childs = {})
+  std::vector<service_exec> execs,
+  std::vector<child> &service_childs)
 {
   if (!services.empty())
   {
@@ -165,8 +165,10 @@ void run_interop(
               << interop << "' "
               << "with flavor "
               << flavor.first << "." << std::endl;
+    std::vector<service_exec> execs = {};
+    std::vector<child> childs = {};
     remove_tmp_files(tmp_files);
-    run_interop(flavor.second, interop, services, tmp_files);
+    run_interop(flavor.second, interop, services, tmp_files, execs, childs);
   }
 }
 
