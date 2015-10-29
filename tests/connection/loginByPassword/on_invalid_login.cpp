@@ -1,24 +1,21 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <configuration.h>
+#include <config.hpp>
 #include <openbus.hpp>
+
+namespace cfg = openbus::tests::config;
 
 bool on_invalid_login_called(false);
 
 struct relogin_callback
 {
-  relogin_callback(const openbus::configuration &cfg)
-    : cfg(cfg)
-  {
-  }
-  
   void operator()(openbus::Connection &conn, openbus::idl::access::LoginInfo info)
   {
     do
     {
       try
       {
-        conn.loginByPassword(cfg.user(), cfg.password(), cfg.domain());
+        conn.loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
         on_invalid_login_called = true;
         break;
       }
@@ -34,12 +31,11 @@ struct relogin_callback
     }
     while(true);
   }
-  openbus::configuration cfg;
 };
 
 int main(int argc, char** argv)
 {
-  openbus::configuration cfg(argc, argv);
+  cfg::load_options(argc, argv);
   openbus::log().set_level(openbus::debug_level);
   std::auto_ptr<openbus::orb_ctx>
     orb_ctx(openbus::ORBInitializer(argc, argv));
@@ -49,10 +45,10 @@ int main(int argc, char** argv)
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   
   boost::shared_ptr<openbus::Connection> conn(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
+    bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
   bus_ctx->setDefaultConnection(conn);
-  conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
-  relogin_callback callback(cfg);
+  conn->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
+  relogin_callback callback;
   conn->onInvalidLogin(callback);
 
   std::size_t validity(

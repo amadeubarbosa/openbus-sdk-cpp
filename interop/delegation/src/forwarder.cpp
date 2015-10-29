@@ -5,7 +5,7 @@
 #include "messagesS.h"
 #pragma clang diagnostic pop
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
@@ -20,7 +20,7 @@
 #pragma clang diagnostic pop
 
 namespace delegation = tecgraf::openbus::interop::delegation;
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 void ORBRun(CORBA::ORB_ptr orb)
 {

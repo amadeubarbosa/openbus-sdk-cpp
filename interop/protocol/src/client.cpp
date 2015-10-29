@@ -6,7 +6,7 @@
 #pragma clang diagnostic pop
 #include <openbus.hpp>
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/tuple/tuple.hpp>
@@ -16,7 +16,7 @@
 const std::string entity("interop_protocol_cpp_client");
 
 using namespace tecgraf::openbus::interop;
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 typedef CORBA::ULong session;
 typedef boost::array<CORBA::Octet, 256> challenge;

@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #include "encodingC.h"
 #include <openbus.hpp>
 
@@ -12,7 +12,7 @@
 const std::string client_entity("interop_sharedauth_cpp_client");
 
 using namespace boost::interprocess;
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 int main(int argc, char** argv) {
   try 

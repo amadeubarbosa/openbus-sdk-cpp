@@ -1,0 +1,29 @@
+local category = "testents"
+local syscrt = "testsyst.crt"
+local system = "testsyst"
+local hello_repid = "IDL:Hello:1.0"
+
+Category {
+  id = category,
+  name = "OpenBus 2.0 Test Entities",
+}
+
+Entity {
+  id = system,
+  category = category,
+  name = "C++ unit tests",
+}
+
+Certificate {
+  id = system,
+  certificate = syscrt,
+}
+
+Interface {
+  id = hello_repid,
+}
+
+Grant {
+  id = system,
+  interfaces = { hello_repid },
+}

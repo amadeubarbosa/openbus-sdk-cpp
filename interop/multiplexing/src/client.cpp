@@ -5,7 +5,7 @@
 #include "helloC.h"
 #pragma clang diagnostic pop
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #include <openbus.hpp>
 #include <log/output/file_output.h>
 
@@ -14,7 +14,7 @@
 #include <map>
 
 const std::string entity("interop_multiplexing_cpp_client");
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 struct bus
 {
   std::string host;

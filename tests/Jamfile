@@ -10,7 +10,7 @@ project openbus/tests ;
 local test-deps =
   /openbus//openbus
   /scs//scs
-  /boost//headers
+  /boost//headers  
   /logger//logger
   /openssl//openssl
   /TAO//TAO
@@ -26,6 +26,7 @@ local test-requirements =
   <library>/openbus//openbus
   <library>/scs//scs
   <library>/boost//headers
+  <library>/boost/program_options
   <library>/logger//logger
   <library>/openssl//openssl
   <library>/TAO//TAO

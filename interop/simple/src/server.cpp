@@ -5,7 +5,7 @@
 #include "helloS.h"
 #pragma clang diagnostic pop
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
@@ -16,7 +16,7 @@
 
 const std::string entity("interop_simple_cpp_server");
 
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello 
 {

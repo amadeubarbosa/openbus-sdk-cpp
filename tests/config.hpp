@@ -1,7 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#ifndef TECGRAF_SDK_OPENBUS_INTEROP_CONFIG_HPP
-#define TECGRAF_SDK_OPENBUS_INTEROP_CONFIG_HPP
+#ifndef TECGRAF_SDK_OPENBUS_TESTS_CONFIG_HPP
+#define TECGRAF_SDK_OPENBUS_TESTS_CONFIG_HPP
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
@@ -11,7 +11,7 @@
 #include <iostream>
 #include <cstdlib>
 
-namespace openbus { namespace test { namespace config
+namespace openbus { namespace tests { namespace config
 {
   
 std::string bus_host_name,
@@ -20,10 +20,15 @@ std::string bus_host_name,
   bus2_reference_path,
   system_private_key,
   user_password_domain,
+  user_entity_name,
+  user_password,
+  system_entity_name,
   system_sharedauth;
+  
 unsigned short bus_host_port,
   bus2_host_port,
   login_lease_time;
+  
 bool openbus_test_verbose;
 
 void load_options(int argc, char **argv)
@@ -61,6 +66,15 @@ void load_options(int argc, char **argv)
     ("user.password.domain"
      ,po::value<std::string>()->default_value("testing")
      ,"Domain")
+    ("user.entity.name"
+     ,po::value<std::string>()->default_value("testuser")
+     ,"")
+    ("user.password"
+     ,po::value<std::string>()->default_value("testuser")
+     ,"")
+    ("system.entity.name"
+     ,po::value<std::string>()->default_value("testsyst")
+     ,"")
     ("system.private.key"
      ,po::value<std::string>()->default_value("testsyst.key")
      ,"Path to system private key")
@@ -112,6 +126,12 @@ void load_options(int argc, char **argv)
     bus2_reference_path = vm["bus2.reference.path"].as<std::string>();
   if (vm.count("user.password.domain"))
     user_password_domain = vm["user.password.domain"].as<std::string>();
+  if (vm.count("user.entity.name"))
+    user_entity_name = vm["user.entity.name"].as<std::string>();
+  if (vm.count("user.password"))
+    user_password = vm["user.password"].as<std::string>();
+  if (vm.count("system.entity.name"))
+    system_entity_name = vm["system.entity.name"].as<std::string>();
   if (vm.count("system.private.key"))
     system_private_key = vm["system.private.key"].as<std::string>();
   if (vm.count("system.sharedauth"))

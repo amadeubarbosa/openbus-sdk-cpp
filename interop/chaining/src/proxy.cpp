@@ -7,7 +7,7 @@
 #pragma clang diagnostic pop
 #include <demo/openssl.hpp>
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 
@@ -15,7 +15,7 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 const std::string entity("interop_chaining_cpp_proxy");
 

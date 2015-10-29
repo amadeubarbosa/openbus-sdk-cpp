@@ -4,30 +4,31 @@
 
 #include <openbus/OpenBusContext.hpp>
 #include <openbus/ORBInitializer.hpp>
-#include <configuration.h>
+#include <config.hpp>
 #include <cstdlib>
 #include <iostream>
 
 int main(int argc, char** argv)
 {
-  openbus::configuration cfg(argc, argv);
+  namespace cfg = openbus::tests::config;
+  cfg::load_options(argc, argv);
   CORBA::ORB_var orb(openbus::ORBInitializer(argc, argv));
   CORBA::Object_ptr obj(orb->resolve_initial_references("OpenBusContext"));
   openbus::OpenBusContext* bus_ctx(
     dynamic_cast<openbus::OpenBusContext *>(obj));
 
   boost::shared_ptr<openbus::Connection> conn_A(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_A->loginByPassword("A", "A", cfg.domain());
+    bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+  conn_A->loginByPassword("A", "A", cfg::user_password_domain);
 
   boost::shared_ptr<openbus::Connection> conn_B(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_B->loginByCertificate(cfg.certificate_user(),
-                             openbus::PrivateKey(argv[argc-1]));
+    bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+  conn_B->loginByCertificate(cfg::system_entity_name,
+                             openbus::PrivateKey(cfg::system_private_key));
 
   boost::shared_ptr<openbus::Connection> conn_C(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_C->loginByPassword("C", "C", cfg.domain());
+    bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+  conn_C->loginByPassword("C", "C", cfg::user_password_domain);
 
   openbus::idl::access::LoginInfoSeq originators;
   originators.length(1);

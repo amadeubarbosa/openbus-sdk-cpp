@@ -6,7 +6,7 @@
 #pragma clang diagnostic pop
 #include <openbus.hpp>
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
@@ -17,7 +17,7 @@
 #include <iterator>
 #include <cstdlib>
 
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 const std::string entity("interop_chaining_cpp_client");
 

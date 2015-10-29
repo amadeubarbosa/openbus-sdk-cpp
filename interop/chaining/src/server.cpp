@@ -1,6 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <config.hpp>
+#include <tests/config.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "helloS.h"
@@ -17,7 +17,7 @@
 #include <boost/regex.hpp>
 #pragma clang diagnostic pop
 
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 const std::string entity("interop_chaining_cpp_server");
 

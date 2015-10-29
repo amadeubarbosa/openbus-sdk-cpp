@@ -1,12 +1,13 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <configuration.h>
+#include <config.hpp>
 #include <openbus.hpp>
 
 int main(int argc, char** argv)
 {
   openbus::log().set_level(openbus::debug_level);
-  openbus::configuration cfg(argc, argv);
+  namespace cfg = openbus::tests::config;
+  cfg::load_options(argc, argv);
 
   boost::weak_ptr<openbus::Connection> weak_conn;
   
@@ -18,7 +19,7 @@ int main(int argc, char** argv)
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   {
     boost::shared_ptr<openbus::Connection> conn(
-      bus_ctx->connectByAddress(cfg.host(), cfg.port()));
+      bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
     weak_conn = conn;
     bus_ctx->setDefaultConnection(conn);
   }

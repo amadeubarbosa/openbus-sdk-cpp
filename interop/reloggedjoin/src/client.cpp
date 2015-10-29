@@ -5,7 +5,7 @@
 #include "helloC.h"
 #pragma clang diagnostic pop
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #include <openbus.hpp>
 
 #include <iostream>
@@ -16,7 +16,7 @@
 
 const std::string entity("interop_rellogedjoin_cpp_client");
 
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 int main(int argc, char **argv) 
 {

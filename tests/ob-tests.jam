@@ -35,14 +35,13 @@ rule openbus-wrong-port ( )
 
 rule run ( name : args * : input-files * : requirements * )
 {
-  return [ testing.run $(name) : -host $(.openbus-host) -port $(.openbus-port)
-          -key $(name) $(args)
+  return [ testing.run $(name) : 
           : $(input-files) : $(requirements) : run-$(name) ] ;
 }
 
 rule run-fail ( name : args * : input-files * : requirements * )
 {
-  return [ testing.run-fail $(name) : -host $(.openbus-host) -port $(.openbus-port) $(args)
+  return [ testing.run-fail $(name) : $(args)
           : $(input-files) : $(requirements) : run-$(name) ] ;
 }
 

@@ -5,7 +5,7 @@
 #include "helloS.h"
 #pragma clang diagnostic pop
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
@@ -17,7 +17,7 @@
 #include <map>
 #include <vector>
 
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 const std::string entity("interop_multiplexing_cpp_server");
 

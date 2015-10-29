@@ -1,12 +1,13 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include <check.hpp>
-#include <configuration.h>
+#include <config.hpp>
 #include <openbus.hpp>
 
 int main(int argc, char **argv)
 {
-  openbus::configuration cfg(argc, argv);
+  namespace cfg = openbus::tests::config;
+  cfg::load_options(argc, argv);
   std::auto_ptr<openbus::orb_ctx>
     orb_ctx(openbus::ORBInitializer(argc, argv));
   CORBA::Object_var
@@ -15,16 +16,16 @@ int main(int argc, char **argv)
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   
   boost::shared_ptr<openbus::Connection> conn_A(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_A->loginByPassword("A", "A", cfg.domain());
+    bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+  conn_A->loginByPassword("A", "A", cfg::user_password_domain);
   
   boost::shared_ptr<openbus::Connection> conn_B(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_B->loginByPassword("B", "B", cfg.domain());
+    bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+  conn_B->loginByPassword("B", "B", cfg::user_password_domain);
   
   boost::shared_ptr<openbus::Connection> conn_C(
-    bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-  conn_C->loginByPassword("C", "C", cfg.domain());
+    bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+  conn_C->loginByPassword("C", "C", cfg::user_password_domain);
 
   bus_ctx->setDefaultConnection(conn_A);
   

@@ -1,12 +1,13 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <configuration.h>
+#include <config.hpp>
 #include <openbus.hpp>
 
 int main(int argc, char** argv)
 {
   openbus::log().set_level(openbus::debug_level);
-  openbus::configuration cfg(argc, argv);
+  namespace cfg = openbus::tests::config;
+  cfg::load_options(argc, argv);
 
   boost::weak_ptr<openbus::Connection> weak_conn, weak_conn2, weak_conn3;
   
@@ -19,7 +20,7 @@ int main(int argc, char** argv)
       *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
     boost::shared_ptr<openbus::Connection> conn(
-      bus_ctx->connectByAddress(cfg.host(), cfg.port()));
+      bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
     weak_conn = conn;
 
     bus_ctx->setDefaultConnection(conn);
@@ -30,7 +31,7 @@ int main(int argc, char** argv)
       std::abort();
     }
 
-    conn->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
+    conn->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
     openbus::idl::access::LoginRegistry_ptr login_registry
       (bus_ctx->getLoginRegistry());
 
@@ -61,8 +62,8 @@ int main(int argc, char** argv)
     bus_ctx->setDefaultConnection(conn);
         
     boost::shared_ptr<openbus::Connection> conn2(
-      bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-    conn2->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
+      bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+    conn2->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
     weak_conn2 = conn2;
     bus_ctx->setDefaultConnection(conn2);
 
@@ -76,8 +77,8 @@ int main(int argc, char** argv)
 
     {
       boost::shared_ptr<openbus::Connection> conn3(
-        bus_ctx->connectByAddress(cfg.host(), cfg.port()));
-      conn3->loginByPassword(cfg.user(), cfg.password(), cfg.domain());
+        bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+      conn3->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
       weak_conn3 = conn3;
       bus_ctx->setDefaultConnection(conn3);
     }

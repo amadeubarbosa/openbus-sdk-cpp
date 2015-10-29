@@ -5,7 +5,7 @@
 #include "helloC.h"
 #pragma clang diagnostic pop
 #include <util.hpp>
-#include <config.hpp>
+#include <tests/config.hpp>
 #include <openbus.hpp>
 
 #pragma clang diagnostic push
@@ -19,7 +19,7 @@
 
 const std::string entity("interop_simple_cpp_client");
 
-namespace cfg = openbus::test::config;
+namespace cfg = openbus::tests::config;
 
 int main(int argc, char **argv) 
 {

@@ -1,13 +1,14 @@
 // -*- coding: iso-8859-1-unix -*-
 
-#include <configuration.h>
+#include <config.hpp>
 #include <demo/openssl.hpp>
 #include <openbus_core-2.1C.h>
 #include <openbus.hpp>
 
 int main(int argc, char* argv[])
 {
-  openbus::configuration cfg(argc, argv);
+  namespace cfg = openbus::tests::config;
+  cfg::load_options(argc, argv);
   openbus::log().set_level(openbus::debug_level);
   std::auto_ptr<openbus::orb_ctx>
     orb_ctx(openbus::ORBInitializer(argc, argv));
@@ -17,12 +18,12 @@ int main(int argc, char* argv[])
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
   std::stringstream corbaloc;
-  corbaloc << "corbaloc::" << cfg.host() << ":" << cfg.port()
+  corbaloc << "corbaloc::" << cfg::bus_host_name << ":" << cfg::bus_host_port
            << "/" << tecgraf::openbus::core::v2_1::BusObjectKey;
   CORBA::Object_var
     ref(orb_ctx->orb()->string_to_object(corbaloc.str().c_str()));
   
-  EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(argv[argc-1]));
+  EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(cfg::system_private_key));
   if (!priv_key)
   {
     std::cerr << "Chave privada invalida." << std::endl;
