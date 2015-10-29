@@ -5,6 +5,7 @@
 #include "messagesC.h"
 #pragma clang diagnostic pop
 #include <util.hpp>
+#include <config.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
 #include <log/output/file_output.h>
@@ -16,70 +17,28 @@
 #include <iostream>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
-#include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 #pragma clang diagnostic pop
+
+namespace delegation = tecgraf::openbus::interop::delegation;
+namespace cfg = openbus::test::config;
 
 void mysleep()
 {
 #ifndef _WIN32
-  unsigned int t = 10u;
+  unsigned int t(cfg::login_lease_time);
   do { t = sleep(t); } while(t);
 #else
-  Sleep(10000);
+  Sleep(cfg::login_lease_time * 1000);
 #endif
 }
 
-namespace delegation = tecgraf::openbus::interop::delegation;
-
 const std::string entity("interop_delegation_cpp_client");
-std::string bus_host, domain;
-unsigned short bus_port;
-bool debug;
-
-void load_options(int argc, char **argv)
-{
-  namespace po = boost::program_options;
-  po::options_description desc("Allowed options");
-  desc.add_options()
-    ("help", "Help")
-    ("debug", po::value<bool>()->default_value(true) , "yes|no")
-    ("bus.host.name", po::value<std::string>()->default_value("localhost"),
-     "Host to OpenBus")
-    ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus")
-    ("user.password.domain", po::value<std::string>()->default_value("testing"),
-     "Password domain");
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
-  if (vm.count("help")) 
-  {
-    std::cout << desc << std::endl;
-    std::exit(1);
-  }
-  if (vm.count("debug"))
-  {
-    debug = vm["debug"].as<bool>();
-  }
-  if (vm.count("bus.host.name"))
-  {
-    bus_host = vm["bus.host.name"].as<std::string>();
-  }
-  if (vm.count("bus.host.port"))
-  {
-    bus_port = vm["bus.host.port"].as<unsigned short>();
-  }
-  if (vm.count("user.password.domain"))
-  {
-    domain = vm["user.password.domain"].as<std::string>();
-  }
-}
 
 int main(int argc, char** argv) {
   try {
-    load_options(argc, argv);
-    if (debug)
+    cfg::load_options(argc, argv);
+    if (cfg::openbus_test_verbose)
     {
       openbus::log().set_level(openbus::debug_level);
     }
@@ -87,10 +46,10 @@ int main(int argc, char** argv) {
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
     boost::shared_ptr<openbus::Connection> conn(
-      bus_ctx->connectByAddress(bus_host, bus_port));
+      bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
     bus_ctx->setDefaultConnection(conn);
     
-    conn->loginByPassword(entity, entity, domain);
+    conn->loginByPassword(entity, entity, cfg::user_password_domain);
 
     openbus::idl::offers::ServicePropertySeq props;
     props.length(2);
@@ -124,20 +83,20 @@ int main(int argc, char** argv) {
             delegation::Broadcaster::_narrow(o));
           conn->logout();
 
-          conn->loginByPassword("bill", "bill", domain);
+          conn->loginByPassword("bill", "bill", cfg::user_password_domain);
           forwarder->setForward("willian");
           broadcaster->subscribe();
           conn->logout();
 
-          conn->loginByPassword("paul", "paul", domain);
+          conn->loginByPassword("paul", "paul", cfg::user_password_domain);
           broadcaster->subscribe();
           conn->logout();
 
-          conn->loginByPassword("mary", "mary", domain);
+          conn->loginByPassword("mary", "mary", cfg::user_password_domain);
           broadcaster->subscribe();
           conn->logout();
 
-          conn->loginByPassword("steve", "steve", domain);
+          conn->loginByPassword("steve", "steve", cfg::user_password_domain);
           broadcaster->subscribe();
           broadcaster->post("Testing the list!");
           conn->logout();
@@ -149,7 +108,7 @@ int main(int argc, char** argv) {
               first != &names[sizeof(names)/sizeof(names[0])];
               ++first)
           {
-            conn->loginByPassword(*first, *first, domain);
+            conn->loginByPassword(*first, *first, cfg::user_password_domain);
             delegation::PostDescSeq_var posts(m->receivePosts());
             std::cout << "user "
                       << std::string(*first)
@@ -202,7 +161,7 @@ int main(int argc, char** argv) {
             conn->logout();
           }
 
-          conn->loginByPassword("bill", "bill", domain);
+          conn->loginByPassword("bill", "bill", cfg::user_password_domain);
           forwarder->cancelForward("willian");
           conn->logout();
         }

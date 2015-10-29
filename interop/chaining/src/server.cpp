@@ -1,5 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#include <config.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include "helloS.h"
@@ -13,54 +14,12 @@
 #include <boost/bind.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
-#include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 #pragma clang diagnostic pop
 
-const std::string entity("interop_chaining_cpp_server");
-std::string priv_key_filename;
-std::string bus_host;
-unsigned short bus_port;
-bool debug;
+namespace cfg = openbus::test::config;
 
-void load_options(int argc, char **argv)
-{
-  namespace po = boost::program_options;
-  po::options_description desc("Allowed options");
-  desc.add_options()
-    ("help", "Help")
-    ("debug", po::value<bool>()->default_value(true) , "yes|no")
-    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
-     "Path to private key")
-    ("bus.host.name", po::value<std::string>()->default_value("localhost"),
-     "Host to OpenBus")
-    ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus");
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
-  if (vm.count("help")) 
-  {
-    std::cout << desc << std::endl;
-    std::exit(1);
-  }
-  if (vm.count("debug"))
-  {
-    debug = vm["debug"].as<bool>();
-  }
-  if (vm.count("bus.host.name"))
-  {
-    bus_host = vm["bus.host.name"].as<std::string>();
-  }
-  if (vm.count("bus.host.port"))
-  {
-    bus_port = vm["bus.host.port"].as<unsigned short>();
-  }
-  if (vm.count("private-key"))
-  {
-    priv_key_filename = vm["private-key"].as<std::string>();
-  }
-}
+const std::string entity("interop_chaining_cpp_server");
 
 struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello 
 {
@@ -92,7 +51,7 @@ void login_register(
   const openbus::idl::offers::ServicePropertySeq &props, openbus::Connection &conn)
 {
   EVP_PKEY *priv_key(
-    openbus::demo::openssl::read_priv_key(priv_key_filename));
+    openbus::demo::openssl::read_priv_key(cfg::system_private_key));
   if (!priv_key)
   {
     std::cout << "Chave privada invalida." << std::endl;
@@ -141,8 +100,8 @@ int main(int argc, char **argv)
 {
   try
   {
-    load_options(argc, argv);
-    if (debug)
+    cfg::load_options(argc, argv);
+    if (cfg::openbus_test_verbose)
     {
       openbus::log().set_level(openbus::debug_level);
     }
@@ -159,7 +118,7 @@ int main(int argc, char **argv)
     openbus::OpenBusContext
       *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
     boost::shared_ptr<openbus::Connection>
-      conn(bus_ctx->connectByAddress(bus_host, bus_port));
+      conn(bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
     bus_ctx->setDefaultConnection(conn);
 
     boost::thread orb_run(boost::bind(ORBRun, bus_ctx->orb()));

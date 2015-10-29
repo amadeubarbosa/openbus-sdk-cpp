@@ -109,7 +109,4 @@ alias delegation
     delegation_forwarder
     delegation_broadcaster
     delegation_messenger
-    admin/interop_delegation_cpp_messenger.key
-    admin/interop_delegation_cpp_broadcaster.key
-    admin/interop_delegation_cpp_forwarder.key
   ;

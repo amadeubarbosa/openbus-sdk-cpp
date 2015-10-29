@@ -61,5 +61,4 @@ explicit simple_server ;
 alias simple
   : simple_client
     simple_server
-    admin/interop_simple_cpp_server.key
   ;

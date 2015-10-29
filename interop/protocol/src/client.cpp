@@ -6,52 +6,17 @@
 #pragma clang diagnostic pop
 #include <openbus.hpp>
 #include <util.hpp>
+#include <config.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
-#include <boost/program_options.hpp>
 #include <boost/tuple/tuple.hpp>
 #pragma clang diagnostic pop
 #include <boost/array.hpp>
 
 const std::string entity("interop_protocol_cpp_client");
-std::string bus_host;
-unsigned short bus_port;
-bool debug;
 
 using namespace tecgraf::openbus::interop;
-
-void load_options(int argc, char **argv)
-{
-  namespace po = boost::program_options;
-  po::options_description desc("Allowed options");
-  desc.add_options()
-    ("help", "Help")
-    ("debug", po::value<bool>()->default_value(true) , "yes|no")
-    ("bus.host.name", po::value<std::string>()->default_value("localhost"),
-     "Host to OpenBus")
-    ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus");
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
-  if (vm.count("help")) 
-  {
-    std::cout << desc << std::endl;
-    std::exit(1);
-  }
-  if (vm.count("debug"))
-  {
-    debug = vm["debug"].as<bool>();
-  }
-  if (vm.count("bus.host.name"))
-  {
-    bus_host = vm["bus.host.name"].as<std::string>();
-  }
-  if (vm.count("bus.host.port"))
-  {
-    bus_port = vm["bus.host.port"].as<unsigned short>();
-  }
-}
+namespace cfg = openbus::test::config;
 
 typedef CORBA::ULong session;
 typedef boost::array<CORBA::Octet, 256> challenge;
@@ -67,8 +32,8 @@ std::vector<no_permission_case> no_permission_cases;
 
 int main(int argc, char **argv)
 {
-  load_options(argc, argv);
-  if (debug)
+  cfg::load_options(argc, argv);
+  if (cfg::openbus_test_verbose)
   {
     openbus::log().set_level(openbus::debug_level);
   }
@@ -76,9 +41,9 @@ int main(int argc, char **argv)
     openbus::ORBInitializer(argc, argv));
   openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
   boost::shared_ptr<openbus::Connection> conn(
-    bus_ctx->connectByAddress(bus_host, bus_port));
+    bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
   bus_ctx->setDefaultConnection(conn);
-  conn->loginByPassword(entity, entity, "testing");
+  conn->loginByPassword(entity, entity, cfg::user_password_domain);
 
   openbus::idl::offers::ServicePropertySeq props;
   props.length(2);

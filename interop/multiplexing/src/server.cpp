@@ -5,6 +5,7 @@
 #include "helloS.h"
 #pragma clang diagnostic pop
 #include <util.hpp>
+#include <config.hpp>
 #include <demo/openssl.hpp>
 #include <openbus.hpp>
 #include <scs/ComponentContext.h>
@@ -12,74 +13,13 @@
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-local-typedef"
-#include <boost/program_options.hpp>
-#pragma clang diagnostic pop
 #include <iostream>
 #include <map>
 #include <vector>
 
-const std::string entity("interop_multiplexing_cpp_server");
-std::string priv_key_filename;
-struct bus
-{
-  std::string host;
-  unsigned short port;
-};
-std::map<std::size_t, bus> buses;
-bool debug;
+namespace cfg = openbus::test::config;
 
-void load_options(int argc, char **argv)
-{
-  namespace po = boost::program_options;
-  po::options_description desc("Allowed options");
-  desc.add_options()
-    ("help", "Help")
-    ("debug", po::value<bool>()->default_value(true) , "yes|no")
-    ("private-key", po::value<std::string>()->default_value(entity + ".key"),
-     "Path to private key")
-    ("bus.host.name", po::value<std::string>()->default_value("localhost"),
-     "Host to OpenBus")
-    ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus")
-    ("bus2.host.name", po::value<std::string>()->default_value("localhost"),
-     "Host to second OpenBus")
-    ("bus2.host.port", po::value<unsigned short>()->default_value(3089), 
-     "Port to second OpenBus");
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
-  if (vm.count("private-key"))
-  {
-    priv_key_filename = vm["private-key"].as<std::string>();
-  }
-  if (vm.count("help")) 
-  {
-    std::cout << desc << std::endl;
-    std::exit(1);
-  }
-  if (vm.count("debug"))
-  {
-    debug = vm["debug"].as<bool>();
-  }
-  if (vm.count("bus.host.name"))
-  {
-    buses[0].host = vm["bus.host.name"].as<std::string>();
-  }
-  if (vm.count("bus.host.port"))
-  {
-    buses[0].port = vm["bus.host.port"].as<unsigned short>();
-  }
-  if (vm.count("bus2.host.name"))
-  {
-    buses[1].host = vm["bus2.host.name"].as<std::string>();
-  }
-  if (vm.count("bus2.host.port"))
-  {
-    buses[1].port = vm["bus2.host.port"].as<unsigned short>();
-  }
-}
+const std::string entity("interop_multiplexing_cpp_server");
 
 class CallDispatchCallback 
 {
@@ -167,8 +107,8 @@ void registerOffer(openbus::OpenBusContext &ctx, boost::shared_ptr<openbus::Conn
 int main(int argc, char **argv) {
   try 
   {
-    load_options(argc, argv);
-    if (debug)
+    cfg::load_options(argc, argv);
+    if (cfg::openbus_test_verbose)
     {
       openbus::log().set_level(openbus::debug_level);
     }
@@ -176,13 +116,13 @@ int main(int argc, char **argv) {
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
     boost::shared_ptr<openbus::Connection> connBusB
-      (bus_ctx->connectByAddress(buses[1].host, buses[1].port));
+      (bus_ctx->connectByAddress(cfg::bus2_host_name, cfg::bus2_host_port));
     boost::shared_ptr<openbus::Connection> conn1BusA
-      (bus_ctx->connectByAddress(buses[0].host, buses[0].port));
+      (bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
     boost::shared_ptr<openbus::Connection> conn2BusA
-      (bus_ctx->connectByAddress(buses[0].host, buses[0].port));
+      (bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
     boost::shared_ptr<openbus::Connection> conn3BusA
-      (bus_ctx->connectByAddress(buses[0].host, buses[0].port));
+      (bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());
@@ -203,7 +143,7 @@ int main(int argc, char **argv) {
     ctx.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0", &srv);
     
     EVP_PKEY *priv_key(
-      openbus::demo::openssl::read_priv_key(priv_key_filename));
+      openbus::demo::openssl::read_priv_key(cfg::system_private_key));
     if (!priv_key)
     {
       std::cout << "Chave privada invalida." << std::endl;

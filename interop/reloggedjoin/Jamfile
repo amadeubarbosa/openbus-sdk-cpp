@@ -85,6 +85,4 @@ alias reloggedjoin
   : reloggedjoin_client
     reloggedjoin_server
     reloggedjoin_proxy
-    admin/interop_reloggedjoin_cpp_server.key 
-    admin/interop_reloggedjoin_cpp_proxy.key 
   ;
