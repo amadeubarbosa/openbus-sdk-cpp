@@ -8,14 +8,14 @@
 openbus::CallerChain build_fake_legacy_chain(
   const std::string &busid, 
   const std::string &target,
-  const openbus::idl_ac::LoginInfoSeq &originators, 
-  const openbus::idl_ac::LoginInfo &caller,
+  const openbus::idl::legacy::access::LoginInfoSeq &originators, 
+  const openbus::idl::legacy::access::LoginInfo &caller,
   openbus::OpenBusContext *bus_ctx) 
 {
-  openbus::idl_cr::SignedData signed_chain;
-  std::memset(signed_chain.signature, '\0', openbus::idl::EncryptedBlockSize);
+  openbus::idl::legacy::creden::SignedCallChain signed_chain;
+  std::memset(signed_chain.signature, '\0', openbus::idl::core::EncryptedBlockSize);
 
-  openbus::idl_ac::CallChain call_chain;
+  openbus::idl::legacy::access::CallChain call_chain;
   call_chain.target = target.c_str();
   call_chain.originators = originators;
   call_chain.caller = caller;
@@ -25,12 +25,12 @@ openbus::CallerChain build_fake_legacy_chain(
   CORBA::Any any;
   any <<= call_chain;
   CORBA::OctetSeq_var seq(codec->encode_value(any));
-  signed_chain.encoded = openbus::idl::OctetSeq(
+  signed_chain.encoded = openbus::idl::legacy::core::OctetSeq(
     seq->maximum(),
     seq->length(),
     const_cast<unsigned char *>(seq->get_buffer()));
   
-  return openbus::CallerChain(busid, target, originators, caller, signed_chain);
+  return openbus::CallerChain(call_chain, busid, target, signed_chain);
 }
 
 #endif

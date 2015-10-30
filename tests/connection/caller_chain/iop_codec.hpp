@@ -3,7 +3,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_TESTS_BUILD_FAKE_LEGACY_CHAIN_HPP
 #define TECGRAF_SDK_OPENBUS_TESTS_BUILD_FAKE_LEGACY_CHAIN_HPP
 
-#include <openbus/openbus_context.hpp>
+#include <openbus.hpp>
 
 #include <tao/PI/PI.h>
 

@@ -2,6 +2,7 @@
 
 #include <config.hpp>
 #include <openbus.hpp>
+
 #include <boost/thread.hpp>
 
 int main(int argc, char** argv)
@@ -17,8 +18,7 @@ int main(int argc, char** argv)
     *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
   boost::shared_ptr<openbus::Connection>
     conn(bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
-  boost::this_thread::sleep_for(boost::chrono::seconds(5));
-  for (std::size_t i(0); i < 3; ++i)
+  for (std::size_t i(0); i < cfg::password_penalty_tries; ++i)
   {
     try
     {
@@ -37,6 +37,6 @@ int main(int argc, char** argv)
   catch (const openbus::idl::access::TooManyAttempts &)
   {
   }
-  boost::this_thread::sleep_for(boost::chrono::seconds(5));
+  boost::this_thread::sleep_for(boost::chrono::seconds(cfg::password_penalty_time));
   return 0; //MSVC
 }

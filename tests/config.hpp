@@ -27,7 +27,9 @@ std::string bus_host_name,
   
 unsigned short bus_host_port,
   bus2_host_port,
-  login_lease_time;
+  login_lease_time,
+  password_penalty_time,
+  password_penalty_tries;
   
 bool openbus_test_verbose;
 
@@ -71,6 +73,12 @@ void load_options(int argc, char **argv)
      ,"")
     ("user.password"
      ,po::value<std::string>()->default_value("testuser")
+     ,"")
+    ("password.penalty.time"
+     ,po::value<unsigned short>()->default_value(1)
+     ,"")
+    ("password.penalty.tries"
+     ,po::value<unsigned short>()->default_value(3)
      ,"")
     ("system.entity.name"
      ,po::value<std::string>()->default_value("testsyst")
@@ -130,6 +138,10 @@ void load_options(int argc, char **argv)
     user_entity_name = vm["user.entity.name"].as<std::string>();
   if (vm.count("user.password"))
     user_password = vm["user.password"].as<std::string>();
+  if (vm.count("password.penalty.time"))
+    password_penalty_time = vm["password.penalty.time"].as<unsigned short>();
+  if (vm.count("password.penalty.tries"))
+    password_penalty_tries = vm["password.penalty.tries"].as<unsigned short>();
   if (vm.count("system.entity.name"))
     system_entity_name = vm["system.entity.name"].as<std::string>();
   if (vm.count("system.private.key"))

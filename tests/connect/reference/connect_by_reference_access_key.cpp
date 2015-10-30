@@ -2,7 +2,6 @@
 
 #include <config.hpp>
 #include <demo/openssl.hpp>
-#include <openbus_core-2.1C.h>
 #include <openbus.hpp>
 
 int main(int argc, char* argv[])

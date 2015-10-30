@@ -23,16 +23,6 @@
 namespace delegation = tecgraf::openbus::interop::delegation;
 namespace cfg = openbus::tests::config;
 
-void mysleep()
-{
-#ifndef _WIN32
-  unsigned int t(cfg::login_lease_time);
-  do { t = sleep(t); } while(t);
-#else
-  Sleep(cfg::login_lease_time * 1000);
-#endif
-}
-
 const std::string entity("interop_delegation_cpp_client");
 
 int main(int argc, char** argv) {
@@ -101,7 +91,7 @@ int main(int argc, char** argv) {
           broadcaster->post("Testing the list!");
           conn->logout();
 
-          mysleep();
+          boost::this_thread::sleep_for(boost::chrono::seconds(cfg::login_lease_time));
 
           const char* names[] = {"willian", "bill", "paul", "mary", "steve"};
           for(const char** first = &names[0]; 

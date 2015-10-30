@@ -3,6 +3,9 @@
 #include <config.hpp>
 #include <openbus.hpp>
 
+#include <boost/thread.hpp>
+#include <iostream>
+
 namespace cfg = openbus::tests::config;
 
 bool on_invalid_login_called(false);
@@ -22,12 +25,7 @@ struct relogin_callback
       catch (const CORBA::Exception &)
       {
       }
-#ifndef _WIN32
-      unsigned int t = 30u;
-      do { t = sleep(t); } while(t);
-#else
-      Sleep(3000);
-#endif
+      boost::this_thread::sleep_for(boost::chrono::seconds(1));
     }
     while(true);
   }
@@ -62,7 +60,6 @@ int main(int argc, char** argv)
     std::abort();
   }
 
-  std::cout << "sleep_for: " << ++validity << "s" << std::endl;
   boost::this_thread::sleep_for(boost::chrono::seconds(validity));
 
   if (on_invalid_login_called)

@@ -2,11 +2,10 @@
 
 #include "build_fake_legacy_chain.hpp"
 #include "iop_codec.hpp"
-
-#include <openbus/OpenBusContext.hpp>
-#include <openbus/ORBInitializer.hpp>
+#include <openbus.hpp>
 #include <config.hpp>
 #include <check.hpp>
+
 #include <cstdlib>
 #include <iostream>
 
@@ -25,16 +24,16 @@ int main(int argc, char **argv)
     bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
   conn_B->loginByPassword("B", "B", cfg::user_password_domain);
     
-  bus_ctx->setDefaultConnection(conn_B.get());
+  bus_ctx->setDefaultConnection(conn_B);
 
-  openbus::idl::access::LoginInfoSeq originators;
+  openbus::idl::legacy::access::LoginInfoSeq originators;
   originators.length(1);
-  openbus::idl::access::LoginInfo delegate;
+  openbus::idl::legacy::access::LoginInfo delegate;
   delegate.id = "<unknown>";
   delegate.entity = "A";
   originators[static_cast<CORBA::ULong>(0)] = delegate;
   
-  openbus::idl::access::LoginInfo caller;
+  openbus::idl::legacy::access::LoginInfo caller;
   caller.id = conn_B->login()->id;
   caller.entity = conn_B->login()->entity;
   
@@ -92,15 +91,15 @@ int main(int argc, char **argv)
     "fake_legacy_chain.originators()[0u].entity",
     "decoded_chain.originators()[0u].entity");;
 
-  const openbus::idl::access::CallChain *decoded_signed_chain;
+  const openbus::idl::legacy::access::CallChain *decoded_signed_chain;
   IOP::Codec_var codec(get_codec(bus_ctx));
   CORBA::Any_var decoded_call_chain_any(
     codec->decode_value(
-      CORBA::OctetSeq(decoded_chain._signedCallChain.encoded.maximum(),
-                      decoded_chain._signedCallChain.encoded.length(),
+      CORBA::OctetSeq(decoded_chain._legacy_signed_chain.encoded.maximum(),
+                      decoded_chain._legacy_signed_chain.encoded.length(),
                       const_cast<unsigned char *>
-                      (decoded_chain._signedCallChain.encoded.get_buffer())),
-      openbus::idl::access::_tc_CallChain));
+                      (decoded_chain._legacy_signed_chain.encoded.get_buffer())),
+      openbus::idl::legacy::access::_tc_CallChain));
   *decoded_call_chain_any >>= decoded_signed_chain;
 
   openbus::tests::is_equal<std::string>(
