@@ -1,5 +1,6 @@
 // -*- coding: iso-8859-1-unix -*-
 
+#include "openbus/log.hpp"
 #include "openbus/detail/interceptors/orb_initializer.hpp"
 #include "openbus/detail/interceptors/client.hpp"
 #include "openbus/detail/interceptors/server.hpp"
@@ -54,9 +55,10 @@ ignore_invalid_login::~ignore_invalid_login()
   }
 }
 
-ORBInitializer::ORBInitializer() 
+ORBInitializer::ORBInitializer(boost::shared_ptr<log_type> log)
+  : log(log)
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log->general_logger(), debug_level, 
               "openbus::interceptors::ORBInitializer::ORBInitializer");
 }
 

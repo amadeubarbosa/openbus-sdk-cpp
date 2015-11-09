@@ -31,7 +31,7 @@ void Connection::renewLogin(
   OpenBusContext &ctx,
   idl::access::ValidityTime t)
 {
-  log_scope l(log().general_logger(), info_level, "Connection::renewLogin()");
+  log_scope l(log()->general_logger(), info_level, "Connection::renewLogin()");
   {
     boost::shared_ptr<Connection> conn_ = conn.lock();
     ctx.setCurrentConnection(conn_);
@@ -109,7 +109,7 @@ Connection::Connection(
   , _profile2login(LRUSize)
   , _login2session(LRUSize)
 {
-  log_scope l(log().general_logger(), info_level, "Connection::Connection");
+  log_scope l(log()->general_logger(), info_level, "Connection::Connection");
   std::stringstream corbaloc;
   corbaloc << "corbaloc::" << _host << ":" << _port << "/" << idl::core::BusObjectKey;
   try
@@ -123,7 +123,7 @@ Connection::Connection(
 
 Connection::~Connection() 
 { 
-  log_scope l(log().general_logger(), info_level, "Connection::~Connection");
+  log_scope l(log()->general_logger(), info_level, "Connection::~Connection");
   try
   {
     _logout();
@@ -148,7 +148,7 @@ void Connection::init()
   idl::legacy_support::LegacyConverter_var legacy_converter;
   idl::offers::OfferRegistry_var offer_registry;
   idl::access::LoginRegistry_var login_registry;
-  log_scope l(log().general_logger(), info_level, "Connection::init");
+  log_scope l(log()->general_logger(), info_level, "Connection::init");
   {
     interceptors::ignore_interceptor _i(_orb_init);
     iComponent = scs::core::IComponent::_narrow(_component_ref);
@@ -224,7 +224,7 @@ void Connection::loginByPassword(const std::string &entity,
                                  const std::string &password,
                                  const std::string &domain) 
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "Connection::loginByPassword");
   boost::unique_lock<boost::mutex> lock(_mutex);
   bool initialized(CORBA::is_nil(_iComponent));
@@ -278,7 +278,7 @@ void Connection::loginByPassword(const std::string &entity,
 void Connection::loginByCertificate(const std::string &entity, 
                                     EVP_PKEY *key) 
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "Connection::loginByCertificate");
   boost::unique_lock<boost::mutex> lock(_mutex);
   bool initialized(CORBA::is_nil(_iComponent));
@@ -334,7 +334,7 @@ void Connection::loginByCertificate(const std::string &entity,
 SharedAuthSecret
 Connection::startSharedAuth() 
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "Connection::startSharedAuth");
   idl::core::EncryptedBlock challenge;
   boost::shared_ptr<Connection> conn;
@@ -365,7 +365,7 @@ Connection::startSharedAuth()
   
 void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "Connection::loginBySharedAuth");
   boost::unique_lock<boost::mutex> lock(_mutex);
   bool initialized(CORBA::is_nil(_iComponent));
@@ -441,22 +441,22 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
 
 bool Connection::_logout(bool local) 
 {
-  log_scope l(log().general_logger(), info_level, "Connection::_logout");
+  log_scope l(log()->general_logger(), info_level, "Connection::_logout");
   bool success(false);
   boost::unique_lock<boost::mutex> lock(_mutex);
   State state(_state);
   lock.unlock();
+  _renewLogin.interrupt();
+  if (_renewLogin.get_id() != boost::this_thread::get_id())
+  {
+    _renewLogin.join();
+  }
   if (state == UNLOGGED)
   {
     return false;
   }
   else if (state == LOGGED) 
   {
-    _renewLogin.interrupt();
-    if (_renewLogin.get_id() != boost::this_thread::get_id())
-    {
-      _renewLogin.join();
-    }
     if (!local)
     {
       struct save_state
@@ -518,7 +518,7 @@ bool Connection::_logout(bool local)
 
 bool Connection::logout() 
 { 
-  log_scope l(log().general_logger(), info_level, "Connection::logout");
+  log_scope l(log()->general_logger(), info_level, "Connection::logout");
   return _logout(false); 
 }
 
@@ -548,7 +548,7 @@ const std::string Connection::busid() const
 
 idl::access::LoginInfo Connection::get_login()
 {
-  log_scope l(log().general_logger(), info_level, "Connection::get_login");
+  log_scope l(log()->general_logger(), info_level, "Connection::get_login");
   idl::access::LoginInfo login, invalid_login;
   {
     boost::lock_guard<boost::mutex> lock(_mutex);;
@@ -593,8 +593,7 @@ idl::access::LoginInfo Connection::get_login()
       invalid_login = curr;
     }
   }
-  boost::lock_guard<boost::mutex> lock(_mutex);;
-  return *(_loginInfo.get());
+  return login;
 }
 
 }

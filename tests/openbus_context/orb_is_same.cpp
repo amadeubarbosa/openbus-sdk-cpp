@@ -4,7 +4,6 @@
 
 int main(int argc, char* argv[])
 {
-  openbus::log().set_level(openbus::debug_level);
   std::auto_ptr<openbus::orb_ctx>
     orb_ctx(openbus::ORBInitializer(argc, argv));
   CORBA::Object_var

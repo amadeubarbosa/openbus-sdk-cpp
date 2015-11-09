@@ -81,11 +81,7 @@ struct log_type
    */
   void add_output(std::auto_ptr<logger::output_base> output)
   {
-    std::auto_ptr<logger::output_base> tmp1(output->clone());
-    std::auto_ptr<logger::output_base> tmp2(output->clone());
     general_log.add_output(output);
-    ci_log.add_output(tmp1);
-    si_log.add_output(tmp2);
   }
 
   /**
@@ -94,11 +90,7 @@ struct log_type
    */
   void add_formatter(std::auto_ptr<logger::formatter_base> formatter)
   {
-    std::auto_ptr<logger::formatter_base> tmp1(formatter->clone());
-    std::auto_ptr<logger::formatter_base> tmp2(formatter->clone());
     general_log.add_formatter(formatter);
-    ci_log.add_formatter(tmp1);
-    si_log.add_formatter(tmp2);
   }
 
   /**
@@ -107,8 +99,6 @@ struct log_type
   void set_level(logger::level lev)
   {
     general_log.set_level(lev);
-    ci_log.set_level(lev);
-    si_log.set_level(lev);
   }
 
   #ifndef OPENBUS_DOXYGEN
@@ -116,26 +106,16 @@ struct log_type
   { 
     return general_log; 
   }
-
-  logger::logger &client_interceptor_logger()
-  { 
-    return ci_log; 
-  }
-
-  logger::logger &server_interceptor_logger()
-  { 
-    return si_log; 
-  }
   #endif
 private:
-  logger::logger general_log, ci_log, si_log;
+  logger::logger general_log;
 };
 
 /**
  * \brief Instância global de log_type que permite acesso pelo usuário
  * das configurações de log do Openbus
  */
-OPENBUS_SDK_DECL log_type& log();
+  OPENBUS_SDK_DECL boost::shared_ptr<log_type> log();
 
 }
 

@@ -93,7 +93,7 @@ boost::shared_ptr<Connection>
 ClientInterceptor::get_current_connection(
   PortableInterceptor::ClientRequestInfo &r)
 {
-  log_scope l(log().general_logger(),info_level,
+  log_scope l(log()->general_logger(),info_level,
               "ClientInterceptor::get_current_connection");
   boost::shared_ptr<Connection> conn;
   {
@@ -177,7 +177,7 @@ idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
   const std::string &target,
   idl::legacy::creden::CredentialData type)
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "ClientInterceptor::get_signed_chain");
   idl::legacy::creden::SignedCallChain chain;
   bool cached(false);
@@ -228,7 +228,7 @@ idl::creden::SignedData ClientInterceptor::get_signed_chain(
   const std::string &target,
   idl::creden::CredentialData type)
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "ClientInterceptor::get_signed_chain");
   idl::creden::SignedData chain;  
   bool cached(false);
@@ -412,18 +412,25 @@ boost::uuids::uuid ClientInterceptor::get_request_id(
 }
 
 ClientInterceptor::ClientInterceptor(ORBInitializer *orb_init)
-  : _orb_init(orb_init),
+  : _log(orb_init->log),
+    _orb_init(orb_init),
     _callChainLRUCache(LRUSize),
     _legacy_callChainLRUCache(LRUSize),
     _bus_ctx(0)
 { 
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "ClientInterceptor::ClientInterceptor");
+}
+
+ClientInterceptor::~ClientInterceptor()
+{
+  log_scope l(log()->general_logger(), info_level, 
+              "ClientInterceptor::~ClientInterceptor");
 }
 
 void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr r)
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "ClientInterceptor::send_request");
   l.level_vlog(debug_level, "operation: %s", r->operation());
   if (ignore_request(*r))
@@ -454,7 +461,7 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
 
 void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo_ptr r)
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "ClientInterceptor::receive_exception");
   l.level_vlog(debug_level, "operation: %s", r->operation()); 
   l.level_vlog(debug_level, "exception: %s", r->received_exception_id()); 
@@ -603,7 +610,8 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
       idl::access::LoginInfo curr_login;
       {
         boost::lock_guard<boost::mutex> conn_lock(conn->_mutex);
-        curr_login = *conn->_loginInfo;
+        if (conn->_loginInfo)
+          curr_login = *(conn->_loginInfo);
       }
       if (std::string(curr_login.id.in())
           == std::string(invalid_login.id.in())) 
@@ -656,7 +664,7 @@ void ClientInterceptor::send_poll(PortableInterceptor::ClientRequestInfo_ptr)
 void ClientInterceptor::receive_reply(
   PortableInterceptor::ClientRequestInfo_ptr r) 
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "ClientInterceptor::receive_reply");
   if (ignore_request(*r))
   {

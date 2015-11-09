@@ -16,38 +16,11 @@
 
 namespace openbus 
 {
-// Para GCC compilando com C++11, nós fazemos uso de magic statics (thread-safe local statics)
-// usando o mesmo código para singlethread. MSVC, mesmo na versão 11 ainda não suporta
-// magic statics, então usamos call_once para initialização segura.
-#if !(defined(__GNUC__) && __cplusplus == 201103L)
-namespace {
-
-log_type& get_log()
+OPENBUS_SDK_DECL boost::shared_ptr<log_type> log()
 {
-  static log_type l;
+  static boost::shared_ptr<log_type> l(new log_type);
   return l;
 }
-
-inline void init_log()
-{
-  static boost::once_flag once = BOOST_ONCE_INIT;
-  boost::call_once<log_type &(*)()>(once, &get_log);
-}
-
-}
-
-OPENBUS_SDK_DECL log_type& log()
-{
-  init_log();
-  return get_log();
-}
-#else
-OPENBUS_SDK_DECL log_type& log()
-{
-  static log_type l;
-  return l;
-}
-#endif
 
 PortableInterceptor::ORBInitializer_var orb_initializer;
 
@@ -73,10 +46,10 @@ std::auto_ptr<orb_ctx>
 ORBInitializer(int &argc, char **argv) 
 {
   boost::lock_guard<boost::mutex> lock(_mutex);
-  log_scope l(log().general_logger(), info_level, "ORBInitializer");
+  log_scope l(log()->general_logger(), info_level, "ORBInitializer");
   if (CORBA::is_nil(orb_initializer))
   {
-    orb_initializer = new interceptors::ORBInitializer;
+    orb_initializer = new interceptors::ORBInitializer(log());
   }
   PortableInterceptor::register_orb_initializer(orb_initializer.in());
   CORBA::ORB_var orb(CORBA::ORB_init(argc, argv));

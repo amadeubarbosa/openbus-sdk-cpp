@@ -3,6 +3,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_INTERCEPTORS_INITIALIZER_HPP
 #define TECGRAF_SDK_OPENBUS_OPENBUS_DETAIL_INTERCEPTORS_INITIALIZER_HPP
 
+#include "openbus/log.hpp"
 #include "openbus/idl.hpp"
 #include "openbus/detail/decl.hpp"
 #include "openbus/detail/openssl/openssl.hpp"
@@ -85,11 +86,12 @@ struct OPENBUS_SDK_DECL ORBInitializer :
   public PortableInterceptor::ORBInitializer,
   public CORBA::LocalObject
 {
-  ORBInitializer();
+  ORBInitializer(boost::shared_ptr<log_type>);
   ~ORBInitializer();
   void pre_init(PortableInterceptor::ORBInitInfo_ptr);
   void post_init(PortableInterceptor::ORBInitInfo_ptr);
 
+  boost::shared_ptr<log_type> log;
   PortableInterceptor::ClientRequestInterceptor_var cln_interceptor; 
   PortableInterceptor::ServerRequestInterceptor_var srv_interceptor;
   IOP::Codec_var codec;

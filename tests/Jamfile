@@ -32,6 +32,7 @@ obj test-hello-skeleton
   : $(here)/idl/hello.idl
   : <generate>skeleton
     <warnings>off
+    <implicit-dependency>test-hello-stub
   ;
 explicit test-hello-skeleton ;
 
@@ -89,9 +90,11 @@ alias run-tests
     [ run get_offer.cpp : :
       : $(test-requirements)
         <library>test-hello-stub
-    	<library>test-hello-skeleton
-    	<dependency>test-hello-skeleton
-    	<implicit-dependency>test-hello-skeleton ]
+      	<library>test-hello-skeleton
+      	<implicit-dependency>test-hello-stub
+      	<implicit-dependency>test-hello-skeleton 
+      	<dependency>test-hello-stub
+      	<dependency>test-hello-skeleton ]
     [ run openbus_context/get_bus_ctx.cpp : : : $(test-requirements) ]
     [ run openbus_context/getting_orb_with_bus_ctx.cpp : : : $(test-requirements) ]
     [ run openbus_context/on_call_dispatch.cpp : :

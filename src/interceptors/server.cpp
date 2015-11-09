@@ -1,4 +1,5 @@
 // -*- coding: iso-8859-1-unix -*-
+#include "openbus/log.hpp"
 #include "openbus/detail/interceptors/server.hpp"
 #include "openbus/connection.hpp"
 #include "openbus/openbus_context.hpp"
@@ -31,12 +32,19 @@ Session::Session(const std::string &login)
 }
 
 ServerInterceptor::ServerInterceptor(ORBInitializer *orb_init)
-  : _orb_init(orb_init),
+  : _log(orb_init->log),
+    _orb_init(orb_init),
     _sessionLRUCache(LRUSize),
     _bus_ctx(0)
 {
-  log_scope l(log().general_logger(), debug_level,
+  log_scope l(log()->general_logger(), debug_level,
               "ServerInterceptor::ServerInterceptor");
+}
+
+ServerInterceptor::~ServerInterceptor()
+{
+  log_scope l(log()->general_logger(), info_level, 
+              "ServerInterceptor::~ServerInterceptor");
 }
 
 CORBA::Any ServerInterceptor::attach_legacy_credential_rst(
@@ -149,7 +157,7 @@ boost::shared_ptr<Connection> ServerInterceptor::get_dispatcher_connection(
   PI::ServerRequestInfo_ptr r)
 {
   boost::shared_ptr<Connection> conn;
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "ServerInterceptor::get_dispatcher");
   if (ctx->onCallDispatch())
   {
@@ -269,7 +277,7 @@ void ServerInterceptor::handle_credential(
   C &credential,
   PI::ServerRequestInfo_ptr r)
 {
-  log_scope l(log().general_logger(), debug_level,
+  log_scope l(log()->general_logger(), debug_level,
               "ServerInterceptor::handle_credential");
   
   boost::shared_ptr<Connection> conn(
@@ -346,7 +354,7 @@ void ServerInterceptor::handle_credential(
 void ServerInterceptor::receive_request_service_contexts(
   PI::ServerRequestInfo_ptr r)
 {
-  log_scope l(log().general_logger(), debug_level,
+  log_scope l(log()->general_logger(), debug_level,
               "ServerInterceptor::receive_request_service_contexts");
   l.level_vlog(debug_level, "operation: %s", r->operation());
 

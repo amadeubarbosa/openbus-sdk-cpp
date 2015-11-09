@@ -32,7 +32,7 @@ struct OPENBUS_SDK_DECL
 ClientInterceptor : public PI::ClientRequestInterceptor 
 {
   ClientInterceptor(ORBInitializer *);
-
+  ~ClientInterceptor();
   void send_request(PI::ClientRequestInfo_ptr);
   void receive_exception(PI::ClientRequestInfo_ptr);
   void send_poll(PI::ClientRequestInfo_ptr);
@@ -84,6 +84,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
     const boost::shared_ptr<Connection> &,
     idl::access::LoginInfo &);
   
+  boost::shared_ptr<log_type> _log;
   ORBInitializer *_orb_init;
   LRUCache<hash_value, idl::creden::SignedData> _callChainLRUCache;
   LRUCache<hash_value, idl::legacy::creden::SignedCallChain>

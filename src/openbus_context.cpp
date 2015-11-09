@@ -40,7 +40,7 @@ OpenBusContext::OpenBusContext(
   , _orb(orb)
   , _call_dispatch_cbk(0)
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "OpenBusContext::OpenBusContext");
   interceptors::ClientInterceptor *cln_int(
     dynamic_cast<interceptors::ClientInterceptor *>(
@@ -60,7 +60,7 @@ boost::shared_ptr<Connection> OpenBusContext::connect_by_address_impl(
   bool legacy_support)
 
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "OpenBusContext::connectByAddress");
   l.vlog("connectByAddress para host %s:%hi", host.c_str(), port);
   boost::shared_ptr<Connection> conn(
@@ -77,7 +77,7 @@ boost::shared_ptr<Connection> OpenBusContext::connect_by_reference_impl(
   EVP_PKEY *access_key,
   bool legacy_support)
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "OpenBusContext::connectByReference");
   boost::shared_ptr<Connection> conn(
     new Connection(ref, _orb, _orb_init, *this, access_key, legacy_support));
@@ -99,7 +99,7 @@ boost::shared_ptr<Connection> OpenBusContext::create_connection_impl(
 boost::shared_ptr<Connection>
 OpenBusContext::setDefaultConnection(const boost::shared_ptr<Connection> &conn)
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "OpenBusContext::setDefaultConnection");  
   boost::lock_guard<boost::mutex> lg(_mutex);
   boost::shared_ptr<Connection> old(_def_conn.lock());
@@ -111,7 +111,7 @@ OpenBusContext::setDefaultConnection(const boost::shared_ptr<Connection> &conn)
 boost::shared_ptr<Connection>
 OpenBusContext::getDefaultConnection() const 
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "OpenBusContext::getDefaultConnection");  
   boost::lock_guard<boost::mutex> lg(_mutex);
   boost::shared_ptr<Connection> def_conn(_def_conn.lock());
@@ -122,7 +122,7 @@ OpenBusContext::getDefaultConnection() const
 boost::shared_ptr<Connection>
 OpenBusContext::setCurrentConnection(const boost::shared_ptr<Connection> &conn) 
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "OpenBusContext::setCurrentConnection");  
   l.vlog("Connection: %p", conn.get());
   boost::lock_guard<boost::mutex> lg(_mutex);
@@ -156,7 +156,7 @@ OpenBusContext::setCurrentConnection(const boost::shared_ptr<Connection> &conn)
 boost::shared_ptr<Connection>
 OpenBusContext::getCurrentConnection() const
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "OpenBusContext::getCurrentConnection");
   boost::shared_ptr<Connection> def_conn(getDefaultConnection());
   boost::lock_guard<boost::mutex> lg(_mutex);
@@ -218,7 +218,7 @@ CallerChain OpenBusContext::extract_legacy_call_chain(
   
 CallerChain OpenBusContext::getCallerChain() 
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "OpenBusContext::getCallerChain");
   const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (!conn)
@@ -245,7 +245,7 @@ CallerChain OpenBusContext::getCallerChain()
 
 void OpenBusContext::joinChain(CallerChain const &chain) 
 {
-  log_scope l(log().general_logger(), info_level, "OpenBusContext::joinChain");
+  log_scope l(log()->general_logger(), info_level, "OpenBusContext::joinChain");
   CallerChain caller_chain(chain == CallerChain() ? getCallerChain() : chain);
   if (caller_chain == CallerChain())
   {
@@ -261,14 +261,14 @@ void OpenBusContext::joinChain(CallerChain const &chain)
 
 void OpenBusContext::exitChain() 
 {
-  log_scope l(log().general_logger(), info_level, "OpenBusContext::exitChain");
+  log_scope l(log()->general_logger(), info_level, "OpenBusContext::exitChain");
   CORBA::Any any;
   _orb_init->pi_current->set_slot(_orb_init->joined_call_chain, any);    
 }
 
 CallerChain OpenBusContext::getJoinedChain() const
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "OpenBusContext::getJoinedChain");
   const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (!conn)
@@ -305,7 +305,7 @@ CallerChain OpenBusContext::getJoinedChain() const
 
 CallerChain OpenBusContext::makeChainFor(const std::string &entity) const
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "OpenBusContext::makeChainFor");
   const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (!conn)
@@ -341,7 +341,7 @@ CallerChain OpenBusContext::importChain(
   const CORBA::OctetSeq &token,
   const std::string &domain) const
 {
-  log_scope l(log().general_logger(), info_level, 
+  log_scope l(log()->general_logger(), info_level, 
               "OpenBusContext::importChain");
   const boost::shared_ptr<Connection> &conn(getCurrentConnection());
   if (!conn)
@@ -367,7 +367,7 @@ CallerChain OpenBusContext::importChain(
 
 CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
 {
-  log_scope l(log().general_logger(), info_level,
+  log_scope l(log()->general_logger(), info_level,
               "OpenBusContext::encodeChain");
   
   idl::data_export::VersionedDataSeq exported_version_seq;
@@ -417,7 +417,7 @@ CORBA::OctetSeq OpenBusContext::encodeChain(const CallerChain chain)
 
 CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
 {
-  log_scope l(log().general_logger(), debug_level,
+  log_scope l(log()->general_logger(), debug_level,
               "OpenBusContext::decodeChain");
   try
   {
@@ -500,7 +500,7 @@ CallerChain OpenBusContext::decodeChain(const CORBA::OctetSeq &encoded) const
 CORBA::OctetSeq OpenBusContext::encodeSharedAuthSecret(
   const SharedAuthSecret &secret)
 {
-  log_scope l(log().general_logger(), info_level,
+  log_scope l(log()->general_logger(), info_level,
               "OpenBusContext::encodeSharedAuth");
   idl::data_export::VersionedDataSeq exported_version_seq;
   exported_version_seq.length(2);
@@ -556,7 +556,7 @@ CORBA::OctetSeq OpenBusContext::encodeSharedAuthSecret(
 SharedAuthSecret OpenBusContext::decodeSharedAuthSecret(
   const CORBA::OctetSeq &encoded)
 {
-  log_scope l(log().general_logger(), info_level,
+  log_scope l(log()->general_logger(), info_level,
               "OpenBusContext::decodeSharedAuth");
   idl::data_export::VersionedDataSeq_var seq;
   std::string tag(decode_exported_versions(encoded, seq));
@@ -707,7 +707,7 @@ std::string OpenBusContext::decode_exported_versions(
 
 OpenBusContext::~OpenBusContext()
 {
-  log_scope l(log().general_logger(), debug_level, 
+  log_scope l(log()->general_logger(), debug_level, 
               "OpenBusContext::~OpenBusContext");
   try
   {
