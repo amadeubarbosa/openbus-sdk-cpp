@@ -46,7 +46,6 @@ void exec(
   path exe_path(current_path());
   exe_path += rel_path;
   path start_path(current_path());
-  start_path += path(stage_interop + interop);
   std::cout << "-->Running " << type << " '" << process << "'." << std::endl;
 #ifndef _WIN32
   std::set<std::string> env;
