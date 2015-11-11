@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     cfg::load_options(argc, argv);
     if (cfg::openbus_test_verbose)
     {
-      openbus::log().set_level(openbus::debug_level);
+      openbus::log()->set_level(openbus::debug_level);
     }
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
