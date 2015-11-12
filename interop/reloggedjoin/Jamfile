@@ -1,6 +1,5 @@
 project openbus/interop/reloggedjoin
-  : requirements
-    <include>../
+  : requirements <include>../ <include>../../
   ;
 
 path-constant here : . ;
@@ -84,6 +83,4 @@ alias reloggedjoin
   : reloggedjoin_client
     reloggedjoin_server
     reloggedjoin_proxy
-    admin/interop_reloggedjoin_cpp_server.key 
-    admin/interop_reloggedjoin_cpp_proxy.key 
   ;

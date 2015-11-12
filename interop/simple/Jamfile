@@ -1,5 +1,5 @@
 project openbus/interop/simple
-  : requirements <include>../
+  : requirements <include>../ <include>../../
   ;
 
 path-constant here : . ;
@@ -59,5 +59,4 @@ explicit simple_server ;
 alias simple
   : simple_client
     simple_server
-    admin/interop_simple_cpp_server.key
   ;

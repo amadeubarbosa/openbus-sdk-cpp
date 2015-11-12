@@ -1,5 +1,5 @@
 project openbus/interop
-  : requirements <include>../
+  : requirements <include>../ <include>../../
   ;
 
 path-constant here : . ;
@@ -100,6 +100,4 @@ alias chaining :
   chaining_client 
   chaining_proxy
   chaining_server
-  admin/interop_chaining_cpp_proxy.key
-  admin/interop_chaining_cpp_server.key
 ;

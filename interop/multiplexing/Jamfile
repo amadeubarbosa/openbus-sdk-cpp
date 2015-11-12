@@ -1,6 +1,5 @@
 project openbus/interop/multiplexing
-  : requirements
-    <include>../
+  : requirements <include>../ <include>../../
   ;
 
 path-constant here : . ;
@@ -60,5 +59,4 @@ explicit multiplexing_server ;
 alias multiplexing
   : multiplexing_client
     multiplexing_server  
-    admin/interop_multiplexing_cpp_server.key
   ;

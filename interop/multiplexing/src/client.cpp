@@ -2,6 +2,7 @@
 
 #include "helloC.h"
 #include <util.hpp>
+#include <tests/config.hpp>
 #include <openbus/ORBInitializer.hpp>
 #include <openbus/log.hpp>
 #include <openbus/OpenBusContext.hpp>
@@ -20,56 +21,24 @@ struct bus
   unsigned short port;
 };
 std::map<std::size_t, bus> buses;
-
-void load_options(int argc, char **argv)
-{
-  namespace po = boost::program_options;
-  po::options_description desc("Allowed options");
-  desc.add_options()
-    ("help", "Help")
-    ("bus.host.name", po::value<std::string>()->default_value("localhost"),
-     "Host to OpenBus")
-    ("bus.host.port", po::value<unsigned short>()->default_value(2089), 
-     "Port to OpenBus")
-    ("bus2.host.name", po::value<std::string>()->default_value("localhost"),
-     "Host to second OpenBus")
-    ("bus2.host.port", po::value<unsigned short>()->default_value(3089), 
-     "Port to second OpenBus");
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
-  if (vm.count("help")) 
-  {
-    std::cout << desc << std::endl;
-    std::exit(1);
-  }
-  if (vm.count("bus.host.name"))
-  {
-    buses[0].host = vm["bus.host.name"].as<std::string>();
-  }
-  if (vm.count("bus.host.port"))
-  {
-    buses[0].port = vm["bus.host.port"].as<unsigned short>();
-  }
-  if (vm.count("bus2.host.name"))
-  {
-    buses[1].host = vm["bus2.host.name"].as<std::string>();
-  }
-  if (vm.count("bus2.host.port"))
-  {
-    buses[1].port = vm["bus2.host.port"].as<unsigned short>();
-  }
-}
+namespace cfg = openbus::tests::config;
 
 int main(int argc, char **argv) 
 {
   try 
   {
-    load_options(argc, argv);
-    openbus::log().set_level(openbus::debug_level);
+    cfg::load_options(argc, argv);
+    if (cfg::openbus_test_verbose)
+    {
+      openbus::log().set_level(openbus::debug_level);
+    }
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
+    buses[0].host = cfg::bus_host_name;
+    buses[0].port = cfg::bus_host_port;
+    buses[1].host = cfg::bus2_host_name;
+    buses[1].port = cfg::bus2_host_port;
     for (std::size_t busIdx = 0; busIdx != 2; ++busIdx)
     {
       std::auto_ptr<openbus::Connection> 
