@@ -55,7 +55,6 @@ child exec(
   auto exe_path(sdk_path);
   exe_path += rel_path.generic_string();
   auto start_path(sdk_path);
-  start_path += path(stage_interop + interop).generic_string();
   std::cout << "-->Running '" << exe_path << "'." << std::endl;
 #ifndef _WIN32
   std::set<std::string> env;
@@ -63,6 +62,8 @@ child exec(
              sdk_path + "/install/deps");
   env.insert("LD_LIBRARY_PATH=" +
              sdk_path + "/install/deps");
+  env.insert("OPENBUS_TESTCFG=" +
+             current_sdk_path + "/test.properties");
 #endif
   try
   {
