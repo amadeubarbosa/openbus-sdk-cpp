@@ -7,8 +7,45 @@ import property-set ;
 import "class" : new ;
 import version ;
 import path ;
+import modules ;
 
 path-constant here : . ;
+
+scs-root-path = [ os.environ SCS_ROOT_PATH ] ;
+if ! $(scs-root-path)
+{
+  scs-root-path = ../scs ;
+}
+
+boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
+if ! $(boost-root-path)
+{
+  boost-root-path = "../boost_1_51_0" ;
+}
+
+logger-root-path = [ os.environ LOGGER_ROOT_PATH ] ;
+if ! $(logger-root-path)
+{
+  logger-root-path = "../logger" ;
+}
+
+local openssl-jam-path = [ os.environ OPENSSL_JAM_PATH ] ;
+if ! $(openssl-jam-path)
+{
+  openssl-jam-path = "$(here)/../openssl.jam" ;
+}
+use-project openssl : $(openssl-jam-path) ; 
+
+local ace_tao-jam-path = [ os.environ ACE_TAO_JAM_PATH ] ;
+if ! $(ace_tao-jam-path)
+{
+  ace_tao-jam-path = "$(here)/../ace_tao.jam" ;
+}
+use-project TAO : $(ace_tao-jam-path) ; 
+
+use-project boost : $(boost-root-path) ;
+use-project scs : $(scs-root-path) ;
+use-project logger : $(logger-root-path) ;
 
 ace-root-path = [ os.environ ACE_ROOT_PATH ] ;
 if ! $(ace-root-path)
@@ -146,6 +183,13 @@ rule tag ( name : type ? : property-set )
   }
 }
 
+project dl ;
+
+lib dl
+  :
+  : <link>shared
+  ;
+
 project openbus
   : requirements
     <tag>@tag
@@ -164,6 +208,7 @@ project openbus
     <define>OPENBUS_SDK_SOURCE
     <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
     <conditional>@tao-idl-init
+    <library>/TAO//TAO
   : usage-requirements
     <link>shared:<define>OPENBUS_SDK_SHARED
     <toolset>msvc-12.0:<cxxflags>/FS
@@ -303,7 +348,6 @@ lib openbus
     /boost//headers
     /logger//logger
     /openssl//openssl
-    /TAO//TAO
     idls
   : <include>include
     <threading>multi:<source>/boost//thread
