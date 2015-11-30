@@ -48,7 +48,7 @@ void login_register(
   if (!priv_key)
   {
     std::cerr << "Chave privada invalida." << std::endl;
-    std::abort();
+    std::exit(-1);
   }
   conn.loginByCertificate(entity, priv_key);
   ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
@@ -75,7 +75,7 @@ struct on_invalid_login
     } 
     catch (const CORBA::Exception &e) 
     {
-      std::cout << "[error (CORBA::Exception)] " << e << std::endl;    
+      std::cerr << "[error (CORBA::Exception)] " << e << std::endl;    
     }
   }
 private:
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
   } 
   catch (const CORBA::Exception &e) 
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
   return 0; //MSVC

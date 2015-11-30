@@ -43,13 +43,13 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
       if (!priv_key)
       {
         std::cerr << "Chave privada invalida." << std::endl;
-        std::abort();
+        std::exit(-1);
       }
       conn->loginByCertificate(entity, priv_key);
       openbus::CallerChain chain = bus_ctx.getCallerChain();
       if (chain == openbus::CallerChain())
       {
-        std::abort();
+        std::exit(-1);
       }
       std::string entity(chain.caller().entity);
       std::string msg("Hello " + entity + "!");
@@ -68,7 +68,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
       if (offers->length() < 1)
       {
         std::cerr << "offers->length() != 0" << std::endl;
-        std::abort();
+        std::exit(-1);
       }
       for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
       {
@@ -82,7 +82,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     {
       std::cerr << "repid: " << e._rep_id() << "minor code: " << e.minor()
                 << std::endl;
-      std::abort();
+      std::exit(-1);
     }
     return CORBA::string_dup("");
   }
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
   } 
   catch (const CORBA::Exception &e) 
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
   return 0; //MSVC

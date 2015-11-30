@@ -54,7 +54,7 @@ child exec(
     );
   auto exe_path(sdk_path);
   exe_path += rel_path.generic_string();
-  auto start_path(sdk_path);
+  auto start_path(current_sdk_path);
   std::cout << "-->Running '" << exe_path << "'." << std::endl;
 #ifndef _WIN32
   std::set<std::string> env;
@@ -106,7 +106,8 @@ void run_interop(
   std::vector<std::string> services,
   const std::vector<path> &tmp_files,
   std::vector<service_exec> execs,
-  std::vector<child> &service_childs)
+  std::vector<child> &service_childs,
+  const std::string &client)
 {
   if (!services.empty())
   {
@@ -114,7 +115,7 @@ void run_interop(
     services.pop_back();
     execs.push_back(service_exec(service, current_sdk_path));
     service_childs.push_back(exec(interop, tag, service, current_sdk_path));
-    run_interop(tag, interop, services, tmp_files, execs, service_childs);
+    run_interop(tag, interop, services, tmp_files, execs, service_childs, client);
 
     execs.pop_back();
 
@@ -125,66 +126,54 @@ void run_interop(
     
     execs.push_back(service_exec(service, legacy_sdk_path));
     service_childs.push_back(exec(interop, tag, service, legacy_sdk_path));
-    run_interop(tag, interop, services, tmp_files, execs, service_childs);
+    run_interop(tag, interop, services, tmp_files, execs, service_childs, client);
     execs.pop_back();
     return;
   }
   std::vector<child> client_childs;
-  wait_for_exit(exec(interop, tag, "client", current_sdk_path));
+  try
+  {
+    wait_for_exit(exec(interop, tag, client, current_sdk_path));
   
-  for (auto &child : service_childs)
+    for (auto &child : service_childs)
+    {
+      terminate(child);
+    }
+  } catch (boost::system::system_error &)
   {
-    terminate(child);
   }
   service_childs.clear();
   std::cout << std::endl;
   remove_tmp_files(tmp_files);
-  boost::this_thread::sleep_for(boost::chrono::seconds(1));
-  for (auto e : execs)
-  {
-    service_childs.push_back(exec(interop, tag, e.first, e.second));
-  }
-  wait_for_exit(exec(interop, tag, "client", current_sdk_path));
-  for (auto &child : service_childs)
-  {
-    terminate(child);
-  }
-  service_childs.clear();
-  std::cout << std::endl;
-  remove_tmp_files(tmp_files);
-  boost::this_thread::sleep_for(boost::chrono::seconds(1));
 }
 
 void run_interop(
   const std::string &interop,
   const std::vector<std::string> &services,
+  const std::string &client = "client",
   const std::vector<path> &tmp_files = {})
 {
   for (auto flavor : flavors)
   {    
-    std::cout << std::endl << "->Running interop '"
+    std::cout << std::endl << "->Interop '"
               << interop << "' "
               << "with flavor "
               << flavor.first << "." << std::endl;
     std::vector<service_exec> execs = {};
     std::vector<child> childs = {};
     remove_tmp_files(tmp_files);
-    run_interop(flavor.second, interop, services, tmp_files, execs, childs);
+    run_interop(flavor.second, interop, services, tmp_files, execs, childs,
+                client);
   }
 }
 
 int main()
 {
   run_interop("simple", {"server",});
-  // run_interop("sharedauth", {"sharedauth", "server"},
-  //             {"/tmp/.secret", "/tmp/.secret.lock"});
+  run_interop("sharedauth", {"sharing"}, "consuming",
+              {"sharedauth.dat"});
   run_interop("multiplexing", { "server" });
   run_interop("reloggedjoin", {"server", "proxy"});
   run_interop("delegation", { "broadcaster", "forwarder", "messenger" });
   return 0; //MSVC
 }
-
-
-
-
-

@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
     if (!priv_key)
     {
       std::cerr << "Chave privada invalida." << std::endl;
-      std::abort();
+      return -1;
     }
     conn->loginByCertificate(entity, priv_key);
 
@@ -139,17 +139,17 @@ int main(int argc, char** argv) {
   } 
   catch(const std::exception &e) 
   {
-    std::cout << "[error (std::exception)] " << e.what() << std::endl;
+    std::cerr << "[error (std::exception)] " << e.what() << std::endl;
     return -1;
   } 
   catch (const CORBA::Exception &e) 
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   } 
   catch (...) 
   {
-    std::cout << "[error *unknow exception*]" << std::endl;
+    std::cerr << "[error *unknow exception*]" << std::endl;
     return -1;
   }
   return 0; //MSVC

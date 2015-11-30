@@ -61,13 +61,13 @@ int main(int argc, char **argv)
       {
         std::cerr << "sayHello() nao retornou a string '"
           + msg + "'." << std::endl;
-        std::abort();
+        return -1;
       }
     }
   } 
   catch (const CORBA::Exception &e) 
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
   return 0; //MSVC

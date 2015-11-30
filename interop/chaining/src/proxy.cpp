@@ -69,7 +69,7 @@ void login_register(
   EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(cfg::system_private_key));
   if (!priv_key)
   {
-    std::cout << "Chave privada invalida." << std::endl;
+    std::cerr << "Chave privada invalida." << std::endl;
     return;
   }
   conn.loginByCertificate(entity, priv_key);
@@ -96,7 +96,7 @@ struct on_invalid_login
     } 
     catch (const CORBA::Exception &e) 
     {
-      std::cout << "[error (CORBA::Exception)] " << e << std::endl;    
+      std::cerr << "[error (CORBA::Exception)] " << e << std::endl;    
     }
   }
 private:
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
   }
   catch (const CORBA::Exception &e)
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
   return 0; //MSVC

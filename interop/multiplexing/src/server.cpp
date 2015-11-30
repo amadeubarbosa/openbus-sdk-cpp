@@ -66,7 +66,7 @@ struct HelloImpl : virtual public POA_tecgraf::openbus::interop::simple::Hello
     {
       std::cerr << "chain == openbus::CallerChain()"
                 << std::endl;
-      std::abort();
+      std::exit(-1);
     }
     std::string msg("Hello " + std::string(chain.caller().entity) + "@"
                     + chain.busid() + "!");
@@ -100,7 +100,7 @@ void registerOffer(openbus::OpenBusContext &ctx, boost::shared_ptr<openbus::Conn
   } 
   catch (const CORBA::Exception &e) 
   {
-    std::cout << "error (CORBA::Exception): " << e << std::endl;
+    std::cerr << "error (CORBA::Exception): " << e << std::endl;
   }
 }
 
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
       openbus::demo::openssl::read_priv_key(cfg::system_private_key));
     if (!priv_key)
     {
-      std::cout << "Chave privada invalida." << std::endl;
+      std::cerr << "Chave privada invalida." << std::endl;
       return -1;
     }
     conn1BusA->loginByCertificate(entity, priv_key);
@@ -178,12 +178,12 @@ int main(int argc, char **argv) {
   } 
   catch (const std::exception &e) 
   {
-    std::cout << "[error (std::exception)] " << e.what() << std::endl;
+    std::cerr << "[error (std::exception)] " << e.what() << std::endl;
     return -1;
   } 
   catch (const CORBA::Exception &e) 
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
   return 0; //MSVC

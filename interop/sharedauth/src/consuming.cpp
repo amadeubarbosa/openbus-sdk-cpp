@@ -47,18 +47,18 @@ int main(int argc, char** argv) {
   } 
   catch(const std::exception &e) 
   {
-    std::cout << "[error (std::exception)] " << e.what() << std::endl;
-    throw;
+    std::cerr << "[error (std::exception)] " << e.what() << std::endl;
+    return -1;
   } 
   catch (const CORBA::Exception &e) 
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
-    throw;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
+    return -1;
   } 
   catch (...) 
   {
-    std::cout << "[error *unknow exception*]" << std::endl;
-    throw;
+    std::cerr << "[error *unknow exception*]" << std::endl;
+    return -1;
   }
   return 0; //MSVC
 }

@@ -110,14 +110,14 @@ int main(int argc, char** argv) {
               std::cerr << "Error: Retrieving messages for '"
                         << *first << "': posts.length() != 1"
                         << std::endl;
-              std::abort();
+              return -1;
             }
             else if (std::string(*first) == "bill" && posts->length() != 0)
             {
               std::cerr << "Error: Retrieving messages for 'bill' \
                             : posts.length() != 0"
                         << std::endl;
-              std::abort();
+              return -1;
               
             }
             for(CORBA::ULong i(0); i != posts->length(); ++i)
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
                 std::cerr << "Error: steve->interop_delegation_*_broadcaster"
                           << " != " << posts[i].from.in()
                           << std::endl;
-                std::abort();
+                return -1;
               }
               else if(std::string(*first) == "willian"
                       &&
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
                 std::cerr << "Error: interop_delegation_*_forwarder"
                           << " != " << posts[i].from.in()
                           << std::endl;
-                std::abort();
+                return -1;
               }                
               std::cout << "message(" << i << ") (from) " << (*posts)[i].from 
                         << " (body) " << (*posts)[i].message << std::endl;
@@ -164,17 +164,17 @@ int main(int argc, char** argv) {
   } 
   catch(std::exception const& e) 
   {
-    std::cout << "[error (std::exception)] " << e.what() << std::endl;
+    std::cerr << "[error (std::exception)] " << e.what() << std::endl;
     return -1;
   } 
   catch (const CORBA::Exception& e) 
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   } 
   catch (...) 
   {
-    std::cout << "[error *unknow exception*]" << std::endl;
+    std::cerr << "[error *unknow exception*]" << std::endl;
     return -1;
   }
   return 0; //MSVC

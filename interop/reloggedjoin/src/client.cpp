@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     if (offers->length() < 1)
     {
       std::cerr << "offers->length() != 0" << std::endl;
-      std::abort();
+      return -1;
     }
     for (CORBA::ULong idx = 0; idx != offers->length(); ++idx) 
     {
@@ -61,13 +61,13 @@ int main(int argc, char **argv)
       {
         std::cerr << "sayHello() nao retornou a string '"
           + msg + "'." << std::endl;
-        std::abort();
+        return -1;
       }
     }
   } 
   catch (const CORBA::Exception &e) 
   {
-    std::cout << "[error (CORBA::Exception)] " << e << std::endl;
+    std::cerr << "[error (CORBA::Exception)] " << e << std::endl;
     return -1;
   }
   return 0; //MSVC
