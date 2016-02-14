@@ -115,14 +115,16 @@ int main(int argc, char **argv) {
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
+    CORBA::Object_var bus_ref(cfg::get_bus_ref(orb_ctx->orb()));
+    CORBA::Object_var bus2_ref(cfg::get_bus2_ref(orb_ctx->orb()));
     boost::shared_ptr<openbus::Connection> connBusB
-      (bus_ctx->connectByAddress(cfg::bus2_host_name, cfg::bus2_host_port));
+      (bus_ctx->connectByReference(bus2_ref));
     boost::shared_ptr<openbus::Connection> conn1BusA
-      (bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+      (bus_ctx->connectByReference(bus_ref));
     boost::shared_ptr<openbus::Connection> conn2BusA
-      (bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+      (bus_ctx->connectByReference(bus_ref));
     boost::shared_ptr<openbus::Connection> conn3BusA
-      (bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+      (bus_ctx->connectByReference(bus_ref));
     std::vector<openbus::Connection *> connVec;
     connVec.push_back(conn1BusA.get());
     connVec.push_back(conn2BusA.get());

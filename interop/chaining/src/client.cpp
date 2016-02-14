@@ -43,9 +43,9 @@ int main(int argc, char **argv)
     openbus::OpenBusContext
       *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
+    CORBA::Object_var bus_ref(cfg::get_bus_ref(orb_ctx->orb()));
     boost::shared_ptr<openbus::Connection> conn(
-      bus_ctx->connectByAddress(cfg::bus_host_name, 
-                                cfg::bus_host_port));
+      bus_ctx->connectByReference(bus_ref));
     bus_ctx->setDefaultConnection(conn);
     conn->loginByPassword(entity, entity, cfg::user_password_domain);
 

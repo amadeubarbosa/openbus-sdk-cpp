@@ -15,12 +15,7 @@
 
 const std::string entity("interop_multiplexing_cpp_client");
 namespace cfg = openbus::tests::config;
-struct bus
-{
-  std::string host;
-  unsigned short port;
-};
-std::map<std::size_t, bus> buses;
+std::map<std::size_t, CORBA::Object_var> buses;
 
 int main(int argc, char **argv) 
 {
@@ -34,14 +29,12 @@ int main(int argc, char **argv)
     boost::shared_ptr<openbus::orb_ctx>
       orb_ctx(openbus::ORBInitializer(argc, argv));
     openbus::OpenBusContext *const bus_ctx(get_bus_ctx(orb_ctx));
-    buses[0].host = cfg::bus_host_name;
-    buses[0].port = cfg::bus_host_port;
-    buses[1].host = cfg::bus2_host_name;
-    buses[1].port = cfg::bus2_host_port;
+    buses[0] = cfg::get_bus_ref(orb_ctx->orb());
+    buses[1] = cfg::get_bus2_ref(orb_ctx->orb());
     for (std::size_t busIdx = 0; busIdx != 2; ++busIdx)
     {
-      boost::shared_ptr<openbus::Connection> 
-        conn(bus_ctx->connectByAddress(buses[busIdx].host, buses[busIdx].port));
+      boost::shared_ptr<openbus::Connection> conn(
+        bus_ctx->connectByReference(buses[busIdx]));
       bus_ctx->setDefaultConnection(conn);
       conn->loginByPassword(entity, entity, cfg::user_password_domain);
 

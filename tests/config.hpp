@@ -4,6 +4,11 @@
 #define TECGRAF_SDK_OPENBUS_TESTS_CONFIG_HPP
 
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#include <tao/ORB.h>
+#include <tao/LocalObject.h>
+#pragma clang diagnostic pop
+#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #include <boost/program_options.hpp>
 #pragma clang diagnostic pop
@@ -32,6 +37,31 @@ unsigned short bus_host_port,
   password_penalty_tries;
   
 bool openbus_test_verbose;
+
+CORBA::Object_var _get_bus_ref(CORBA::ORB_ptr orb, std::string bus_ref)
+{
+  std::ifstream bus_ior_file(bus_ref.c_str());
+  if (!bus_ior_file)
+  {
+    std::cerr << "Nao foi possivel abrir o arquivo com o IOR do barramento."
+              << std::endl;
+    return CORBA::Object::_nil();
+  }
+  std::stringstream stream;
+  stream << bus_ior_file.rdbuf();
+  std::string bus_ior(stream.str());
+  return orb->string_to_object(bus_ior.c_str());
+}
+    
+CORBA::Object_var get_bus_ref(CORBA::ORB_ptr orb)
+{
+  return _get_bus_ref(orb, bus_reference_path);
+}
+
+CORBA::Object_var get_bus2_ref(CORBA::ORB_ptr orb)
+{
+  return _get_bus_ref(orb, bus2_reference_path);
+}
 
 void load_options(int argc, char **argv)
 {
@@ -97,7 +127,8 @@ void load_options(int argc, char **argv)
   cfgfile_opts.add(config);
 
   po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, cmdline_opts), vm);
+  po::store(po::command_line_parser(argc, argv)
+            .options(cmdline_opts).allow_unregistered().run(), vm);
   
   if (vm.count("help")) 
   {

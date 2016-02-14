@@ -117,8 +117,9 @@ int main(int argc, char **argv)
       obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
     openbus::OpenBusContext
       *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
-    boost::shared_ptr<openbus::Connection>
-      conn(bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+    CORBA::Object_var bus_ref(cfg::get_bus_ref(orb_ctx->orb()));
+    boost::shared_ptr<openbus::Connection> conn(
+      bus_ctx->connectByReference(bus_ref));
     bus_ctx->setDefaultConnection(conn);
 
     boost::thread orb_run(boost::bind(ORBRun, bus_ctx->orb()));
