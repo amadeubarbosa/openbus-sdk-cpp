@@ -1,6 +1,7 @@
 project openbus/interop/reloggedjoin
   : requirements
     <include>../ <include>../../
+    <use>/boost//headers
   ;
 
 path-constant here : . ;
@@ -23,7 +24,6 @@ exe reloggedjoin_client
     /openbus//openbus
     /boost//program_options
     /scs//scs
-    /boost//headers
     /logger//logger
     /openssl//openssl
     /TAO//TAO
@@ -42,7 +42,6 @@ exe reloggedjoin_server
     /openbus//openbus
     /boost//program_options
     /scs//scs
-    /boost//headers
     /logger//logger
     /openssl//openssl
     /TAO//TAO
@@ -64,7 +63,6 @@ exe reloggedjoin_proxy
     /openbus//openbus
     /boost//program_options
     /scs//scs
-    /boost//headers
     /logger//logger
     /openssl//openssl
     /TAO//TAO

@@ -1,6 +1,7 @@
 project openbus/interop/multiplexing
   : requirements
     <include>../ <include>../../
+    <use>/boost//headers
   ;
 
 path-constant here : . ;
@@ -23,7 +24,6 @@ exe multiplexing_client
     /openbus//openbus
     /scs//scs
     /logger//logger
-    /boost//headers
     /boost//program_options
     /openssl//openssl
     /TAO//TAO
@@ -42,7 +42,6 @@ exe multiplexing_server
     /openbus//openbus
     /scs//scs
     /logger//logger
-    /boost//headers
     /boost//program_options
     /openssl//openssl
     /TAO//TAO

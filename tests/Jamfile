@@ -15,7 +15,7 @@ local test-requirements =
   <define>OPENBUS_SDK_TEST #Dangerous!
   <library>/openbus//openbus
   <library>/scs//scs
-  <library>/boost//headers
+  <use>/boost//headers
   <library>/boost/program_options
   <library>/logger//logger
   <library>/openssl//openssl

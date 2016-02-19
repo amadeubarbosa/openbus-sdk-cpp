@@ -1,5 +1,6 @@
 project openbus/interop/protocol
   : requirements <include>../ <include>../../
+    <use>/boost//headers
   ;
 
 path-constant here : . ;
@@ -22,7 +23,6 @@ exe protocol_client
     /openbus//openbus
     /scs//scs
     /logger//logger
-    /boost//headers
     /boost//program_options
     /openssl//openssl
     /TAO//TAO

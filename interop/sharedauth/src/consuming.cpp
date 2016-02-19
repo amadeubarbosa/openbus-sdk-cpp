@@ -5,13 +5,11 @@
 #include "encodingC.h"
 #include <openbus.hpp>
 
-#include <boost/interprocess/sync/file_lock.hpp>
 #include <iostream>
 #include <fstream>
 
 const std::string client_entity("interop_sharedauth_cpp_client");
 
-using namespace boost::interprocess;
 namespace cfg = openbus::tests::config;
 
 int main(int argc, char** argv) {

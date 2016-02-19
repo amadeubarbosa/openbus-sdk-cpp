@@ -14,6 +14,12 @@
 
 #include <memory>
 
+namespace
+{
+PortableInterceptor::ORBInitializer_var orb_initializer;
+boost::mutex _mutex;
+}
+
 namespace openbus 
 {
 OPENBUS_SDK_DECL boost::shared_ptr<log_type> log()
@@ -21,10 +27,6 @@ OPENBUS_SDK_DECL boost::shared_ptr<log_type> log()
   static boost::shared_ptr<log_type> l(new log_type);
   return l;
 }
-
-PortableInterceptor::ORBInitializer_var orb_initializer;
-
-boost::mutex _mutex;
 
 orb_ctx::orb_ctx(CORBA::ORB_var orb)
   : orb_(orb)

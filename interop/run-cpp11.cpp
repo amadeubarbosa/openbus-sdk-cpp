@@ -24,8 +24,8 @@ typedef std::string flavor_tag;
 
 const std::map<flavor, flavor_tag> flavors = 
 {
-  // {"multithread, debug and shared", "mt-d"},
-  // {"multithread, release and shared", "mt"},
+  {"multithread, debug and shared", "mt-d"},
+  {"multithread, release and shared", "mt"},
   {"multithread, debug and static", "mt-s-d"},
   {"multithread, release and static", "mt-s"},
 };

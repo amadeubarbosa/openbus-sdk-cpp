@@ -41,12 +41,6 @@ ServerInterceptor::ServerInterceptor(ORBInitializer *orb_init)
               "ServerInterceptor::ServerInterceptor");
 }
 
-ServerInterceptor::~ServerInterceptor()
-{
-  log_scope l(log()->general_logger(), info_level, 
-              "ServerInterceptor::~ServerInterceptor");
-}
-
 CORBA::Any ServerInterceptor::attach_legacy_credential_rst(
   boost::shared_ptr<Session> session,
   const boost::shared_ptr<Connection> &conn,

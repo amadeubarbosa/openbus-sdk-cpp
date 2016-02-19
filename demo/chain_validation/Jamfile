@@ -24,7 +24,6 @@ local rule demo-exe ( name : src : deps * )
       /scs//scs
       /logger//logger
       /openssl//openssl
-      /boost//headers
       /boost//program_options
       /TAO//TAO
       $(deps)
@@ -35,6 +34,7 @@ local rule demo-exe ( name : src : deps * )
       <implicit-dependency>$(deps)
       <link>static,<target-os>linux:<source>/dl//dl
       <include>../..
+      <use>/boost//headers
     ;
   explicit $(name) ;
 }

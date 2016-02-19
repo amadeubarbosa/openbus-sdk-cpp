@@ -49,7 +49,6 @@ struct OPENBUS_SDK_DECL Session
 struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor 
 {
   ServerInterceptor(ORBInitializer *);
-  ~ServerInterceptor();
   void receive_request_service_contexts(PI::ServerRequestInfo_ptr);
   void receive_request(PI::ServerRequestInfo_ptr);
   void send_reply(PI::ServerRequestInfo_ptr);

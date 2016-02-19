@@ -32,7 +32,6 @@ struct OPENBUS_SDK_DECL
 ClientInterceptor : public PI::ClientRequestInterceptor 
 {
   ClientInterceptor(ORBInitializer *);
-  ~ClientInterceptor();
   void send_request(PI::ClientRequestInfo_ptr);
   void receive_exception(PI::ClientRequestInfo_ptr);
   void send_poll(PI::ClientRequestInfo_ptr);

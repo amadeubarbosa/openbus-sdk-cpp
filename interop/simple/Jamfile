@@ -1,5 +1,6 @@
 project openbus/interop/simple
   : requirements <include>../ <include>../../
+    <use>/boost//headers
   ;
 
 path-constant here : . ;
@@ -22,7 +23,6 @@ exe simple_client
     /openbus//openbus
     /scs//scs
     /logger//logger
-    /boost//headers
     /boost//program_options
     /openssl//openssl
     /TAO//TAO
@@ -41,7 +41,6 @@ exe simple_server
     /openbus//openbus
     /scs//scs
     /logger//logger
-    /boost//headers
     /boost//program_options
     /openssl//openssl
     /TAO//TAO

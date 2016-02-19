@@ -422,12 +422,6 @@ ClientInterceptor::ClientInterceptor(ORBInitializer *orb_init)
               "ClientInterceptor::ClientInterceptor");
 }
 
-ClientInterceptor::~ClientInterceptor()
-{
-  log_scope l(log()->general_logger(), info_level, 
-              "ClientInterceptor::~ClientInterceptor");
-}
-
 void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr r)
 {
   log_scope l(log()->general_logger(), debug_level, 

@@ -1,5 +1,6 @@
 project openbus/interop/sharedauth
   : requirements <include>../ <include>../../
+    <use>/boost//headers
   ;
 
 path-constant here : . ;
@@ -28,7 +29,6 @@ exe sharedauth_consuming
     /openbus//openbus 
     /scs//scs 
     /logger//logger 
-    /boost//headers 
     /boost//program_options 
     /openssl//openssl    
     /TAO//TAO
@@ -50,7 +50,6 @@ exe sharedauth_sharing
     /openbus//openbus 
     /scs//scs 
     /logger//logger 
-    /boost//headers 
     /boost//program_options
     /boost//filesystem
     /openssl//openssl

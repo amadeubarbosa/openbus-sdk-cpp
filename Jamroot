@@ -345,7 +345,6 @@ explicit idls ;
 lib openbus
   : [ glob-tree *.cpp *.c : bin demo tests install assistant interop ]
     /scs//scs
-    /boost//headers
     /logger//logger
     /openssl//openssl
     idls
@@ -354,6 +353,7 @@ lib openbus
     <dependency>idls
     <implicit-dependency>idls
     <toolset>msvc:<source>/scs//idls
+    <use>/boost//headers
   :
   : <include>include
     <dependency>idls

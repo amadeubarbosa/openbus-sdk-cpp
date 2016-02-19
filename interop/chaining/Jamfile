@@ -1,5 +1,6 @@
 project openbus/interop
   : requirements <include>../ <include>../../
+    <use>/boost//headers
   ;
 
 path-constant here : . ;
@@ -33,7 +34,6 @@ explicit proxy-skeleton ;
 exe chaining_client
   : src/client.cpp
     /openbus//openbus
-    /boost//headers
     /boost//program_options
     /openssl//openssl
     /scs//scs
@@ -50,7 +50,6 @@ exe chaining_client
 
 exe chaining_proxy
   : src/proxy.cpp
-    /boost//headers
     /boost//program_options
     /openssl//openssl
     /scs//scs
@@ -74,7 +73,6 @@ exe chaining_proxy
 
 exe chaining_server
   : src/server.cpp
-    /boost//headers
     /boost//regex
     /boost//program_options
     /openssl//openssl
