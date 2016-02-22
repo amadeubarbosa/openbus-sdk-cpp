@@ -160,7 +160,7 @@ public:
    * \param conn Conexão que recebeu a notificação de login inválido.
    * \param login Informações do login que se tornou inválido.
    */
-  typedef boost::function<void (Connection &conn,
+  typedef boost::function<void (boost::shared_ptr<Connection> conn,
                                 idl::access::LoginInfo login)> 
     InvalidLoginCallback;
   

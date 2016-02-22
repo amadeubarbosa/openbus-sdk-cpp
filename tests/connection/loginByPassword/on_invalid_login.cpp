@@ -12,24 +12,38 @@ bool on_invalid_login_called(false);
 
 struct relogin_callback
 {
-  void operator()(openbus::Connection &conn, openbus::idl::access::LoginInfo info)
+  void operator()(boost::shared_ptr<openbus::Connection> conn,
+                  openbus::idl::access::LoginInfo info)
   {
+    openbus::log_scope log(openbus::log()->general_logger(),
+                           openbus::info_level, "relogin_callback");
     do
     {
       try
       {
-        conn.loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
-        on_invalid_login_called = true;
-        break;
-      }
-      catch (const CORBA::Exception &)
-      {
-      }
-      boost::this_thread::sleep_for(boost::chrono::seconds(1));
-    }
-    while(true);
-  }
-};
+        /*
+         * sleep_for() é um ponto de interrupção. Em caso de execução
+         * da callback por parte da thread de renovação, o SDK não pode
+         * permitir que o uso de um ponto de interrupção no código do
+         * usuário lance boost::thread_interrupted.
+         */
+        try
+        {
+          boost::this_thread::sleep_for(boost::chrono::seconds(1));
+        }
+        catch (const boost::thread_interrupted &)
+        {
+          std::cerr << "boost::thread_interrupted lançado indevidamente"
+                    << std::endl;
+          std::abort();
+        }
+        
+        conn->loginByPassword( cfg::user_entity_name,
+        cfg::user_password, cfg::user_password_domain);
+        on_invalid_login_called = true; break; } catch (const
+        CORBA::Exception &) { }
+        boost::this_thread::sleep_for(boost::chrono::seconds(1)); }
+        while(true); } };
 
 int main(int argc, char** argv)
 {

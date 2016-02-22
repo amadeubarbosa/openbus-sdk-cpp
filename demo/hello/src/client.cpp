@@ -96,13 +96,14 @@ struct callSayHello
 struct onReloginCallback
 {
   typedef void result_type;
-  result_type operator()(openbus::Connection& c, access_control::LoginInfo info) const
+  result_type operator()(boost::shared_ptr<openbus::Connection> c,
+                         access_control::LoginInfo info) const
   {
     do
     {
       try
       {
-        c.loginByPassword("demo", "demo");
+        c->loginByPassword("demo", "demo");
         break;
       }
       catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)

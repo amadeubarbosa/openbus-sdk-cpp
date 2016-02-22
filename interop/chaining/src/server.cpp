@@ -48,7 +48,8 @@ private:
 
 void login_register(
   const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp,
-  const openbus::idl::offers::ServicePropertySeq &props, openbus::Connection &conn)
+  const openbus::idl::offers::ServicePropertySeq &props,
+  boost::shared_ptr<openbus::Connection> conn)
 {
   EVP_PKEY *priv_key(
     openbus::demo::openssl::read_priv_key(cfg::system_private_key));
@@ -57,7 +58,7 @@ void login_register(
     std::cerr << "Chave privada invalida." << std::endl;
     return;
   }
-  conn.loginByCertificate(entity, priv_key); 
+  conn->loginByCertificate(entity, priv_key); 
   ctx.getOfferRegistry()->registerService(comp.getIComponent(), props);
 }
 
@@ -67,12 +68,13 @@ struct on_invalid_login
   on_invalid_login(
     const openbus::OpenBusContext &ctx, scs::core::ComponentContext &comp, 
     const openbus::idl::offers::ServicePropertySeq &props, 
-    openbus::Connection  &conn) 
+    boost::shared_ptr<openbus::Connection> conn) 
     : ctx(ctx), comp(comp), props(props), conn(conn)
   {
   }
 
-  result_type operator()(openbus::Connection &c, openbus::idl::access::LoginInfo l) 
+  result_type operator()(boost::shared_ptr<openbus::Connection> c,
+                         openbus::idl::access::LoginInfo l) 
   {
     try 
     {
@@ -88,7 +90,7 @@ private:
   const openbus::OpenBusContext &ctx;
   scs::core::ComponentContext &comp;
   const openbus::idl::offers::ServicePropertySeq &props;
-  openbus::Connection &conn;
+  boost::shared_ptr<openbus::Connection> conn;
 };
 
 void ORBRun(CORBA::ORB_ptr orb)
@@ -137,12 +139,12 @@ int main(int argc, char **argv)
     props[0u].name = "offer.domain";
     props[0u].value = "Interoperability Tests";
 
-    conn->onInvalidLogin(on_invalid_login(*bus_ctx, comp, props, *conn));
+    conn->onInvalidLogin(on_invalid_login(*bus_ctx, comp, props, conn));
 
     HelloImpl srv(*bus_ctx);
     comp.addFacet("Hello", "IDL:tecgraf/openbus/interop/simple/Hello:1.0",
                   &srv);
-    login_register(*bus_ctx, comp, props, *conn);
+    login_register(*bus_ctx, comp, props, conn);
     orb_run.join();
   }
   catch (const CORBA::Exception &e)

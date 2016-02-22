@@ -87,7 +87,8 @@ struct on_invalid_login
   {
   }
 
-  result_type operator()(openbus::Connection &c, openbus::idl::access::LoginInfo l) 
+  result_type operator()(boost::shared_ptr<openbus::Connection>,
+                         openbus::idl::access::LoginInfo l) 
   {
     try 
     {

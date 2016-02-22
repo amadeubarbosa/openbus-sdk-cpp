@@ -12,13 +12,14 @@ bool on_invalid_login_called(false);
 
 struct relogin_callback
 {
-  void operator()(openbus::Connection &conn, openbus::idl::access::LoginInfo info)
+  void operator()(boost::shared_ptr<openbus::Connection> conn,
+                  openbus::idl::access::LoginInfo info)
   {
     do
     {
       try
       {
-        conn.loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
+        conn->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
         on_invalid_login_called = true;
         break;
       }

@@ -570,14 +570,17 @@ idl::access::LoginInfo Connection::get_login()
     }
     try
     {
-      onInvalidLogin()(*this, invalid_login);
+      boost::this_thread::disable_interruption di;
+      _onInvalidLogin(shared_from_this(), invalid_login);
     }
     catch (...)
     {
       l.level_log(warning_level, 
-                  "Falha na execucao da callback OnInvalidLogin.");
+                  "Falha na execução da callback OnInvalidLogin. " \
+                  "Silenciamento de exceção lançada.");
     }
     boost::lock_guard<boost::mutex> lock(_mutex);;
+    login = _loginInfo.get() ? *(_loginInfo.get()) : idl::access::LoginInfo();
     idl::access::LoginInfo curr;
     if (_invalid_login.get())
     {

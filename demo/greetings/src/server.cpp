@@ -49,14 +49,15 @@ void run_orb(CORBA::ORB_var orb)
 struct onReloginCallback
 {
   typedef void result_type;
-  result_type operator()(openbus::Connection& c, access_control::LoginInfo info
+  result_type operator()(boost::shared_ptr<openbus::Connection> c,
+                         access_control::LoginInfo info
                          , EVP_PKEY * priv_key) const
   {
     do
     {
       try
       {
-        c.loginByCertificate("demo", priv_key);
+        c->loginByCertificate("demo", priv_key);
         break;
       }
       catch(tecgraf::openbus::core::v2_1::services::access_control::AccessDenied const&)
