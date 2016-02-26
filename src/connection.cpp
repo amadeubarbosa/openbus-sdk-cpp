@@ -79,7 +79,7 @@ Connection::Connection(
   , _loginInfo(0)    
   , _invalid_login(0)
   , _onInvalidLogin(0)
-  , _state(UNLOGGED)
+  , _state(LOGGED_OUT)
   , _profile2login(LRUSize)
   , _login2session(LRUSize)
 {
@@ -105,7 +105,7 @@ Connection::Connection(
   , _loginInfo(0)
   , _invalid_login(0)
   , _onInvalidLogin(0)
-  , _state(UNLOGGED)
+  , _state(LOGGED_OUT)
   , _profile2login(LRUSize)
   , _login2session(LRUSize)
 {
@@ -127,6 +127,10 @@ Connection::~Connection()
   try
   {
     _logout();
+    if (_renewLogin.get_id() != boost::this_thread::get_id())
+    {
+      _renewLogin.join();
+    }
   }
   catch (...) 
   {
@@ -227,18 +231,15 @@ void Connection::loginByPassword(const std::string &entity,
   log_scope l(log()->general_logger(), info_level, 
               "Connection::loginByPassword");
   boost::unique_lock<boost::mutex> lock(_mutex);
+  if (LOGGED == _state)
+  {
+    throw AlreadyLoggedIn();
+  }
   bool initialized(CORBA::is_nil(_iComponent));
   lock.unlock();
   if (initialized)
   {
     init();
-  }
-  lock.lock();
-  State state(_state);
-  lock.unlock();
-  if (state == LOGGED) 
-  {
-    throw AlreadyLoggedIn();
   }
   
   interceptors::ignore_interceptor _i(_orb_init);
@@ -281,18 +282,15 @@ void Connection::loginByCertificate(const std::string &entity,
   log_scope l(log()->general_logger(), info_level, 
               "Connection::loginByCertificate");
   boost::unique_lock<boost::mutex> lock(_mutex);
+  if (LOGGED == _state)
+  {
+    throw AlreadyLoggedIn();
+  }
   bool initialized(CORBA::is_nil(_iComponent));
   lock.unlock();
   if (initialized)
   {
     init();
-  }
-  lock.lock();
-  State state(_state);
-  lock.unlock();
-  if (state == LOGGED) 
-  {
-    throw AlreadyLoggedIn();
   }
   
   idl::core::EncryptedBlock challenge;
@@ -368,18 +366,15 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   log_scope l(log()->general_logger(), info_level, 
               "Connection::loginBySharedAuth");
   boost::unique_lock<boost::mutex> lock(_mutex);
+  if (LOGGED == _state)
+  {
+    throw AlreadyLoggedIn();
+  }
   bool initialized(CORBA::is_nil(_iComponent));
   lock.unlock();
   if (initialized)
   {
     init();
-  }
-  lock.lock();
-  State state(_state);
-  lock.unlock();
-  if (state == LOGGED) 
-  {
-    throw AlreadyLoggedIn();
   }
 
   if (secret.busid() != busid())
@@ -442,76 +437,85 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
 bool Connection::_logout(bool local) 
 {
   log_scope l(log()->general_logger(), info_level, "Connection::_logout");
-  bool success(false);
   boost::unique_lock<boost::mutex> lock(_mutex);
-  State state(_state);
-  lock.unlock();
-  _renewLogin.interrupt();
-  if (_renewLogin.get_id() != boost::this_thread::get_id())
-  {
-    _renewLogin.join();
-  }
-  if (state == UNLOGGED)
+  if (LOGGED_OUT == _state)
   {
     return false;
   }
-  else if (state == LOGGED) 
+  lock.unlock();
+  _renewLogin.interrupt();
+  bool success(false);
+  if (!local)
   {
-    if (!local)
+    struct save_state
     {
-      struct save_state
-      {
-        save_state(OpenBusContext &context,
-                   boost::shared_ptr<Connection> self)
-          : context(context)
-          , previous_conn(context.getCurrentConnection())
-          , previous_chain(context.getJoinedChain())
+      save_state(OpenBusContext &context,
+                 boost::shared_ptr<Connection> self)
+        : context(context)
+        , previous_conn(context.getCurrentConnection())
+        , previous_chain(context.getJoinedChain())
         {
           context.exitChain();
           context.setCurrentConnection(self);
         }
-        ~save_state()
+      ~save_state()
         {
           context.setCurrentConnection(previous_conn);
           context.joinChain(previous_chain);
         }
 
-        OpenBusContext &context;
-        boost::shared_ptr<Connection> previous_conn;
-        CallerChain previous_chain;
-      } save_state_(_openbusContext, shared_from_this());
+      OpenBusContext &context;
+      boost::shared_ptr<Connection> previous_conn;
+      CallerChain previous_chain;
+    } save_state_(_openbusContext, shared_from_this());
 
-      static_cast<void>(save_state_); // avoid warnings
-      try
+    static_cast<void>(save_state_); // avoid warnings
+    try
+    {
+      interceptors::ignore_invalid_login i(_orb_init);        
+      _access_control->logout();
+      success = true;
+    }
+    catch (const CORBA::NO_PERMISSION &e)
+    {
+      if (idl::access::InvalidLoginCode == e.minor())
       {
-        interceptors::ignore_invalid_login i(_orb_init);        
-        _access_control->logout();
         success = true;
       }
-      catch (const CORBA::NO_PERMISSION &e)
+      else
       {
-        if (idl::access::InvalidLoginCode == e.minor())
-        {
-          success = true;
-        }
-        else
-        {
-          l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::NO_PERMISSION with rep_id '%s' and minor '%d'", e._rep_id(), e.minor());
-          success = false;
-        }
-      }
-      catch (const CORBA::SystemException &e)
-      {
-        //Mico does not implement CORBA::Exception_rep_id()
-        l.level_vlog(warning_level, "Falha durante chamada remota de logout: CORBA::SystemException with rep_id '%s' and minor '%d'", e._rep_id(), e.minor());
+        l.level_vlog(warning_level,
+                     "Falha durante chamada remota de logout: "   \
+                     "CORBA::NO_PERMISSION with rep_id '%s' and minor '%d'",
+                     e._rep_id(), e.minor());
         success = false;
       }
+    }
+    catch (const CORBA::Exception &e)
+    {
+      l.level_vlog(warning_level, "Falha durante chamada remota de logout: " \
+                   "CORBA::Exception with rep_id '%s'",
+                   e._rep_id());
+      success = false;
+    }
+    catch (const CORBA::SystemException &e)
+    {
+      l.level_vlog(warning_level, "Falha durante chamada remota de logout: " \
+                   "CORBA::SystemException with rep_id '%s' and minor '%d'",
+                   e._rep_id(), e.minor());
+      success = false;
+    }
+    catch (...)
+    {
+      l.level_vlog(warning_level,
+                   "Falha desconhecida durante chamada remota de logou.");
+      success = false;
     }
   }
   lock.lock();
   _loginInfo.reset();
   _invalid_login.reset();
-  _state = UNLOGGED;
+  _state = LOGGED_OUT;
   lock.unlock();  
   return success;    
 }
@@ -534,16 +538,16 @@ Connection::InvalidLoginCallback Connection::onInvalidLogin() const
   return _onInvalidLogin; 
 }
 
-const idl::access::LoginInfo *Connection::login() const 
+const idl::access::LoginInfo * Connection::login() const 
 {
   boost::lock_guard<boost::mutex> lock(_mutex);;
-  return ((_state == INVALID) ? 0 : _loginInfo.get());
+  return _loginInfo.get();
 }
 
 const std::string Connection::busid() const
 { 
   boost::lock_guard<boost::mutex> lock(_mutex);;
-  return ((_state == INVALID) ? std::string() : _busid);
+  return _busid;
 }
 
 idl::access::LoginInfo Connection::get_login()

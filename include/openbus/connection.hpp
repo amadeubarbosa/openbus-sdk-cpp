@@ -419,8 +419,7 @@ private:
   enum State 
   {
     LOGGED,
-    UNLOGGED,
-    INVALID
+    LOGGED_OUT
   } _state;
   
     

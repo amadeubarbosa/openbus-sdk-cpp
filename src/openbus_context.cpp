@@ -720,6 +720,10 @@ OpenBusContext::~OpenBusContext()
       {
         l.vlog("Logout for connection{%p}", conn.get());
         conn->_logout();
+        if (conn->_renewLogin.get_id() != boost::this_thread::get_id())
+        {
+          conn->_renewLogin.join();
+        }
       }
     }
   }
