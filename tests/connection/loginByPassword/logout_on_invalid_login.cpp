@@ -8,6 +8,8 @@
 
 namespace cfg = openbus::tests::config;
 
+boost::mutex mtx;
+boost::condition_variable cond;
 bool on_invalid_login_called(false);
 
 struct relogin_callback
@@ -15,20 +17,9 @@ struct relogin_callback
   void operator()(boost::shared_ptr<openbus::Connection> conn,
                   openbus::idl::access::LoginInfo info)
   {
-    do
-    {
-      try
-      {
-        conn->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
-        on_invalid_login_called = true;
-        break;
-      }
-      catch (const CORBA::Exception &)
-      {
-      }
-      boost::this_thread::sleep_for(boost::chrono::seconds(1));
-    }
-    while(true);
+    boost::lock_guard<boost::mutex> lock(mtx);
+    on_invalid_login_called = true;
+    cond.notify_one();
   }
 };
 
@@ -53,7 +44,6 @@ int main(int argc, char** argv)
   conn->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
   relogin_callback callback;
   conn->onInvalidLogin(callback);
-  std::string invalid_login(conn->login()->id.in());
 
   std::size_t validity(
     bus_ctx->getLoginRegistry()->getLoginValidity(conn->login()->id.in()));
@@ -66,13 +56,18 @@ int main(int argc, char** argv)
     std::abort();
   }
 
-  boost::this_thread::sleep_for(boost::chrono::seconds(validity));
-
-  if (on_invalid_login_called)
+  boost::unique_lock<boost::mutex> lock(mtx);
+  while (!on_invalid_login_called)
   {
-    std::cerr << "on_invalid_login_called == true: Callback onInvalidLogin executada indevidamente."
-              << std::endl;
-    std::abort();
+    if (boost::cv_status::timeout
+        == cond.wait_for(lock, boost::chrono::seconds(validity)))
+    {
+      return 0;
+    }
   }
+  std::cerr << "on_invalid_login_called == true: Callback onInvalidLogin " \
+    "executada indevidamente."
+            << std::endl;
+  std::abort();
   return 0; //MSVC
 }

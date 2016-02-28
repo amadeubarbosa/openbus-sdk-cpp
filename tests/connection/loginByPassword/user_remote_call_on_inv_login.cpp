@@ -8,6 +8,8 @@
 
 namespace cfg = openbus::tests::config;
 
+boost::mutex mtx;
+boost::condition_variable cond;
 bool on_invalid_login_called(false);
 
 struct relogin_callback
@@ -25,7 +27,6 @@ struct relogin_callback
           cfg::user_entity_name,
           cfg::user_password,
           cfg::user_password_domain);
-        on_invalid_login_called = true;
         break;
       }
       catch (const CORBA::Exception &)
@@ -34,6 +35,9 @@ struct relogin_callback
       boost::this_thread::sleep_for(boost::chrono::seconds(1));
     }
     while(true);
+    boost::lock_guard<boost::mutex> lock(mtx);
+    on_invalid_login_called = true;
+    cond.notify_one();
   }
 };
 
@@ -67,10 +71,15 @@ int main(int argc, char** argv)
 
   bus_ctx->getLoginRegistry()->getLoginValidity(conn->login()->id.in());  
 
-  if (!on_invalid_login_called)
+  boost::unique_lock<boost::mutex> lock(mtx);
+  while (!on_invalid_login_called)
   {
-    std::cerr << "on_invalid_login_called != true" << std::endl;
-    std::abort();
+    if (boost::cv_status::timeout
+        == cond.wait_for(lock, boost::chrono::seconds(validity*2)))
+    {
+      std::cerr << "on_invalid_login_called != true" << std::endl;
+      std::abort();
+    }
   }
   return 0; //MSVC
 }
