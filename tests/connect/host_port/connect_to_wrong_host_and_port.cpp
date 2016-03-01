@@ -10,21 +10,12 @@ int main(int argc, char* argv[])
   try
   {
     namespace cfg = openbus::tests::config;
-  cfg::load_options(argc, argv);
-  if (cfg::openbus_test_verbose)
-  {
-    openbus::log()->set_level(openbus::debug_level);
-  }
-
-    openbus::log()->set_level(openbus::debug_level);
-    std::auto_ptr<openbus::orb_ctx>
-      orb_ctx(openbus::ORBInitializer(argc, argv));
-    CORBA::Object_var
-      obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
-    openbus::OpenBusContext
-      *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
+    cfg::ctx_t ctx(cfg::init(argc, argv));
+    openbus::OpenBusContext *bus_ctx(ctx.second);
+    
     boost::shared_ptr<openbus::Connection>
-      conn(bus_ctx->connectByAddress(cfg::bus_host_name, (cfg::bus_host_port + 10)));
+      conn(bus_ctx->connectByAddress(
+             cfg::bus_host_name, (cfg::bus_host_port + 10)));
   }
   catch (const openbus::InvalidBusAddress &)
   {

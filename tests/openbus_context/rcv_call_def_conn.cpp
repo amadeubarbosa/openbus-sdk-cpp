@@ -37,21 +37,11 @@ void call_orb(CORBA::ORB_var orb)
 int main(int argc, char** argv)
 {
   namespace cfg = openbus::tests::config;
-  cfg::load_options(argc, argv);
-  if (cfg::openbus_test_verbose)
-  {
-    openbus::log()->set_level(openbus::debug_level);
-  }
-
-  std::auto_ptr<openbus::orb_ctx>
-    orb_ctx(openbus::ORBInitializer(argc, argv));
+  cfg::ctx_t ctx(cfg::init(argc, argv));
+  openbus::OpenBusContext *bus_ctx(ctx.second);
+  boost::shared_ptr<openbus::orb_ctx> orb_ctx(ctx.first);
 
   boost::thread orb_thread(boost::bind(&call_orb, orb_ctx->orb()));
-
-  CORBA::Object_var
-    obj(orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
-  openbus::OpenBusContext
-    *bus_ctx(dynamic_cast<openbus::OpenBusContext *>(obj.in()));
 
   boost::shared_ptr<openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
@@ -76,11 +66,11 @@ int main(int argc, char** argv)
   PortableServer::POAManager_var poa_manager = poa->the_POAManager();
   poa_manager->activate();
 
-  scs::core::ComponentContext ctx(bus_ctx->orb(), componentId);
+  scs::core::ComponentContext scs_ctx(bus_ctx->orb(), componentId);
   
   hello_impl hello_servant (*conn);
 
-  ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
+  scs_ctx.addFacet("hello", "IDL:Hello:1.0", &hello_servant);
 
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   openbus::idl::offers::ServicePropertySeq props;
@@ -91,7 +81,7 @@ int main(int argc, char** argv)
   props[0] = property;
   props[1].name = "uuid";
   props[1].value = boost::uuids::to_string(uuid).c_str();
-  bus_ctx->getOfferRegistry()->registerService(ctx.getIComponent(), props);
+  bus_ctx->getOfferRegistry()->registerService(scs_ctx.getIComponent(), props);
 
   props.length(4);
   props[0].name  = "openbus.offer.entity";

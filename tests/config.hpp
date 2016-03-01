@@ -3,6 +3,7 @@
 #ifndef TECGRAF_SDK_OPENBUS_TESTS_CONFIG_HPP
 #define TECGRAF_SDK_OPENBUS_TESTS_CONFIG_HPP
 
+#include <openbus.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <tao/ORB.h>
@@ -63,7 +64,7 @@ CORBA::Object_var get_bus2_ref(CORBA::ORB_ptr orb)
   return _get_bus_ref(orb, bus2_reference_path);
 }
 
-void load_options(int argc, char **argv)
+void load_options(int &argc, char **argv)
 {
   namespace po = boost::program_options;
   po::options_description generic("Command line options");
@@ -179,6 +180,21 @@ void load_options(int argc, char **argv)
     system_private_key = vm["system.private.key"].as<std::string>();
   if (vm.count("system.sharedauth"))
     system_sharedauth = vm["system.sharedauth"].as<std::string>();
+}
+
+typedef std::pair<boost::shared_ptr<orb_ctx>, OpenBusContext *> ctx_t;
+ctx_t init(int &argc, char **argv)
+{
+  load_options(argc, argv);
+  if (openbus_test_verbose)
+  {
+    log()->set_level(debug_level);
+  }
+  boost::shared_ptr<orb_ctx> orb_ctx(openbus::ORBInitializer(argc, argv));
+  CORBA::Object_var obj(
+    orb_ctx->orb()->resolve_initial_references("OpenBusContext"));
+  OpenBusContext *bus_ctx(dynamic_cast<OpenBusContext *>(obj.in()));
+  return std::make_pair(orb_ctx, bus_ctx);
 }
 
 }}}
