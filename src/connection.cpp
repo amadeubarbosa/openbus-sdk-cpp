@@ -437,86 +437,88 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
 bool Connection::_logout(bool local) 
 {
   log_scope l(log()->general_logger(), info_level, "Connection::_logout");
+  idl::access::LoginInfo login;
   boost::unique_lock<boost::mutex> lock(_mutex);
   if (LOGGED_OUT == _state)
   {
     return false;
   }
-  lock.unlock();
   _renewLogin.interrupt();
-  bool success(false);
-  if (!local)
-  {
-    struct save_state
-    {
-      save_state(OpenBusContext &context,
-                 boost::shared_ptr<Connection> self)
-        : context(context)
-        , previous_conn(context.getCurrentConnection())
-        , previous_chain(context.getJoinedChain())
-        {
-          context.exitChain();
-          context.setCurrentConnection(self);
-        }
-      ~save_state()
-        {
-          context.setCurrentConnection(previous_conn);
-          context.joinChain(previous_chain);
-        }
-
-      OpenBusContext &context;
-      boost::shared_ptr<Connection> previous_conn;
-      CallerChain previous_chain;
-    } save_state_(_openbusContext, shared_from_this());
-
-    static_cast<void>(save_state_); // avoid warnings
-    try
-    {
-      interceptors::ignore_invalid_login i(_orb_init);        
-      _access_control->logout();
-      success = true;
-    }
-    catch (const CORBA::NO_PERMISSION &e)
-    {
-      if (idl::access::InvalidLoginCode == e.minor())
-      {
-        success = true;
-      }
-      else
-      {
-        l.level_vlog(warning_level,
-                     "Falha durante chamada remota de logout: "   \
-                     "CORBA::NO_PERMISSION with rep_id '%s' and minor '%d'",
-                     e._rep_id(), e.minor());
-        success = false;
-      }
-    }
-    catch (const CORBA::Exception &e)
-    {
-      l.level_vlog(warning_level, "Falha durante chamada remota de logout: " \
-                   "CORBA::Exception with rep_id '%s'",
-                   e._rep_id());
-      success = false;
-    }
-    catch (const CORBA::SystemException &e)
-    {
-      l.level_vlog(warning_level, "Falha durante chamada remota de logout: " \
-                   "CORBA::SystemException with rep_id '%s' and minor '%d'",
-                   e._rep_id(), e.minor());
-      success = false;
-    }
-    catch (...)
-    {
-      l.level_vlog(warning_level,
-                   "Falha desconhecida durante chamada remota de logou.");
-      success = false;
-    }
-  }
-  lock.lock();
+  login = *(_loginInfo.get());
   _loginInfo.reset();
   _invalid_login.reset();
   _state = LOGGED_OUT;
-  lock.unlock();  
+  lock.unlock();
+  if (local)
+  {
+    return false;
+  }
+  bool success(false);
+  struct save_state
+  {
+    save_state(OpenBusContext &context,
+               boost::shared_ptr<Connection> self)
+      : context(context)
+      , previous_conn(context.getCurrentConnection())
+      , previous_chain(context.getJoinedChain())
+      {
+        context.exitChain();
+        context.setCurrentConnection(self);
+      }
+    ~save_state()
+      {
+        context.setCurrentConnection(previous_conn);
+        context.joinChain(previous_chain);
+      }
+
+    OpenBusContext &context;
+    boost::shared_ptr<Connection> previous_conn;
+    CallerChain previous_chain;
+  } save_state_(_openbusContext, shared_from_this());
+
+  static_cast<void>(save_state_); // avoid warnings
+  try
+  {
+    interceptors::ignore_invalid_login i(_orb_init);
+    interceptors::login l(_orb_init, login);
+    _access_control->logout();
+    success = true;
+  }
+  catch (const CORBA::NO_PERMISSION &e)
+  {
+    if (idl::access::InvalidLoginCode == e.minor())
+    {
+      success = true;
+    }
+    else
+    {
+      l.level_vlog(warning_level,
+                   "Falha durante chamada remota de logout: "   \
+                   "CORBA::NO_PERMISSION with rep_id '%s' and minor '%d'",
+                   e._rep_id(), e.minor());
+      success = false;
+    }
+  }
+  catch (const CORBA::Exception &e)
+  {
+    l.level_vlog(warning_level, "Falha durante chamada remota de logout: " \
+                 "CORBA::Exception with rep_id '%s'",
+                 e._rep_id());
+    success = false;
+  }
+  catch (const CORBA::SystemException &e)
+  {
+    l.level_vlog(warning_level, "Falha durante chamada remota de logout: " \
+                 "CORBA::SystemException with rep_id '%s' and minor '%d'",
+                 e._rep_id(), e.minor());
+    success = false;
+  }
+  catch (...)
+  {
+    l.level_vlog(warning_level,
+                 "Falha desconhecida durante chamada remota de logout.");
+    success = false;
+  }
   return success;    
 }
 

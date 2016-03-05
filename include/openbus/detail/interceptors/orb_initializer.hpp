@@ -82,6 +82,13 @@ struct OPENBUS_SDK_DECL ignore_invalid_login
   ORBInitializer *orb_init;
 };
 
+struct OPENBUS_SDK_DECL login
+{
+  login(ORBInitializer *, idl::access::LoginInfo);
+  ~login();
+  ORBInitializer *orb_init;
+};
+  
 struct OPENBUS_SDK_DECL ORBInitializer : 
   public PortableInterceptor::ORBInitializer,
   public CORBA::LocalObject
@@ -97,7 +104,8 @@ struct OPENBUS_SDK_DECL ORBInitializer :
   IOP::Codec_var codec;
   PortableInterceptor::Current_var pi_current;
   PortableInterceptor::SlotId current_connection, joined_call_chain,
-    signed_call_chain, ignore_interceptor, ignore_invalid_login, request_id;
+    signed_call_chain, ignore_interceptor, ignore_invalid_login, request_id,
+    login;
 };
 
 }}

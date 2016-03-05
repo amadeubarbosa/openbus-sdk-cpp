@@ -171,6 +171,13 @@ bool ClientInterceptor::ignore_invalid_login(PortableInterceptor::ClientRequestI
   return !!ignore;
 }
 
+idl::access::LoginInfo ClientInterceptor::login(
+  PortableInterceptor::ClientRequestInfo &r)
+{
+  CORBA::Any_var any(r.get_slot(_orb_init->login));
+  return extract<idl::access::LoginInfo>(any);
+}
+
 idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
   const boost::shared_ptr<Connection> &conn,
   hash_value &hash,
@@ -432,8 +439,17 @@ void ClientInterceptor::send_request(PortableInterceptor::ClientRequestInfo_ptr 
     return;
   }
 
-  boost::shared_ptr<Connection> conn(get_current_connection(*r));
-  idl::access::LoginInfo curr_login(conn->get_login());
+  boost::shared_ptr<Connection> conn(get_current_connection(*r));  
+  idl::access::LoginInfo curr_login, scoped_login;
+  scoped_login = login(*r);
+  if (idl::access::LoginInfo() == scoped_login)
+  {
+    curr_login = conn->get_login();
+  }
+  else
+  {
+    curr_login = scoped_login;
+  }
   if (std::string(curr_login.id.in()).empty())
   {
     l.log("throw NoLoginCode");

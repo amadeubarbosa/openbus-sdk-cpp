@@ -42,6 +42,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   boost::shared_ptr<Connection> get_current_connection(PI::ClientRequestInfo &);
   bool ignore_request(PI::ClientRequestInfo &);
   bool ignore_invalid_login(PI::ClientRequestInfo &);
+  idl::access::LoginInfo login(PI::ClientRequestInfo &);
 
   idl::creden::SignedData
     get_signed_chain(

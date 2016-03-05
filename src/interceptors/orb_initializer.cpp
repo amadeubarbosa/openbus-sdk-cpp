@@ -55,6 +55,28 @@ ignore_invalid_login::~ignore_invalid_login()
   }
 }
 
+login::login(ORBInitializer * p,
+                     idl::access::LoginInfo login)
+  : orb_init(p)
+{
+  CORBA::Any any;
+  any <<= login;
+  orb_init->pi_current->set_slot(orb_init->login, any); 
+}
+
+login::~login()
+{
+  try
+  {
+    CORBA::Any any;
+    any <<= idl::access::LoginInfo();
+    orb_init->pi_current->set_slot(orb_init->login, any); 
+  } 
+  catch (...)
+  {
+  }
+}
+
 ORBInitializer::ORBInitializer(boost::shared_ptr<log_type> log)
   : log(log)
 {
@@ -91,6 +113,7 @@ void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr info)
   ignore_interceptor = info->allocate_slot_id();
   ignore_invalid_login = info->allocate_slot_id();
   request_id = info->allocate_slot_id();
+  login = info->allocate_slot_id();
 }
 
 }}
