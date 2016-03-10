@@ -12,6 +12,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/foreach.hpp>
 #ifndef _WIN32
   #include <unistd.h>
 #endif
@@ -127,10 +128,7 @@ Connection::~Connection()
   try
   {
     _logout();
-    if (_renewLogin.get_id() != boost::this_thread::get_id())
-    {
-      _renewLogin.join();
-    }
+    join_renew_threads();
   }
   catch (...) 
   {
@@ -217,7 +215,7 @@ void Connection::login(idl::access::LoginInfo &loginInfo,
   _loginInfo.reset(&loginInfo);
   _invalid_login.reset();
   _state = LOGGED;
-  _renewLogin = boost::thread(
+  _renew_threads[loginInfo.id.in()] = boost::thread(
     boost::bind(renewLogin,
                 boost::weak_ptr<Connection>(shared_from_this()),
                 _access_control, 
@@ -443,8 +441,8 @@ bool Connection::_logout(bool local)
   {
     return false;
   }
-  _renewLogin.interrupt();
   login = *(_loginInfo.get());
+  _renew_threads[login.id.in()].interrupt();
   _loginInfo.reset();
   _invalid_login.reset();
   _state = LOGGED_OUT;
@@ -605,4 +603,15 @@ idl::access::LoginInfo Connection::get_login()
   return login;
 }
 
+void Connection::join_renew_threads()
+{
+  BOOST_FOREACH(_login_thread_t::value_type &e, _renew_threads)
+  {
+    if (e.second.get_id() != boost::this_thread::get_id())
+    {
+      e.second.join();
+    }
+  }
+}
+  
 }

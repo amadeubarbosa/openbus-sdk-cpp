@@ -30,6 +30,7 @@
 #include <boost/thread.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/container/map.hpp>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -391,6 +392,8 @@ private:
 
   idl::access::LoginInfo get_login();
 
+  void join_renew_threads();
+  
   /* Variaveis que sao modificadas somente no construtor. */
   OpenBusContext &_openbusContext;
   PrivateKey _key;
@@ -411,7 +414,8 @@ private:
   const unsigned short _port;
   interceptors::ORBInitializer * _orb_init;
   CORBA::ORB_ptr _orb;
-  boost::thread _renewLogin;
+  typedef boost::container::map<std::string, boost::thread> _login_thread_t;
+  _login_thread_t _renew_threads;
   mutable boost::mutex _mutex;
   boost::scoped_ptr<idl::access::LoginInfo> _loginInfo, _invalid_login;
   InvalidLoginCallback _onInvalidLogin;
