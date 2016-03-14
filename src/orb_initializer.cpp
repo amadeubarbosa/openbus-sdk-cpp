@@ -18,14 +18,22 @@ namespace
 {
 PortableInterceptor::ORBInitializer_var orb_initializer;
 boost::mutex _mutex;
+boost::once_flag once = BOOST_ONCE_INIT;
+openbus::log_type *log_type_;
+
+void log_init()
+{
+  log_type_ = new openbus::log_type;
+}
 }
 
 namespace openbus 
 {
-OPENBUS_SDK_DECL boost::shared_ptr<log_type> log()
+
+OPENBUS_SDK_DECL log_type * log()
 {
-  static boost::shared_ptr<log_type> l(new log_type);
-  return l;
+  boost::call_once(&log_init, once);
+  return log_type_;
 }
 
 orb_ctx::orb_ctx(CORBA::ORB_var orb)

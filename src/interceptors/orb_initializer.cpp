@@ -77,7 +77,7 @@ login::~login()
   }
 }
 
-ORBInitializer::ORBInitializer(boost::shared_ptr<log_type> log)
+ORBInitializer::ORBInitializer(log_type *log)
   : log(log)
 {
   log_scope l(log->general_logger(), debug_level, 

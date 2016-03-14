@@ -93,12 +93,12 @@ struct OPENBUS_SDK_DECL ORBInitializer :
   public PortableInterceptor::ORBInitializer,
   public CORBA::LocalObject
 {
-  ORBInitializer(boost::shared_ptr<log_type>);
+  ORBInitializer(log_type *);
   ~ORBInitializer();
   void pre_init(PortableInterceptor::ORBInitInfo_ptr);
   void post_init(PortableInterceptor::ORBInitInfo_ptr);
 
-  boost::shared_ptr<log_type> log;
+  log_type *log;
   PortableInterceptor::ClientRequestInterceptor_var cln_interceptor; 
   PortableInterceptor::ServerRequestInterceptor_var srv_interceptor;
   IOP::Codec_var codec;

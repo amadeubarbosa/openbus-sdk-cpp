@@ -115,7 +115,7 @@ private:
  * \brief Instância global de log_type que permite acesso pelo usuário
  * das configurações de log do Openbus
  */
-  OPENBUS_SDK_DECL boost::shared_ptr<log_type> log();
+  OPENBUS_SDK_DECL log_type * log();
 
 }
 
