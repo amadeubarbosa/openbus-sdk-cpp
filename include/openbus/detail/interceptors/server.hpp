@@ -57,7 +57,7 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
   char *name();
   void destroy();
 
-  boost::shared_ptr<log_type> _log;
+  log_type *_log;
   boost::mutex _mutex;
   ORBInitializer *_orb_init;
   LRUCache<CORBA::ULong, boost::shared_ptr<Session> > _sessionLRUCache;

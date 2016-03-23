@@ -441,6 +441,7 @@ bool Connection::_logout(bool local)
   {
     return false;
   }
+  assert(_loginInfo.get());
   login = *(_loginInfo.get());
   _renew_threads[login.id.in()].interrupt();
   _loginInfo.reset();

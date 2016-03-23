@@ -9,7 +9,6 @@
 #include <tao/AnyTypeCode/AnyTypeCode_Adapter_Impl.h>
 #include <tao/AnyTypeCode/ExceptionA.h>
 #include <tao/AnyTypeCode/Any_Dual_Impl_T.h>
-#include <boost/scoped_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <openssl/sha.h>
@@ -593,7 +592,7 @@ void ClientInterceptor::receive_exception(PortableInterceptor::ClientRequestInfo
     idl::access::LoginInfo invalid_login;
     {
       boost::lock_guard<boost::mutex> conn_lock(conn->_mutex);
-      invalid_login = *conn->_loginInfo;
+      if (conn->_loginInfo) invalid_login = *conn->_loginInfo;
     }
     try
     { 
@@ -683,6 +682,7 @@ void ClientInterceptor::receive_reply(
   boost::uuids::uuid request_id(get_request_id(r));
   if (!request_id.is_nil())
   {
+    boost::lock_guard<boost::mutex> l(_mutex);
     _request_id2conn.erase(request_id);
   }
 }

@@ -84,7 +84,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
     const boost::shared_ptr<Connection> &,
     idl::access::LoginInfo &);
   
-  boost::shared_ptr<log_type> _log;
+  log_type *_log;
   ORBInitializer *_orb_init;
   LRUCache<hash_value, idl::creden::SignedData> _callChainLRUCache;
   LRUCache<hash_value, idl::legacy::creden::SignedCallChain>

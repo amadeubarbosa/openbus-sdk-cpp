@@ -11,7 +11,6 @@
 #include "openbus/log.hpp"
 #pragma clang diagnostic pop
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <cstring>
@@ -235,6 +234,7 @@ bool ServerInterceptor::validate_chain(
   SHA256(cred.chain.encoded.get_buffer(),
          cred.chain.encoded.length(), hashChain);
 
+  assert(conn->_buskey.get());
   if (!conn->_buskey->verify(cred.chain.signature, 
                             idl::core::EncryptedBlockSize, hashChain, 
                             idl::core::HashValueSize))
@@ -282,6 +282,7 @@ void ServerInterceptor::handle_credential(
   try 
   {
     l.vlog("Validando login: %s", credential.login.in());
+    assert(conn->_loginCache.get());
     caller = conn->_loginCache->validateLogin(credential.login.in());
   }
   catch (const CORBA::NO_PERMISSION &e) 
