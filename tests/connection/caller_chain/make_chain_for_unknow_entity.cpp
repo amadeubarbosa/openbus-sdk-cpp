@@ -14,6 +14,7 @@ int main(int argc, char** argv)
     bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
   bus_ctx->setDefaultConnection(conn);
   conn->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
+  cfg::register_relogin_callback(conn);
   bus_ctx->makeChainFor("unknow_entity");
   return 0; //MSVC
 }

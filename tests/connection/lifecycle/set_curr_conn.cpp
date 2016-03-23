@@ -18,6 +18,7 @@ int main(int argc, char** argv)
     weak_conn = conn;
 
     bus_ctx->setCurrentConnection(conn);
+    cfg::register_relogin_callback(conn);
     
     if (weak_conn.use_count() != 1)
     {
@@ -60,6 +61,7 @@ int main(int argc, char** argv)
     conn2->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
     weak_conn2 = conn2;
     bus_ctx->setCurrentConnection(conn2);
+    cfg::register_relogin_callback(conn2);
 
     login_registry->getLoginValidity(conn2->login()->id);
 
@@ -75,6 +77,7 @@ int main(int argc, char** argv)
       conn3->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
       weak_conn3 = conn3;
       bus_ctx->setCurrentConnection(conn3);
+      cfg::register_relogin_callback(conn3);
     }
 
     try

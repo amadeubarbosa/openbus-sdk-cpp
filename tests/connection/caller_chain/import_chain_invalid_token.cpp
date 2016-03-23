@@ -16,6 +16,7 @@ int main(int argc, char** argv)
   conn->loginByPassword(cfg::user_entity_name, cfg::user_password, cfg::user_password_domain);
 
   bus_ctx->setDefaultConnection(conn);
+  cfg::register_relogin_callback(conn);
 
   std::string token("invalid_token");
   CORBA::OctetSeq token_seq(

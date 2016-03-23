@@ -46,6 +46,7 @@ int main(int argc, char** argv)
 
   boost::shared_ptr<openbus::Connection> conn(
     bus_ctx->connectByAddress(cfg::bus_host_name, cfg::bus_host_port));
+  cfg::register_relogin_callback(conn);
   bus_ctx->setDefaultConnection(conn);
   EVP_PKEY *priv_key(openbus::demo::openssl::read_priv_key(cfg::system_private_key));
   if (!priv_key)

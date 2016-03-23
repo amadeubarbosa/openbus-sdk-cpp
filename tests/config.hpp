@@ -197,5 +197,34 @@ ctx_t init(int &argc, char **argv)
   return std::make_pair(orb_ctx, bus_ctx);
 }
 
+struct relogin_callback
+{
+  void operator()(boost::shared_ptr<openbus::Connection> conn,
+                  openbus::idl::access::LoginInfo info)
+  {
+    openbus::log_scope log(openbus::log()->general_logger(),
+                           openbus::info_level, "relogin_callback");
+    do
+    {
+      try
+      {
+        conn->loginByPassword(user_entity_name,
+                              user_password,
+                              user_password_domain);
+        if (conn->login()) break;
+      }
+      catch (const CORBA::Exception &) { }
+      boost::this_thread::sleep_for(boost::chrono::seconds(1));
+    }
+    while(true);
+  }
+};
+
+void register_relogin_callback(boost::shared_ptr<Connection> conn)
+{
+  relogin_callback callback;
+  conn->onInvalidLogin(callback);
+}
+  
 }}}
 #endif

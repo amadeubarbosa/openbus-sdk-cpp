@@ -20,6 +20,7 @@ int main(int argc, char **argv)
   conn_B->loginByPassword("B", "B", cfg::user_password_domain);
   
   bus_ctx->setDefaultConnection(conn_A);
+  cfg::register_relogin_callback(conn_A);
   
   openbus::CallerChain chain_A_B(
     bus_ctx->makeChainFor(conn_B->login()->entity.in()));
