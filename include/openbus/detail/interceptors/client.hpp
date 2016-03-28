@@ -43,9 +43,13 @@ ClientInterceptor : public PI::ClientRequestInterceptor
   bool ignore_request(PI::ClientRequestInfo &);
   bool ignore_invalid_login(PI::ClientRequestInfo &);
   idl::access::LoginInfo login(PI::ClientRequestInfo &);
+  std::string busid(
+    PI::ClientRequestInfo_ptr,
+    const boost::shared_ptr<Connection> &);
 
   idl::creden::SignedData
     get_signed_chain(
+      PI::ClientRequestInfo_ptr,
       const boost::shared_ptr<Connection> &,
       hash_value &hash, 
       const std::string &target,
@@ -53,6 +57,7 @@ ClientInterceptor : public PI::ClientRequestInterceptor
     
   idl::legacy::creden::SignedCallChain
     get_signed_chain(
+      PI::ClientRequestInfo_ptr,
       const boost::shared_ptr<Connection> &,
       hash_value &, 
       const std::string &target,
@@ -83,6 +88,8 @@ ClientInterceptor : public PI::ClientRequestInterceptor
     PI::ClientRequestInfo_ptr,
     const boost::shared_ptr<Connection> &,
     idl::access::LoginInfo &);
+
+  void clear_caches();
   
   log_type *_log;
   ORBInitializer *_orb_init;

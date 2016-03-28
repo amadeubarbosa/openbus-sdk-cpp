@@ -148,7 +148,7 @@ CallerChain ClientInterceptor::get_joined_chain(
                         (legacy_signed_chain.encoded.get_buffer())),
         idl::legacy::access::_tc_CallChain);
       idl::legacy::access::CallChain chain(extract<idl::legacy::access::CallChain>(any));
-      return CallerChain(chain, conn->busid(), chain.target.in(), legacy_signed_chain);
+      return CallerChain(chain, busid(r, conn), chain.target.in(), legacy_signed_chain);
     }
   }
   return CallerChain();
@@ -177,7 +177,21 @@ idl::access::LoginInfo ClientInterceptor::login(
   return extract<idl::access::LoginInfo>(any);
 }
 
+std::string ClientInterceptor::busid(
+  PortableInterceptor::ClientRequestInfo_ptr r,
+  const boost::shared_ptr<Connection> &conn)
+{
+  CORBA::Any_var any(r->get_slot(_orb_init->busid));
+  const char *id;
+  if (any >>= id)
+  {
+    return std::string(id);
+  }
+  return conn->busid();
+}
+
 idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
+  PI::ClientRequestInfo_ptr r,
   const boost::shared_ptr<Connection> &conn,
   hash_value &hash,
   const std::string &target,
@@ -200,7 +214,7 @@ idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
     catch (const CORBA::SystemException &)
     {
       l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
-             conn->busid().c_str());
+             busid(r, conn).c_str());
       throw CORBA::NO_PERMISSION(idl::legacy::access::UnavailableBusCode,
                                  CORBA::COMPLETED_NO);
     }
@@ -229,6 +243,7 @@ idl::legacy::creden::SignedCallChain ClientInterceptor::get_signed_chain(
 }
 
 idl::creden::SignedData ClientInterceptor::get_signed_chain(
+  PI::ClientRequestInfo_ptr r,
   const boost::shared_ptr<Connection> &conn,
   hash_value &hash,
   const std::string &target,
@@ -251,7 +266,7 @@ idl::creden::SignedData ClientInterceptor::get_signed_chain(
     catch (const CORBA::SystemException &)
     {
       l.vlog("throw CORBA::NO_PERMISSION, minor=UnavailableBusCode, busid=%s", 
-             conn->busid().c_str());
+             busid(r, conn).c_str());
       throw CORBA::NO_PERMISSION(idl::access::UnavailableBusCode,
                                  CORBA::COMPLETED_NO);
     }
@@ -291,7 +306,7 @@ void ClientInterceptor::fill_credential(
   Connection::SecretSession *session)
 {
   C credential;
-  credential.bus = conn->_busid.c_str();
+  credential.bus = busid(r, conn).c_str();
   credential.login = login.id;
   if (session == 0)
   {
@@ -357,7 +372,7 @@ void ClientInterceptor::fill_credential(
       {
         target = session->remote_id;
       }
-      credential.chain = get_signed_chain(conn, hash, target, C());
+      credential.chain = get_signed_chain(r, conn, hash, target, C());
     }
   }
       
@@ -415,6 +430,12 @@ boost::uuids::uuid ClientInterceptor::get_request_id(
   {
     return boost::uuids::nil_generator()();
   }
+}
+
+void ClientInterceptor::clear_caches()
+{
+  _callChainLRUCache.clear();
+  _legacy_callChainLRUCache.clear();
 }
 
 ClientInterceptor::ClientInterceptor(ORBInitializer *orb_init)

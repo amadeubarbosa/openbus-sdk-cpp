@@ -77,6 +77,28 @@ login::~login()
   }
 }
 
+busid::busid(ORBInitializer * p,
+             std::string id)
+  : orb_init(p)
+{
+  CORBA::Any any;
+  any <<= id.c_str();
+  orb_init->pi_current->set_slot(orb_init->busid, any); 
+}
+
+busid::~busid()
+{
+  try
+  {
+    CORBA::Any any;
+    any <<= "";
+    orb_init->pi_current->set_slot(orb_init->busid, any); 
+  } 
+  catch (...)
+  {
+  }
+}
+
 ORBInitializer::ORBInitializer(log_type *log)
   : log(log)
 {
@@ -114,6 +136,7 @@ void ORBInitializer::post_init(PortableInterceptor::ORBInitInfo_ptr info)
   ignore_invalid_login = info->allocate_slot_id();
   request_id = info->allocate_slot_id();
   login = info->allocate_slot_id();
+  busid = info->allocate_slot_id();
 }
 
 }}

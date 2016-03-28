@@ -115,6 +115,8 @@ struct OPENBUS_SDK_DECL ServerInterceptor : public PI::ServerRequestInterceptor
     void handle_credential(
       C &,
       PI::ServerRequestInfo_ptr);
+
+  void clear_caches();
 };
 
 }}

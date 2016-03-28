@@ -388,7 +388,7 @@ private:
     return _login_registry;
   }
 
-  void init();
+  void login_init();
 
   idl::access::LoginInfo get_login();
 

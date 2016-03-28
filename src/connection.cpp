@@ -1,6 +1,7 @@
 // -*- coding: iso-8859-1-unix -*-
 
 #include "openbus/connection.hpp"
+#include "openbus/detail/interceptors/client.hpp"
 #include "openbus/detail/interceptors/server.hpp"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
@@ -24,6 +25,7 @@ const std::size_t LRUSize(128);
 
 namespace openbus 
 {
+
 class Connection;
 
 void Connection::renewLogin(
@@ -142,7 +144,7 @@ Connection::~Connection()
   }
 }
 
-void Connection::init()
+void Connection::login_init()
 {
   scs::core::IComponent_var iComponent;
   idl::access::AccessControl_var access_control;
@@ -155,7 +157,8 @@ void Connection::init()
     interceptors::ignore_interceptor _i(_orb_init);
     iComponent = scs::core::IComponent::_narrow(_component_ref);
     
-    CORBA::Object_var obj = iComponent->getFacet(idl::access::_tc_AccessControl->id());
+    CORBA::Object_var obj(
+      iComponent->getFacet(idl::access::_tc_AccessControl->id()));
     access_control = idl::access::AccessControl::_narrow(obj);
     assert(!CORBA::is_nil(access_control.in()));
     
@@ -178,8 +181,7 @@ void Connection::init()
     
     obj = iComponent->getFacet(idl::access::_tc_LoginRegistry->id());
     login_registry = idl::access::LoginRegistry::_narrow(obj);
-    assert(!CORBA::is_nil(login_registry.in()));
-    
+    assert(!CORBA::is_nil(login_registry.in()));    
   }
 	
   std::string busid; 
@@ -233,13 +235,8 @@ void Connection::loginByPassword(const std::string &entity,
   {
     throw AlreadyLoggedIn();
   }
-  bool initialized(CORBA::is_nil(_iComponent));
   lock.unlock();
-  if (initialized)
-  {
-    init();
-  }
-  
+  login_init();  
   interceptors::ignore_interceptor _i(_orb_init);
   idl::access::LoginAuthenticationInfo loginAuthenticationInfo;
   
@@ -284,13 +281,8 @@ void Connection::loginByCertificate(const std::string &entity,
   {
     throw AlreadyLoggedIn();
   }
-  bool initialized(CORBA::is_nil(_iComponent));
   lock.unlock();
-  if (initialized)
-  {
-    init();
-  }
-  
+  login_init();
   idl::core::EncryptedBlock challenge;
   idl::access::LoginProcess_var loginProcess;
   {
@@ -368,13 +360,8 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
   {
     throw AlreadyLoggedIn();
   }
-  bool initialized(CORBA::is_nil(_iComponent));
   lock.unlock();
-  if (initialized)
-  {
-    init();
-  }
-
+  login_init();
   if (secret.busid() != busid())
   {
     throw WrongBus();
@@ -435,17 +422,37 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
 bool Connection::_logout(bool local) 
 {
   log_scope l(log()->general_logger(), info_level, "Connection::_logout");
-  idl::access::LoginInfo login;
   boost::unique_lock<boost::mutex> lock(_mutex);
   if (LOGGED_OUT == _state)
   {
     return false;
   }
   assert(_loginInfo.get());
-  login = *(_loginInfo.get());
+  idl::access::LoginInfo login = *(_loginInfo.get());
   _renew_threads[login.id.in()].interrupt();
   _loginInfo.reset();
   _invalid_login.reset();
+  _iComponent = scs::core::IComponent::_nil();
+  idl::access::AccessControl_var access_control(_access_control);
+  _access_control = idl::access::AccessControl::_nil();
+  _offer_registry = idl::offers::OfferRegistry::_nil();
+  _login_registry = idl::access::LoginRegistry::_nil();
+  _legacy_access_control = idl::legacy::access::AccessControl::_nil();
+  _legacy_converter = idl::legacy_support::LegacyConverter::_nil();
+  std::string busid(_busid);
+  _busid = "";
+  _loginCache.reset();
+  _buskey.reset();
+  interceptors::ClientInterceptor *cln_int(
+    dynamic_cast<interceptors::ClientInterceptor *>(
+      _orb_init->cln_interceptor.in()));
+  cln_int->clear_caches();
+  interceptors::ServerInterceptor *srv_int(
+    dynamic_cast<interceptors::ServerInterceptor *>(
+      _orb_init->srv_interceptor.in()));
+  srv_int->clear_caches();
+  _profile2login.clear();
+  _login2session.clear();
   _state = LOGGED_OUT;
   lock.unlock();
   if (local)
@@ -480,7 +487,8 @@ bool Connection::_logout(bool local)
   {
     interceptors::ignore_invalid_login i(_orb_init);
     interceptors::login l(_orb_init, login);
-    _access_control->logout();
+    interceptors::busid b(_orb_init, busid);
+    access_control->logout();
     success = true;
   }
   catch (const CORBA::NO_PERMISSION &e)

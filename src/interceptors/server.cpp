@@ -345,6 +345,11 @@ void ServerInterceptor::handle_credential(
     throw CORBA::NO_PERMISSION(idl::access::InvalidChainCode, CORBA::COMPLETED_NO);
   }
 }
+
+void ServerInterceptor::clear_caches()
+{
+  _sessionLRUCache.clear();
+}
     
 void ServerInterceptor::receive_request_service_contexts(
   PI::ServerRequestInfo_ptr r)
