@@ -142,7 +142,7 @@ if ! $(scs-root-path)
   scs-root-path = ../scs ;
 }
 
-boost-root-path = [ os.environ BOOST_ROOT_PATH ] ;
+boost-root-path = [ os.environ BOOST_ROOT ] ;
 if ! $(boost-root-path)
 {
   boost-root-path = "../boost" ;
