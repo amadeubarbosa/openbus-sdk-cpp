@@ -1,3 +1,5 @@
+import os ;
+
 project openbus/interop
   : requirements <include>../ <include>../../
     <use>/boost//headers
@@ -5,27 +7,39 @@ project openbus/interop
 
 path-constant here : . ;
 
+interop-basic-idl-path = [ os.environ INTEROP_BASIC_IDL_PATH ] ;
+if ! $(interop-basic-idl-path)
+{
+  interop-basic-idl-path = $(here)/../../../openbus-sdk-idl-interop-basic ;
+}
+
+interop-chaining-idl-path = [ os.environ INTEROP_CHAINING_IDL_PATH ] ;
+if ! $(interop-chaining-idl-path)
+{
+  interop-chaining-idl-path = $(here)/../../../openbus-sdk-idl-interop-chaining ;
+}
+
 obj hello-stub
-  : $(here)/idl/hello/hello.idl
+  : $(interop-basic-idl-path)/hello.idl
   : <warnings>off
   ;
 explicit hello-stub ;
 
 obj hello-skeleton
-  : $(here)/idl/hello/hello.idl
+  : $(interop-basic-idl-path)/hello.idl
   : <generate>skeleton
     <warnings>off
   ;
 explicit hello-skeleton ;
 
 obj proxy-stub
-  : $(here)/idl/proxy/proxy.idl
+  : $(interop-chaining-idl-path)/proxy.idl
   : <warnings>off
   ;
 explicit proxy-stub ;
 
 obj proxy-skeleton
-  : $(here)/idl/proxy/proxy.idl
+  : $(interop-chaining-idl-path)/proxy.idl
   : <generate>skeleton
     <warnings>off
   ;

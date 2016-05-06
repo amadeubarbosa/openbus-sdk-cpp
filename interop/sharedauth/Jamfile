@@ -1,3 +1,5 @@
+import os ;
+
 project openbus/interop/sharedauth
   : requirements <include>../ <include>../../
     <use>/boost//headers
@@ -5,21 +7,33 @@ project openbus/interop/sharedauth
 
 path-constant here : . ;
 
+interop-basic-idl-path = [ os.environ INTEROP_BASIC_IDL_PATH ] ;
+if ! $(interop-basic-idl-path)
+{
+  interop-basic-idl-path = $(here)/../../../openbus-sdk-idl-interop-basic ;
+}
+
+interop-sharedauth-idl-path = [ os.environ INTEROP_SHAREDAUTH_IDL_PATH ] ;
+if ! $(interop-sharedauth-idl-path)
+{
+  interop-sharedauth-idl-path = $(here)/../../../openbus-sdk-idl-interop-sharedauth ;
+}
+
 obj hello-stub
-  : $(here)/idl/hello/hello.idl
+  : $(interop-basic-idl-path)/hello.idl
   : <warnings>off
   ;
 explicit hello-stub ;
 
 obj hello-skeleton
-  : $(here)/idl/hello/hello.idl
+  : $(interop-basic-idl-path)/hello.idl
   : <generate>skeleton
     <warnings>off
   ;
 explicit hello-skeleton ;
 
 obj encoding-stub
-  : $(here)/idl/sharedauth/encoding.idl
+  : $(interop-sharedauth-idl-path)/encoding.idl
   : <warnings>off
   ;
 explicit encoding-stub ;

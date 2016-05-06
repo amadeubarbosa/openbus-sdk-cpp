@@ -1,3 +1,5 @@
+import os ;
+
 project openbus/interop/simple
   : requirements <include>../ <include>../../
     <use>/boost//headers
@@ -5,14 +7,20 @@ project openbus/interop/simple
 
 path-constant here : . ;
 
+interop-basic-idl-path = [ os.environ INTEROP_BASIC_IDL_PATH ] ;
+if ! $(interop-basic-idl-path)
+{
+  interop-basic-idl-path = $(here)/../../../openbus-sdk-idl-interop-basic ;
+}
+
 obj hello-stub
-  : $(here)/idl/hello.idl
+  : $(interop-basic-idl-path)/hello.idl
   : <warnings>off
   ;
 explicit hello-stub ;
 
 obj hello-skeleton
-  : $(here)/idl/hello.idl
+  : $(interop-basic-idl-path)/hello.idl
   : <generate>skeleton
     <warnings>off
   ;

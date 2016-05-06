@@ -1,3 +1,5 @@
+import os ;
+
 project openbus/interop/delegation
   : requirements
     <include>../ <include>../../
@@ -6,14 +8,20 @@ project openbus/interop/delegation
 
 path-constant here : . ;
 
+interop-delegation-idl-path = [ os.environ INTEROP_DELEGATION_IDL_PATH ] ;
+if ! $(interop-delegation-idl-path)
+{
+  interop-delegation-idl-path = $(here)/../../../openbus-sdk-idl-interop-delegation ;
+}
+
 obj messages-stub
-  : $(here)/idl/messages.idl
+  : $(interop-delegation-idl-path)/messages.idl
   : <warnings>off
   ;
 explicit messages-stub ;
 
 obj messages-skeleton
-  : $(here)/idl/messages.idl
+  : $(interop-delegation-idl-path)/messages.idl
   : <generate>skeleton
   <warnings>off
   ;
