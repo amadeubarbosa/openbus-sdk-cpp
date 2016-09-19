@@ -283,15 +283,8 @@ void Connection::loginByPassword(const std::string &entity,
     
   idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo(0);
-  try 
-  {
-    loginInfo = _access_control->loginByPassword(entity.c_str(), _key.pubKey(), 
-                                                 encryptedBlock, validityTime);
-  } 
-  catch (const idl_ac::WrongEncoding &) 
-  {
-    throw idl::services::ServiceFailure();
-  }
+  loginInfo = _access_control->loginByPassword(entity.c_str(), _key.pubKey(), 
+					       encryptedBlock, validityTime);
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -342,15 +335,8 @@ void Connection::loginByCertificate(const std::string &entity,
   interceptors::ignore_interceptor _i(_orb_init);
   idl_ac::ValidityTime validityTime;
   idl_ac::LoginInfo *loginInfo(0);
-  try 
-  {
-    loginInfo = loginProcess->login(_key.pubKey(), encryptedBlock, 
-                                    validityTime);
-  } 
-  catch (const idl_ac::WrongEncoding &) 
-  {
-    throw idl_ac::AccessDenied();
-  }
+  loginInfo = loginProcess->login(_key.pubKey(), encryptedBlock, 
+				  validityTime);
   login(*loginInfo, validityTime);
   l.vlog("conn.login.id: %s", _loginInfo->id.in());
 }
@@ -423,10 +409,6 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
     loginInfo = secret.login_process_->login(_key.pubKey(), encryptedBlock, 
                                              validityTime);
   } 
-  catch (const idl_ac::WrongEncoding &)
-  {
-    throw idl_ac::AccessDenied();
-  }
   catch (const CORBA::OBJECT_NOT_EXIST &)
   {
     throw InvalidLoginProcess();

@@ -210,6 +210,8 @@ public:
   * @throw idl_ac::AccessDenied
   *        Senha fornecida para autenticação da entidade não foi validada pelo 
   *        barramento.
+  * @throw WrongEncoding A autenticação falhou, pois a senha não foi
+  *        codificada corretamente com a chave pública do barramento.
   * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
@@ -233,6 +235,8 @@ public:
   * @throw idl_ac::MissingCertificate 
   *        Não há certificado para essa entidade registrado no barramento
   *        indicado.
+  * @throw WrongEncoding A autenticação falhou, pois a senha não foi
+  *        codificada corretamente com a chave pública do barramento.
   * @throw idl::ServiceFailure 
   *        Ocorreu uma falha interna nos serviços do barramento que impediu a 
   *        autenticação da conexão.
@@ -274,6 +278,8 @@ public:
   *        informado é inválido, por exemplo depois do segredo ser
   *        cancelado, ter expirado, ou já ter sido utilizado.
   * @throw AlreadyLoggedIn A conexão já está autenticada.
+  * @throw WrongEncoding A autenticação falhou, pois a senha não foi
+  *        codificada corretamente com a chave pública do barramento.
   * @throw AccessDenied O segredo fornecido não corresponde ao esperado
   *        pelo barramento.
   * @throw ServiceFailure Ocorreu uma falha interna nos serviços do
