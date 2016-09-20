@@ -1,0 +1,9 @@
+
+project openbus/demo/hello ;
+
+exe_ hello
+  : demo
+  : client server
+  : hello
+  ;
+explicit hello ;

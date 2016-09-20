@@ -1,0 +1,10 @@
+
+project openbus/interop/delegation ;
+
+exe_ delegation
+  : interop
+  : client forwarder broadcaster messenger
+  : delegation
+  : /boost//regex
+  ;
+explicit delegation ;

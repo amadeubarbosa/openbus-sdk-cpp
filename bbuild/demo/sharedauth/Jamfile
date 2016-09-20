@@ -1,0 +1,9 @@
+
+project openbus/demo/sharedauth ;
+
+exe_ sharedauth
+  : demo
+  : client sharedauth server
+  : hello
+  ;
+explicit sharedauth ;

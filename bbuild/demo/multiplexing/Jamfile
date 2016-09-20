@@ -1,0 +1,9 @@
+
+project openbus/demo/multiplexing ;
+
+exe_ multiplexing
+  : demo
+  : client server
+  : greetings
+  ;
+explicit multiplexing ;

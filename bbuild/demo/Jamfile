@@ -1,0 +1,23 @@
+
+project openbus/demo ;
+
+path-constant demo : $(root)/demo ;
+
+stubs hello : $(demo)/hello/idl/hello.idl ;
+stubs chain_validation : $(demo)/chain_validation/idl/chain_validation.idl ;
+stubs dedicated_clock : $(demo)/dedicated_clock/idl/dedicated_clock.idl ;
+stubs greetings : $(demo)/greetings/idl/greetings.idl ;
+stubs independent_clock : $(demo)/independent_clock/idl/independent_clock.idl ;
+
+install stage
+  : audit//audit
+    chain_validation//chain_validation
+    dedicated_clock//dedicated_clock
+    greetings//greetings
+    hello//hello
+    independent_clock//independent_clock
+    multiplexing//multiplexing
+    sharedauth//sharedauth
+    $(demo)/demo.key
+
+;

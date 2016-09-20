@@ -1,0 +1,10 @@
+
+project openbus/interop/chaining ;
+
+exe_ chaining
+  : interop
+  : client proxy server
+  : basic chaining
+  : /boost//regex
+  ;
+explicit chaining ;

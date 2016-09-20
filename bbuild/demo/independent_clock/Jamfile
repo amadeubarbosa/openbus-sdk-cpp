@@ -1,0 +1,9 @@
+
+project openbus/demo/independent_clock ;
+
+exe_ independent_clock
+  : demo
+  : client server
+  : independent_clock
+  ;
+explicit independent_clock ;

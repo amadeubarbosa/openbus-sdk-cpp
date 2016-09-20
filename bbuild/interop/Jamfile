@@ -1,0 +1,85 @@
+import os ;
+
+project openbus/interop ;
+
+path-constant interop : $(root)/interop ;
+
+local interopidls = basic chaining delegation protocol sharedauth ;
+for local idl in $(interopidls)
+{
+  interop-$(idl)-idl = [ os.environ INTEROP_$(idl:U)_IDL ] ;
+  if ! $(interop-$(idl)-idl)
+  { 
+    interop-$(idl)-idl = $(deps)/openbus-sdk-idl-interop-$(idl) ;
+  }   
+}
+
+stubs basic : $(interop-basic-idl)/hello.idl ;
+stubs chaining : $(interop-chaining-idl)/proxy.idl ;
+stubs delegation : $(interop-delegation-idl)/messages.idl ;
+stubs protocol : $(interop-protocol-idl)/mock.idl ;
+stubs sharedauth : $(interop-sharedauth-idl)/encoding.idl ;
+
+install stage
+  : chaining//chaining
+    delegation//delegation
+    multiplexing//multiplexing
+    protocol//protocol
+    reloggedjoin//reloggedjoin
+    sharedauth//sharedauth
+    simple//simple
+  ;
+
+boost-process = [ os.environ BOOST_PROCESS_ROOT_PATH ] ;
+if ! $(boost-process)
+{
+  boost-process = "$(deps)/boost-process" ;
+}
+
+project openbus/interop/run
+  : requirements
+    <toolset>msvc:<define>_CRT_SECURE_NO_WARNINGS
+    <threading>multi
+  : default-build
+    <link>shared
+    <variant>release
+  ;
+
+local shared-deps = 
+  /boost//filesystem
+  /boost//system
+  /boost//iostreams
+  ;
+  
+exe run
+  : $(root)/interop/run.cpp
+    $(shared-deps)
+  : <include>$(boost-process)
+  ;
+explicit run ;
+
+install stage-run
+  : run
+  : <install-dependencies>on
+    <install-type>LIB
+    <install-type>EXE
+  ;
+explicit stage-run ;
+
+exe run-cpp11
+  : $(root)/interop/run-cpp11.cpp
+    $(shared-deps)
+    /boost//thread
+  : <include>$(boost-process)
+    <toolset>clang:<cxxflags>-std=c++11
+    <toolset>gcc:<cxxflags>-std=c++11
+  ;
+explicit run-cpp11 ;
+
+install stage-run-cpp11
+  : run-cpp11
+  : <install-dependencies>on
+    <install-type>LIB
+    <install-type>EXE
+  ;
+explicit stage-run-cpp11 ;

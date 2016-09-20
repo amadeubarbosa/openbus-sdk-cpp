@@ -1,0 +1,9 @@
+
+project openbus/demo/dedicated_clock ;
+
+exe_ dedicated_clock
+  : demo
+  : client server
+  : dedicated_clock
+  ;
+explicit dedicated_clock ;

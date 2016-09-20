@@ -1,0 +1,10 @@
+
+project openbus/interop/sharedauth ;
+
+exe_ sharedauth
+  : interop
+  : consuming sharing
+  : basic sharedauth
+  : /boost//filesystem
+  ;
+explicit sharedauth ;

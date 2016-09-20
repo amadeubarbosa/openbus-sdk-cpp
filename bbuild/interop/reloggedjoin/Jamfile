@@ -1,0 +1,9 @@
+
+project openbus/interop/reloggedjoin ;
+
+exe_ reloggedjoin
+  : interop
+  : client server proxy
+  : basic
+  ;
+explicit reloggedjoin ;

@@ -1,0 +1,9 @@
+
+project openbus/demo/chain_validation ;
+
+exe_ chain_validation
+  : demo
+  : client executive secretary
+  : chain_validation
+  ;
+explicit chain_validation ;

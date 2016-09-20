@@ -1,0 +1,654 @@
+# -*- coding: iso-8859-1-unix -*-
+
+import common ;
+import os ;
+import feature ;
+import property-set ;
+import "class" : new ;
+import version ;
+import path ;
+import modules ;
+import option ;
+import testing ;
+
+path-constant here : . ;
+path-constant root : $(here)/.. ;
+path-constant deps : $(root)/.. ;
+
+scs = [ os.environ SCS ] ;
+if ! $(scs)
+{
+  scs = $(deps)/scs ;
+}
+use-project scs : $(scs)/bbuild ;
+
+boost = [ os.environ BOOST ] ;
+if ! $(boost)
+{
+  boost = "$(deps)/boost" ;
+}
+use-project boost : $(boost) ;
+
+logger = [ os.environ LOGGER ] ;
+if ! $(logger)
+{
+  logger = "$(deps)/logger" ;
+}
+use-project logger : $(logger)/bbuild ;
+
+local openssl-jam = [ os.environ OPENSSL_JAM ] ;
+if ! $(openssl-jam)
+{
+  openssl-jam = "$(deps)/openssl.jam" ;
+}
+use-project openssl : $(openssl-jam) ; 
+
+local ace_tao-jam = [ os.environ ACE_TAO_JAM ] ;
+if ! $(ace_tao-jam)
+{
+  ace_tao-jam = "$(deps)/ace_tao.jam" ;
+}
+use-project TAO : $(ace_tao-jam) ; 
+
+
+ace_tao = [ os.environ ACE_TAO ] ;
+if ! $(ace_tao)
+{
+  ace_tao = $(deps)/ACE_TAO ;
+}
+
+taoidl = [ os.environ TAOIDL ] ;
+if ! $(taoidl)
+{
+  taoidl = $(deps)/taoidl ;
+}
+modules.load tao-idl : : $(taoidl) ;
+import tao-idl ;
+
+rule tao-idl-init ( properties * )
+{
+  if <toolset>msvc in $(properties)
+  {
+    local msvc-bin-path ;
+    if <toolset-msvc:version>12.0 in $(properties)
+    {
+      if <address-model>64 in $(properties)
+      {
+        msvc-bin-path = "C:/Program Files (x86)/Microsoft Visual Studio 12.0/VC/bin" ;
+      }
+      else
+      {
+        msvc-bin-path = "C:/Program Files/Microsoft Visual Studio 12.0/VC/bin" ;
+      }
+    }
+    if <toolset-msvc:version>9.0 in $(properties)
+    {
+      if <address-model>64 in $(properties)
+      {
+        msvc-bin-path = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin/amd64" ;
+      }
+      else
+      {
+        msvc-bin-path = "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin" ;
+      }
+    }
+    using tao-idl
+      : $(ace_tao)/bin
+      : $(ace_tao)/lib
+      : $(msvc-bin-path)
+      ;
+  }
+  else
+  {
+    using tao-idl
+      : $(ace_tao)/bin
+      : $(ace_tao)/lib
+      ;
+  }
+    
+}
+
+scs-idl = [ os.environ SCS_IDL ] ;
+if ! $(scs-idl)
+{
+  scs-idl = $(scs)/idl/src ;
+}
+
+openbus-idl = [ os.environ OPENBUS_IDL ] ;
+if ! $(openbus-idl)
+{
+  openbus-idl = $(root)/idl/current ;
+}
+
+openbus-legacy-idl = [ os.environ OPENBUS_LEGACY_IDL ] ;
+if ! $(openbus-legacy-idl)
+{
+  openbus-legacy-idl = $(root)/idl/legacy ;
+}
+
+# To add requirements for version >= or < than determinate version for specific toolset
+rule version-less ( lhs rhs )
+{
+    return [ version.version-less
+        [ SPLIT_BY_CHARACTERS $(lhs) : . ] :
+        [ SPLIT_BY_CHARACTERS $(rhs) : . ] ] ;
+}
+
+rule add-conditions ( conditions + : toolset : min-version ? : max-version ? : properties * )
+{
+    local curr-toolset = [ MATCH <toolset>(.*) : $(properties) ] ;
+    local curr-version = [ MATCH <toolset-$(curr-toolset):version>(.*) : $(properties) ] ;
+
+    if $(curr-toolset) = $(toolset) &&
+        ! ( $(min-version) && [ version-less $(curr-version) $(min-version) ] ) &&
+        ! ( $(max-version) && [ version-less $(max-version) $(curr-version) ] )
+    {
+        return $(conditions) ;
+    }
+}
+
+rule add-Wno-unused-local-typedefs-gcc>=4.8 ( properties * )
+{
+    return [ add-conditions <cxxflags>-Wno-unused-local-typedefs : gcc : 4.8 : : $(properties) ] ;
+}
+
+rule tag ( name : type ? : property-set )
+{
+  if $(type) in STATIC_LIB SHARED_LIB IMPORT_LIB EXE
+  {
+    local result ;
+    local debug ;
+    local static ;
+    if <link>static in [ $(property-set).raw ]
+    {
+      static = -s ;
+    }
+    if <variant>debug in [ $(property-set).raw ]
+    {
+      debug = -d ;
+    }
+    if <threading>multi in [ $(property-set).raw ]
+    {
+      result = [ common.format-name <base> 
+        -mt $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    else
+    {
+      result = [ common.format-name <base> 
+        $(static) $(debug) : $(name) : $(type) : $(property-set) ] ;
+    }
+    return $(result) ;
+  }
+}
+
+project dl ;
+
+lib dl
+  :
+  : <link>shared
+  ;
+
+project openbus
+  : requirements
+    <tag>@tag
+    <threading>multi
+    <target-os>windows:<pch>off
+    <target-os>windows,<link>shared:<runtime-link>shared
+    <target-os>windows,<link>static:<runtime-link>static
+    <target-os>windows:<debug-store>database
+    <target-os>windows:<define>_SCL_SECURE_NO_WARNINGS
+    <target-os>windows:<define>_CRT_SECURE_NO_WARNINGS
+    <toolset>msvc-12.0:<cxxflags>/FS
+    <toolset>msvc-12.0:<cflags>/FS
+    <debug-symbols>on
+    <define>BOOST_ALL_NO_LIB=1
+    <link>shared:<define>OPENBUS_SDK_SHARED
+    <define>OPENBUS_SDK_SOURCE
+    <conditional>@add-Wno-unused-local-typedefs-gcc>=4.8
+    <conditional>@tao-idl-init
+    <library>/TAO//TAO
+  : usage-requirements
+    <link>shared:<define>OPENBUS_SDK_SHARED
+    <toolset>msvc-12.0:<cxxflags>/FS
+  : default-build
+    <threading>multi
+    <variant>debug
+    <link>static
+  ;
+
+obj access_control-stub
+  : $(openbus-idl)/src/openbus_access-2.1.idl
+    core-stub
+    credential-stub
+  : <include>$(root)/idl
+    <implicit-dependency>core-stub
+    <implicit-dependency>credential-stub
+  :
+  : <implicit-dependency>core-stub
+    <implicit-dependency>credential-stub
+  ;
+explicit access_control-stub ;
+
+obj legacy_support-stub
+  : $(openbus-idl)/src/openbus_legacy-2.1.idl
+    access_control-stub
+    access_control-legacy-stub
+  : <include>$(openbus-idl)/src
+    <include>$(openbus-legacy-idl)/src
+    <implicit-dependency>access_control-stub
+    <implicit-dependency>access_control-legacy-stub
+  :
+  : <implicit-dependency>access_control-stub
+    <implicit-dependency>access_control-legacy-stub
+  ;
+explicit legacy_support-stub ;
+
+obj offer_registry-stub
+  : $(openbus-idl)/src/openbus_offers-2.1.idl
+    access_control-stub
+  : <implicit-dependency>/scs//idls
+    <implicit-dependency>access_control-stub
+    <include>$(openbus-idl)/src
+  :
+  : <implicit-dependency>/scs//idls
+  ;
+explicit offer_registry-stub ;
+
+obj core-stub
+  : $(openbus-idl)/src/openbus_core-2.1.idl
+  : <include>$(openbus-idl)/src
+  ;
+explicit core-stub ;
+
+obj credential-stub
+  : $(openbus-idl)/src/openbus_creden-2.1.idl
+    core-legacy-stub   
+  : <implicit-dependency>core-legacy-stub
+    <include>$(openbus-idl)/src
+  :
+  : <implicit-dependency>core-legacy-stub
+  ;
+explicit credential-stub ;
+
+obj data_export-stub
+  : $(openbus-idl)/src/openbus_export-2.1.idl
+    access_control-legacy-stub  
+  : <implicit-dependency>access_control-legacy-stub
+    <include>$(openbus-idl)/src
+  :
+  : <implicit-dependency>access_control-legacy-stub
+  ;
+explicit data_export-stub ;
+
+obj access_control-legacy-stub
+  : $(openbus-legacy-idl)/src/access_control.idl
+    core-legacy-stub
+    credential-legacy-stub
+  : <implicit-dependency>core-legacy-stub
+    <implicit-dependency>credential-legacy-stub
+  :
+  : <implicit-dependency>core-legacy-stub
+    <implicit-dependency>credential-legacy-stub
+  ;
+explicit access_control-legacy-stub ;
+
+obj core-legacy-stub
+  : $(openbus-legacy-idl)/src/core.idl
+  ;
+explicit core-legacy-stub ;
+
+obj credential-legacy-stub
+  : $(openbus-legacy-idl)/src/credential.idl
+    core-legacy-stub
+  : <implicit-dependency>core-legacy-stub
+  :
+  : <implicit-dependency>core-legacy-stub
+  ;
+explicit credential-legacy-stub ;
+
+obj data_export-legacy-stub
+  : $(openbus-legacy-idl)/src/data_export.idl
+    access_control-legacy-stub
+  : <implicit-dependency>access_control-legacy-stub
+  :
+  : <implicit-dependency>access_control-legacy-stub
+  ;
+explicit data_export-legacy-stub ;
+
+obj offer_registry-legacy-stub
+  : $(openbus-legacy-idl)/src/offer_registry.idl
+  : <implicit-dependency>/scs//idls
+    <include>$(openbus-legacy-idl)/src
+  :
+  : <implicit-dependency>/scs//idls
+  ;
+explicit offer_registry-legacy-stub ;
+
+alias idls
+  : access_control-stub
+    legacy_support-stub
+    offer_registry-stub
+    core-stub
+    credential-stub
+    data_export-stub
+    access_control-legacy-stub
+    core-legacy-stub
+    credential-legacy-stub
+    data_export-legacy-stub
+    offer_registry-legacy-stub
+  : <warnings>off
+  ;
+explicit idls ;
+
+local src = $(root)/src ;
+
+lib openbus
+  : $(src)/connection.cpp
+    $(src)/interceptors/client.cpp
+    $(src)/interceptors/orb_initializer.cpp
+    $(src)/interceptors/server.cpp
+    $(src)/login_cache.cpp
+    $(src)/openbus_context.cpp
+    $(src)/openssl/openssl.cpp
+    $(src)/openssl/private_key.cpp
+    $(src)/openssl/public_key.cpp
+    $(src)/orb_init.cpp
+    $(src)/shared_auth_secret.cpp
+    $(src)/ticket.c
+    /scs//scs
+    /logger//logger
+    /openssl//openssl
+    idls
+  : <include>$(root)/include
+    <threading>multi:<source>/boost//thread
+    <dependency>idls
+    <implicit-dependency>idls
+    <toolset>msvc:<source>/scs//idls
+    <use>/boost//headers
+  :
+  : <include>$(root)/include
+    <dependency>idls
+    <implicit-dependency>idls
+  ;
+explicit openbus ;
+
+install stage
+  : openbus
+    demo//stage
+  ;
+
+tao-idl.cpp-h install-access_control_idl
+  : $(openbus-idl)/src/openbus_access-2.1.idl
+  ;
+explicit install-access_control_idl ;
+
+tao-idl.cpp-h install-legacy_support_idl
+  : $(openbus-idl)/src/openbus_legacy-2.1.idl
+  ;
+explicit install-legacy_support_idl ;
+
+tao-idl.cpp-h install-offer_registry_idl
+  : $(openbus-idl)/src/openbus_offers-2.1.idl
+  ;
+explicit install-offer_registry_idl ;
+
+tao-idl.cpp-h install-core_idl
+  : $(openbus-idl)/src/openbus_core-2.1.idl
+  ;
+explicit install-core_idl ;
+
+tao-idl.cpp-h install-credential_idl
+  : $(openbus-idl)/src/openbus_creden-2.1.idl
+  ;
+explicit install-credential_idl ;
+
+tao-idl.cpp-h install-data_export_idl
+  : $(openbus-idl)/src/openbus_export-2.1.idl
+  ;
+explicit install-data_export_idl ;
+
+tao-idl.cpp-h install-access_control-legacy_idl
+  : $(openbus-legacy-idl)/src/access_control.idl
+  ;
+explicit install-access_control-legacy_idl ;
+
+tao-idl.cpp-h install-core-legacy_idl
+  : $(openbus-legacy-idl)/src/core.idl
+  ;
+explicit install-core-legacy_idl ;
+
+tao-idl.cpp-h install-credential-legacy_idl
+  : $(openbus-legacy-idl)/src/credential.idl
+  ;
+explicit install-credential-legacy_idl ;
+
+tao-idl.cpp-h install-data_export-legacy_idl
+  : $(openbus-legacy-idl)/src/data_export.idl
+  ;
+explicit install-data_export-legacy_idl ;
+
+tao-idl.cpp-h install-offer_registry-legacy_idl
+  : $(openbus-legacy-idl)/src/offer_registry.idl
+  ;
+explicit install-offer_registry-legacy_idl ;
+
+tao-idl.cpp-h install-scs_idl
+  : $(scs-idl)/scs.idl
+  ;
+explicit install-scs_idl ;
+
+install stage-stubs
+  : install-access_control_idl
+    install-legacy_support_idl
+    install-core_idl
+    install-offer_registry_idl
+    install-core_idl
+    install-credential_idl
+    install-data_export_idl
+    install-access_control-legacy_idl
+    install-core-legacy_idl
+    install-credential-legacy_idl
+    install-data_export-legacy_idl
+    install-offer_registry-legacy_idl
+  : <location>install/stubs
+    <install-dependencies>on
+    <install-type>CPP
+    <install-type>H
+  ;
+explicit stage-stubs ;
+
+install stage-deps
+  : openbus
+    /boost//program_options
+    /boost//date_time
+    /boost//filesystem
+    /boost//regex
+  : <location>install/deps
+    <install-dependencies>on
+    <install-type>LIB
+    <install-type>PDB
+  ;
+explicit stage-deps ;
+
+local test-requirements =
+  <threading>multi:<source>/boost//thread 
+  <target-os>windows:<library>/openbus//idls
+  <target-os>windows:<library>/scs//scs-stub
+  <target-os>linux,<link>static:<source>/dl//dl
+  <include>$(root)/tests
+  <include>$(root)
+  <include>$(root)/include
+  <define>OPENBUS_SDK_TEST #Dangerous!
+  <library>/openbus//openbus
+  <library>/scs//scs
+  <use>/boost//headers
+  <library>/boost/program_options
+  <library>/logger//logger
+  <library>/openssl//openssl
+  <library>/TAO//TAO
+  ;
+
+obj test-hello-stub
+  : $(root)/tests/idl/hello.idl
+  : <warnings>off
+  ;
+explicit test-hello-stub ;
+
+obj test-hello-skeleton
+  : $(root)/tests/idl/hello.idl
+  : <generate>skeleton
+    <warnings>off
+    <implicit-dependency>test-hello-stub
+  ;
+explicit test-hello-skeleton ;
+
+local tests = $(root)/tests ;
+
+alias run-tests
+  : [ run $(tests)/connect/host_port/connect_by_address_access_key.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connect/host_port/connect_by_address_access_key_legacy_on.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connect/host_port/connect_by_address_legacy_on.cpp : : : $(test-requirements) ]    
+    [ run $(tests)/connect/host_port/connect_to_right_host_and_port.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connect/host_port/connect_to_wrong_host_and_port.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connect/host_port/connect_with_invalid_host.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connect/reference/connect_by_reference_access_key.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connect/reference/connect_by_reference_access_key_legacy_on.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connect/reference/connect_by_reference_legacy_on.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connect/reference/connect_with_valid_reference.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/dec_incompat_type_chain.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/dec_incompat_version_chain.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/enc_and_dec_chain_AB.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/enc_and_dec_chain_ABC.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/enc_and_dec_legacy_chain_AB.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/enc_and_dec_legacy_chain_ABC.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/import_chain.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/import_chain_invalid_token.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/import_chain_unknown_domain.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/make_chain_for_joined_chain.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/make_chain_for_know_entity.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/caller_chain/make_chain_for_unknow_entity.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/lifecycle/bus_ctx.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/lifecycle/create_conn.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/lifecycle/set_curr_conn.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/lifecycle/set_def_conn.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/login/login_info_after_login.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByCertificate/entity_pkey_ok.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginByCertificate/entity_pkey_ok_invalid_host.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginByCertificate/entity_pkey_ok_valid_ref.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginByCertificate/entity_pkey_ok_wrong_host_port.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/after_logout.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/entity_id_and_password_ok.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/entity_id_and_password_ok_valid_ref.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/invalid_host.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/login_when_already_logged.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/logout_on_invalid_login.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/on_invalid_login.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/user_remote_call_on_inv_login.cpp : : : $(test-requirements) ]
+    # [ run $(tests)/connection/loginByPassword/too_many_attempts.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/unknown_domain.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/wrong_host_port.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginByPassword/wrong_password.cpp : : : $(test-requirements) ]
+    [ run $(tests)/connection/loginBySharedAuth/enc_and_dec_secret.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginBySharedAuth/login.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginBySharedAuth/login_invalid_host.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginBySharedAuth/login_valid_ref.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginBySharedAuth/login_wrong_host_port.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/loginBySharedAuth/try_login_after_cancel.cpp : : $(tests)/admin/TestCppHello.key : $(test-requirements) ]
+    [ run $(tests)/connection/logout/logout_twice.cpp : : : $(test-requirements) ]
+    [ run $(tests)/fail_user_created_orb.cpp : : : $(test-requirements) ]
+    [ run $(tests)/get_offer.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+      	<library>test-hello-skeleton
+      	<implicit-dependency>test-hello-stub
+      	<implicit-dependency>test-hello-skeleton 
+      	<dependency>test-hello-stub
+      	<dependency>test-hello-skeleton ]
+    [ run $(tests)/openbus_context/get_bus_ctx.cpp : : : $(test-requirements) ]
+    [ run $(tests)/openbus_context/getting_orb_with_bus_ctx.cpp : : : $(test-requirements) ]
+    [ run $(tests)/openbus_context/on_call_dispatch.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
+    [ run $(tests)/openbus_context/on_call_dispatch_null_return.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
+    [ run $(tests)/openbus_context/orb_is_same.cpp : : : $(test-requirements) ]
+    [ run $(tests)/openbus_context/rcv_call_def_conn.cpp : :
+      : $(test-requirements)
+        <library>test-hello-stub
+    	<library>test-hello-skeleton
+    	<dependency>test-hello-skeleton
+    	<implicit-dependency>test-hello-skeleton ]
+  ;
+explicit run-tests ;
+
+rule stubs ( demo : idl )
+{
+  local stub = $(demo)-stub ;
+  obj $(stub)
+    : $(idl)
+    : <warnings>off
+    ;
+  explicit $(stub) ;
+  local skeleton = $(demo)-skeleton ;
+  obj $(skeleton)
+    : $(idl)
+    : <generate>skeleton
+      <warnings>off
+    ;
+  explicit $(skeleton) ;
+}
+
+rule exe-aux ( name : type : src : deps * )
+{
+  local case_ = [ MATCH "^([a-z_]+)_[a-z]+$" : $(name) ] ;
+  exe $(name)
+    : $(root)/$(type)/$(case_)/src/$(src).cpp
+      /openbus//openbus
+      /scs//scs
+      /logger//logger
+      /openssl//openssl
+      /boost//program_options
+      /TAO//TAO
+      $(deps)
+    : <threading>multi:<source>/boost//thread
+      <target-os>windows:<library>/openbus//idls
+      <target-os>windows:<library>/scs//scs-stub
+      <dependency>$(deps)
+      <implicit-dependency>$(deps)
+      <link>static,<target-os>linux:<source>/dl//dl
+      <include>$(root)
+      <include>$(root)/$(type)
+      <use>/boost//headers
+    ;
+  explicit $(name) ;
+}
+
+rule exe_ ( name : type : procs + : idls + : deps * )
+{
+  local stubs ;
+  for local idl in $(idls)
+  {
+    stubs = $(stubs) /openbus/$(type)//$(idl)-stub /openbus/$(type)//$(idl)-skeleton ;
+  }
+
+  local labels ;
+  for local proc in $(procs)
+  {
+    local label = $(name)_$(proc) ;
+    labels = $(labels) $(label) ;
+    exe-aux $(label)
+      : $(type)
+      : $(proc)
+      : $(stubs) $(deps)
+      ;
+  }
+  alias $(name) : $(labels) ;
+  explicit $(name) ;
+}

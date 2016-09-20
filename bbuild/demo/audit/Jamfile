@@ -1,0 +1,9 @@
+
+project openbus/demo/audit ;
+
+exe_ audit
+  : demo
+  : client server proxy
+  : hello
+  ;
+explicit audit ;

@@ -1,0 +1,9 @@
+
+project openbus/interop/simple ;
+
+exe_ simple
+  : interop
+  : client server
+  : basic
+  ;
+explicit simple ;

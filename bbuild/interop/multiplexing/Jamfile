@@ -1,0 +1,9 @@
+
+project openbus/interop/multiplexing ;
+
+exe_ multiplexing
+  : interop
+  : client server
+  : basic
+  ;
+explicit multiplexing ;

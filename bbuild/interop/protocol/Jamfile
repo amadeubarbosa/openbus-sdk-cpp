@@ -1,0 +1,9 @@
+
+project openbus/interop/protocol ;
+
+exe_ protocol
+  : interop
+  : client
+  : protocol
+  ;
+explicit protocol ;
