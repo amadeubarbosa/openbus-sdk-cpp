@@ -407,10 +407,6 @@ void Connection::loginBySharedAuth(const SharedAuthSecret &secret)
       loginInfo = secret.login_process_->login(_key.pubKey(), encryptedBlock, 
                                                validityTime);
   } 
-  catch (const idl::access::WrongEncoding &)
-  {
-    throw idl::access::AccessDenied();
-  }
   catch (const CORBA::OBJECT_NOT_EXIST &)
   {
     throw InvalidLoginProcess();
