@@ -18,6 +18,4 @@ install stage
     independent_clock//independent_clock
     multiplexing//multiplexing
     sharedauth//sharedauth
-    $(demo)/demo.key
-
 ;
